@@ -1,0 +1,26 @@
+{
+  "name": "city-pulse-detective",
+  "version": "1.0.0",
+  "description": "《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》3D 專屬私服器多人版",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hsiaoyujui114-code/city-pulse-detective.git"
+  },
+  "keywords": [
+    "detective",
+    "taipei",
+    "3d",
+    "threejs",
+    "multiplayer",
+    "websocket"
+  ],
+  "author": "hsiaoyujui114-code",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}
