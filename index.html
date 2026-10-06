@@ -5,13 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》- 3D 專屬私服器多人版</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Three.js 3D 繪圖引擎 (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- 優先載入本地 Three.js 引擎，確保離線與任何網路環境絕不黑屏 -->
+  <script src="assets/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
 </head>
 <body>
 
   <!-- 3D WebGL 畫布容器 -->
   <div id="webgl-container"></div>
+
+  <!-- 導航提示氣泡 -->
+  <div class="nav-hint-toast" id="navHintToast">
+    <span>🧭</span>
+    <span id="navHintText">請操作角色實際走到全家便利商店門口！</span>
+  </div>
 
   <!-- 頂部 HUD -->
   <div class="hud-top">
@@ -74,21 +85,21 @@
       <span>⚠️ 主線任務</span>
       <span style="font-size:12px; color:#38bdf8;">台北車站・神祕失竊案</span>
     </div>
-    <div class="quest-objective-item">
+    <div class="quest-objective-item" onclick="guideToClue()">
       <span class="quest-check" id="qcClues">☑️</span>
-      <span>調查現場與地面可疑紙條 (<span id="clueCount">0</span>/3)</span>
+      <span>調查站前花圃神祕紙條 (<span id="clueCount">0</span>/3)</span>
     </div>
-    <div class="quest-objective-item">
+    <div class="quest-objective-item" onclick="handleGoToStore()">
       <span class="quest-check" id="qcStore">⬜</span>
-      <span>前往全家便利商店，購買茶葉蛋 ($13) 補給</span>
+      <span><strong>親自走到全家便利商店</strong>，購買茶葉蛋 ($13)</span>
     </div>
-    <div class="quest-objective-item">
+    <div class="quest-objective-item" onclick="openTibModal()">
       <span class="quest-check" id="qcTib">⬜</span>
       <span>打開 TIB 交通情報台比對悠遊卡與 CCTV</span>
     </div>
-    <div class="quest-objective-item">
+    <div class="quest-objective-item" onclick="guideToPolice()">
       <span class="quest-check" id="qcArrest">⬜</span>
-      <span>與巡警會合，進行筆錄對質並逮捕竊賊</span>
+      <span>走到警車與巡警會合，進行筆錄對質逮捕</span>
     </div>
   </div>
 
@@ -98,12 +109,20 @@
     <span class="interact-label" id="interactLabel">進入全家便利商店</span>
   </div>
 
+  <!-- 行動裝置虛擬十字方向鍵 -->
+  <div class="mobile-dpad">
+    <div style="grid-column: 2;" class="dpad-btn" id="dpadUp">▲</div>
+    <div style="grid-column: 1; grid-row: 2;" class="dpad-btn" id="dpadLeft">◀</div>
+    <div style="grid-column: 2; grid-row: 2;" class="dpad-btn" id="dpadDown">▼</div>
+    <div style="grid-column: 3; grid-row: 2;" class="dpad-btn" id="dpadRight">▶</div>
+  </div>
+
   <!-- 左下角多人聊天室 -->
   <div class="chat-window">
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg-row">
         <span class="author">[系統]</span>
-        <span>歡迎連入《雙北漫遊偵探》3D 私服共享世界！按 WASD 或方向鍵移動角色，點擊畫面可旋轉視角。</span>
+        <span>歡迎連入 3D 私服世界！按 [WASD] 移動角色，[E] 鍵互動。要買茶葉蛋請操作小偵探實際走到全家門口喔！</span>
       </div>
     </div>
     <div class="chat-input-bar">
@@ -114,11 +133,11 @@
 
   <!-- 底部操作按鈕列 -->
   <div class="hud-bottom-bar">
-    <div class="action-btn-circle" onclick="openStoreModal()" title="全家便利商店">
+    <div class="action-btn-circle" onclick="handleGoToStore()" title="全家便利商店">
       <span class="icon">🏪</span>
       <span class="label">全家超商</span>
     </div>
-    <div class="action-btn-circle" onclick="openNightMarketModal()" title="寧夏夜市小吃">
+    <div class="action-btn-circle" onclick="handleGoToNightMarket()" title="寧夏夜市小吃">
       <span class="icon">🏮</span>
       <span class="label">夜市美食</span>
     </div>

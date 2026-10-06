@@ -7,7 +7,7 @@
   --cyan-primary: #00d2ff;
   --cyan-glow: rgba(0, 210, 255, 0.5);
   --blue-dark: #07152d;
-  --blue-panel: rgba(10, 25, 50, 0.92);
+  --blue-panel: rgba(10, 25, 50, 0.94);
   --blue-border: #1a4275;
   --amber: #f59e0b;
   --green: #10b981;
@@ -39,6 +39,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 1;
+  background: #87ceeb; /* 預設天空藍，防止 WebGL 載入前黑屏 */
 }
 
 /* 3D 畫布防嚇馬賽克濾鏡 */
@@ -77,8 +78,8 @@ body {
 }
 
 .profile-avatar-box {
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: 2px solid #38bdf8;
   background: #1e293b;
@@ -86,7 +87,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 30px;
+  font-size: 28px;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
@@ -94,7 +95,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 150px;
+  min-width: 140px;
 }
 
 .profile-header {
@@ -279,6 +280,12 @@ body {
   color: #cbd5e1;
   margin-top: 6px;
   line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.quest-objective-item:hover {
+  color: #38bdf8;
 }
 
 .quest-check {
@@ -288,6 +295,32 @@ body {
 
 .quest-check.done {
   color: #10b981;
+}
+
+/* 導航提示氣泡 (Navigation Toast) */
+.nav-hint-toast {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #f59e0b;
+  border-radius: 20px;
+  padding: 8px 20px;
+  color: #fef08a;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(245, 158, 11, 0.4);
+  z-index: 35;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* 全服號外快報跑馬燈 (Breaking News Banner) */
@@ -325,44 +358,44 @@ body {
   background: var(--blue-panel);
   border: 2px solid #00d2ff;
   border-radius: 24px;
-  padding: 8px 24px;
+  padding: 10px 26px;
   display: none;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 0 20px var(--cyan-glow);
+  gap: 12px;
+  box-shadow: 0 0 25px var(--cyan-glow), 0 8px 20px rgba(0, 0, 0, 0.8);
   z-index: 25;
   cursor: pointer;
   transition: transform 0.15s;
 }
 
 .interact-prompt-floating:hover {
-  transform: translateX(-50%) scale(1.05);
+  transform: translateX(-50%) scale(1.06);
 }
 
 .key-badge {
   background: #0284c7;
   color: white;
   font-weight: 900;
-  font-size: 14px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  box-shadow: 0 0 8px #38bdf8;
+  font-size: 15px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #38bdf8;
 }
 
 .interact-label {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 800;
   color: #f0f9ff;
 }
 
-/* 底部中央/左側導航按鈕列 (Bottom Sci-Fi Action Bar) */
+/* 底部中央導航按鈕列 (Bottom Action Bar) */
 .hud-bottom-bar {
   position: absolute;
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px;
+  gap: 10px;
   z-index: 20;
 }
 
@@ -400,14 +433,45 @@ body {
   color: #bae6fd;
 }
 
+/* 手機虛擬十字鍵 (Mobile Controls) */
+.mobile-dpad {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: none;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 6px;
+  z-index: 25;
+}
+
+.dpad-btn {
+  width: 48px;
+  height: 48px;
+  background: rgba(10, 25, 50, 0.9);
+  border: 1px solid #00d2ff;
+  color: white;
+  border-radius: 12px;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.dpad-btn:active {
+  background: #0284c7;
+}
+
 /* 多人聊天對話窗 (Chat Box) */
 .chat-window {
   position: absolute;
-  bottom: 90px;
+  bottom: 86px;
   left: 16px;
-  width: 320px;
-  height: 180px;
-  background: rgba(7, 21, 45, 0.88);
+  width: 310px;
+  height: 170px;
+  background: rgba(7, 21, 45, 0.9);
   border: 1px solid var(--blue-border);
   border-radius: 12px;
   display: flex;
@@ -550,8 +614,11 @@ body {
 
 /* 響應式控制 */
 @media (max-width: 768px) {
+  .mobile-dpad {
+    display: grid;
+  }
   .quest-box {
-    width: 220px;
+    width: 210px;
     font-size: 11px;
   }
   .hud-bottom-bar {
