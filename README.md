@@ -43,6 +43,7 @@
 | **02. 系統規格** | [📋 `docs/02_project_spec/PROJECT_SPEC.md`](./docs/02_project_spec/PROJECT_SPEC.md) | 遊戲循環、數值體系、捷運站點配置、道具規格 |
 | **03. 討論紀錄** | [📜 `docs/03_discussion_history/DISCUSSION_LOG.md`](./docs/03_discussion_history/DISCUSSION_LOG.md) | 第 1 ~ 5 回合所有使用者對話、需求與修改決策 |
 | **04. 美術情境** | [🎨 `docs/04_art_and_style/ART_STYLE_GUIDE.md`](./docs/04_art_and_style/ART_STYLE_GUIDE.md) | 雲端 41 張概念圖分析、視覺基調（非彈窗貼圖） |
+| **05. 真實地圖與Server** | [🌐 `docs/05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md`](./docs/05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md) | 所有人同服 Server 架構、免費部署、雙北真實道路 (OSM) 轉換 |
 
 ---
 
