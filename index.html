@@ -3,33 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》- 雙引擎動漫偵探 RPG</title>
+  <title>《雙北漫遊：都會行蹤》- 第一人稱 3D 雙北真實地圖 ✕ 公車通勤 ✕ 專屬私服器</title>
   <link rel="stylesheet" href="style.css">
-  <!-- 優先載入本地 Three.js 引擎，若無法啟用 WebGL 則自動無縫切換 2.5D 高相容引擎 -->
   <script src="assets/three.min.js"></script>
 </head>
 <body>
 
-  <!-- 3D WebGL / 2.5D 畫布容器 (預設深色背景，絕不白屏) -->
+  <!-- 3D WebGL / 2.5D 畫布容器 (深色沉浸底色，絕不白屏) -->
   <div id="webgl-container"></div>
+
+  <!-- 第一人稱準星 (First-Person Reticle) -->
+  <div class="fpv-crosshair" id="fpvCrosshair"></div>
+
+  <!-- 第一人稱視角操作提示 -->
+  <div class="fpv-hint" id="fpvHint">
+    <span>👀 第一人稱視角：滑鼠點擊畫面轉動視角，[WASD] 移動，[E] 互動</span>
+  </div>
 
   <!-- 導航提示氣泡 (Navigation Toast) -->
   <div class="nav-hint-toast" id="navHintToast">
     <span>🧭</span>
-    <span id="navHintText">請打開地圖搭乘捷運，或親自探索街區！</span>
+    <span id="navHintText">請走到路邊公車站牌【台北車站(忠孝)】搭乘公車！</span>
   </div>
 
-  <!-- 頂部 HUD (忠實對照 Google Drive 截圖) -->
+  <!-- 公車 / 捷運乘車與快轉過場動畫 HUD (Transit Cutscene HUD) -->
+  <div class="transit-hud" id="transitHud">
+    <div class="transit-card">
+      <div class="transit-badge" id="transitBadge">🚌 307 公車 (忠孝幹線 ➔ 中山商圈)</div>
+      <div class="transit-status" id="transitStatus">車輛行駛中，點擊右方按鈕啟用鳥瞰快轉過場...</div>
+    </div>
+    <button class="fast-forward-btn" id="btnFastForward" onclick="triggerFastForwardTransition()">
+      <span>⏩ 快轉過場動畫 (空拍鳥瞰)</span>
+    </button>
+  </div>
+
+  <!-- 頂部 HUD -->
   <div class="hud-top">
-    <!-- 左上角角色狀態卡 -->
+    <!-- 左上角角色狀態卡 (沉浸都會調查員) -->
     <div class="player-profile-card">
       <div class="profile-avatar-box">
-        <img src="assets/images/avatar_detective.png" alt="少年偵探頭像">
+        <img src="assets/images/avatar_detective.png" alt="個人頭像">
       </div>
       <div class="profile-info">
         <div class="profile-header">
           <span class="level-tag">Lv. 5</span>
-          <span class="badge-tag">偵探新手</span>
+          <span class="badge-tag">都會調查員</span>
         </div>
         <div class="bar-row">
           <span class="bar-label">體力</span>
@@ -50,16 +68,16 @@
 
     <!-- 全服號外快報廣播欄 -->
     <div class="breaking-news-banner" id="breakingNewsBanner">
-      <span>🚨 全服號外：</span>
-      <span id="breakingNewsText">歡迎進入雙北漫遊偵探世界！</span>
+      <span>🚨 全服快訊：</span>
+      <span id="breakingNewsText">歡迎進入雙北 1:1 真實道路虛擬世界！</span>
     </div>
 
-    <!-- 體力不支中央警報橫幅 (截圖 5) -->
+    <!-- 體力不支中央警報橫幅 -->
     <div class="stamina-warning-banner" id="staminaWarningBanner" onclick="openRestModal()">
       <div class="warning-icon-box">⚠️</div>
       <div class="warning-text-box">
         <div class="warning-title">體力不支</div>
-        <div class="warning-desc">你的體力已經見底，無法繼續奔跑！點此找地方休息。</div>
+        <div class="warning-desc">體力耗盡步伐沉重！請找公車候車椅休息或至超商補給。</div>
       </div>
     </div>
 
@@ -72,11 +90,11 @@
 
       <div class="location-pill" id="locationPill">
         <span>📍</span>
-        <span id="locationText">中山商圈・街頭</span>
+        <span id="locationText">忠孝西路一段 ✕ 館前路口</span>
       </div>
 
-      <!-- 圓形雷達小地圖 (點擊打開雙北捷運探索大地圖) -->
-      <div class="radar-minimap" onclick="openMapModal()" title="點擊展開雙北捷運與探索地圖">
+      <!-- 圓形雷達小地圖 (點擊打開雙北真實地圖檢視) -->
+      <div class="radar-minimap" onclick="openMapModal()" title="點擊檢視雙北路網與公車路線圖 (無瞬移傳送)">
         <img src="assets/images/radar_map.png" class="radar-bg-img" alt="Radar Minimap">
         <div class="radar-sweep"></div>
         <div class="radar-compass-n">N</div>
@@ -85,41 +103,41 @@
     </div>
   </div>
 
-  <!-- 左側懸浮主線任務卡 (截圖 1 & 2 左上角) -->
+  <!-- 左側懸浮主線任務卡 -->
   <div class="quest-floating-card" id="mainQuestCard">
     <div class="quest-card-header">
       <div class="quest-card-header-left">
         <span>⚠️</span>
-        <span>主線任務</span>
+        <span>主線委託</span>
       </div>
       <button class="quest-card-close" onclick="toggleMainQuestCard()">✕</button>
     </div>
     <div class="quest-card-body" id="mainQuestBody">
-      打開 [📍 地圖] 搭乘捷運，沿線調查線索並尋找目擊者。
+      前往【台北車站(忠孝)】站牌搭乘 307 公車，或走進捷運出入口搭手扶梯進站。
     </div>
   </div>
 
-  <!-- 左下角懸浮任務提示卡 (截圖 1 左下角) -->
+  <!-- 左下角懸浮任務提示卡 -->
   <div class="hint-floating-card" id="hintQuestCard">
     <div class="quest-card-header">
       <div class="quest-card-header-left">
         <span>⚠️</span>
-        <span>任務提示</span>
+        <span>交通指引</span>
       </div>
       <button class="quest-card-close" onclick="toggleHintQuestCard()">✕</button>
     </div>
     <div class="quest-card-body" id="hintQuestBody">
-      前往街區中的手搖飲或便利商店，購買飲品補充體力。
+      雙北地圖全面擴大 2 倍，無法直接瞬移！請至路邊站牌等候公車。
     </div>
   </div>
 
-  <!-- 右側互動選項膠囊堆疊 (走近目標時動態彈出) -->
+  <!-- 右側互動選項膠囊堆疊 -->
   <div class="action-pills-stack" id="actionPillsStack"></div>
 
-  <!-- 3D/2.5D 浮動互動提示 [E] (中央底部) -->
+  <!-- 第一人稱 3D 浮動互動提示 [E] -->
   <div class="interact-prompt-floating" id="interactPrompt" onclick="triggerCurrentInteraction()">
     <span class="key-badge">E</span>
-    <span class="interact-label" id="interactLabel">調查</span>
+    <span class="interact-label" id="interactLabel">搭乘公車</span>
   </div>
 
   <!-- 行動裝置虛擬十字方向鍵 -->
@@ -130,14 +148,14 @@
     <div style="grid-column: 3; grid-row: 2;" class="dpad-btn" id="dpadRight">▶</div>
   </div>
 
-  <!-- 偵探內心獨白 / 劇情對話視窗 (底部對話框) -->
+  <!-- 劇情對話 / 內心獨白視窗 -->
   <div class="detective-dialogue-box" id="detectiveDialogueBox">
     <div class="diag-avatar-box">
-      <img src="assets/images/avatar_detective.png" alt="偵探頭像">
+      <img src="assets/images/avatar_detective.png" alt="個人頭像">
     </div>
     <div class="diag-content-box">
-      <div class="diag-speaker" id="diagSpeaker">偵探新手</div>
-      <div class="diag-text" id="diagText">看來每個捷運站周圍都有不同的線索，打開地圖看看吧！</div>
+      <div class="diag-speaker" id="diagSpeaker">調查員</div>
+      <div class="diag-text" id="diagText">看來忠孝西路車水馬龍，到站牌等公車吧！</div>
     </div>
     <button class="diag-close" onclick="closeDialogueBox()">✕</button>
   </div>
@@ -147,7 +165,7 @@
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg-row">
         <span class="author">[系統]</span>
-        <span>歡迎連入雙北漫遊世界！[WASD] 移動，點擊 [📍 地圖] 可搭乘捷運往返雙北各站。</span>
+        <span>歡迎連入真實雙北連線世界！第一人稱視角移動，搭公車或捷運往返各區。</span>
       </div>
     </div>
     <div class="chat-input-bar">
@@ -156,21 +174,21 @@
     </div>
   </div>
 
-  <!-- 右下角 4 顆經典 Cyberpunk 操作按鈕 (嚴格遵照 Google Drive 截圖) -->
+  <!-- 右下角 4 顆 Cyberpunk 操作按鈕 -->
   <div class="hud-bottom-right-dock">
     <div class="dock-btn" onclick="openInventoryModal()" title="隨身背包">
       <div class="dock-icon">🎒</div>
       <div class="dock-label">背包</div>
     </div>
-    <div class="dock-btn" onclick="openQuestsModal()" title="任務清單">
+    <div class="dock-btn" onclick="openQuestsModal()" title="委託進度">
       <div class="dock-icon">📋</div>
       <div class="dock-label">任務</div>
     </div>
-    <div class="dock-btn" onclick="openMapModal()" title="雙北捷運探索地圖">
+    <div class="dock-btn" onclick="openMapModal()" title="雙北道路與公車路線檢視">
       <div class="dock-icon">📍</div>
       <div class="dock-label">地圖</div>
     </div>
-    <div class="dock-btn" onclick="openSettingsModal()" title="系統與私服器設定">
+    <div class="dock-btn" onclick="openSettingsModal()" title="環境與私服器設定">
       <div class="dock-icon">⚙️</div>
       <div class="dock-label">設定</div>
     </div>
@@ -178,57 +196,75 @@
 
   <!-- ==================== 各功能實機系統 MODALS ==================== -->
 
-  <!-- 1. 雙北捷運路網與探索地圖 (核心探索樞紐，非死板按鈕！) -->
+  <!-- 1. 雙北路網與公車路線檢視地圖 (嚴格禁止直接傳送！僅供檢視與規劃) -->
   <div class="modal-overlay" id="mapModal">
-    <div class="modal-card" style="width:780px;">
+    <div class="modal-card" style="width:820px;">
       <div class="modal-header">
-        <div class="modal-title"><span>🚇</span> 雙北捷運轉乘路網與都會探索大地圖</div>
+        <div class="modal-title"><span>🗺️</span> 雙北真實路網 ✕ 幹線公車路線圖 (檢視模式)</div>
         <button class="modal-close" onclick="closeModal('mapModal')">×</button>
       </div>
-      <p style="font-size:12.5px; color:#94a3b8; margin-bottom:12px;">
-        💡 <strong>自由探索機制：</strong> 超商、美食夜市與公家機關散布在雙北各站。請點選捷運站刷悠遊卡搭乘前往，並在現場實際走動尋找！
-      </p>
-      
-      <!-- 捷運站點選擇網格 -->
+      <div style="background:#0f172a; padding:12px; border-radius:10px; border-left:4px solid #f59e0b; margin-bottom:12px;">
+        🚫 <strong>【真實交通法則】</strong>：地圖僅供路線導航與規劃，<strong>無法點擊直接瞬移！</strong> 請親自走到路邊站牌搭乘公車或進入捷運站！
+      </div>
+
       <div class="mrt-grid">
-        <div class="mrt-card active" onclick="travelToDistrict('zhongshan')">
-          <div class="mrt-line red">🔴 淡水信義線 / 🟠 中和新蘆線</div>
-          <div class="mrt-station-name">中山站 (Zhongshan)</div>
-          <div class="mrt-features">🏪 全家中山店 ｜ 🧋 CoCo手搖飲 ｜ 🚲 Ubike</div>
+        <div class="mrt-card" onclick="alertPlanRoute('bus_307')">
+          <div class="mrt-line" style="color:#10b981;">🚌 台北市 307 幹線公車 (全台客運之王)</div>
+          <div class="mrt-station-name">板橋 ➔ 台北車站 ➔ 南京東路 ➔ 撫遠街</div>
+          <div class="mrt-features">班次密集 (每3分鐘一班) ｜ 車上提供 WiFi ｜ 停靠忠孝西路專用道</div>
         </div>
-        <div class="mrt-card" onclick="travelToDistrict('taipei_main')">
-          <div class="mrt-line red">🔴 淡水信義線 / 🔵 板南線</div>
-          <div class="mrt-station-name">台北車站 (Taipei Main)</div>
-          <div class="mrt-features">🚇 四鐵樞紐 ｜ 📜 花圃神祕紙條 ｜ 🏪 站前全家</div>
+        <div class="mrt-card" onclick="alertPlanRoute('bus_zs')">
+          <div class="mrt-line" style="color:#38bdf8;">🚌 中山幹線公車 (天母 ➔ 台北車站)</div>
+          <div class="mrt-station-name">中山北路一至七段 ✕ 台北車站</div>
+          <div class="mrt-features">林蔭大道直達 ｜ 停靠 CoCo手搖飲、中山市場、國賓飯店</div>
         </div>
-        <div class="mrt-card" onclick="travelToDistrict('datong')">
-          <div class="mrt-line red">🔴 雙連站 / 大同區</div>
-          <div class="mrt-station-name">雙連站・寧夏夜市 (Ningxia)</div>
-          <div class="mrt-features">🏮 鹽酥雞小吃 ｜ 🐙 章魚燒 ｜ 🏪 圓環全家</div>
+        <div class="mrt-card" onclick="alertPlanRoute('mrt_red')">
+          <div class="mrt-line" style="color:#ef4444;">🔴 捷運淡水信義線 (地下段)</div>
+          <div class="mrt-station-name">象山 ➔ 台北車站 ➔ 雙連 ➔ 士林 ➔ 淡水</div>
+          <div class="mrt-features">需由 M5/M6 出口搭乘手扶梯下樓 ｜ 進入地下月台等車</div>
         </div>
-        <div class="mrt-card" onclick="travelToDistrict('tamsui')">
-          <div class="mrt-line red">🔴 淡水信義線 (端點站)</div>
-          <div class="mrt-station-name">淡水渡船頭 (Tamsui & Bali)</div>
-          <div class="mrt-features">🚢 淡水河渡輪 ｜ 🏰 紅毛城古蹟 ｜ 🌊 觀海長廊</div>
-        </div>
-        <div class="mrt-card" onclick="travelToDistrict('xinyi')">
-          <div class="mrt-line red">🔴 象山站 / 信義商圈</div>
-          <div class="mrt-station-name">信義區・鄰里巷弄 (Xinyi)</div>
-          <div class="mrt-features">👵 鄰里阿嬤泡茶桌 ｜ 🎆 台北101觀景台</div>
-        </div>
-        <div class="mrt-card" onclick="travelToDistrict('beitou')">
-          <div class="mrt-line red">🔴 新北投支線</div>
-          <div class="mrt-station-name">北投公園・分局 (Beitou)</div>
-          <div class="mrt-features">🌳 公園涼亭休息處 ｜ 🚓 北投分局情報隊</div>
+        <div class="mrt-card" onclick="alertPlanRoute('bus_cd')">
+          <div class="mrt-line" style="color:#fbbf24;">🚌 承德幹線公車 (寧夏夜市 ➔ 雙連)</div>
+          <div class="mrt-station-name">台北車站 ➔ 建成圓環 ➔ 寧夏夜市</div>
+          <div class="mrt-features">夜市美食專線 ｜ 停靠重慶北路與南京西路口</div>
         </div>
       </div>
       <div style="margin-top:14px; text-align:right; font-size:12px; color:#38bdf8;">
-        💳 悠遊卡餘額: $<span id="mapMoney">200</span> (每次搭乘扣款 $20)
+        💳 悠遊卡餘額: $<span id="mapMoney">200</span> (市區公車一段票 $15)
       </div>
     </div>
   </div>
 
-  <!-- 2. 全家 FamilyMart 實體門市互動介面 -->
+  <!-- 2. CoCo 都可手搖飲門市 (真實招牌與外觀樣式) -->
+  <div class="modal-overlay" id="cocoModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🧋</span> CoCo 都可 (中山北路門市)</div>
+        <button class="modal-close" onclick="closeModal('cocoModal')">×</button>
+      </div>
+      <div style="background:#f973161a; border:1px solid #f97316; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#fb923c; font-weight:800; font-size:14px;">店員招呼：「一杯好茶，遇見更好的你！今天辦案走很多路吧？喝杯珍奶補充體力！」</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">🧋 招牌珍珠奶茶 ($50)</div>
+            <div style="font-size:11.5px; color:#94a3b8;">Q彈黑糖珍珠 ✕ 濃純奶茶，體力 +35、心情 +30</div>
+          </div>
+          <button class="chat-send-btn" style="background:#f97316; padding:8px 16px;" onclick="buyBobaTea()">購買 $50</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">🍋 四季春青茶 ($35)</div>
+            <div style="font-size:11.5px; color:#94a3b8;">現泡清香回甘，體力 +20</div>
+          </div>
+          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="buyGreenTea()">購買 $35</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 全家 FamilyMart 24H 實體超商 -->
   <div class="modal-overlay" id="storeModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -236,12 +272,12 @@
         <button class="modal-close" onclick="closeModal('storeModal')">×</button>
       </div>
       <div style="background:#0f172a; padding:12px; border-radius:10px; border-left:4px solid #10b981; margin-bottom:14px;">
-        🌱 <strong>【六年級獨立研究・減塑環保手則】</strong>：結帳時恪守環保政策，不索取不必要塑膠袋與多餘紙巾，展現新世代環保公民素養！
+        🌱 <strong>【六年級減塑守則】</strong>：結帳時自備購物袋，不索取一次性塑膠袋與多餘紙巾！
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
           <h4 style="color:#6ee7b7; margin-bottom:4px;">🥚 熱騰騰茶葉蛋 ($13)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">剛起鍋茶香濃郁，補充大量體力！</p>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">剛起鍋茶香濃郁，補充體力！</p>
           <button class="chat-send-btn" style="background:#10b981; width:100%; padding:8px;" onclick="buyTeaEgg()">購買 $13 (+25 體力)</button>
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
@@ -251,43 +287,38 @@
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
           <h4 style="color:#fbbf24; margin-bottom:4px;">🛹 柯南極速電動滑板 ($300)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">在雙北街頭疾速滑行，跑速 +60%！</p>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">穿梭雙北各大路段，跑速 +60%！</p>
           <button class="chat-send-btn" style="background:#f59e0b; width:100%; padding:8px;" id="btnSkateboard" onclick="buySkateboard()">購買 $300</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3. CoCo 都可手搖飲門市 -->
-  <div class="modal-overlay" id="cocoModal">
+  <!-- 4. 捷運站內月台與等車 Modal (搭手扶梯下樓) -->
+  <div class="modal-overlay" id="mrtStationModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🧋</span> CoCo 都可 (中山手搖飲店)</div>
-        <button class="modal-close" onclick="closeModal('cocoModal')">×</button>
+        <div class="modal-title"><span>🚇</span> 台北捷運站地下月台 (手扶梯已下達)</div>
+        <button class="modal-close" onclick="closeModal('mrtStationModal')">×</button>
       </div>
-      <p style="font-size:13px; color:#fb923c; font-weight:800; margin-bottom:12px;">
-        店員熱情招呼：「一杯好茶，遇見更好的你！今天辦案辛苦囉！」
-      </p>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
-          <div>
-            <div style="font-weight:bold; color:white;">🧋 經典珍珠奶茶 ($50)</div>
-            <div style="font-size:11.5px; color:#94a3b8;">Q彈黑糖珍珠 ✕ 濃純奶茶，體力 +35、心情 +30</div>
-          </div>
-          <button class="chat-send-btn" style="background:#f97316; padding:8px 16px;" onclick="buyBobaTea()">購買 $50</button>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
-          <div>
-            <div style="font-weight:bold; color:white;">🍋 四季春青茶 ($35)</div>
-            <div style="font-size:11.5px; color:#94a3b8;">回甘清爽，體力 +20</div>
-          </div>
-          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="buyGreenTea()">購買 $35</button>
-        </div>
+      <div style="background:#0f172a; padding:14px; border-radius:10px; margin-bottom:12px;">
+        <h4 style="color:#38bdf8; margin-bottom:6px;">🔔 列車進站廣播響起：</h4>
+        <p style="font-size:13px; color:#cbd5e1; line-height:1.6;">
+          「往淡水方向列車即將進站，請旅客依序排隊先下後上。」
+        </p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="chat-send-btn" style="background:#0284c7; flex:1; padding:12px;" onclick="boardMrtTrain('tamsui')">
+          🚆 嗶悠遊卡上車 (往淡水・解鎖快轉)
+        </button>
+        <button class="chat-send-btn" style="background:#0f766e; flex:1; padding:12px;" onclick="boardMrtTrain('xinyi')">
+          🚆 嗶悠遊卡上車 (往信義101・解鎖快轉)
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- 4. 寧夏夜市美食小吃街 -->
+  <!-- 5. 寧夏夜市美食小吃 -->
   <div class="modal-overlay" id="nightMarketModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -309,129 +340,53 @@
     </div>
   </div>
 
-  <!-- 5. 淡水↔八里 渡輪觀景台 -->
-  <div class="modal-overlay" id="ferryModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>🚢</span> 淡水河渡輪碼頭 ✕ 觀海步道</div>
-        <button class="modal-close" onclick="closeModal('ferryModal')">×</button>
-      </div>
-      <div style="background:#0f172a; padding:14px; border-radius:10px; margin-bottom:12px;">
-        <h4 style="color:#38bdf8; margin-bottom:6px;">🌊 淡水河口海天一色</h4>
-        <p style="font-size:12.5px; color:#cbd5e1; line-height:1.6;">
-          遠眺觀音山稜線，微風拂過水面，對岸八里渡船頭遊人絡繹不絕。
-        </p>
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="chat-send-btn" style="background:#0284c7; flex:1; padding:10px;" onclick="takeScenicPhoto()">📷 拍照留念 (解鎖相冊成就)</button>
-        <button class="chat-send-btn" style="background:#0f766e; flex:1; padding:10px;" onclick="postStory()">💬 發限時動態 (心情 +25)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. 信義區鄰里巷弄阿嬤泡茶桌 (八卦線索) -->
-  <div class="modal-overlay" id="alleyModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>👵</span> 信義區・鄰里巷弄阿嬤泡茶桌</div>
-        <button class="modal-close" onclick="closeModal('alleyModal')">×</button>
-      </div>
-      <div style="background:#1e293b; padding:14px; border-left:4px solid #f59e0b; border-radius:8px; margin-bottom:14px;">
-        <strong>阿嬤熱情招呼：</strong>「小同學來坐！喝杯熱茶！剛才看到一個戴黑鴨舌帽的男生神情慌張跑進捷運站，好像跟隔壁吵架的阿明在講電話呢！」
-      </div>
-      <p style="font-size:12.5px; font-weight:bold; color:#38bdf8; margin-bottom:8px;">選擇詢問方向：</p>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="chat-send-btn" style="background:#0284c7; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_1')">💬 真的假的？！阿明跟黑帽男子認識嗎？</button>
-        <button class="chat-send-btn" style="background:#1e293b; border:1px solid #38bdf8; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_2')">💙 阿嬤，您看見他往哪個捷運方向跑？</button>
-        <button class="chat-send-btn" style="background:#1e293b; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_3')">❕ 謝謝阿嬤！我馬上前往北投分局調閱 CCTV！</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 7. 台北101觀景台煙火 -->
-  <div class="modal-overlay" id="fireworksModal">
-    <div class="modal-card" style="text-align:center;">
-      <div class="modal-header">
-        <div class="modal-title"><span>❇️</span> 信義區・觀景台 台北 101 夜景</div>
-        <button class="modal-close" onclick="closeModal('fireworksModal')">×</button>
-      </div>
-      <p style="font-size:13.5px; color:#dbeafe; line-height:1.7; margin:16px 0;">
-        俯瞰繁華信義都會夜色，台北 101 塔身點亮璀璨光芒！<br>
-        「原來台北的夜晚，也能這麼讓人心動。」
-      </p>
-      <button class="chat-send-btn" style="background:#f59e0b; padding:8px 24px;" onclick="enjoyFireworks()">🎆 沉浸觀賞煙火 (心情全滿)</button>
-    </div>
-  </div>
-
-  <!-- 8. 體力耗盡休息處 (北投公園涼亭) -->
-  <div class="modal-overlay" id="restModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>⚠️</span> 北投公園・涼亭長椅急救處</div>
-        <button class="modal-close" onclick="closeModal('restModal')">×</button>
-      </div>
-      <div style="background:#1e293b; padding:12px; border-left:4px solid #ef4444; border-radius:6px; margin-bottom:12px;">
-        「呼……好累……剛剛跑太快了……先坐下來喝口水深呼吸吧……」
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="chat-send-btn" style="background:#10b981; flex:1; padding:10px;" onclick="restAndRecover()">🛏️ 長椅坐下休息 (+50 體力)</button>
-        <button class="chat-send-btn" style="background:#0284c7; flex:1; padding:10px;" onclick="drinkWater()">☕ 喝隨身溫水 (+25 體力)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 9. 情報站：北投分局偵查隊 (特定地點與警官互動觸發！) -->
+  <!-- 6. 情報站：北投分局偵查隊 -->
   <div class="modal-overlay" id="cctvModal">
     <div class="modal-card" style="width:780px;">
       <div class="modal-header">
         <div class="modal-title"><span>🎛️</span> 交通情報局 (TIB) ✕ 北投分局 CCTV 監控中樞</div>
         <button class="modal-close" onclick="closeModal('cctvModal')">×</button>
       </div>
-      <p style="font-size:12.5px; color:#94a3b8; margin-bottom:12px;">
-        🚨 <strong>官方刑警協同：</strong> 與北投分局林巡官共同調閱雙北交通大數據，犯罪逃逸軌跡無所遁形！
-      </p>
-      <!-- 4分割監視器畫面模擬 -->
       <div class="cctv-quad-grid">
         <div class="cctv-cam-box">
-          <div class="cctv-tag">CAM 01 捷運出口 14:03</div>
-          <div class="cctv-screen-mock">🚶‍♂️ 黑帽男子背黑色後背包走出閘門</div>
+          <div class="cctv-tag">CAM 01 忠孝西路站前 14:03</div>
+          <div class="cctv-screen-mock">🚶‍♂️ 黑帽男子背後背包走出出口</div>
         </div>
         <div class="cctv-cam-box">
-          <div class="cctv-tag">CAM 02 中正路口 14:05</div>
-          <div class="cctv-screen-mock">🚸 穿越斑馬線向北移動</div>
+          <div class="cctv-tag">CAM 02 中山北路一段 14:05</div>
+          <div class="cctv-screen-mock">🚸 穿越斑馬線向公車站移動</div>
         </div>
         <div class="cctv-cam-box">
-          <div class="cctv-tag">CAM 03 八里渡船頭 14:12</div>
-          <div class="cctv-screen-mock">🚢 現身碼頭棧道，神情慌張</div>
+          <div class="cctv-tag">CAM 03 307 公車候車站 14:12</div>
+          <div class="cctv-screen-mock">🚌 登上 307 公車往南京東路</div>
         </div>
         <div class="cctv-cam-box">
-          <div class="cctv-tag">CAM 04 八里老街 14:16</div>
-          <div class="cctv-screen-mock">🔍 混入老街人潮，手持失竊公事包</div>
+          <div class="cctv-tag">CAM 04 八里渡船頭 14:16</div>
+          <div class="cctv-screen-mock">🔍 現身碼頭棧道，手持失竊公事包</div>
         </div>
       </div>
-      <!-- 嫌疑人輪廓 -->
       <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a; margin:12px 0;">
-        <h4 style="color:#38bdf8; margin-bottom:4px;">🎯 鎖定嫌疑人關鍵特徵</h4>
-        <p style="font-size:12px; color:#cbd5e1;">年齡約20-30歲 ｜ 身高約175cm ｜ 深色連帽外套、黑色後背包、黑鴨舌帽 ｜ 悠遊卡最後扣款於台北車站！</p>
+        <h4 style="color:#38bdf8; margin-bottom:4px;">🎯 鎖定嫌疑人時空行蹤</h4>
+        <p style="font-size:12px; color:#cbd5e1;">利用 307 公車與捷運時序比對，確認嫌犯不在場證明作假！</p>
       </div>
-      <button class="chat-send-btn" style="background:#ef4444; width:100%; padding:10px; font-size:13.5px;" onclick="openInterrogateModal()">🚨 線上警力就位！前往現場進行筆錄打臉對質！</button>
+      <button class="chat-send-btn" style="background:#ef4444; width:100%; padding:10px; font-size:13.5px;" onclick="openInterrogateModal()">🚨 線上警力就位！進行現場筆錄打臉逮捕！</button>
     </div>
   </div>
 
-  <!-- 10. 現場筆錄對質與逮捕 -->
+  <!-- 7. 現場筆錄對質逮捕 -->
   <div class="modal-overlay" id="interrogateModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>⚖️</span> 捷運站前 —— 現場對質逮捕</div>
+        <div class="modal-title"><span>⚖️</span> 站前廣場 —— 現場對質逮捕</div>
         <button class="modal-close" onclick="closeModal('interrogateModal')">×</button>
       </div>
       <div style="background:#1e293b; padding:12px; border-left:4px solid #ef4444; border-radius:6px; margin-bottom:12px;">
-        <strong>黑帽男子辯解：</strong>「警察先生！我下午一直都在板橋家裡睡覺，悠遊卡根本沒用過，你們抓錯人了！」
+        <strong>黑帽男子辯解：</strong>「警察先生！我下午一直都在板橋睡覺，沒搭過車，你們抓錯人了！」
       </div>
-      <p style="font-weight:800; color:#38bdf8; margin-bottom:8px;">請選擇出示正確的鐵證當場打臉：</p>
+      <p style="font-weight:800; color:#38bdf8; margin-bottom:8px;">請出示正確的鐵證打臉：</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <button class="chat-send-btn" style="background:#0284c7; text-align:left; padding:8px 12px;" onclick="confrontSuspect('easycard')">
-          💳 <strong>出示 TIB 悠遊卡數據</strong>：14:38 在台北車站 B1 出站扣款 $30！
+          💳 <strong>出示 TIB 悠遊卡紀錄</strong>：14:12 在忠孝西路刷卡搭乘 307 公車！
         </button>
         <button class="chat-send-btn" style="background:#1e293b; border:1px solid #334155; text-align:left; padding:8px 12px;" onclick="confrontSuspect('wrong')">
           🥚 出示剛才在全家買的茶葉蛋發票
@@ -440,27 +395,27 @@
     </div>
   </div>
 
-  <!-- 11. 破案頒獎 -->
+  <!-- 8. 破案頒獎 -->
   <div class="modal-overlay" id="victoryModal">
     <div class="modal-card" style="text-align:center;">
       <h2 style="font-size:22px; color:#6ee7b7; margin-bottom:8px;">🎉 案件圓滿偵破！竊賊當場就擒！</h2>
       <p style="font-size:14px; color:#d1fae5; margin-bottom:16px;">
-        你運用了悠遊卡時序比對與 CCTV 軌跡分析，成功戳破嫌疑人的不在場謊言，追回所有失竊物品！
+        你運用了公車乘車紀錄與 CCTV 軌跡分析，成功戳破嫌疑人的謊言，追回失竊公事包！
       </p>
       <div style="display:flex; justify-content:center; gap:20px; font-size:15px; font-weight:900; margin-bottom:18px;">
-        <span style="color:#fbbf24;">🏅 偵探徽章 +50</span>
+        <span style="color:#fbbf24;">🏅 榮譽勳章 +50</span>
         <span style="color:#34d399;">💵 生活金 +$100</span>
-        <span style="color:#38bdf8;">⭐ 聲望晉升：初出茅廬的偵探</span>
+        <span style="color:#38bdf8;">⭐ 聲望晉升：雙北都會神探</span>
       </div>
       <button class="chat-send-btn" style="background:#10b981; font-size:14px; padding:8px 24px;" onclick="closeModal('victoryModal')">領取榮譽並繼續漫遊 ▶</button>
     </div>
   </div>
 
-  <!-- 12. 隨身背包 (Dock [🎒 背包]) -->
+  <!-- 9. 隨身背包 (Dock [🎒 背包]) -->
   <div class="modal-overlay" id="inventoryModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🎒</span> 少年偵探隨身背包</div>
+        <div class="modal-title"><span>🎒</span> 隨身調查背包</div>
         <button class="modal-close" onclick="closeModal('inventoryModal')">×</button>
       </div>
       <div class="inventory-grid" id="inventoryGrid">
@@ -486,7 +441,7 @@
         </div>
         <div class="inventory-slot active">
           <div class="inventory-icon">📜</div>
-          <div class="inventory-name">站前暗號紙條</div>
+          <div class="inventory-name">307 公車時刻表</div>
           <div class="inventory-desc">已解讀</div>
         </div>
         <div class="inventory-slot active">
@@ -498,55 +453,56 @@
     </div>
   </div>
 
-  <!-- 13. 任務清單 (Dock [📋 任務]) -->
+  <!-- 10. 任務清單 (Dock [📋 任務]) -->
   <div class="modal-overlay" id="questsModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>📋</span> 當前偵探委託調查進度</div>
+        <div class="modal-title"><span>📋</span> 當前委託調查進度</div>
         <button class="modal-close" onclick="closeModal('questsModal')">×</button>
       </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
           <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>1. 探索中山商圈與補給</span>
-            <span id="stCoCo" style="color:#f59e0b;">進行中</span>
+            <span>1. 忠孝西路搭乘 307 公車</span>
+            <span id="stBus" style="color:#f59e0b;">進行中</span>
           </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">在街區尋找手搖飲或超商，補充體力。</p>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">走到路邊公車站牌等車上車，體驗鳥瞰快轉過場。</p>
         </div>
         <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
           <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>2. 台北車站調查花圃暗號</span>
-            <span id="stClue" style="color:#f59e0b;">進行中</span>
+            <span>2. CoCo 手搖飲與全家超商補給</span>
+            <span id="stStore" style="color:#f59e0b;">進行中</span>
           </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">搭乘捷運至台北車站，調查遺留的神祕紙條。</p>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">親自走訪門市購買珍奶或茶葉蛋，維持體力。</p>
         </div>
         <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
           <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>3. 北投分局調閱 CCTV 情報</span>
-            <span id="stTib" style="color:#f59e0b;">進行中</span>
+            <span>3. 北投分局調閱 CCTV 追蹤</span>
+            <span id="stCctv" style="color:#f59e0b;">進行中</span>
           </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">至北投分局與刑警會合，鎖定嫌疑人行蹤。</p>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">會面警政巡官，調閱 4 分割監視器時空軌跡。</p>
         </div>
         <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
           <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
             <span>4. 現場筆錄打臉逮捕</span>
             <span id="stArrest" style="color:#f59e0b;">未完成</span>
           </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">出示 TIB 悠遊卡紀錄，戳破嫌犯的不在場謊言！</p>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">出示 307 公車刷卡紀錄，戳破嫌犯不在場證明！</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 14. 設定與私服器 (Dock [⚙️ 設定]) -->
+  <!-- 11. 設定與私服器 (Dock [⚙️ 設定]) -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>⚙️</span> 遊戲環境與私服器連線設定</div>
+        <div class="modal-title"><span>⚙️</span> 環境與私服器連線設定</div>
         <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
       </div>
       <div style="font-size:13px; line-height:1.7; color:#cbd5e1;">
         <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px;">
+          <strong>👀 當前視角模式：</strong> <span style="color:#38bdf8; font-weight:bold;">第一人稱視角 (FPV 主角之眼)</span><br>
           <strong>⚡ 渲染核心模式：</strong> <span id="renderEngineLabel" style="color:#10b981; font-weight:bold;">偵測中...</span>
         </div>
         <div style="background:#0f172a; padding:14px; border-radius:10px; margin-bottom:12px; border:1px solid #1e3a8a;">
@@ -556,7 +512,7 @@
             <button class="chat-send-btn" onclick="reconnectCustomServer()">重新連線</button>
           </div>
           <p style="font-size:11.5px; color:#94a3b8; margin-top:6px;">
-            本機啟動請在終端機輸入 <code>node server.js</code>！GitHub Pages 自動啟動同儕偵探共享模式。
+            本機啟動請在終端機輸入 <code>npm start</code>！上傳雲端後可填入 Render 提供的 <code>wss://...</code> 網址。
           </p>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -567,7 +523,6 @@
     </div>
   </div>
 
-  <!-- 引入遊戲主程式 (雙引擎核心) -->
   <script src="game.js"></script>
 </body>
 </html>

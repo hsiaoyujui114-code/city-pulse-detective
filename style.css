@@ -927,3 +927,147 @@ body {
     height: 52px;
   }
 }
+
+/* ==========================================================================
+   第一人稱視角 (FPV) 與公車/捷運鳥瞰快轉過場動畫 HUD
+   ========================================================================== */
+
+/* 第一人稱準星 (Center Reticle) */
+.fpv-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 15;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 210, 255, 0.7);
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+  display: block;
+}
+
+.fpv-crosshair::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  transform: translate(-50%, -50%);
+  background: #38bdf8;
+  border-radius: 50%;
+}
+
+/* 第一人稱視角操作提示 */
+.fpv-hint {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 24, 52, 0.88);
+  border: 1px solid rgba(0, 210, 255, 0.5);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 12.5px;
+  color: #e2e8f0;
+  z-index: 18;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulseHint 3s infinite ease-in-out;
+}
+
+@keyframes pulseHint {
+  0%, 100% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 0.65; transform: translateX(-50%) translateY(-2px); }
+}
+
+/* 導航提示氣泡 (Navigation Toast) */
+.nav-hint-toast {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1.5px solid #38bdf8;
+  border-radius: 25px;
+  padding: 8px 22px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #38bdf8;
+  z-index: 25;
+  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+/* 公車 / 捷運乘車與鳥瞰快轉過場 HUD */
+.transit-hud {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 18px;
+  background: rgba(10, 25, 50, 0.95);
+  border: 2px solid #10b981;
+  border-radius: 18px;
+  padding: 12px 26px;
+  z-index: 35;
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45), 0 0 20px rgba(0, 210, 255, 0.3);
+  backdrop-filter: blur(14px);
+}
+
+.transit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.transit-badge {
+  font-size: 15px;
+  font-weight: 900;
+  color: #6ee7b7;
+  letter-spacing: 0.5px;
+}
+
+.transit-status {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.fast-forward-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: 1.5px solid #34d399;
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+  transition: all 0.2s ease;
+  animation: pulseButton 1.6s infinite alternate;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fast-forward-btn:hover {
+  transform: scale(1.06);
+  background: linear-gradient(135deg, #34d399, #10b981);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.85);
+}
+
+@keyframes pulseButton {
+  from { box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); transform: scale(1); }
+  to { box-shadow: 0 0 24px rgba(16, 185, 129, 0.85); transform: scale(1.03); }
+}
+
