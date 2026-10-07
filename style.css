@@ -1,17 +1,15 @@
 /* ==========================================================================
    《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》
-   完整 3D 視覺風格：動漫偵探 ✕ 台北都會 ✕ 交通情報調查局 (TIB)
-   嚴格對照 Google Drive 實機畫面與 UI 規範
+   完整視覺風格：動漫偵探 ✕ 台北捷運 ✕ 交通大數據
    ========================================================================== */
 
 :root {
   --cyan-primary: #00d2ff;
   --cyan-glow: rgba(0, 210, 255, 0.55);
   --blue-dark: #07152d;
-  --blue-panel: rgba(8, 24, 52, 0.92);
+  --blue-panel: rgba(8, 24, 52, 0.94);
   --blue-panel-border: rgba(0, 210, 255, 0.7);
   --amber: #f59e0b;
-  --amber-glow: rgba(245, 158, 11, 0.5);
   --green: #10b981;
   --red: #ef4444;
   --text-main: #f8fafc;
@@ -28,7 +26,7 @@
 }
 
 body {
-  background-color: #030712;
+  background-color: #07152d; /* 預設沉浸深藍夜景，絕不白屏 */
   color: var(--text-main);
   font-family: var(--font-base);
   overflow: hidden;
@@ -36,16 +34,22 @@ body {
   width: 100vw;
 }
 
-/* 3D WebGL 畫布容器 */
+/* 3D / 2.5D 畫布容器 */
 #webgl-container {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: #87ceeb;
+  background: #07152d;
+}
+
+#webgl-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 #webgl-container.mosaic-mode {
-  filter: blur(4.5px) contrast(1.15);
+  filter: blur(4px) contrast(1.15);
 }
 
 /* 頂部主狀態列 (Top HUD) */
@@ -114,13 +118,12 @@ body {
   color: #ffffff;
   font-size: 20px;
   font-weight: 900;
-  letter-spacing: 0.5px;
   text-shadow: 0 0 8px rgba(0, 210, 255, 0.8);
 }
 
 .profile-header .badge-tag {
   color: #93c5fd;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -187,7 +190,6 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 210, 255, 0.3);
   backdrop-filter: blur(10px);
   z-index: 20;
-  transition: opacity 0.2s;
 }
 
 .hint-floating-card {
@@ -239,7 +241,7 @@ body {
   line-height: 1.5;
 }
 
-/* 體力不支中央警報橫幅 (Stamina Exhausted Warning) */
+/* 體力不支中央警報橫幅 */
 .stamina-warning-banner {
   position: absolute;
   top: 92px;
@@ -256,6 +258,7 @@ body {
   box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), 0 8px 24px rgba(0, 0, 0, 0.8);
   z-index: 40;
   animation: pulseWarning 1.2s infinite ease-in-out;
+  cursor: pointer;
 }
 
 @keyframes pulseWarning {
@@ -279,7 +282,7 @@ body {
   margin-top: 2px;
 }
 
-/* 導航提示氣泡 (Navigation Toast) */
+/* 導航提示氣泡 */
 .nav-hint-toast {
   position: absolute;
   top: 150px;
@@ -305,7 +308,7 @@ body {
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* 全服號外快報廣播欄 */
+/* 全服號外快報欄 */
 .breaking-news-banner {
   position: absolute;
   top: 14px;
@@ -325,7 +328,7 @@ body {
   gap: 8px;
 }
 
-/* 右上角 HUD (天氣時間、位置標籤、圓形雷達小地圖) */
+/* 右上角 HUD */
 .hud-top-right {
   display: flex;
   align-items: center;
@@ -361,7 +364,7 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 210, 255, 0.25);
 }
 
-/* 圓形雷達小地圖 (精準對照截圖) */
+/* 圓形雷達小地圖 */
 .radar-minimap {
   width: 76px;
   height: 76px;
@@ -424,7 +427,7 @@ body {
   z-index: 3;
 }
 
-/* 右側互動功能選項膠囊堆疊 (Action Pills Stack) */
+/* 右側互動功能選項膠囊堆疊 */
 .action-pills-stack {
   position: absolute;
   right: 24px;
@@ -469,7 +472,7 @@ body {
   box-shadow: 0 0 8px #38bdf8;
 }
 
-/* 3D 浮動互動提示 [E] (中央底部) */
+/* 浮動互動提示 [E] (中央底部) */
 .interact-prompt-floating {
   position: absolute;
   bottom: 96px;
@@ -485,14 +488,18 @@ body {
   box-shadow: 0 0 25px var(--cyan-glow), 0 8px 20px rgba(0, 0, 0, 0.8);
   z-index: 25;
   cursor: pointer;
-  transition: transform 0.15s;
 }
 
-.interact-prompt-floating:hover {
-  transform: translateX(-50%) scale(1.06);
+.key-badge {
+  background: #0284c7;
+  color: white;
+  font-weight: 900;
+  font-size: 14px;
+  padding: 2px 9px;
+  border-radius: 6px;
 }
 
-/* 偵探對話 / 內心獨白視窗 (Bottom-Left Dialogue Box) */
+/* 偵探對話視窗 */
 .detective-dialogue-box {
   position: absolute;
   bottom: 24px;
@@ -509,12 +516,6 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 16px var(--cyan-glow);
   backdrop-filter: blur(10px);
   z-index: 30;
-  animation: slideInUp 0.25s ease;
-}
-
-@keyframes slideInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .diag-avatar-box {
@@ -524,7 +525,6 @@ body {
   border: 2px solid #00d2ff;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
 }
 
 .diag-avatar-box img {
@@ -559,11 +559,7 @@ body {
   align-self: flex-start;
 }
 
-.diag-close:hover {
-  color: white;
-}
-
-/* 右下角 4 顆經典操作按鈕 (Bottom-Right Dock) */
+/* 右下角 4 顆 Cyberpunk 經典 Dock 按鈕 */
 .hud-bottom-right-dock {
   position: absolute;
   bottom: 20px;
@@ -638,7 +634,7 @@ body {
   background: #0284c7;
 }
 
-/* 多人聊天室（可收合） */
+/* 聊天室 */
 .chat-window {
   position: absolute;
   top: 92px;
@@ -693,10 +689,6 @@ body {
   outline: none;
 }
 
-.chat-input:focus {
-  border-color: #38bdf8;
-}
-
 .chat-send-btn {
   background: #0284c7;
   border: none;
@@ -707,15 +699,9 @@ body {
   font-weight: 800;
   margin-left: 6px;
   cursor: pointer;
-  transition: 0.15s;
 }
 
-.chat-send-btn:hover {
-  background: #0284c7;
-  filter: brightness(1.15);
-}
-
-/* ==================== 通用彈窗 MODALS ==================== */
+/* ==================== 彈窗 MODALS ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -777,16 +763,96 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: 0.15s;
 }
 
 .modal-close:hover {
   background: #ef4444;
   color: white;
-  border-color: #ef4444;
 }
 
-/* 物品背包格子 */
+/* 捷運路網網格 */
+.mrt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.mrt-card {
+  background: #0f172a;
+  border: 1.5px solid #1e3a8a;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mrt-card:hover {
+  border-color: #00d2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 210, 255, 0.4);
+}
+
+.mrt-card.active {
+  border-color: #10b981;
+  background: #064e3b22;
+}
+
+.mrt-line {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f87171;
+  margin-bottom: 4px;
+}
+
+.mrt-station-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.mrt-features {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* 4分割 CCTV 監視器模擬 */
+.cctv-quad-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cctv-cam-box {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 8px;
+  height: 110px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cctv-tag {
+  font-size: 10.5px;
+  font-weight: 900;
+  color: #22c55e;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.cctv-screen-mock {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+/* 背包格子 */
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -799,7 +865,6 @@ body {
   border-radius: 12px;
   padding: 12px 8px;
   text-align: center;
-  transition: all 0.2s;
 }
 
 .inventory-slot.active {
