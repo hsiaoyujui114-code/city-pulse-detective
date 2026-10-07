@@ -18,36 +18,37 @@
   <!-- 3D WebGL 畫布容器 -->
   <div id="webgl-container"></div>
 
-  <!-- 導航提示氣泡 -->
+  <!-- 導航提示氣泡 (Navigation Toast) -->
   <div class="nav-hint-toast" id="navHintToast">
     <span>🧭</span>
     <span id="navHintText">請操作角色實際走到全家便利商店門口！</span>
   </div>
 
-  <!-- 頂部 HUD -->
+  <!-- 頂部 HUD (Top HUD) -->
   <div class="hud-top">
-    <!-- 左上角角色狀態卡 -->
+    <!-- 左上角角色狀態卡 (忠實對照 Google Drive 截圖) -->
     <div class="player-profile-card">
-      <div class="profile-avatar-box">🕵️‍♂️</div>
+      <div class="profile-avatar-box">
+        <img src="assets/images/avatar_detective.png" alt="少年偵探頭像">
+      </div>
       <div class="profile-info">
         <div class="profile-header">
-          <span class="level-tag">Lv. 8</span>
-          <span id="playerNicknameDisplay">小偵探 [你]</span>
-          <span class="badge-tag">🌟 偵探新手</span>
+          <span class="level-tag">Lv. 5</span>
+          <span class="badge-tag">偵探新手</span>
         </div>
         <div class="bar-row">
-          <span>體力</span>
+          <span class="bar-label">體力</span>
           <div class="bar-track">
-            <div class="bar-fill stamina" id="barStamina" style="width: 85%;"></div>
+            <div class="bar-fill stamina" id="barStamina" style="width: 78%;"></div>
           </div>
-          <span id="txtStamina">85/100</span>
+          <span class="bar-val" id="txtStamina">78/100</span>
         </div>
         <div class="bar-row">
-          <span>心情</span>
+          <span class="bar-label">😊 心情</span>
           <div class="bar-track">
-            <div class="bar-fill mood" id="barMood" style="width: 90%;"></div>
+            <div class="bar-fill mood" id="barMood" style="width: 85%;"></div>
           </div>
-          <span id="txtMood">90/100</span>
+          <span class="bar-val" id="txtMood">85/100</span>
         </div>
       </div>
     </div>
@@ -58,55 +59,72 @@
       <span id="breakingNewsText">歡迎進入雙北漫遊 3D 私服世界！</span>
     </div>
 
+    <!-- 體力耗盡警報橫幅 (截圖 5：體力不支) -->
+    <div class="stamina-warning-banner" id="staminaWarningBanner" onclick="openRestModal()">
+      <div class="warning-icon-box">⚠️</div>
+      <div class="warning-text-box">
+        <div class="warning-title">體力不支</div>
+        <div class="warning-desc">你的體力已經見底，無法繼續行動。點此找地方休息！</div>
+      </div>
+    </div>
+
     <!-- 右上角小地圖與時間 -->
     <div class="hud-top-right">
-      <div class="server-status-pill" id="serverStatusPill" onclick="openServerModal()">
-        <span id="serverStatusDot">🟢</span>
-        <span id="serverStatusText">私服器已連線 (1人)</span>
-      </div>
-
       <div class="weather-time-pill" id="weatherTimePill" onclick="toggleWeather()">
         <span id="weatherIcon">☀️</span>
-        <span id="weatherTimeText">晴 14°C 下午 03:42</span>
+        <span id="weatherTimeText">晴天 10:24</span>
       </div>
 
-      <!-- 圓形雷達小地圖 -->
-      <div class="radar-minimap">
+      <div class="location-pill" id="locationPill">
+        <span>📍</span>
+        <span id="locationText">中山區・CoCo手搖飲</span>
+      </div>
+
+      <!-- 圓形雷達小地圖 (截圖 1:1 移植) -->
+      <div class="radar-minimap" onclick="openMapModal()" title="點擊展開捷運與地圖">
+        <img src="assets/images/radar_map.png" class="radar-bg-img" alt="Radar Minimap">
         <div class="radar-sweep"></div>
         <div class="radar-compass-n">N</div>
-        <div class="radar-player-dot"></div>
+        <div class="radar-player-dot" id="radarPlayerDot"></div>
       </div>
     </div>
   </div>
 
-  <!-- 左側主線任務卡 -->
-  <div class="quest-box">
-    <div class="quest-title-row">
-      <span>⚠️ 主線任務</span>
-      <span style="font-size:12px; color:#38bdf8;">台北車站・神祕失竊案</span>
+  <!-- 左側懸浮主線任務卡 (截圖 1 & 2 左上角) -->
+  <div class="quest-floating-card" id="mainQuestCard">
+    <div class="quest-card-header">
+      <div class="quest-card-header-left">
+        <span>⚠️</span>
+        <span>主線任務</span>
+      </div>
+      <button class="quest-card-close" onclick="toggleMainQuestCard()">✕</button>
     </div>
-    <div class="quest-objective-item" onclick="guideToClue()">
-      <span class="quest-check" id="qcClues">☑️</span>
-      <span>調查站前花圃神祕紙條 (<span id="clueCount">0</span>/3)</span>
-    </div>
-    <div class="quest-objective-item" onclick="handleGoToStore()">
-      <span class="quest-check" id="qcStore">⬜</span>
-      <span><strong>親自走到全家便利商店</strong>，購買茶葉蛋 ($13)</span>
-    </div>
-    <div class="quest-objective-item" onclick="openTibModal()">
-      <span class="quest-check" id="qcTib">⬜</span>
-      <span>打開 TIB 交通情報台比對悠遊卡與 CCTV</span>
-    </div>
-    <div class="quest-objective-item" onclick="guideToPolice()">
-      <span class="quest-check" id="qcArrest">⬜</span>
-      <span>走到警車與巡警會合，進行筆錄對質逮捕</span>
+    <div class="quest-card-body" id="mainQuestBody">
+      前往捷運站，搭乘捷運前往下一個目的地。
     </div>
   </div>
 
-  <!-- 3D 浮動互動提示 [E] -->
+  <!-- 左下角懸浮任務提示卡 (截圖 1 左下角) -->
+  <div class="hint-floating-card" id="hintQuestCard">
+    <div class="quest-card-header">
+      <div class="quest-card-header-left">
+        <span>⚠️</span>
+        <span>任務提示</span>
+      </div>
+      <button class="quest-card-close" onclick="toggleHintQuestCard()">✕</button>
+    </div>
+    <div class="quest-card-body" id="hintQuestBody">
+      前往中山區的飲料店，購買一杯飲料補充體力。
+    </div>
+  </div>
+
+  <!-- 右側互動選項膠囊堆疊 (截圖 2、3、5 專屬右側選單) -->
+  <div class="action-pills-stack" id="actionPillsStack"></div>
+
+  <!-- 3D 浮動互動提示 [E] (中央底部) -->
   <div class="interact-prompt-floating" id="interactPrompt" onclick="triggerCurrentInteraction()">
     <span class="key-badge">E</span>
-    <span class="interact-label" id="interactLabel">進入全家便利商店</span>
+    <span class="interact-label" id="interactLabel">購買飲料</span>
   </div>
 
   <!-- 行動裝置虛擬十字方向鍵 -->
@@ -117,59 +135,84 @@
     <div style="grid-column: 3; grid-row: 2;" class="dpad-btn" id="dpadRight">▶</div>
   </div>
 
-  <!-- 左下角多人聊天室 -->
-  <div class="chat-window">
+  <!-- 偵探內心獨白 / 劇情對話視窗 (截圖 2、3、4、6 底部對話框) -->
+  <div class="detective-dialogue-box" id="detectiveDialogueBox">
+    <div class="diag-avatar-box">
+      <img src="assets/images/avatar_detective.png" alt="偵探頭像">
+    </div>
+    <div class="diag-content-box">
+      <div class="diag-speaker" id="diagSpeaker">偵探新手</div>
+      <div class="diag-text" id="diagText">河風好舒服，下次再來這裡吃個海鮮好了！</div>
+    </div>
+    <button class="diag-close" onclick="closeDialogueBox()">✕</button>
+  </div>
+
+  <!-- 多人同屏聊天室 (頂部左側精巧對齊) -->
+  <div class="chat-window" id="chatWindow">
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg-row">
         <span class="author">[系統]</span>
-        <span>歡迎連入 3D 私服世界！按 [WASD] 移動角色，[E] 鍵互動。要買茶葉蛋請操作小偵探實際走到全家門口喔！</span>
+        <span>歡迎進入雙北 3D 多人世界！按 [WASD] 移動，[E] 鍵互動。買東西需操作角色實際走到門口！</span>
       </div>
     </div>
     <div class="chat-input-bar">
-      <input type="text" class="chat-input" id="chatInput" placeholder="輸入文字在 3D 頭頂發送氣泡..." maxlength="50" onkeydown="if(event.key==='Enter') sendChatMessage()">
+      <input type="text" class="chat-input" id="chatInput" placeholder="輸入文字在 3D 頭頂顯示氣泡..." maxlength="50" onkeydown="if(event.key==='Enter') sendChatMessage()">
       <button class="chat-send-btn" onclick="sendChatMessage()">送出</button>
     </div>
   </div>
 
-  <!-- 底部操作按鈕列 -->
-  <div class="hud-bottom-bar">
-    <div class="action-btn-circle" onclick="handleGoToStore()" title="全家便利商店">
-      <span class="icon">🏪</span>
-      <span class="label">全家超商</span>
+  <!-- 右下角 4 顆經典 Cyberpunk 操作按鈕 (完全對齊 Google Drive 截圖) -->
+  <div class="hud-bottom-right-dock">
+    <div class="dock-btn" onclick="openInventoryModal()" title="隨身背包">
+      <div class="dock-icon">🎒</div>
+      <div class="dock-label">背包</div>
     </div>
-    <div class="action-btn-circle" onclick="handleGoToNightMarket()" title="寧夏夜市小吃">
-      <span class="icon">🏮</span>
-      <span class="label">夜市美食</span>
+    <div class="dock-btn" onclick="openQuestsModal()" title="任務清單">
+      <div class="dock-icon">📋</div>
+      <div class="dock-label">任務</div>
     </div>
-    <div class="action-btn-circle" onclick="openTibModal()" title="交通情報調查局">
-      <span class="icon">🎛️</span>
-      <span class="label">TIB情報台</span>
+    <div class="dock-btn" onclick="openMapModal()" title="台北捷運與地圖">
+      <div class="dock-icon">📍</div>
+      <div class="dock-label">地圖</div>
     </div>
-    <div class="action-btn-circle" onclick="openCluesModal()" title="案件線索簿">
-      <span class="icon">📁</span>
-      <span class="label">線索簿</span>
-    </div>
-    <div class="action-btn-circle" onclick="openMapModal()" title="捷運地圖">
-      <span class="icon">🚇</span>
-      <span class="label">捷運地圖</span>
-    </div>
-    <div class="action-btn-circle" onclick="openCodexModal()" title="考據圖鑑">
-      <span class="icon">📜</span>
-      <span class="label">考據卡</span>
-    </div>
-    <div class="action-btn-circle" onclick="toggleMosaic()" title="防嚇馬賽克保護切換">
-      <span class="icon" id="iconMosaic">👁️</span>
-      <span class="label" id="lblMosaic">馬賽克:關</span>
-    </div>
-    <div class="action-btn-circle" onclick="openServerModal()" title="私服器狀態與設定">
-      <span class="icon">⚙️</span>
-      <span class="label">私服器</span>
+    <div class="dock-btn" onclick="openSettingsModal()" title="私服器與系統設定">
+      <div class="dock-icon">⚙️</div>
+      <div class="dock-label">設定</div>
     </div>
   </div>
 
-  <!-- ==================== 各功能彈窗 MODALS ==================== -->
+  <!-- ==================== 各功能實機彈窗 MODALS ==================== -->
 
-  <!-- 1. 全家 FamilyMart 24H 便利商店 Modal -->
+  <!-- 1. CoCo 都可手搖飲 (截圖 1 專屬) -->
+  <div class="modal-overlay" id="cocoModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🧋</span> CoCo 都可 (中山手搖飲店・晴天)</div>
+        <button class="modal-close" onclick="closeModal('cocoModal')">×</button>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px;">
+        <img src="assets/images/coco_tea.jpg" alt="CoCo 都可" style="width:320px; border-radius:12px; border:1px solid #334155; object-fit:cover;">
+        <div style="flex:1; min-width:260px; font-size:13px; line-height:1.7;">
+          <p style="color:#fb923c; font-weight:800; font-size:15px; margin-bottom:6px;">店員親切問候：「一杯好茶，遇見更好的你！小偵探今天想喝點什麼？」</p>
+          <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #f97316; margin:8px 0;">
+            🥤 <strong>【人氣招牌】</strong>：濃醇珍珠奶茶現搖出杯，補充體力，提神破案！
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:10px 14px; border-radius:8px;">
+              <span>🧋 <strong>經典珍珠奶茶 ($50)</strong> - 體力 +35、心情 +30</span>
+              <button class="chat-send-btn" style="background:#f97316; padding:6px 14px;" onclick="buyBobaTea()">購買 $50</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:10px 14px; border-radius:8px;">
+              <span>🍋 <strong>四季春青茶 / 檸檬冬瓜 ($35)</strong> - 體力 +20</span>
+              <button class="chat-send-btn" style="background:#0284c7; padding:6px 14px;" onclick="buyGreenTea()">購買 $35</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 全家 FamilyMart 24H 便利商店 Modal -->
   <div class="modal-overlay" id="storeModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -177,23 +220,23 @@
         <button class="modal-close" onclick="closeModal('storeModal')">×</button>
       </div>
       <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px;">
-        <img src="assets/images/familymart.jpg" alt="FamilyMart" style="width:280px; border-radius:10px; border:1px solid #334155; object-fit:cover;">
+        <img src="assets/images/familymart.jpg" alt="FamilyMart" style="width:300px; border-radius:12px; border:1px solid #334155; object-fit:cover;">
         <div style="flex:1; min-width:260px; font-size:13px; line-height:1.7;">
-          <p style="color:#38bdf8; font-weight:800; font-size:15px; margin-bottom:6px;">店員熱情招呼：「大偵探歡迎光臨！今天中山區陽光正好呢！」</p>
+          <p style="color:#38bdf8; font-weight:800; font-size:15px; margin-bottom:6px;">店員招呼：「大偵探歡迎光臨！熱騰騰茶葉蛋剛起鍋喔！」</p>
           <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #10b981; margin:8px 0;">
-            🌱 <strong>【六年級獨立研究環保減塑守則】</strong>：結帳時恪守環保教育政策，絕不隨意提供衛生紙與塑膠袋，以親切笑容取代多餘廢棄物！
+            🌱 <strong>【環保減塑守則】</strong>：結帳恪守環保政策，不隨意提供多餘塑膠袋與紙巾，共同愛護台北！
           </div>
           <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:8px;">
-              <span>🥚 <strong>熱騰騰茶葉蛋 ($13)</strong> - 補充體力 +25</span>
+              <span>🥚 <strong>熱騰騰茶葉蛋 ($13)</strong> - 體力 +25</span>
               <button class="chat-send-btn" style="background:#10b981;" onclick="buyTeaEgg()">購買 $13</button>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:8px;">
-              <span>🧃 <strong>光泉蜜豆奶 / 運動飲料 ($25)</strong> - 恢復心情 +20</span>
+              <span>🧃 <strong>光泉蜜豆奶 / 運動飲料 ($25)</strong> - 心情 +20</span>
               <button class="chat-send-btn" style="background:#0284c7;" onclick="buyDrink()">購買 $25</button>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:8px;">
-              <span>🛹 <strong>柯南極速電動滑板 ($300)</strong> - 3D 奔跑速度 +60%</span>
+              <span>🛹 <strong>柯南極速電動滑板 ($300)</strong> - 奔跑速度 +60%</span>
               <button class="chat-send-btn" style="background:#f59e0b;" id="btnSkateboard" onclick="buySkateboard()">購買 $300</button>
             </div>
           </div>
@@ -202,62 +245,119 @@
     </div>
   </div>
 
-  <!-- 2. 寧夏夜市美食小吃攤 Modal -->
-  <div class="modal-overlay" id="nightMarketModal">
+  <!-- 3. 淡水↔八里 渡輪 (截圖 2 專屬) -->
+  <div class="modal-overlay" id="ferryModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🏮</span> 台北夜市美食街 —— 鹽酥雞與章魚燒</div>
-        <button class="modal-close" onclick="closeModal('nightMarketModal')">×</button>
+        <div class="modal-title"><span>🚢</span> 淡水↔八里 渡輪碼頭・觀景台</div>
+        <button class="modal-close" onclick="closeModal('ferryModal')">×</button>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-        <div style="background:#0f172a; padding:12px; border-radius:10px; border:1px solid #334155;">
-          <img src="assets/images/night_market.jpg" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
-          <h4 style="color:#fbbf24; margin-bottom:4px;">🍗 經典現炸鹽酥雞 ($50)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">香酥可口九層塔香！老闆：「小偵探辦案辛苦了！這份剛炸好的最酥脆！」</p>
-          <button class="chat-send-btn" style="background:#f59e0b; width:100%; padding:6px;" onclick="buySnack('chicken', 50)">購買一份 ($50)</button>
-        </div>
-        <div style="background:#0f172a; padding:12px; border-radius:10px; border:1px solid #334155;">
-          <img src="assets/images/takoyaki.jpg" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
-          <h4 style="color:#fbbf24; margin-bottom:4px;">🐙 炭烤現做章魚燒 ($45)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">柴魚片飛舞、日式醬汁濃郁，吃完體力與心情瞬間回滿！</p>
-          <button class="chat-send-btn" style="background:#f59e0b; width:100%; padding:6px;" onclick="buySnack('takoyaki', 45)">購買一份 ($45)</button>
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <img src="assets/images/ferry_bali.jpg" alt="淡水八里渡輪" style="width:340px; border-radius:12px; border:1px solid #334155; object-fit:cover;">
+        <div style="flex:1; min-width:260px; font-size:13px; line-height:1.7;">
+          <h4 style="color:#38bdf8; margin-bottom:8px;">🌊 欣賞淡水河口海天一色</h4>
+          <p style="color:#cbd5e1; margin-bottom:12px;">
+            望向遠方的觀音山與對岸八里渡船頭，微風徐徐拂過，整個人心情完全放鬆。
+          </p>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="chat-send-btn" style="background:#0284c7; padding:8px;" onclick="takeScenicPhoto()">📷 拍照留念 (解鎖相冊成就)</button>
+            <button class="chat-send-btn" style="background:#0f766e; padding:8px;" onclick="postStory()">💬 發個限時動態 (心情 +25)</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3. TIB 交通情報調查局控制台 Modal -->
-  <div class="modal-overlay" id="tibModal">
+  <!-- 4. 信義區鄰里巷弄阿嬤訪談 (截圖 3 專屬) -->
+  <div class="modal-overlay" id="alleyModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🎛️</span> 交通情報調查局 (TIB) —— 交通脈動大數據分析台</div>
-        <button class="modal-close" onclick="closeModal('tibModal')">×</button>
+        <div class="modal-title"><span>👵</span> 信義區・鄰里巷弄阿嬤泡茶桌</div>
+        <button class="modal-close" onclick="closeModal('alleyModal')">×</button>
       </div>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-        《城市脈動：通勤偵探》核心玩法：犯罪無法避免移動，每一次捷運進出站、公車扣款、監視器車牌都是破案手術刀！
-      </p>
-      <div style="background:#0f172a; border:1px solid #1e3a8a; border-radius:10px; padding:14px; margin-bottom:12px;">
-        <h4 style="color:#38bdf8; margin-bottom:8px;">💳 涉案嫌疑人（黑帽口罩男）悠遊卡進出站紀錄</h4>
-        <table style="width:100%; font-size:12.5px; border-collapse:collapse;">
-          <tr style="background:#1e293b; color:#93c5fd; text-align:left;">
-            <th style="padding:6px 10px;">時間</th><th>路線／站點</th><th>交易行為</th><th>分析判定</th>
-          </tr>
-          <tr><td style="padding:6px 10px;">14:15</td><td>板南線 板橋站</td><td>刷卡進站</td><td>開始移動</td></tr>
-          <tr style="background:rgba(239, 68, 68, 0.2); color:#fca5a5; font-weight:bold;">
-            <td style="padding:6px 10px;">14:38</td><td>台北車站 B1 閘門</td><td>出站扣款 $30</td><td>⚠️ 案發時間點抵達現場！</td>
-          </tr>
-        </table>
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <img src="assets/images/alley_gossip.jpg" alt="信義區鄰里巷弄" style="width:340px; border-radius:12px; border:1px solid #334155; object-fit:cover;">
+        <div style="flex:1; min-width:260px; font-size:13px; line-height:1.7;">
+          <div style="background:#1e293b; padding:12px; border-left:4px solid #f59e0b; border-radius:8px; margin-bottom:12px;">
+            <strong>阿嬤笑道：</strong>「欸～你知道嗎？隔壁那個阿明，最近好像跟女朋友吵架了！聽說晚上常常在陽台講電話，還哭耶～還有個戴黑鴨舌帽的男生在巷口東張西望呢！」
+          </div>
+          <p style="font-weight:bold; color:#38bdf8; margin-bottom:8px;">選擇你的偵探回應：</p>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="chat-send-btn" style="background:#0284c7; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_1')">💬 真的假的？！阿明跟黑帽男子認識嗎？</button>
+            <button class="chat-send-btn" style="background:#1e293b; border:1px solid #38bdf8; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_2')">💙 阿嬤，您有沒有看見黑帽男子往哪個方向走？</button>
+            <button class="chat-send-btn" style="background:#1e293b; text-align:left; padding:8px 12px;" onclick="dialogueOption('gossip_3')">❕ 謝謝阿姨！我再去捷運站與北投分局確認線索！</button>
+          </div>
+        </div>
       </div>
-      <div style="background:#0f172a; border:1px solid #1e3a8a; border-radius:10px; padding:14px;">
-        <h4 style="color:#38bdf8; margin-bottom:8px;">📹 台北車站站前廣場 CCTV-04 錄影比對</h4>
-        <p style="font-size:12px; color:#cbd5e1; line-height:1.6;">
-          監視器於 14:40 拍到黑帽口罩男子趁人潮擁擠偷取遊客公事包，隨後慌張跑進 B1 月台，並在花圃旁遺留一張暗號紙條！
+    </div>
+  </div>
+
+  <!-- 5. 台北101觀景台看煙火 (截圖 4 專屬) -->
+  <div class="modal-overlay" id="fireworksModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>❇️</span> 信義區・觀景台 台北101煙火</div>
+        <button class="modal-close" onclick="closeModal('fireworksModal')">×</button>
+      </div>
+      <div style="text-align:center;">
+        <img src="assets/images/taipei101_night.jpg" style="width:100%; max-height:360px; object-fit:cover; border-radius:12px; margin-bottom:12px; border:1px solid #38bdf8;">
+        <p style="font-size:14px; color:#dbeafe; line-height:1.6;">
+          璀璨絢麗的煙火在台北 101 高空綻放！城市夜景璀璨迷人，心情值全面回滿！
         </p>
+        <button class="chat-send-btn" style="background:#f59e0b; margin-top:10px; padding:8px 24px;" onclick="enjoyFireworks()">🎇 沉浸觀賞煙火 (心情全滿)</button>
       </div>
     </div>
   </div>
 
-  <!-- 4. 現場筆錄對質與逮捕 Modal -->
+  <!-- 6. 體力耗盡休息與診所 (截圖 5 專屬) -->
+  <div class="modal-overlay" id="restModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>⚠️</span> 北投公園・涼亭 —— 體力不支急救休息處</div>
+        <button class="modal-close" onclick="closeModal('restModal')">×</button>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <img src="assets/images/stamina_exhausted.jpg" style="width:340px; border-radius:12px; border:1px solid #ef4444; object-fit:cover;">
+        <div style="flex:1; min-width:260px; font-size:13px; line-height:1.7;">
+          <h4 style="color:#ef4444; font-size:15px; margin-bottom:6px;">偵探新手呼哧喘氣：</h4>
+          <div style="background:#1e293b; padding:10px 14px; border-left:4px solid #ef4444; border-radius:6px; margin-bottom:12px;">
+            「呼……好累……剛剛跑得太快了……先坐下來休息一下喝口水吧……」
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="chat-send-btn" style="background:#10b981; padding:8px 12px;" onclick="restAndRecover()">🛏️ 在長椅坐下休息片刻 (體力 +50)</button>
+            <button class="chat-send-btn" style="background:#0284c7; padding:8px 12px;" onclick="drinkWater()">☕ 喝隨身保溫瓶溫水 (體力 +25)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 北投分局 CCTV 監視器指揮中心 (截圖 6 專屬) -->
+  <div class="modal-overlay" id="cctvModal">
+    <div class="modal-card" style="width:820px;">
+      <div class="modal-header">
+        <div class="modal-title"><span>📹</span> 北投分局・偵查隊 —— CCTV 全市交通監視器情報中樞</div>
+        <button class="modal-close" onclick="closeModal('cctvModal')">×</button>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+        <img src="assets/images/cctv_police_room.jpg" style="width:400px; border-radius:12px; border:1px solid #38bdf8; object-fit:cover;">
+        <div style="flex:1; min-width:280px; font-size:12.5px; line-height:1.6;">
+          <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a; margin-bottom:8px;">
+            <h4 style="color:#38bdf8; margin-bottom:4px;">🎯 鎖定嫌疑人輪廓特徵</h4>
+            <p><strong>年齡：</strong>約 20-30 歲</p>
+            <p><strong>身高：</strong>約 175 cm</p>
+            <p><strong>特徵：</strong>深色連帽外套、背黑色後背包、戴深色鴨舌帽</p>
+          </div>
+          <div style="background:#0f172a; padding:10px; border-radius:8px; border-left:4px solid #3b82f6;">
+            <strong>時空追蹤：</strong>CAM 01 捷運站出口 (14:03) ➔ CAM 02 中正路口 (14:05) ➔ CAM 03 八里渡船頭 (14:12) ➔ CAM 04 八里老街 (14:16)！
+          </div>
+        </div>
+      </div>
+      <button class="chat-send-btn" style="background:#ef4444; width:100%; padding:10px; font-size:14px;" onclick="openInterrogateModal()">🚨 通知前線警力，前往捷運站前進行攔截逮捕！</button>
+    </div>
+  </div>
+
+  <!-- 8. 現場筆錄對質與逮捕 Modal -->
   <div class="modal-overlay" id="interrogateModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -271,7 +371,7 @@
           <div style="background:#1e293b; padding:10px 14px; border-left:4px solid #ef4444; border-radius:6px; margin-bottom:12px;">
             「警察先生！我下午一直都在板橋家裡睡覺，我的悠遊卡根本沒用過，怎麼可能出現在台北車站偷東西？你們一定是抓錯人了！」
           </div>
-          <p style="font-weight:800; color:#38bdf8; margin-bottom:6px;">請選擇出示正確的鐵證當場打臉：</p>
+          <p style="font-weight:800; color:#38bdf8; margin-bottom:6px;">請出示正確的鐵證當場打臉：</p>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <button class="chat-send-btn" style="background:#0284c7; text-align:left; padding:8px 12px;" onclick="confrontSuspect('easycard')">
               💳 <strong>出示 TIB 悠遊卡紀錄</strong>：14:38 在台北車站 B1 出站扣款 $30！
@@ -285,47 +385,105 @@
     </div>
   </div>
 
-  <!-- 5. 案件破獲頒獎與成就解鎖 Modal -->
+  <!-- 9. 破案勝利 Modal -->
   <div class="modal-overlay" id="victoryModal">
     <div class="modal-card" style="text-align:center;">
-      <div class="victory-card-banner">
-        <h2 style="font-size:22px; color:#6ee7b7; margin-bottom:8px;">🎉 案件圓滿偵破！竊賊當場就擒！</h2>
-        <p style="font-size:14px; color:#d1fae5; margin-bottom:16px;">
-          你運用了悠遊卡時序比對與 CCTV 軌跡分析，成功戳破嫌疑人的不在場謊言，追回所有失竊物品！
-        </p>
-        <div style="display:flex; justify-content:center; gap:20px; font-size:15px; font-weight:900; margin-bottom:18px;">
-          <span style="color:#fbbf24;">🏅 偵探徽章 +50</span>
-          <span style="color:#34d399;">💵 生活金 +$100</span>
-          <span style="color:#38bdf8;">⭐ 聲望晉升：初出茅廬的偵探</span>
-        </div>
-        <button class="chat-send-btn" style="background:#10b981; font-size:14px; padding:8px 24px;" onclick="closeModal('victoryModal')">領取榮譽並繼續漫遊 ▶</button>
+      <h2 style="font-size:22px; color:#6ee7b7; margin-bottom:8px;">🎉 案件圓滿偵破！竊賊當場就擒！</h2>
+      <p style="font-size:14px; color:#d1fae5; margin-bottom:16px;">
+        你運用了悠遊卡時序比對與 CCTV 軌跡分析，成功戳破嫌疑人的不在場謊言，追回所有失竊物品！
+      </p>
+      <div style="display:flex; justify-content:center; gap:20px; font-size:15px; font-weight:900; margin-bottom:18px;">
+        <span style="color:#fbbf24;">🏅 偵探徽章 +50</span>
+        <span style="color:#34d399;">💵 生活金 +$100</span>
+        <span style="color:#38bdf8;">⭐ 聲望晉升：初出茅廬的偵探</span>
       </div>
+      <button class="chat-send-btn" style="background:#10b981; font-size:14px; padding:8px 24px;" onclick="closeModal('victoryModal')">領取榮譽並繼續漫遊 ▶</button>
     </div>
   </div>
 
-  <!-- 6. 案件線索簿 (Clues Notebook) Modal -->
-  <div class="modal-overlay" id="cluesModal">
+  <!-- 10. 隨身背包物品 Modal (Dock [🎒 背包]) -->
+  <div class="modal-overlay" id="inventoryModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>📁</span> 偵探隨身案件線索簿</div>
-        <button class="modal-close" onclick="closeModal('cluesModal')">×</button>
+        <div class="modal-title"><span>🎒</span> 少年偵探隨身背包</div>
+        <button class="modal-close" onclick="closeModal('inventoryModal')">×</button>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <img src="assets/images/station_note.jpg" style="width:100%; height:140px; object-fit:cover; border-radius:6px; margin-bottom:6px;">
-          <h4 style="color:#38bdf8;">📜 神祕紙條暗號</h4>
-          <p style="font-size:12px; color:#94a3b8;">在月台花圃旁拾獲，記錄著「R10 ➔ BL12」的轉乘路線。</p>
+      <div class="inventory-grid" id="inventoryGrid">
+        <div class="inventory-slot active">
+          <div class="inventory-icon">💳</div>
+          <div class="inventory-name">台北悠遊卡</div>
+          <div class="inventory-desc">餘額: $<span id="invMoney">200</span></div>
         </div>
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <img src="assets/images/taipei_street_start.jpg" style="width:100%; height:140px; object-fit:cover; border-radius:6px; margin-bottom:6px;">
-          <h4 style="color:#38bdf8;">🚕 站前廣場計程車目擊證詞</h4>
-          <p style="font-size:12px; color:#94a3b8;">司機證實看見黑帽男子神色慌張地跑向全家便利商店。</p>
+        <div class="inventory-slot" id="slotTeaEgg">
+          <div class="inventory-icon">🥚</div>
+          <div class="inventory-name">熱騰騰茶葉蛋</div>
+          <div class="inventory-desc" id="descTeaEgg">未持有</div>
+        </div>
+        <div class="inventory-slot" id="slotBoba">
+          <div class="inventory-icon">🧋</div>
+          <div class="inventory-name">CoCo珍珠奶茶</div>
+          <div class="inventory-desc" id="descBoba">未持有</div>
+        </div>
+        <div class="inventory-slot" id="slotSkateboard">
+          <div class="inventory-icon">🛹</div>
+          <div class="inventory-name">柯南極速滑板</div>
+          <div class="inventory-desc" id="descSkateboard">未裝備</div>
+        </div>
+        <div class="inventory-slot active">
+          <div class="inventory-icon">📜</div>
+          <div class="inventory-name">站前暗號紙條</div>
+          <div class="inventory-desc">已解讀</div>
+        </div>
+        <div class="inventory-slot active">
+          <div class="inventory-icon">🔍</div>
+          <div class="inventory-name">便攜放大鏡</div>
+          <div class="inventory-desc">基礎裝備</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 7. 捷運地圖 Modal -->
+  <!-- 11. 任務清單 Modal (Dock [📋 任務]) -->
+  <div class="modal-overlay" id="questsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>📋</span> 當前偵探委託調查清單</div>
+        <button class="modal-close" onclick="closeModal('questsModal')">×</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
+          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
+            <span>1. 中山手搖飲店補給</span>
+            <span id="stCoCo" style="color:#f59e0b;">進行中</span>
+          </div>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">實際走到 CoCo 都可手搖飲門口購買飲料補充體力。</p>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
+          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
+            <span>2. 全家便利商店購買茶葉蛋</span>
+            <span id="stStore" style="color:#f59e0b;">進行中</span>
+          </div>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">實際走到全家綠白藍發光招牌處，購買茶葉蛋 ($13)。</p>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
+          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
+            <span>3. 翻查花圃暗號紙條</span>
+            <span id="stClue" style="color:#f59e0b;">進行中</span>
+          </div>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">調查台北車站站前花圃留下的神祕紙條。</p>
+        </div>
+        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
+          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
+            <span>4. 巡警會合與現場逮捕</span>
+            <span id="stArrest" style="color:#f59e0b;">未完成</span>
+          </div>
+          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">走到警車處，以 TIB 悠遊卡紀錄當場打臉嫌疑人！</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. 捷運與市區地圖 Modal (Dock [📍 地圖]) -->
   <div class="modal-overlay" id="mapModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -339,52 +497,27 @@
     </div>
   </div>
 
-  <!-- 8. 考據圖鑑 Modal (Codex) -->
-  <div class="modal-overlay" id="codexModal">
+  <!-- 13. 設定 Modal (Dock [⚙️ 設定]) -->
+  <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>📜</span> 名著名案與自然科學考據圖鑑庫</div>
-        <button class="modal-close" onclick="closeModal('codexModal')">×</button>
-      </div>
-      <div class="codex-card-banner">
-        <h4>📖 《名偵探柯南》✕ 台北車站延遲計時機關考據</h4>
-        <p style="font-size:12.5px; line-height:1.6; margin-top:4px;">
-          <strong>名著啟發：</strong> 改編自青山剛昌《名偵探柯南》中經典的「不在場證明」與「聲學延遲」本格推理手法。<br>
-          <strong>自然科學原理：</strong> 長廊聲波多重反射造成回聲，配合電子票證打卡紀錄，精準拆穿時間差假象！<br>
-          <strong>雙北在地特色：</strong> 融入台北車站地下街縱橫交錯的真實動線與全家超商生活文化。
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 9. 私服器狀態與設定 Modal -->
-  <div class="modal-overlay" id="serverModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>⚙️</span> 專屬私服器 (Dedicated Private Server) 連線設定</div>
-        <button class="modal-close" onclick="closeModal('serverModal')">×</button>
+        <div class="modal-title"><span>⚙️</span> 遊戲環境與私服器連線設定</div>
+        <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
       </div>
       <div style="font-size:13px; line-height:1.7; color:#cbd5e1;">
-        <p>
-          本遊戲支援國小六年級同學在同一個私服世界實例中<strong>「同屏共享、實時可見」</strong>！
-        </p>
-        <div style="background:#0f172a; padding:14px; border-radius:10px; margin:12px 0; border:1px solid #1e3a8a;">
-          <label style="font-weight:bold; color:#38bdf8;">WebSocket 伺服器位址：</label>
-          <div style="display:flex; gap:8px; margin-top:6px;">
+        <div style="background:#0f172a; padding:14px; border-radius:10px; margin-bottom:12px; border:1px solid #1e3a8a;">
+          <h4 style="color:#38bdf8; margin-bottom:8px;">🌐 專屬私服器 (WebSocket) 連線位址</h4>
+          <div style="display:flex; gap:8px;">
             <input type="text" id="wsServerInput" class="chat-input" style="padding:6px 10px;" value="ws://localhost:3000">
-            <button class="chat-send-btn" onclick="reconnectCustomServer()">連線私服器</button>
+            <button class="chat-send-btn" onclick="reconnectCustomServer()">重新連線</button>
           </div>
           <p style="font-size:11.5px; color:#94a3b8; margin-top:6px;">
-            💡 提示：若在本地執行，請在終端機輸入 <code>node server.js</code> 即可啟動私服器！若在 GitHub Pages 則自動啟用模擬同儕偵探。
+            在本地執行時請於後台輸入 <code>node server.js</code> 啟動私服器！GitHub Pages 自動啟用同儕偵探共享模式。
           </p>
         </div>
-        <div style="background:#0f172a; padding:12px; border-radius:8px;">
-          <strong>👥 當前在線小偵探名單：</strong>
-          <div id="onlinePlayerList" style="margin-top:6px; color:#34d399;">
-            • 小偵探 [你] (主控端)<br>
-            • 少年偵探_小涵 (同屏在線)<br>
-            • 少年偵探_益碩 (同屏在線)
-          </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="toggleWeather()">☀️ 切換天氣 (晴天/黃昏/夜晚)</button>
+          <button class="chat-send-btn" style="background:#6366f1; padding:8px 16px;" onclick="toggleMosaic()" id="btnMosaic">👁️ 防嚇馬賽克保護：關</button>
         </div>
       </div>
     </div>

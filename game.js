@@ -2,6 +2,7 @@
  * ==========================================================================
  * 《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》
  * 3D 核心遊戲邏輯 ✕ Three.js 引擎 ✕ 專屬私服器 (WebSocket) 多人同步
+ * 忠實對照 Google Drive 實機畫面與 UI 規範
  * ==========================================================================
  */
 
@@ -58,11 +59,11 @@ function playStoreChime() {
   });
 }
 
-// 捷運進站四音階 (G4, B4, D5, G5)
-function playMrtChime() {
-  const notes = [392, 493.88, 587.33, 783.99];
+// 飲料店招呼鈴聲
+function playDrinkChime() {
+  const notes = [523.25, 659.25, 783.99];
   notes.forEach((freq, idx) => {
-    setTimeout(() => playTone(freq, 'triangle', 0.28, 0.15), idx * 170);
+    setTimeout(() => playTone(freq, 'sine', 0.2, 0.15), idx * 120);
   });
 }
 
@@ -74,13 +75,11 @@ function playVictoryFanfare() {
   });
 }
 
-// 筆錄打臉音效
 function playSlapSound() {
   playTone(150, 'sawtooth', 0.15, 0.3);
   setTimeout(() => playTone(880, 'square', 0.25, 0.2), 80);
 }
 
-// 錯誤蜂鳴音
 function playBuzzer() {
   playTone(180, 'sawtooth', 0.2, 0.25);
   setTimeout(() => playTone(150, 'sawtooth', 0.2, 0.25), 180);
@@ -89,8 +88,8 @@ function playBuzzer() {
 /* ─── 2. 遊戲全局狀態 ─── */
 const gameState = {
   money: 200,
-  stamina: 85,
-  mood: 90,
+  stamina: 78,
+  mood: 85,
   hasSkateboard: false,
   speed: 0.18,
   weather: 'sunny',
@@ -98,10 +97,13 @@ const gameState = {
   nickname: "小偵探 [你]",
   currentBubble: "🔍 巡視街頭",
   cluesFound: 0,
+  hasBoba: false,
+  hasTeaEgg: false,
+  currentLocationName: "中山區・CoCo手搖飲",
   quests: {
-    clues: false,
+    coco: false,
     store: false,
-    tib: false,
+    clues: false,
     arrest: false
   },
   activeInteractTarget: null
@@ -125,7 +127,7 @@ scene.background = new THREE.Color(0x87ceeb); // 晴天天空藍
 scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-// 初始預設相機位置與朝向，確保首幀立即有畫面，絕不黑屏
+// 初始相機座標，由斜上方俯瞰
 camera.position.set(0, 11, 23);
 camera.lookAt(0, 1.8, 5);
 
@@ -165,19 +167,18 @@ sunLight.shadow.camera.top = d;
 sunLight.shadow.camera.bottom = -d;
 scene.add(sunLight);
 
-/* ─── 4. 建立 3D 台北街區與重要建築 ─── */
-// 道路與人行道
+/* ─── 4. 建立 3D 台北街區與重要建築 (完整對照 Google Drive 截圖) ─── */
 const roadMat = new THREE.MeshLambertMaterial({ color: 0x242830 });
 const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0xc8cdd4 });
 
-// 主幹道 (寬 18m)
-const roadMesh = new THREE.Mesh(new THREE.PlaneGeometry(160, 20), roadMat);
+// 主幹道 (寬 20m)
+const roadMesh = new THREE.Mesh(new THREE.PlaneGeometry(180, 20), roadMat);
 roadMesh.rotation.x = -Math.PI / 2;
 roadMesh.receiveShadow = true;
 scene.add(roadMesh);
 
 // 斑馬線
-for (let i = -8; i <= 8; i += 2) {
+for (let i = -10; i <= 10; i += 2.5) {
   const stripe = new THREE.Mesh(
     new THREE.PlaneGeometry(1.2, 5),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -188,18 +189,27 @@ for (let i = -8; i <= 8; i += 2) {
 }
 
 // 北側人行道
-const northWalk = new THREE.Mesh(new THREE.PlaneGeometry(160, 25), sidewalkMat);
+const northWalk = new THREE.Mesh(new THREE.PlaneGeometry(180, 25), sidewalkMat);
 northWalk.rotation.x = -Math.PI / 2;
 northWalk.position.set(0, 0.05, 22.5);
 northWalk.receiveShadow = true;
 scene.add(northWalk);
 
-// 南側人行道
-const southWalk = new THREE.Mesh(new THREE.PlaneGeometry(160, 25), sidewalkMat);
+// 南側人行道 (靠近淡水河濱與觀景台)
+const southWalk = new THREE.Mesh(new THREE.PlaneGeometry(180, 25), sidewalkMat);
 southWalk.rotation.x = -Math.PI / 2;
 southWalk.position.set(0, 0.05, -22.5);
 southWalk.receiveShadow = true;
 scene.add(southWalk);
+
+// 淡水河水面 (南側遠處)
+const riverMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(180, 30),
+  new THREE.MeshLambertMaterial({ color: 0x0284c7, transparent: true, opacity: 0.85 })
+);
+riverMesh.rotation.x = -Math.PI / 2;
+riverMesh.position.set(0, -0.2, -45);
+scene.add(riverMesh);
 
 // 遠景：台北 101 大樓
 function buildTaipei101() {
@@ -220,7 +230,7 @@ function buildTaipei101() {
   spire.position.y = 95;
   t101Group.add(spire);
 
-  t101Group.position.set(35, 0, -110);
+  t101Group.position.set(40, 0, -110);
   scene.add(t101Group);
 }
 buildTaipei101();
@@ -228,7 +238,7 @@ buildTaipei101();
 // 實體互動地標資料列表
 const interactables = [];
 
-// 建立 3D 建築輔助函式（讓門面永遠面向街道 z = 0）
+// 建立 3D 建築輔助函式
 function createStreetBuilding(x, z, w, h, d, mainColor, signText, signColor = 0x00d2ff, type = "") {
   const group = new THREE.Group();
   const bMat = new THREE.MeshLambertMaterial({ color: mainColor });
@@ -238,10 +248,9 @@ function createStreetBuilding(x, z, w, h, d, mainColor, signText, signColor = 0x
   mesh.receiveShadow = true;
   group.add(mesh);
 
-  // 門面朝向街道（z > 0 的建築門面向南 -d/2；z < 0 的建築門面向北 +d/2）
   const facingZ = z > 0 ? -d / 2 : d / 2;
 
-  // 門面落地玻璃窗
+  // 門面玻璃窗
   const windowPane = new THREE.Mesh(
     new THREE.BoxGeometry(w * 0.75, h * 0.5, 0.2),
     new THREE.MeshLambertMaterial({ color: 0x1e293b, emissive: 0x0f2744 })
@@ -249,7 +258,7 @@ function createStreetBuilding(x, z, w, h, d, mainColor, signText, signColor = 0x
   windowPane.position.set(0, h * 0.3, facingZ + (z > 0 ? -0.1 : 0.1));
   group.add(windowPane);
 
-  // 建築發光招牌
+  // 發光招牌
   const signMesh = new THREE.Mesh(
     new THREE.BoxGeometry(w * 0.88, 2.2, 0.4),
     new THREE.MeshLambertMaterial({ color: signColor, emissive: signColor, emissiveIntensity: 0.35 })
@@ -260,11 +269,9 @@ function createStreetBuilding(x, z, w, h, d, mainColor, signText, signColor = 0x
   group.position.set(x, 0, z);
   scene.add(group);
 
-  // 實體入口座標（人行道上門口位置）
   const doorZ = z > 0 ? z - d / 2 - 2.5 : z + d / 2 + 2.5;
 
   if (type) {
-    // 地面發光感應圓環
     const ringGeo = new THREE.RingGeometry(1.6, 2.0, 32);
     const ringMat = new THREE.MeshBasicMaterial({ color: signColor, side: THREE.DoubleSide });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
@@ -284,9 +291,18 @@ function createStreetBuilding(x, z, w, h, d, mainColor, signText, signColor = 0x
   return group;
 }
 
-// 1. 🏪 全家 FamilyMart 24H 便利商店（實體位置：x: -25, z: 18）
-const fMart = createStreetBuilding(-25, 18, 16, 9, 12, 0xf8fafc, "進入全家便利商店 (買茶葉蛋)", 0x10b981, "familymart");
-// 全家綠白藍經典飾條
+// 1. 🧋 CoCo 都可 手搖飲旗艦店 (截圖 1：中山區・CoCo手搖飲，位於 x: 0, z: 18)
+const cocoStore = createStreetBuilding(0, 18, 14, 8, 10, 0xf97316, "購買手搖飲料 ($50)", 0xf97316, "coco");
+// 橘色雨遮與招牌字樣
+const cocoCanopy = new THREE.Mesh(
+  new THREE.BoxGeometry(13, 0.8, 3),
+  new THREE.MeshLambertMaterial({ color: 0xf97316 })
+);
+cocoCanopy.position.set(0, 5.5, -5.5);
+cocoStore.add(cocoCanopy);
+
+// 2. 🏪 全家 FamilyMart 24H 便利商店 (位於 x: -28, z: 18)
+const fMart = createStreetBuilding(-28, 18, 16, 9, 12, 0xf8fafc, "進入全家便利商店 (買茶葉蛋)", 0x10b981, "familymart");
 const fmStripe = new THREE.Mesh(
   new THREE.BoxGeometry(15, 0.9, 0.4),
   new THREE.MeshBasicMaterial({ color: 0x0284c7 })
@@ -294,26 +310,53 @@ const fmStripe = new THREE.Mesh(
 fmStripe.position.set(0, 7.2, -6.3);
 fMart.add(fmStripe);
 
-// 2. 🚇 台北車站站前大廳 (x: 22, z: 20)
-createStreetBuilding(22, 20, 26, 14, 15, 0x475569, "調查台北車站失竊現場", 0x38bdf8, "station");
+// 3. 🚇 台北車站站前大廳 (位於 x: 28, z: 20)
+createStreetBuilding(28, 20, 24, 13, 14, 0x475569, "調查台北車站失竊現場", 0x38bdf8, "station");
 
-// 3. 🏮 寧夏夜市美食小吃攤 (x: -50, z: 16)
+// 4. 🏮 寧夏夜市美食小吃攤 (位於 x: -56, z: 16)
 const foodStall = new THREE.Group();
 const stallBody = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 4), new THREE.MeshLambertMaterial({ color: 0x78350f }));
 stallBody.position.y = 2;
 stallBody.castShadow = true;
 foodStall.add(stallBody);
-const canopy = new THREE.Mesh(new THREE.BoxGeometry(7, 0.6, 5), new THREE.MeshLambertMaterial({ color: 0xd90429 }));
-canopy.position.y = 4.2;
-foodStall.add(canopy);
+const stallCanopy = new THREE.Mesh(new THREE.BoxGeometry(7, 0.6, 5), new THREE.MeshLambertMaterial({ color: 0xd90429 }));
+stallCanopy.position.y = 4.2;
+foodStall.add(stallCanopy);
 const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), new THREE.MeshLambertMaterial({ color: 0xef4444, emissive: 0xef4444 }));
 lantern.position.set(-2.5, 3.8, -2.2);
 foodStall.add(lantern);
-foodStall.position.set(-50, 0, 16);
+foodStall.position.set(-56, 0, 16);
 scene.add(foodStall);
-interactables.push({ x: -50, z: 12, r: 4.5, type: "nightmarket", label: "品嚐夜市美食 (鹽酥雞 / 章魚燒)" });
+interactables.push({ x: -56, z: 12, r: 4.5, type: "nightmarket", label: "品嚐夜市美食 (鹽酥雞 / 章魚燒)" });
 
-// 4. 🚓 警局巡邏車與筆錄警戒線現場 (x: 45, z: 14)
+// 5. 🚢 淡水↔八里 渡輪碼頭觀景台 (截圖 2，位於 x: -72, z: -18)
+const pierGroup = new THREE.Group();
+const pierPlatform = new THREE.Mesh(new THREE.BoxGeometry(12, 1, 14), new THREE.MeshLambertMaterial({ color: 0x64748b }));
+pierPlatform.position.y = 0.5;
+pierGroup.add(pierPlatform);
+const pierSign = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 0.4), new THREE.MeshLambertMaterial({ color: 0x0284c7 }));
+pierSign.position.set(0, 3.5, 5);
+pierGroup.add(pierSign);
+pierGroup.position.set(-72, 0, -18);
+scene.add(pierGroup);
+interactables.push({ x: -72, z: -14, r: 5.5, type: "ferry", label: "欣賞淡水河風景 (拍照留念)" });
+
+// 6. 👵 信義區老街巷弄阿嬤泡茶桌 (截圖 3，位於 x: 16, z: -18)
+const alleyGroup = new THREE.Group();
+const table = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.2, 16), new THREE.MeshLambertMaterial({ color: 0x78350f }));
+table.position.y = 0.6;
+alleyGroup.add(table);
+const stool1 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 12), new THREE.MeshLambertMaterial({ color: 0x92400e }));
+stool1.position.set(1.8, 0.3, 0);
+alleyGroup.add(stool1);
+const stool2 = stool1.clone();
+stool2.position.set(-1.8, 0.3, 0);
+alleyGroup.add(stool2);
+alleyGroup.position.set(16, 0, -18);
+scene.add(alleyGroup);
+interactables.push({ x: 16, z: -14, r: 4.8, type: "alley", label: "與鄰里阿嬤泡茶聊天 (收集八卦線索)" });
+
+// 7. 🚓 警局巡邏車與筆錄警戒線現場 (位於 x: 52, z: 12)
 const policeCar = new THREE.Group();
 const carBody = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.8, 6.5), new THREE.MeshLambertMaterial({ color: 0x111827 }));
 carBody.position.y = 1.2;
@@ -327,33 +370,23 @@ policeCar.add(strobeRed);
 const strobeBlue = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.6), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
 strobeBlue.position.set(0.7, 3.0, -0.4);
 policeCar.add(strobeBlue);
-policeCar.position.set(45, 0, 14);
+policeCar.position.set(52, 0, 12);
 scene.add(policeCar);
-interactables.push({ x: 45, z: 10, r: 5, type: "police", label: "與巡警會合，進行筆錄打臉逮捕" });
+interactables.push({ x: 52, z: 8, r: 5, type: "police", label: "與巡警會合，進行筆錄打臉逮捕" });
 
-// 5. 🚕 黃色計程車 (x: 5, z: -5)
-const taxi = new THREE.Group();
-const taxiBody = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.6, 6), new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
-taxiBody.position.y = 1;
-taxi.add(taxiBody);
-const taxiCabin = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.2, 3.2), new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
-taxiCabin.position.set(0, 2.1, -0.3);
-taxi.add(taxiCabin);
-taxi.position.set(5, 0, -5);
-taxi.rotation.y = Math.PI / 2;
-scene.add(taxi);
-interactables.push({ x: 5, z: -5, r: 4.5, type: "taxi", label: "詢問計程車司機 (目擊線索)" });
-
-// 6. 📜 地面失竊暗號紙條 (x: -5, z: 12)
+// 8. 📜 地面失竊暗號紙條 (位於 x: 18, z: 12)
 const clueMarker = new THREE.Mesh(
   new THREE.CylinderGeometry(0.8, 0.8, 0.1, 16),
   new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
 );
-clueMarker.position.set(-5, 0.08, 12);
+clueMarker.position.set(18, 0.08, 12);
 scene.add(clueMarker);
-interactables.push({ x: -5, z: 12, r: 3.5, type: "clue_ground", label: "翻查站前花圃神祕暗號紙條" });
+interactables.push({ x: 18, z: 12, r: 3.5, type: "clue_ground", label: "翻查站前花圃神祕暗號紙條" });
 
-// 路燈
+// 9. 觀景台看 101 煙火 (位於 x: 40, z: -20)
+interactables.push({ x: 40, z: -20, r: 5.5, type: "fireworks", label: "觀賞台北 101 煙火夜景" });
+
+// 行道樹與路燈
 function addStreetLamp(x, z) {
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 8), new THREE.MeshLambertMaterial({ color: 0x334155 }));
   pole.position.set(x, 4, z);
@@ -365,11 +398,11 @@ function addStreetLamp(x, z) {
   light.position.set(x, 7.8, z);
   scene.add(light);
 }
-addStreetLamp(-35, 11);
-addStreetLamp(0, 11);
-addStreetLamp(35, 11);
+addStreetLamp(-40, 11);
+addStreetLamp(-14, 11);
+addStreetLamp(14, 11);
+addStreetLamp(40, 11);
 
-// 行道樹
 function addTree(x, z) {
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3), new THREE.MeshLambertMaterial({ color: 0x5c4033 }));
   trunk.position.set(x, 1.5, z);
@@ -380,8 +413,9 @@ function addTree(x, z) {
   scene.add(leaves);
 }
 addTree(-12, 14);
-addTree(60, 14);
-addTree(-62, 14);
+addTree(12, 14);
+addTree(-68, 14);
+addTree(68, 14);
 
 /* ─── 5. 3D 少年偵探主角模型 ─── */
 function createDetectiveCharacter(isLocal = true, name = "小偵探") {
@@ -413,7 +447,7 @@ function createDetectiveCharacter(isLocal = true, name = "小偵探") {
   head.castShadow = true;
   group.add(head);
 
-  // 獵鹿帽
+  // 鴨舌帽子
   const hat = new THREE.Mesh(
     new THREE.CylinderGeometry(0.46, 0.52, 0.28, 16),
     new THREE.MeshLambertMaterial({ color: 0x78350f })
@@ -475,7 +509,6 @@ function createDetectiveCharacter(isLocal = true, name = "小偵探") {
     ctxText.fillStyle = "rgba(10, 25, 50, 0.92)";
     ctxText.strokeStyle = isLocal ? "#00d2ff" : "#34d399";
     ctxText.lineWidth = 4;
-    // 使用全域相容繪製圓角
     drawSafeRoundRect(ctxText, 10, 10, 236, 60, 16);
     ctxText.fill();
     ctxText.stroke();
@@ -518,7 +551,6 @@ window.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
 });
 
-// 手機十字虛擬按鍵支援
 function bindMobileDpad(id, key) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -564,6 +596,12 @@ let walkCycle = 0;
 function updateLocalMovement() {
   const p = localPlayer.group;
   let spd = gameState.hasSkateboard ? gameState.speed * 1.6 : gameState.speed;
+
+  // 體力過低時限制速度
+  if (gameState.stamina < 15) {
+    spd *= 0.55;
+  }
+
   let moveX = 0;
   let moveZ = 0;
 
@@ -584,6 +622,11 @@ function updateLocalMovement() {
 
     if (Math.floor(walkCycle) % 8 === 0) {
       playTone(200, 'square', 0.03, 0.02);
+      // 移動時微量消耗體力
+      if (Math.random() < 0.2) {
+        gameState.stamina = Math.max(8, gameState.stamina - 0.4);
+        updateBars();
+      }
     }
   } else {
     localPlayer.leftLeg.rotation.x = 0;
@@ -591,10 +634,10 @@ function updateLocalMovement() {
   }
 
   // 邊界防溢出
-  p.position.x = Math.max(-75, Math.min(75, p.position.x));
-  p.position.z = Math.max(-20, Math.min(25, p.position.z));
+  p.position.x = Math.max(-85, Math.min(85, p.position.x));
+  p.position.z = Math.max(-30, Math.min(30, p.position.z));
 
-  // 相機平滑插值追蹤
+  // 相機平滑跟隨
   const targetCamX = p.position.x + Math.sin(cameraYaw) * cameraDistance;
   const targetCamZ = p.position.z + Math.cos(cameraYaw) * cameraDistance;
   const targetCamY = p.position.y + Math.sin(cameraPitch) * cameraDistance + 2.5;
@@ -602,16 +645,52 @@ function updateLocalMovement() {
   camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.12);
   camera.lookAt(p.position.x, p.position.y + 1.8, p.position.z);
 
-  // 檢查是否走到地標位置
-  checkProximityToInteractables(p.position);
+  // 檢查玩家位置與互動區域
+  checkProximityAndLocation(p.position);
 }
 
-/* ─── 7. 嚴格實體步行距離偵測與導航 ─── */
+/* ─── 7. 實體步行距離偵測、右側選單與動態地區判定 ─── */
 const interactPrompt = document.getElementById("interactPrompt");
 const interactLabel = document.getElementById("interactLabel");
+const actionPillsStack = document.getElementById("actionPillsStack");
+const locationText = document.getElementById("locationText");
+let lastNearestType = null;
 let hasPlayedDoorbell = false;
 
-function checkProximityToInteractables(pos) {
+function checkProximityAndLocation(pos) {
+  // 1. 動態判定當前行政區與地標
+  let currentLoc = "中山區・都會漫步街頭";
+  if (Math.hypot(pos.x - 0, pos.z - 18) < 14) {
+    currentLoc = "中山區・CoCo手搖飲";
+  } else if (Math.hypot(pos.x - (-28), pos.z - 18) < 14) {
+    currentLoc = "中山區・全家便利商店";
+  } else if (Math.hypot(pos.x - 28, pos.z - 20) < 16) {
+    currentLoc = "台北車站・站前大廳";
+  } else if (Math.hypot(pos.x - (-56), pos.z - 16) < 16) {
+    currentLoc = "大同區・寧夏夜市";
+  } else if (Math.hypot(pos.x - (-72), pos.z - (-18)) < 16) {
+    currentLoc = "淡水↔八里 渡輪";
+  } else if (Math.hypot(pos.x - 16, pos.z - (-18)) < 16) {
+    currentLoc = "信義區・鄰里巷弄";
+  } else if (Math.hypot(pos.x - 52, pos.z - 12) < 16) {
+    currentLoc = "北投分局・偵查隊";
+  } else if (pos.z < -10 && pos.x > 25) {
+    currentLoc = "信義區・觀景台";
+  }
+  if (gameState.currentLocationName !== currentLoc) {
+    gameState.currentLocationName = currentLoc;
+    locationText.innerText = currentLoc;
+  }
+
+  // 2. 體力不支警報橫幅控制 (截圖 5)
+  const warnBanner = document.getElementById("staminaWarningBanner");
+  if (gameState.stamina <= 18) {
+    warnBanner.style.display = "flex";
+  } else {
+    warnBanner.style.display = "none";
+  }
+
+  // 3. 實體互動距離判斷
   let nearest = null;
   let minD = 999;
 
@@ -628,16 +707,75 @@ function checkProximityToInteractables(pos) {
     interactLabel.innerText = nearest.label;
     interactPrompt.style.display = "flex";
 
-    // 若走到全家門口，播放全家進門叮咚聲
-    if (nearest.type === "familymart" && !hasPlayedDoorbell) {
-      playStoreChime();
-      hasPlayedDoorbell = true;
+    if (nearest.type !== lastNearestType) {
+      lastNearestType = nearest.type;
+      updateActionPills(nearest.type);
+
+      if (nearest.type === "familymart" && !hasPlayedDoorbell) {
+        playStoreChime();
+        hasPlayedDoorbell = true;
+      } else if (nearest.type === "coco") {
+        playDrinkChime();
+      }
     }
   } else {
     gameState.activeInteractTarget = null;
     interactPrompt.style.display = "none";
     hasPlayedDoorbell = false;
+    if (lastNearestType !== null) {
+      lastNearestType = null;
+      actionPillsStack.innerHTML = "";
+    }
   }
+}
+
+// 根據所在位置動態建立右側選項堆疊 (完全復刻截圖 2、3、5 樣式)
+function updateActionPills(type) {
+  actionPillsStack.innerHTML = "";
+
+  if (type === "coco") {
+    addActionPill("🥤 購買飲料", "E", () => openCocoModal());
+    addActionPill("📷 拍照打卡留念", "📸", () => {
+      showDetectiveDialogue("這間手搖飲的店面真有朝氣！先拍一張存在線索簿裡！");
+      playTone(600, 'sine', 0.1);
+    });
+    addActionPill("💬 詢問店員目擊情報", "💬", () => {
+      showDetectiveDialogue("店員：「剛才有個戴深色連帽外套的男生買了茶，匆匆忙忙往捷運站跑了！」");
+      gameState.quests.coco = true;
+      updateQuestProgress();
+    });
+  } else if (type === "familymart") {
+    addActionPill("🏪 進入全家便利商店", "E", () => openStoreModal());
+    addActionPill("🥚 購買茶葉蛋 ($13)", "🥚", () => buyTeaEgg());
+    addActionPill("🛹 裝備柯南滑板 ($300)", "🛹", () => buySkateboard());
+  } else if (type === "ferry") {
+    addActionPill("🚢 欣賞風景", "E", () => openFerryModal());
+    addActionPill("📷 拍照留念", "📸", () => takeScenicPhoto());
+    addActionPill("💬 發個限時動態", "💬", () => postStory());
+    addActionPill("☕ 買杯飲料", "☕", () => openCocoModal());
+    showDetectiveDialogue("終於來到八里了……。河風好舒服，下次再來這裡吃個海鮮好了！");
+  } else if (type === "alley") {
+    addActionPill("👵 與鄰里阿嬤聊天", "E", () => openAlleyModal());
+    addActionPill("💬 真的假的？！", "💬", () => dialogueOption('gossip_1'));
+    addActionPill("💙 有沒有聽到什麼細節？", "💙", () => dialogueOption('gossip_2'));
+    addActionPill("❕ 謝謝阿姨！我再去問問。", "❕", () => dialogueOption('gossip_3'));
+  } else if (type === "station") {
+    addActionPill("🚇 調查台北車站", "E", () => openCluesModal());
+    addActionPill("📜 翻查花圃暗號紙條", "📜", () => guideToClue());
+  } else if (type === "police") {
+    addActionPill("🚓 進行筆錄對質逮捕", "E", () => openInterrogateModal());
+    addActionPill("📹 查看北投分局 CCTV", "📹", () => openCctvModal());
+  } else if (type === "fireworks") {
+    addActionPill("❇️ 觀賞 101 煙火", "E", () => openFireworksModal());
+  }
+}
+
+function addActionPill(text, badge, onClick) {
+  const btn = document.createElement("div");
+  btn.className = "action-pill-btn";
+  btn.innerHTML = `<span class="key-badge">${badge}</span> <span>${text}</span>`;
+  btn.onclick = onClick;
+  actionPillsStack.appendChild(btn);
 }
 
 // 導航提示 Toast
@@ -652,57 +790,50 @@ function showNavToast(text) {
   }, 4000);
 }
 
-// 點擊全家超商按鈕時的處理（貫徹必須實際走到的核心要求！）
+// 偵探獨白 / 劇情對話窗 (底端彈出)
+function showDetectiveDialogue(text, speaker = "偵探新手") {
+  const box = document.getElementById("detectiveDialogueBox");
+  document.getElementById("diagSpeaker").innerText = speaker;
+  document.getElementById("diagText").innerText = text;
+  box.style.display = "flex";
+}
+function closeDialogueBox() {
+  document.getElementById("detectiveDialogueBox").style.display = "none";
+}
+
+// 點擊前往指定地點時，嚴格檢驗是否實際走到（貫徹核心要求）
 function handleGoToStore() {
   const pos = localPlayer.group.position;
-  // 全家入口在 (-25, 7.5)
-  const dist = Math.hypot(pos.x - (-25), pos.z - 7.5);
-
+  const dist = Math.hypot(pos.x - (-28), pos.z - 18);
   if (dist <= 5.0) {
-    // 已經在全家門口，允許進入
     openStoreModal();
   } else {
-    // 離全家太遠，提示必須實際走過去！
-    showNavToast(`📍 你目前距離全家超商還有約 ${Math.round(dist)} 公尺！請操作小偵探實際走到全家綠白藍發光招牌處！`);
-    // 角色頭頂氣泡提示
+    showNavToast(`📍 距離全家超商尚有 ${Math.round(dist)} 公尺！請操作角色實際走到全家綠白藍發光門口！`);
     gameState.currentBubble = "🏪 前往全家買茶葉蛋";
     localPlayer.updateSprite(gameState.nickname, gameState.currentBubble);
   }
 }
 
-// 點擊夜市美食按鈕時的處理
-function handleGoToNightMarket() {
+function handleGoToCoco() {
   const pos = localPlayer.group.position;
-  const dist = Math.hypot(pos.x - (-50), pos.z - 12);
-
+  const dist = Math.hypot(pos.x - 0, pos.z - 18);
   if (dist <= 5.0) {
-    openNightMarketModal();
+    openCocoModal();
   } else {
-    showNavToast(`📍 距離夜市小吃攤還有約 ${Math.round(dist)} 公尺！請走到左側寧夏夜市紅燈籠處！`);
+    showNavToast(`📍 距離 CoCo 手搖飲尚有 ${Math.round(dist)} 公尺！請走到橘色招牌處！`);
   }
 }
 
 function guideToClue() {
   const pos = localPlayer.group.position;
-  const dist = Math.hypot(pos.x - (-5), pos.z - 12);
-  if (dist <= 4.0) {
+  const dist = Math.hypot(pos.x - 18, pos.z - 12);
+  if (dist <= 4.5) {
     alert("📜 拾獲地面紙條！上面潦草寫著：『14:38 北車站閘門碰面』！正式列入線索！");
     gameState.cluesFound = Math.min(3, gameState.cluesFound + 1);
-    document.getElementById("clueCount").innerText = gameState.cluesFound;
     gameState.quests.clues = true;
     updateQuestProgress();
   } else {
     showNavToast(`📍 請走到站前花圃黃色光圈處調查神祕紙條！(尚距 ${Math.round(dist)} 公尺)`);
-  }
-}
-
-function guideToPolice() {
-  const pos = localPlayer.group.position;
-  const dist = Math.hypot(pos.x - 45, pos.z - 10);
-  if (dist <= 5.5) {
-    openInterrogateModal();
-  } else {
-    showNavToast(`📍 請走到右側警車警笛閃爍處與巡警會合！(尚距 ${Math.round(dist)} 公尺)`);
   }
 }
 
@@ -711,26 +842,27 @@ function triggerCurrentInteraction() {
   if (!type) return;
 
   playTone(550, 'triangle', 0.1);
-  if (type === "familymart") {
+  if (type === "coco") {
+    openCocoModal();
+  } else if (type === "familymart") {
     openStoreModal();
-  } else if (type === "nightmarket") {
-    openNightMarketModal();
-  } else if (type === "station") {
-    openCluesModal();
-    gameState.quests.clues = true;
-    updateQuestProgress();
+  } else if (type === "ferry") {
+    openFerryModal();
+  } else if (type === "alley") {
+    openAlleyModal();
+  } else if (type === "fireworks") {
+    openFireworksModal();
   } else if (type === "police") {
     openInterrogateModal();
-  } else if (type === "taxi") {
-    alert("🚖 計程車運將大叔：「剛才看見一個戴黑鴨舌帽的男生從車站 B1 跑出來，朝全家超商方向溜走了！」");
-    gameState.cluesFound = Math.min(3, gameState.cluesFound + 1);
-    document.getElementById("clueCount").innerText = gameState.cluesFound;
+  } else if (type === "station") {
+    openCluesModal();
+  } else if (type === "nightmarket") {
+    alert("🏮 寧夏夜市香氣四溢！現炸鹽酥雞與現烤章魚燒補充體力！");
+    gameState.stamina = 100;
+    gameState.mood = 100;
+    updateBars();
   } else if (type === "clue_ground") {
-    alert("📜 拾獲地面紙條！上面潦草寫著：『14:38 北車站閘門碰面』！正式列入線索！");
-    gameState.cluesFound = Math.min(3, gameState.cluesFound + 1);
-    document.getElementById("clueCount").innerText = gameState.cluesFound;
-    gameState.quests.clues = true;
-    updateQuestProgress();
+    guideToClue();
   }
 }
 
@@ -740,12 +872,9 @@ const remotePlayers = new Map();
 let isOnlineWithServer = false;
 
 function initPrivateServerConnection() {
-  // 如果當前是在 HTTPS (例如 GitHub Pages)，不強制連線未加密 ws:// 以防瀏覽器拋出安全性阻擋
   if (location.protocol === "https:") {
-    console.log("[WS] 運行於 HTTPS 環境，自動啟用同儕偵探模擬模式！");
+    console.log("[WS] 運行於 HTTPS 環境，啟用同儕偵探模擬模式！");
     spawnSimulatedClassmates();
-    document.getElementById("serverStatusDot").innerText = "🟢";
-    document.getElementById("serverStatusText").innerText = "GitHub Pages 共享世界";
     return;
   }
 
@@ -755,9 +884,6 @@ function initPrivateServerConnection() {
 
     socket.onopen = () => {
       isOnlineWithServer = true;
-      document.getElementById("serverStatusDot").innerText = "🟢";
-      document.getElementById("serverStatusText").innerText = "私服器已連線";
-
       socket.send(JSON.stringify({
         type: 'join',
         nickname: gameState.nickname,
@@ -774,8 +900,6 @@ function initPrivateServerConnection() {
 
     socket.onclose = () => {
       isOnlineWithServer = false;
-      document.getElementById("serverStatusDot").innerText = "🟡";
-      document.getElementById("serverStatusText").innerText = "單機模式 (同儕模擬)";
       spawnSimulatedClassmates();
     };
 
@@ -789,11 +913,9 @@ function initPrivateServerConnection() {
 
 function handleServerMessage(msg) {
   if (msg.type === 'init') {
-    document.getElementById("serverStatusText").innerText = `私服器在線: ${msg.onlineCount} 人`;
     msg.players.forEach(p => addRemotePlayer(p));
   }
   else if (msg.type === 'player_join') {
-    document.getElementById("serverStatusText").innerText = `私服器在線: ${msg.onlineCount} 人`;
     addRemotePlayer(msg.player);
     appendChatMessage("[系統]", `同學 ${msg.player.nickname} 進入了雙北 3D 世界！`);
   }
@@ -817,7 +939,6 @@ function handleServerMessage(msg) {
   }
   else if (msg.type === 'player_leave') {
     removeRemotePlayer(msg.id);
-    document.getElementById("serverStatusText").innerText = `私服器在線: ${msg.onlineCount} 人`;
   }
 }
 
@@ -838,7 +959,6 @@ function removeRemotePlayer(id) {
   }
 }
 
-// 模擬同學偵探遊走
 function spawnSimulatedClassmates() {
   if (remotePlayers.size > 0) return;
   const classmates = [
@@ -852,7 +972,7 @@ function spawnSimulatedClassmates() {
       const rChar = remotePlayers.get(c.id);
       if (rChar) {
         c.x += c.vx;
-        if (c.x > 30 || c.x < -30) c.vx *= -1;
+        if (c.x > 35 || c.x < -35) c.vx *= -1;
         rChar.group.position.x = c.x;
         rChar.group.rotation.y = c.vx > 0 ? Math.PI / 2 : -Math.PI / 2;
       }
@@ -875,7 +995,7 @@ setInterval(() => {
   }
 }, 80);
 
-/* ─── 9. 多人聊天室與全服快報 ─── */
+/* ─── 9. 多人聊天室與快報 ─── */
 function sendChatMessage() {
   const input = document.getElementById("chatInput");
   const text = input.value.trim();
@@ -909,7 +1029,37 @@ function showBreakingNews(text) {
   setTimeout(() => banner.style.display = "none", 6000);
 }
 
-/* ─── 10. 遊戲主線劇情、超商補給與對質破案 ─── */
+/* ─── 10. 劇情互動、消費與破案邏輯 ─── */
+function buyBobaTea() {
+  if (gameState.money < 50) {
+    alert("悠遊卡餘額不足 $50 囉！");
+    return;
+  }
+  gameState.money -= 50;
+  gameState.stamina = Math.min(100, gameState.stamina + 35);
+  gameState.mood = Math.min(100, gameState.mood + 30);
+  gameState.hasBoba = true;
+  updateBars();
+  playTone(650, 'sine', 0.12);
+  alert("🧋 咕嚕嚕～珍珠奶茶口感超Q彈！體力 +35，心情 +30！");
+  gameState.quests.coco = true;
+  updateQuestProgress();
+  closeModal('cocoModal');
+}
+
+function buyGreenTea() {
+  if (gameState.money < 35) {
+    alert("餘額不足！");
+    return;
+  }
+  gameState.money -= 35;
+  gameState.stamina = Math.min(100, gameState.stamina + 20);
+  updateBars();
+  playTone(680, 'sine', 0.1);
+  alert("🍋 喝了一大口青茶！消暑提神，體力 +20！");
+  closeModal('cocoModal');
+}
+
 function buyTeaEgg() {
   if (gameState.money < 13) {
     alert("悠遊卡餘額不足 $13 囉！");
@@ -917,12 +1067,13 @@ function buyTeaEgg() {
   }
   gameState.money -= 13;
   gameState.stamina = Math.min(100, gameState.stamina + 25);
+  gameState.hasTeaEgg = true;
   updateBars();
   playTone(650, 'sine', 0.1);
-  alert("🥚 成功購買熱騰騰茶葉蛋！體力 +25！店員溫馨提醒小心燙～響應環保不拿衛生紙！");
-
+  alert("🥚 成功購買熱騰騰茶葉蛋！體力 +25！響應環保自備提袋！");
   gameState.quests.store = true;
   updateQuestProgress();
+  closeModal('storeModal');
 }
 
 function buyDrink() {
@@ -934,35 +1085,75 @@ function buyDrink() {
   gameState.mood = Math.min(100, gameState.mood + 20);
   updateBars();
   playTone(700, 'sine', 0.1);
-  alert("🧃 喝了冰涼的蜜豆奶！心情值大振 +20！");
+  alert("🧃 喝了冰涼運動飲料！心情值大振 +20！");
+  closeModal('storeModal');
 }
 
 function buySkateboard() {
   if (gameState.money < 300) {
-    alert("生活金不足 $300！快解開案件領取委託金吧！");
+    alert("生活金不足 $300！快調查案件領取委託賞金吧！");
     return;
   }
   gameState.money -= 300;
   gameState.hasSkateboard = true;
   localPlayer.board.visible = true;
-  document.getElementById("btnSkateboard").innerText = "已裝備";
-  document.getElementById("btnSkateboard").disabled = true;
+  const btn = document.getElementById("btnSkateboard");
+  if (btn) {
+    btn.innerText = "已裝備";
+    btn.disabled = true;
+  }
   playTone(850, 'triangle', 0.15);
   alert("🛹 成功裝備【柯南極速滑板】！3D 奔跑移動速度大幅提升 60%！");
+  closeModal('storeModal');
 }
 
-function buySnack(type, price) {
-  if (gameState.money < price) {
-    alert(`金額不足 $${price}！`);
-    return;
+function takeScenicPhoto() {
+  playTone(750, 'triangle', 0.1);
+  alert("📸 咔嚓！拍下了波光粼粼的淡水河與遠方八里風光！獲得【淡水河攝影達人】成就！");
+  closeModal('ferryModal');
+}
+
+function postStory() {
+  gameState.mood = Math.min(100, gameState.mood + 25);
+  updateBars();
+  playTone(700, 'sine', 0.1);
+  alert("💬 發佈 Instagram 限時動態：『八里的風，吹散辦案的疲憊～』獲得 50 個讚！心情 +25！");
+  closeModal('ferryModal');
+}
+
+function dialogueOption(opt) {
+  closeModal('alleyModal');
+  if (opt === 'gossip_1') {
+    showDetectiveDialogue("哇～原來是這樣！鄰居的八卦果然不能小看……說不定跟那起案件有關！");
+  } else if (opt === 'gossip_2') {
+    showDetectiveDialogue("阿嬤：「他好像提著黑色包包往北投方向跑了，神色很慌張呢！」");
+  } else {
+    showDetectiveDialogue("謝謝阿嬤！我馬上前往北投分局調閱 CCTV 監視器！");
   }
-  gameState.money -= price;
-  gameState.stamina = 100;
+}
+
+function enjoyFireworks() {
   gameState.mood = 100;
   updateBars();
-  playTone(800, 'sine', 0.15);
-  alert(type === 'chicken' ? "🍗 九層塔香酥鹽酥雞太香了！體力與心情全部補滿！" : "🐙 濃郁章魚燒入口即化！精神百倍！");
-  closeModal('nightMarketModal');
+  playTone(900, 'sine', 0.2);
+  alert("🎆 仰望 101 夜空萬千花火！台北之美盡收眼底！心情值全面回滿！");
+  closeModal('fireworksModal');
+}
+
+function restAndRecover() {
+  gameState.stamina = Math.min(100, gameState.stamina + 50);
+  updateBars();
+  playTone(520, 'sine', 0.15);
+  alert("🛏️ 在公園涼亭長椅深呼吸休息了片刻，體力恢復 +50！");
+  closeModal('restModal');
+}
+
+function drinkWater() {
+  gameState.stamina = Math.min(100, gameState.stamina + 25);
+  updateBars();
+  playTone(600, 'sine', 0.1);
+  alert("☕ 喝了隨身保溫瓶溫水，嗓子潤順，體力恢復 +25！");
+  closeModal('restModal');
 }
 
 function confrontSuspect(choice) {
@@ -992,17 +1183,56 @@ function confrontSuspect(choice) {
 }
 
 function updateQuestProgress() {
-  if (gameState.quests.clues) document.getElementById("qcClues").className = "quest-check done";
-  if (gameState.quests.store) document.getElementById("qcStore").className = "quest-check done";
-  if (gameState.quests.tib) document.getElementById("qcTib").className = "quest-check done";
-  if (gameState.quests.arrest) document.getElementById("qcArrest").className = "quest-check done";
+  const stCoCo = document.getElementById("stCoCo");
+  const stStore = document.getElementById("stStore");
+  const stClue = document.getElementById("stClue");
+  const stArrest = document.getElementById("stArrest");
+
+  if (gameState.quests.coco && stCoCo) { stCoCo.innerText = "已完成 ✅"; stCoCo.style.color = "#10b981"; }
+  if (gameState.quests.store && stStore) { stStore.innerText = "已完成 ✅"; stStore.style.color = "#10b981"; }
+  if (gameState.quests.clues && stClue) { stClue.innerText = "已完成 ✅"; stClue.style.color = "#10b981"; }
+  if (gameState.quests.arrest && stArrest) { stArrest.innerText = "已破案 🏆"; stArrest.style.color = "#10b981"; }
+
+  // 背包介面更新
+  const invMoney = document.getElementById("invMoney");
+  if (invMoney) invMoney.innerText = gameState.money;
+
+  const descBoba = document.getElementById("descBoba");
+  if (descBoba && gameState.hasBoba) {
+    descBoba.innerText = "持有中";
+    document.getElementById("slotBoba").classList.add("active");
+  }
+
+  const descTeaEgg = document.getElementById("descTeaEgg");
+  if (descTeaEgg && gameState.hasTeaEgg) {
+    descTeaEgg.innerText = "持有中";
+    document.getElementById("slotTeaEgg").classList.add("active");
+  }
+
+  const descSkateboard = document.getElementById("descSkateboard");
+  if (descSkateboard && gameState.hasSkateboard) {
+    descSkateboard.innerText = "已裝備";
+    document.getElementById("slotSkateboard").classList.add("active");
+  }
 }
 
 function updateBars() {
-  document.getElementById("barStamina").style.width = gameState.stamina + "%";
-  document.getElementById("txtStamina").innerText = `${gameState.stamina}/100`;
-  document.getElementById("barMood").style.width = gameState.mood + "%";
-  document.getElementById("txtMood").innerText = `${gameState.mood}/100`;
+  const sFill = document.getElementById("barStamina");
+  if (sFill) {
+    sFill.style.width = Math.round(gameState.stamina) + "%";
+    if (gameState.stamina <= 18) {
+      sFill.classList.add("low");
+    } else {
+      sFill.classList.remove("low");
+    }
+  }
+  const sTxt = document.getElementById("txtStamina");
+  if (sTxt) sTxt.innerText = `${Math.round(gameState.stamina)}/100`;
+
+  const mFill = document.getElementById("barMood");
+  if (mFill) mFill.style.width = Math.round(gameState.mood) + "%";
+  const mTxt = document.getElementById("txtMood");
+  if (mTxt) mTxt.innerText = `${Math.round(gameState.mood)}/100`;
 }
 
 /* ─── 11. 天氣切換與防嚇馬賽克濾鏡 ─── */
@@ -1017,15 +1247,15 @@ function toggleWeather() {
     sunLight.color.setHex(0xfdba74);
     sunLight.intensity = 0.7;
     icon.innerText = "🌇";
-    text.innerText = "夕 16°C 傍晚 05:40";
+    text.innerText = "下午 16:32";
   } else if (gameState.weather === 'sunset') {
     gameState.weather = 'night';
     scene.background.setHex(0x030712);
     scene.fog.color.setHex(0x030712);
     sunLight.color.setHex(0x38bdf8);
     sunLight.intensity = 0.25;
-    icon.innerText = "🌃";
-    text.innerText = "夜 13°C 晚上 07:42";
+    icon.innerText = "🌙";
+    text.innerText = "晴天 20:36";
   } else {
     gameState.weather = 'sunny';
     scene.background.setHex(0x87ceeb);
@@ -1033,7 +1263,7 @@ function toggleWeather() {
     sunLight.color.setHex(0xfffaed);
     sunLight.intensity = 0.95;
     icon.innerText = "☀️";
-    text.innerText = "晴 14°C 下午 03:42";
+    text.innerText = "晴天 10:24";
   }
   playTone(500, 'sine', 0.05);
 }
@@ -1041,31 +1271,50 @@ function toggleWeather() {
 function toggleMosaic() {
   gameState.mosaic = !gameState.mosaic;
   const box = document.getElementById("webgl-container");
-  const lbl = document.getElementById("lblMosaic");
+  const btn = document.getElementById("btnMosaic");
   if (gameState.mosaic) {
     box.classList.add("mosaic-mode");
-    lbl.innerText = "馬賽克:開";
+    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：開";
   } else {
     box.classList.remove("mosaic-mode");
-    lbl.innerText = "馬賽克:關";
+    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：關";
   }
   playTone(600, 'sine', 0.05);
 }
 
-/* ─── 12. 彈窗控制器 ─── */
-function openStoreModal() { document.getElementById("storeModal").style.display = "flex"; }
-function openNightMarketModal() { document.getElementById("nightMarketModal").style.display = "flex"; }
-function openTibModal() {
-  document.getElementById("tibModal").style.display = "flex";
-  gameState.quests.tib = true;
-  updateQuestProgress();
+function toggleMainQuestCard() {
+  const c = document.getElementById("mainQuestCard");
+  c.style.display = (c.style.display === "none") ? "block" : "none";
 }
+
+function toggleHintQuestCard() {
+  const c = document.getElementById("hintQuestCard");
+  c.style.display = (c.style.display === "none") ? "block" : "none";
+}
+
+/* ─── 12. 彈窗控制器 ─── */
+function openCocoModal() { document.getElementById("cocoModal").style.display = "flex"; }
+function openStoreModal() { document.getElementById("storeModal").style.display = "flex"; }
+function openFerryModal() { document.getElementById("ferryModal").style.display = "flex"; }
+function openAlleyModal() { document.getElementById("alleyModal").style.display = "flex"; }
+function openFireworksModal() { document.getElementById("fireworksModal").style.display = "flex"; }
+function openRestModal() { document.getElementById("restModal").style.display = "flex"; }
+function openCctvModal() { document.getElementById("cctvModal").style.display = "flex"; }
 function openInterrogateModal() { document.getElementById("interrogateModal").style.display = "flex"; }
 function openVictoryModal() { document.getElementById("victoryModal").style.display = "flex"; }
-function openCluesModal() { document.getElementById("cluesModal").style.display = "flex"; }
+function openInventoryModal() {
+  updateQuestProgress();
+  document.getElementById("inventoryModal").style.display = "flex";
+}
+function openQuestsModal() {
+  updateQuestProgress();
+  document.getElementById("questsModal").style.display = "flex";
+}
 function openMapModal() { document.getElementById("mapModal").style.display = "flex"; }
-function openCodexModal() { document.getElementById("codexModal").style.display = "flex"; }
-function openServerModal() { document.getElementById("serverModal").style.display = "flex"; }
+function openSettingsModal() { document.getElementById("settingsModal").style.display = "flex"; }
+function openCluesModal() {
+  alert("📜 案件線索簿：『捷運進站 14:15 板橋站 ➔ 14:38 台北車站出站』！");
+}
 function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
 function reconnectCustomServer() {
@@ -1076,14 +1325,12 @@ function reconnectCustomServer() {
       socket = new WebSocket(url);
       socket.onopen = () => {
         isOnlineWithServer = true;
-        document.getElementById("serverStatusDot").innerText = "🟢";
-        document.getElementById("serverStatusText").innerText = "已連線自訂私服";
         alert("🎉 成功連線至私服器：" + url);
       };
     } catch (e) {
       alert("連線失敗：" + e.message);
     }
-    closeModal('serverModal');
+    closeModal('settingsModal');
   }
 }
 
