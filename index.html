@@ -27,11 +27,16 @@
   <div class="transit-hud" id="transitHud">
     <div class="transit-card">
       <div class="transit-badge" id="transitBadge">🚌 307 公車 (忠孝幹線 ➔ 中山商圈)</div>
-      <div class="transit-status" id="transitStatus">車輛行駛中，點擊右方按鈕啟用鳥瞰快轉過場...</div>
+      <div class="transit-status" id="transitStatus">車輛行駛中，可悠閒隨車欣賞街景，或點擊按鈕快轉/下車...</div>
     </div>
-    <button class="fast-forward-btn" id="btnFastForward" onclick="triggerFastForwardTransition()">
-      <span>⏩ 快轉過場動畫 (空拍鳥瞰)</span>
-    </button>
+    <div style="display:flex; gap:8px;">
+      <button class="fast-forward-btn" id="btnFastForward" onclick="triggerFastForwardTransition()">
+        <span>⏩ 快轉過場動畫 (空拍鳥瞰)</span>
+      </button>
+      <button class="fast-forward-btn" id="btnDisembark" style="background: linear-gradient(135deg, #475569, #334155); border-color:#64748b;" onclick="disembarkTransit()">
+        <span>🚶 到站下車</span>
+      </button>
+    </div>
   </div>
 
   <!-- 頂部 HUD -->
@@ -292,6 +297,36 @@
           <h4 style="color:#fbbf24; margin-bottom:4px;">🛹 柯南極速電動滑板 ($300)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">穿梭雙北各大路段，跑速 +60%！</p>
           <button class="chat-send-btn" style="background:#f59e0b; width:100%; padding:8px;" id="btnSkateboard" onclick="buySkateboard()">購買 $300</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3b. 7-Eleven 統一超商 24H 實體門市 -->
+  <div class="modal-overlay" id="sevenModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🏪</span> 7-Eleven 統一超商 (24H 門市)</div>
+        <button class="modal-close" onclick="closeModal('sevenModal')">×</button>
+      </div>
+      <div style="background:#ea580c1a; border:1px solid #ea580c; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#fb923c; font-weight:800; font-size:14px;">店員親切問候：「Always Open, 7-Eleven！今天雙北調查辛苦囉，來份御飯糰或現煮拿鐵補充能量！」</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fdba74; margin-bottom:4px;">🍙 經典肉鬆御飯糰 ($30)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">嚴選台梗九號米與酥脆海苔，補充體力！</p>
+          <button class="chat-send-btn" style="background:#ea580c; width:100%; padding:8px;" onclick="buyRiceBall()">購買 $30 (+30 體力)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#6ee7b7; margin-bottom:4px;">☕ CITY CAFE 冰拿鐵 ($45)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">濃醇鮮乳與香醇咖啡豆，放鬆辦案心情！</p>
+          <button class="chat-send-btn" style="background:#059669; width:100%; padding:8px;" onclick="buyLatte()">購買 $45 (+25 心情)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#38bdf8; margin-bottom:4px;">🍵 茶裏王日式無糖綠 ($25)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">回甘就像現泡，解膩生津恢復體力！</p>
+          <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyKingTea()">購買 $25 (+20 體力)</button>
         </div>
       </div>
     </div>

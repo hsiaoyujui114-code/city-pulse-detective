@@ -162,10 +162,21 @@ const interactables = [
   { id: 'mrt_escalator_m6', x: 24, z: 24, r: 7.5, type: 'mrt_escalator', name: '捷運出入口 M6 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
   { id: 'mrt_escalator_zs', x: 70, z: 15, r: 7.5, type: 'mrt_escalator', name: '捷運中山站出入口 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
 
-  // 3. 實體品牌外觀門市
+  // 3. 實體品牌連鎖門市 (多據點完整網路：CoCo、全家、7-Eleven)
+  // CoCo 都可 手搖飲門市 (3 處分店)
   { id: 'coco_zs', x: 92, z: -35, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山北路門市)', label: '購買 CoCo 手搖飲料 ($50)' },
+  { id: 'coco_ny', x: -20, z: 65, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前南陽店)', label: '購買 CoCo 手搖飲料 ($50)' },
+  { id: 'coco_cq', x: -115, z: 15, r: 8.0, type: 'coco', name: 'CoCo 都可 (重慶書店街店)', label: '購買 CoCo 手搖飲料 ($50)' },
+
+  // 全家便利商店 FamilyMart (3 處分店)
   { id: 'fmart_zs', x: 92, z: 25, r: 8.0, type: 'familymart', name: '全家便利商店 (中山北路店)', label: '進入全家便利商店 (買茶葉蛋)' },
   { id: 'fmart_station', x: -45, z: 32, r: 8.0, type: 'familymart', name: '全家便利商店 (站前館前店)', label: '進入全家便利商店' },
+  { id: 'fmart_circle', x: -105, z: -75, r: 8.0, type: 'familymart', name: '全家便利商店 (建成圓環店)', label: '進入全家便利商店' },
+
+  // 7-Eleven 統一超商 (3 處分店)
+  { id: 'seven_zx', x: -15, z: 28, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前忠孝店)', label: '進入 7-Eleven 超商 (買御飯糰/拿鐵)' },
+  { id: 'seven_cq', x: -115, z: 75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶南路店)', label: '進入 7-Eleven 超商 (買御飯糰/拿鐵)' },
+  { id: 'seven_zs', x: 92, z: -95, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山南京店)', label: '進入 7-Eleven 超商 (買御飯糰/拿鐵)' },
 
   // 4. 重點調查與線索地標
   { id: 'clue_flower', x: 12, z: 18, r: 6.0, type: 'clue_ground', name: '站前花圃神祕紙條', label: '翻查站前花圃神祕紙條' },
@@ -261,8 +272,32 @@ bindMobileDpad("dpadRight", "d");
  * 玩家雙速平滑位移運算
  */
 function updateMovement() {
-  if (gameState.fastForwarding) {
-    updateFastForwardCutscene();
+  if (gameState.inTransit) {
+    if (gameState.fastForwarding) {
+      updateFastForwardCutscene();
+      return;
+    }
+    // 玩家搭乘公車或捷運，未快轉時隨車平穩漫遊欣賞街景
+    if (gameState.transitType === 'bus') {
+      playerPos.x = bus307.x;
+      playerPos.z = bus307.z;
+      if (transitStatus) {
+        transitStatus.innerText = `🚌 307 公車行駛中 (位置: X:${Math.round(bus307.x)}, Z:${Math.round(bus307.z)})，隨車漫遊欣賞街景中... 可點擊【到站下車】或【快轉】。`;
+      }
+    } else if (gameState.transitType === 'mrt') {
+      const dest = (gameState.transitDest === 'zhongshan') ? { x: 70, z: 15 } : { x: 24, z: 24 };
+      playerPos.x += (dest.x - playerPos.x) * 0.02;
+      playerPos.z += (dest.z - playerPos.z) * 0.02;
+      if (transitStatus) {
+        transitStatus.innerText = `🚇 捷運列車行駛於地下隧道中 (前往: ${gameState.transitDest === 'zhongshan' ? '中山站' : '台北車站'})，可隨車漫遊或點擊【到站下車】/【快轉】。`;
+      }
+    }
+
+    camera.x += (playerPos.x - camera.x) * 0.12;
+    camera.z += (playerPos.z - camera.z) * 0.12;
+    camera.currentScale += (camera.targetScale - camera.currentScale) * 0.1;
+    updateMinimapRadar();
+    checkProximityAndLocation();
     return;
   }
 
@@ -430,6 +465,28 @@ function updateFastForwardCutscene() {
   }
 }
 
+function disembarkTransit() {
+  if (!gameState.inTransit) return;
+  const wasType = gameState.transitType;
+  gameState.inTransit = false;
+  gameState.fastForwarding = false;
+  camera.targetScale = 19;
+  if (transitHud) transitHud.style.display = "none";
+
+  if (wasType === 'bus') {
+    playerPos.x = bus307.x;
+    playerPos.z = bus307.z + 5.5; // 下車至路旁人行道
+    playBusChime();
+    showNavToast("🚶 已從 307 公車下車至人行道！恢復自由探索！");
+    showDetectiveDialogue("「呼～到站下車！在雙北街頭吹吹風，繼續調查！」", "都會調查員");
+  } else {
+    playerPos.z = playerPos.z + 4;
+    playMrtChime();
+    showNavToast("🚶 已從捷運列車下車抵達站台！恢復自由探索！");
+    showDetectiveDialogue("「捷運列車到站，走出手扶梯繼續調查！」", "都會調查員");
+  }
+}
+
 /* ─── 8. 現代 2D/2.5D 動漫都會冒險渲染核心 (Y-Sorting 深度分層) ─── */
 function renderScene() {
   const w = canvas.width;
@@ -551,78 +608,125 @@ function renderScene() {
   // 將所有建築、公車、NPC 行人與玩家依照 Z 座標排序，呈現精緻遮蔽感
   const renderList = [];
 
-  // 1. 建築物件加入渲染清單
-  // CoCo 都可 (中山北路門市)
-  renderList.push({
-    z: -35,
-    draw: () => {
-      const bx = screenX(92 - 12);
-      const bz = screenZ(-35 - 10);
-      // 店面主體
-      ctx.fillStyle = '#ffffff';
-      drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
-      ctx.fill();
-      ctx.strokeStyle = '#ea580c';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+  // 門市外觀渲染模組 (CoCo、FamilyMart、7-Eleven)
+  function drawCocoStore(x, z, branchName) {
+    const bx = screenX(x - 12);
+    const bz = screenZ(z - 10);
+    // 店面主體
+    ctx.fillStyle = '#ffffff';
+    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-      // CoCo 正宗亮橘波浪招牌
-      ctx.fillStyle = '#f97316';
-      drawSafeRoundRect(ctx, bx - 2, bz, 28 * scale, 5.5 * scale, 4);
-      ctx.fill();
+    // CoCo 正宗亮橘波浪招牌
+    ctx.fillStyle = '#f97316';
+    drawSafeRoundRect(ctx, bx - 2, bz, 28 * scale, 5.5 * scale, 4);
+    ctx.fill();
 
-      // 圓形微笑標誌
-      ctx.beginPath();
-      ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 2.2 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 1.6 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = '#f97316';
-      ctx.fill();
+    // 圓形微笑標誌
+    ctx.beginPath();
+    ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 2.2 * scale, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 1.6 * scale, 0, Math.PI * 2);
+    ctx.fillStyle = '#f97316';
+    ctx.fill();
 
-      // 招牌大字 "CoCo 都可"
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(12, scale * 0.85)}px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText('CoCo 都可 (手搖飲)', bx + 8 * scale, bz + 3.8 * scale);
+    // 招牌大字 "CoCo 都可"
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(10, scale * 0.75)}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`CoCo (${branchName})`, bx + 7.5 * scale, bz + 3.8 * scale);
 
-      // 服務點餐木質吧檯與 2 只大茶桶
-      ctx.fillStyle = '#78350f';
-      drawSafeRoundRect(ctx, bx + 5 * scale, bz + 12 * scale, 14 * scale, 4 * scale, 3);
-      ctx.fill();
-      // 不銹鋼大茶桶
-      ctx.fillStyle = '#e2e8f0';
-      drawSafeRoundRect(ctx, bx + 7 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
-      ctx.fill();
-      drawSafeRoundRect(ctx, bx + 14 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
-      ctx.fill();
-    }
-  });
+    // 服務點餐木質吧檯與 2 只大茶桶
+    ctx.fillStyle = '#78350f';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 12 * scale, 14 * scale, 4 * scale, 3);
+    ctx.fill();
+    // 不銹鋼大茶桶
+    ctx.fillStyle = '#e2e8f0';
+    drawSafeRoundRect(ctx, bx + 7 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+    ctx.fill();
+    drawSafeRoundRect(ctx, bx + 14 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+    ctx.fill();
+  }
 
-  // 全家 FamilyMart (中山店)
-  renderList.push({
-    z: 25,
-    draw: () => {
-      const bx = screenX(92 - 12);
-      const bz = screenZ(25 - 10);
-      ctx.fillStyle = '#f8fafc';
-      drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
-      ctx.fill();
-      ctx.strokeStyle = '#059669';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+  function drawFamilyMartStore(x, z, branchName) {
+    const bx = screenX(x - 12);
+    const bz = screenZ(z - 10);
+    ctx.fillStyle = '#f8fafc';
+    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-      // 經典藍綠雙色燈箱
-      ctx.fillStyle = '#009944';
-      ctx.fillRect(bx, bz, 24 * scale, 3 * scale);
-      ctx.fillStyle = '#0068b7';
-      ctx.fillRect(bx, bz + 3 * scale, 24 * scale, 2.5 * scale);
+    // 經典藍綠雙色燈箱
+    ctx.fillStyle = '#009944';
+    ctx.fillRect(bx, bz, 24 * scale, 3 * scale);
+    ctx.fillStyle = '#0068b7';
+    ctx.fillRect(bx, bz + 3 * scale, 24 * scale, 2.5 * scale);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(12, scale * 0.8)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('FamilyMart 全家 (中山店)', bx + 12 * scale, bz + 4 * scale);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(10, scale * 0.75)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`FamilyMart (${branchName})`, bx + 12 * scale, bz + 4 * scale);
+
+    // 玻璃自動門
+    ctx.fillStyle = 'rgba(219, 234, 254, 0.45)';
+    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 10 * scale, 12 * scale, 9 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#009944';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  function drawSevenElevenStore(x, z, branchName) {
+    const bx = screenX(x - 12);
+    const bz = screenZ(z - 10);
+    ctx.fillStyle = '#f8fafc';
+    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 7-Eleven 經典橘綠紅三色招牌
+    const stripeH = 1.8 * scale;
+    ctx.fillStyle = '#ea580c'; // 亮橘
+    ctx.fillRect(bx, bz, 24 * scale, stripeH);
+    ctx.fillStyle = '#16a34a'; // 翠綠
+    ctx.fillRect(bx, bz + stripeH, 24 * scale, stripeH);
+    ctx.fillStyle = '#dc2626'; // 鮮紅
+    ctx.fillRect(bx, bz + stripeH * 2, 24 * scale, stripeH);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(10, scale * 0.72)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`7-Eleven (${branchName})`, bx + 12 * scale, bz + 3.8 * scale);
+
+    // 玻璃自動門與室內溫暖燈光
+    ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
+    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 10 * scale, 12 * scale, 9 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // 1. 連鎖品牌門市 (CoCo、全家、7-Eleven) 加入深度排序清單
+  interactables.forEach(it => {
+    if (it.type === 'coco') {
+      const bName = it.name.replace('CoCo 都可 (', '').replace(')', '');
+      renderList.push({ z: it.z, draw: () => drawCocoStore(it.x, it.z, bName) });
+    } else if (it.type === 'familymart') {
+      const bName = it.name.replace('全家便利商店 (', '').replace(')', '');
+      renderList.push({ z: it.z, draw: () => drawFamilyMartStore(it.x, it.z, bName) });
+    } else if (it.type === 'seven') {
+      const bName = it.name.replace('7-Eleven 統一超商 (', '').replace(')', '');
+      renderList.push({ z: it.z, draw: () => drawSevenElevenStore(it.x, it.z, bName) });
     }
   });
 
@@ -871,10 +975,16 @@ let hasPlayedDoorbell = false;
 function checkProximityAndLocation() {
   let currentLoc = "忠孝西路一段 ✕ 館前路口";
   if (Math.hypot(playerPos.x - 92, playerPos.z - (-35)) < 18) currentLoc = "中山北路一段・CoCo都可手搖飲門市";
+  else if (Math.hypot(playerPos.x - (-20), playerPos.z - 65) < 18) currentLoc = "南陽補習街・CoCo都可手搖飲門市";
+  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 15) < 18) currentLoc = "重慶南路書店街・CoCo都可門市";
   else if (Math.hypot(playerPos.x - 92, playerPos.z - 25) < 18) currentLoc = "中山北路一段・全家便利商店";
+  else if (Math.hypot(playerPos.x - (-45), playerPos.z - 32) < 18) currentLoc = "館前路商業廊道・全家便利商店(站前店)";
+  else if (Math.hypot(playerPos.x - (-105), playerPos.z - (-75)) < 18) currentLoc = "建成圓環商圈・全家便利商店";
+  else if (Math.hypot(playerPos.x - (-15), playerPos.z - 28) < 18) currentLoc = "忠孝西路一段・7-Eleven 統一超商(站前店)";
+  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 75) < 18) currentLoc = "重慶南路一段・7-Eleven 統一超商";
+  else if (Math.hypot(playerPos.x - 92, playerPos.z - (-95)) < 18) currentLoc = "中山南京路口・7-Eleven 統一超商";
   else if (Math.hypot(playerPos.x - 0, playerPos.z - 2) < 16) currentLoc = "忠孝西路中央公車專用道【台北車站(忠孝)】";
   else if (Math.hypot(playerPos.x - 24, playerPos.z - 24) < 16) currentLoc = "台北車站南側廣場 ✕ M6捷運出入口";
-  else if (Math.hypot(playerPos.x - (-45), playerPos.z - 32) < 18) currentLoc = "館前路商業廊道・站前全家超商";
   else if (Math.hypot(playerPos.x - (-110), playerPos.z - (-120)) < 24) currentLoc = "建成圓環 ✕ 寧夏夜市美食小吃街";
   else if (Math.hypot(playerPos.x - 130, playerPos.z - 120) < 22) currentLoc = "北投分局・刑事偵查隊";
   else if (Math.hypot(playerPos.x - (-160), playerPos.z - (-40)) < 22) currentLoc = "淡水河水岸碼頭棧道";
@@ -908,7 +1018,7 @@ function checkProximityAndLocation() {
     if (nearest.id !== lastNearestId) {
       lastNearestId = nearest.id;
       updateActionPills(nearest);
-      if (nearest.type === 'familymart' && !hasPlayedDoorbell) {
+      if ((nearest.type === 'familymart' || nearest.type === 'seven' || nearest.type === 'coco') && !hasPlayedDoorbell) {
         playStoreChime();
         hasPlayedDoorbell = true;
       }
@@ -936,6 +1046,11 @@ function updateActionPills(item) {
     addActionPill("🏪 進入全家便利商店", "E", () => openStoreModal());
     addActionPill("🥚 購買熱茶葉蛋 ($13)", "🥚", () => buyTeaEgg());
     addActionPill("🛹 購買極速滑板 ($300)", "🛹", () => buySkateboard());
+  } else if (item.type === "seven") {
+    addActionPill("🏪 進入 7-Eleven 超商", "E", () => openSevenModal());
+    addActionPill("🍙 買肉鬆御飯糰 ($30)", "🍙", () => buyRiceBall());
+    addActionPill("☕ 買 CITY CAFE 拿鐵 ($45)", "☕", () => buyLatte());
+    addActionPill("🍵 買茶裏王無糖綠 ($25)", "🍵", () => buyKingTea());
   } else if (item.type === "police") {
     addActionPill("📹 調閱 CCTV 軌跡", "E", () => openCctvModal());
     addActionPill("🚓 進行筆錄對質逮捕", "🚨", () => openInterrogateModal());
@@ -970,6 +1085,7 @@ function triggerCurrentInteraction() {
     openMrtStationModal();
   } else if (type === "coco") openCocoModal();
   else if (type === "familymart") openStoreModal();
+  else if (type === "seven") openSevenModal();
   else if (type === "police") openCctvModal();
   else if (type === "nightmarket") openNightMarketModal();
   else if (type === "ferry") openFerryModal();
@@ -1054,6 +1170,42 @@ function buySkateboard() {
   playTone(850, 'triangle', 0.15);
   alert("🛹 裝備極速電動滑板！移動速度提升至 1.10！疾馳全雙北街區！");
   closeModal('storeModal');
+}
+
+function buyRiceBall() {
+  if (gameState.money < 30) return alert("悠遊卡餘額不足 $30 囉！");
+  gameState.money -= 30;
+  gameState.stamina = Math.min(100, gameState.stamina + 30);
+  updateBars();
+  playTone(680, 'sine', 0.12);
+  alert("🍙 享用 7-Eleven 經典肉鬆御飯糰！酥脆海苔搭配香濃肉鬆，體力 +30！");
+  gameState.quests.store = true;
+  updateQuestProgress();
+  closeModal('sevenModal');
+}
+
+function buyLatte() {
+  if (gameState.money < 45) return alert("悠遊卡餘額不足 $45 囉！");
+  gameState.money -= 45;
+  gameState.mood = Math.min(100, gameState.mood + 25);
+  updateBars();
+  playTone(720, 'sine', 0.12);
+  alert("☕ 喝了一杯 7-Eleven CITY CAFE 冰拿鐵！濃郁咖啡香放鬆辦案心情，心情 +25！");
+  gameState.quests.store = true;
+  updateQuestProgress();
+  closeModal('sevenModal');
+}
+
+function buyKingTea() {
+  if (gameState.money < 25) return alert("悠遊卡餘額不足 $25 囉！");
+  gameState.money -= 25;
+  gameState.stamina = Math.min(100, gameState.stamina + 20);
+  updateBars();
+  playTone(660, 'sine', 0.1);
+  alert("🍵 喝了 7-Eleven 茶裏王日式無糖綠！回甘就像現泡，解渴生津體力 +20！");
+  gameState.quests.store = true;
+  updateQuestProgress();
+  closeModal('sevenModal');
 }
 
 function buySnack(type, price) {
@@ -1212,6 +1364,7 @@ function toggleHintQuestCard() {
 
 function openCocoModal() { document.getElementById("cocoModal").style.display = "flex"; }
 function openStoreModal() { document.getElementById("storeModal").style.display = "flex"; }
+function openSevenModal() { document.getElementById("sevenModal").style.display = "flex"; }
 function openMrtStationModal() { document.getElementById("mrtStationModal").style.display = "flex"; }
 function openNightMarketModal() { document.getElementById("nightMarketModal").style.display = "flex"; }
 function openFerryModal() { document.getElementById("ferryModal").style.display = "flex"; }
