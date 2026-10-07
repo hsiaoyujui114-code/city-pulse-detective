@@ -1,7 +1,7 @@
 # 🤖 AI 接續協作與交接總綱手冊 (Master AI Handover Guide)
 
 > **本文件專供接續本專案之 AI Agent / AI Engineer 閱讀。**  
-> 請完整研讀本手冊、[`PROJECT_SPEC.md`](./PROJECT_SPEC.md)、[`DISCUSSION_LOG.md`](./DISCUSSION_LOG.md) 與 [`ART_STYLE_GUIDE.md`](./ART_STYLE_GUIDE.md)，確保對專案背景、核心玩法哲學與使用者嚴格要求維持 100% 的一致性。
+> 請完整研讀本手冊、[`PROJECT_SPEC.md`](../02_project_spec/PROJECT_SPEC.md)、[`DISCUSSION_LOG.md`](../03_discussion_history/DISCUSSION_LOG.md) 與 [`ART_STYLE_GUIDE.md`](../04_art_and_style/ART_STYLE_GUIDE.md)，確保對專案背景、核心玩法哲學與使用者嚴格要求維持 100% 的一致性。
 
 ---
 
@@ -66,10 +66,13 @@ taipei-metro-detective-rpg/
 ├── game.js                 # 雙引擎主核心 (Three.js 3D + 2.5D Canvas、控制器、捷運轉乘、實體碰撞)
 ├── server.js               # Node.js + WebSocket 專屬私服器 (支援多人同屏、破案全服號外)
 ├── package.json            # 專案依賴與腳本 (npm start)
-├── AI_HANDOVER.md          # [本文件] 給接續 AI 的交接指南
-├── PROJECT_SPEC.md         # 專案詳細規格書與系統數值設計
-├── DISCUSSION_LOG.md       # 使用者歷次討論與修改決策歷史紀錄
-├── ART_STYLE_GUIDE.md      # Google Drive 41 張概念圖風格解析手冊
+├── README.md               # 專案簡介與快速開始
+├── docs/                   # 【AI 協作文檔專屬目錄】
+│   ├── README.md           # 文檔總覽導航與推薦閱讀順序
+│   ├── 01_ai_handover/     # 🤖 AI_HANDOVER.md (本文件)
+│   ├── 02_project_spec/    # 📋 PROJECT_SPEC.md (系統功能規格書)
+│   ├── 03_discussion_history/ # 📜 DISCUSSION_LOG.md (歷次使用者討論紀錄)
+│   └── 04_art_and_style/   # 🎨 ART_STYLE_GUIDE.md (美術情境指導手冊)
 └── assets/
     ├── three.min.js        # 本地封裝 Three.js r128 (零外部 CDN 依賴)
     └── images/
