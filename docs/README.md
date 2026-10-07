@@ -24,7 +24,7 @@ flowchart LR
 | :--- | :--- | :--- | :--- |
 | **`01_ai_handover/`** | 🤖 `AI_HANDOVER.md` | **【最重要！必讀】**<br>• 使用者痛點與核心誡命（禁止死機白屏、禁止直達商店按鈕、禁止生硬貼圖）。<br>• 雙核心渲染架構（3D WebGL ✕ 2.5D Canvas）。<br>• 給後續 AI 的審查與開發工作流。 | [前往文件](./01_ai_handover/AI_HANDOVER.md) |
 | **`02_project_spec/`** | 📋 `PROJECT_SPEC.md` | **【系統功能規格書】**<br>• 核心遊戲循環與狀態機。<br>• 角色數值（體力、心情、生活金、移動速度）。<br>• 雙北捷運 6 大探索站點與街區配置。<br>• TIB 交通大數據時空比對規格。 | [前往文件](./02_project_spec/PROJECT_SPEC.md) |
-| **`03_discussion_history/`** | 📜 `DISCUSSION_LOG.md` | **【歷次使用者討論紀錄】**<br>• 第 1 回合：初始企劃與靜態網頁 RPG 建立。<br>• 第 2 回合：升級 3D 玩法與專屬私服器。<br>• 第 3 回合：黑屏修復與必須親自走到門口。<br>• 第 4 回合：雲端截圖 HUD 與動漫立繪對齊。<br>• 第 5 回合：WebGL 報錯根治、捷運探索地圖、去圖片化。 | [前往文件](./03_discussion_history/DISCUSSION_LOG.md) |
+| **`03_discussion_history/`** | 📜 `DISCUSSION_LOG.md` | **【歷次使用者討論紀錄】**<br>• 第 1~5 回合：初始企劃、私服器、截圖HUD、WebGL相容性。<br>• 第 6 回合：真實雙北路網、CoCo門市、307公車快轉、除名少年偵探。<br>• 第 7 回合：定案現代 2D/2.5D 動漫都會冒險 RPG、走路/奔跑雙速系統。 | [前往文件](./03_discussion_history/DISCUSSION_LOG.md) |
 | **`04_art_and_style/`** | 🎨 `ART_STYLE_GUIDE.md` | **【美術風格與概念圖手冊】**<br>• Google Drive `遊戲圖片~待處理` 41 張概念圖分類剖析。<br>• 視覺基調（Cyber Cyan ✕ 台灣街頭暖金黃）。<br>• 明確規範：參考圖是美術情境指導，絕不可當作死板彈窗貼圖！ | [前往文件](./04_art_and_style/ART_STYLE_GUIDE.md) |
 | **`05_multiplayer_and_real_map/`** | 🌐 `SERVER_AND_GIS_GUIDE.md` | **【萬人同服 ✕ 雙北真實道路 (GIS)】**<br>• 「所有人都在同一個世界」的 Server 原理與免費雲端部署（Render/Railway）。<br>• OpenStreetMap (OSM) 雙北真實道路向量轉 3D 坐標演算法。 | [前往文件](./05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md) |
 

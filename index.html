@@ -343,6 +343,64 @@
     </div>
   </div>
 
+  <!-- 5-1. 長椅休息與補水 Modal -->
+  <div class="modal-overlay" id="restModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🛏️</span> 街區候車長椅 / 綠化休憩區</div>
+        <button class="modal-close" onclick="closeModal('restModal')">×</button>
+      </div>
+      <div style="background:#0f172a; padding:12px; border-radius:10px; margin-bottom:14px; border-left:4px solid #38bdf8;">
+        🍃 <strong>【調節步伐】</strong>：在雙北街頭走累了嗎？停下腳步在候車長椅上閉目休息，恢復體力與精神！
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">🛏️ 長椅閉目深呼吸 (+50 體力)</div>
+            <div style="font-size:11.5px; color:#94a3b8;">放鬆身心，快速消除疲勞。</div>
+          </div>
+          <button class="chat-send-btn" style="background:#10b981; padding:8px 16px;" onclick="restAndRecover()">休息片刻</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">☕ 飲用隨身保溫瓶溫水 (+25 體力)</div>
+            <div style="font-size:11.5px; color:#94a3b8;">自備保溫瓶飲水，環保減塑好習慣！</div>
+          </div>
+          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="drinkWater()">喝溫水</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5-2. 淡水河渡輪觀景棧道 Modal -->
+  <div class="modal-overlay" id="ferryModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🚢</span> 淡水河渡輪觀景棧道 (八里航線)</div>
+        <button class="modal-close" onclick="closeModal('ferryModal')">×</button>
+      </div>
+      <div style="background:#0369a122; border:1px solid #0284c7; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#38bdf8; font-weight:800; font-size:13.5px;">🌊 微風徐徐吹過淡水河面，遠眺觀音山稜線，夕陽餘暉灑落棧道。</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">📸 拍攝河岸風景照</div>
+            <div style="font-size:11.5px; color:#94a3b8;">捕捉波光粼粼的水面，解鎖攝影成就！</div>
+          </div>
+          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="takeScenicPhoto()">拍照打卡</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:12px 16px; border-radius:8px;">
+          <div>
+            <div style="font-weight:bold; color:white;">💬 發佈限時動態 (+25 心情)</div>
+            <div style="font-size:11.5px; color:#94a3b8;">分享『八里的風，吹散辦案疲憊～』獲得熱烈點讚！</div>
+          </div>
+          <button class="chat-send-btn" style="background:#f59e0b; padding:8px 16px;" onclick="postStory()">發動態</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 6. 情報站：北投分局偵查隊 -->
   <div class="modal-overlay" id="cctvModal">
     <div class="modal-card" style="width:780px;">

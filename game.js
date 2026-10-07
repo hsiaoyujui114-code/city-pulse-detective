@@ -1229,6 +1229,35 @@ function openMapModal() { updateQuestProgress(); document.getElementById("mapMod
 function openSettingsModal() { document.getElementById("settingsModal").style.display = "flex"; }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
+function takeScenicPhoto() {
+  playTone(750, 'triangle', 0.1);
+  alert("📸 拍下了波光粼粼的淡水河景與八里對岸！解鎖相簿成就！");
+  closeModal('ferryModal');
+}
+
+function postStory() {
+  gameState.mood = Math.min(100, gameState.mood + 25);
+  updateBars();
+  playTone(700, 'sine', 0.1);
+  alert("💬 發佈限時動態：『八里的風，吹散辦案的疲憊～』獲得熱烈點讚！心情 +25！");
+  closeModal('ferryModal');
+}
+
+function toggleMosaic() {
+  gameState.mosaic = !gameState.mosaic;
+  const box = document.getElementById("webgl-container");
+  const btn = document.getElementById("btnMosaic");
+  if (gameState.mosaic) {
+    if (box) box.classList.add("mosaic-mode");
+    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：開";
+  } else {
+    if (box) box.classList.remove("mosaic-mode");
+    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：關";
+  }
+  playTone(600, 'sine', 0.05);
+}
+
+
 /* ─── 12. 專屬私服器 (WebSocket) 連線與多人同屏 ─── */
 let socket = null;
 const remotePlayers = new Map();
