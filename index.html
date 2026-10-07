@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>《雙北漫遊：都會行蹤》- 第一人稱 3D 雙北真實地圖 ✕ 公車通勤 ✕ 專屬私服器</title>
+  <title>《雙北漫遊：都會行蹤》- 現代 2D/2.5D 動漫都會冒險 RPG ✕ 雙速奔跑 ✕ 雙倍大地圖</title>
   <link rel="stylesheet" href="style.css">
   <script src="assets/three.min.js"></script>
 </head>
 <body>
 
-  <!-- 3D WebGL / 2.5D 畫布容器 (深色沉浸底色，絕不白屏) -->
+  <!-- 2D / 2.5D 現代動漫 RPG 畫布容器 (深色沉浸底色，絕不白屏) -->
   <div id="webgl-container"></div>
 
-  <!-- 第一人稱準星 (First-Person Reticle) -->
-  <div class="fpv-crosshair" id="fpvCrosshair"></div>
-
-  <!-- 第一人稱視角操作提示 -->
+  <!-- 操作提示橫幅 -->
   <div class="fpv-hint" id="fpvHint">
-    <span>👀 第一人稱視角：滑鼠點擊畫面轉動視角，[WASD] 移動，[E] 互動</span>
+    <span>🎮 現代都會 RPG：[WASD/方向鍵] 移動 ｜ 按住 [Shift] 或點擊右下 [🏃 奔跑] 衝刺 ｜ [E] 互動</span>
   </div>
 
   <!-- 導航提示氣泡 (Navigation Toast) -->
@@ -140,12 +137,18 @@
     <span class="interact-label" id="interactLabel">搭乘公車</span>
   </div>
 
-  <!-- 行動裝置虛擬十字方向鍵 -->
+  <!-- 行動裝置虛擬十字方向鍵與跑步衝刺鍵 -->
   <div class="mobile-dpad">
     <div style="grid-column: 2;" class="dpad-btn" id="dpadUp">▲</div>
     <div style="grid-column: 1; grid-row: 2;" class="dpad-btn" id="dpadLeft">◀</div>
     <div style="grid-column: 2; grid-row: 2;" class="dpad-btn" id="dpadDown">▼</div>
     <div style="grid-column: 3; grid-row: 2;" class="dpad-btn" id="dpadRight">▶</div>
+  </div>
+
+  <!-- 走路 / 奔跑模式切換懸浮鍵 (Shift快捷鍵) -->
+  <div class="sprint-toggle-btn" id="btnToggleSprint" onclick="toggleSprintMode()" title="切換走路 / 奔跑模式 [Shift]">
+    <span class="sprint-icon" id="sprintIcon">🏃</span>
+    <span class="sprint-text" id="sprintText">奔跑模式 [Shift]</span>
   </div>
 
   <!-- 劇情對話 / 內心獨白視窗 -->

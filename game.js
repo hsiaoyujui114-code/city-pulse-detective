@@ -1,9 +1,10 @@
 /**
  * ==========================================================================
- * 《雙北漫遊：都會行蹤》✕《城市脈動：通勤偵探》
- * 雙核心引擎 (Three.js 3D 第一人稱視角 FPV ✕ 2.5D Canvas 萬能高相容模式)
- * 1:1 雙北真實路網 (忠孝西路 ✕ 中山北路 ✕ 館前路 ✕ 重慶路 ✕ 市民大道)
- * 專屬私服器多人同步 ✕ 公車主軸通勤 ✕ 鳥瞰快轉過場動畫
+ * 《雙北漫遊：都會行蹤》- 現代 2D ✕ 2.5D 動漫都會冒險 RPG
+ * 60FPS 現代平滑動態渲染 (Y-Sorting 深度分層 ✕ 動態陰影 ✕ 天候光影)
+ * 雙速移動模式 (🚶 走路 ✕ 🏃 奔跑極速衝刺)
+ * 完整倍增大雙北真實路網 (忠孝西路 ✕ 中山北路 ✕ 台北車站 ✕ 館前路 ✕ 重慶路 ✕ 市民大道)
+ * 專屬私服器多人同步 ✕ 307 公車通勤 ✕ 空拍鳥瞰快轉過場
  * ==========================================================================
  */
 
@@ -81,24 +82,28 @@ function playBuzzer() {
   setTimeout(() => playTone(150, 'sawtooth', 0.2, 0.25), 180);
 }
 
-/* ─── 2. 遊戲全局狀態 ─── */
+/* ─── 2. 遊戲全局狀態與雙速移動核心 ─── */
 const gameState = {
   money: 200,
-  stamina: 78,
-  mood: 85,
+  stamina: 85,
+  mood: 90,
   hasSkateboard: false,
-  speed: 0.24,
+  // 雙速移動曲線 (大幅提速)
+  walkSpeed: 0.38,       // 🚶 正常步行速度 (比過去 0.2 提升近一倍)
+  runSpeed: 0.75,        // 🏃 奔跑衝刺速度 (極速奔馳)
+  isRunning: false,      // 當前是否處於跑步衝刺狀態
+  speed: 0.38,
   weather: 'sunny',
   mosaic: false,
   nickname: "都會調查員 [你]",
-  currentBubble: "🔍 巡視雙北街頭",
+  currentBubble: "🔍 巡視雙北都會街區",
   cluesFound: 0,
   hasBoba: false,
   hasTeaEgg: false,
   currentDistrict: 'zhongshan',
   currentLocationName: "忠孝西路一段 ✕ 館前路口",
   inTransit: false,
-  transitType: null, // 'bus' or 'mrt'
+  transitType: null,
   transitDest: null,
   fastForwarding: false,
   fastForwardProgress: 0,
@@ -113,951 +118,129 @@ const gameState = {
   activeInteractTarget: null
 };
 
-/* ─── 3. 第一人稱視角 (FPV) 控制狀態 ─── */
-const fpv = {
-  eyeHeight: 1.7,
-  yaw: 0, // 水平旋轉 (弧度)
-  pitch: 0, // 俯仰角 (弧度，正抬頭、負低頭)
-  mouseSensitivity: 0.0028,
-  touchSensitivity: 0.005,
-  isPointerLocked: false,
-  lastTouchX: 0,
-  lastTouchY: 0,
-  isTouching: false
-};
-
+// 主角位置與動態攝像機平滑追蹤 (Smooth Lerp Camera)
 const playerPos = {
   x: 0,
-  y: 0,
   z: 14,
-  rot: 0
+  facing: 'down', // 'down', 'up', 'left', 'right'
+  walkCycle: 0,
+  isMoving: false
 };
-let walkCycle = 0;
 
-/* ─── 4. 雙核心引擎偵測 (Three.js 3D ✕ 2.5D Canvas 萬能高相容模式) ─── */
-let activeEngine = '2.5d';
+const camera = {
+  x: 0,
+  z: 14,
+  targetScale: 19, // 正常視野比例
+  currentScale: 19
+};
+
+// 奔跑腳底塵土/氣流粒子系統
+const sprintParticles = [];
+
+/* ─── 3. 2D/2.5D Canvas 現代動漫引擎容器初始化 ─── */
 const container = document.getElementById("webgl-container");
-
-let scene, camera, renderer, sunLight, hemiLight;
-let canvas2D, ctx2D;
-
-function isWebGLSupported() {
-  try {
-    const testCanvas = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && 
-      (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')));
-  } catch (e) {
-    return false;
-  }
-}
-
-let threeSuccess = false;
-if (typeof THREE !== 'undefined' && isWebGLSupported()) {
-  try {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a1426);
-    scene.fog = new THREE.FogExp2(0x0a1426, 0.008);
-
-    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1500);
-    camera.position.set(playerPos.x, fpv.eyeHeight, playerPos.z);
-
-    renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: "high-performance",
-      failIfMajorPerformanceCaveat: false
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
-    container.appendChild(renderer.domElement);
-
-    hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x1e293b, 0.75);
-    scene.add(hemiLight);
-
-    sunLight = new THREE.DirectionalLight(0xfffaed, 1.1);
-    sunLight.position.set(60, 120, 80);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 1024;
-    sunLight.shadow.mapSize.height = 1024;
-    scene.add(sunLight);
-
-    threeSuccess = true;
-    activeEngine = '3d';
-  } catch (err) {
-    console.warn("3D WebGL 啟動受限，平滑啟動 2.5D 萬能相容引擎：", err);
-    threeSuccess = false;
-  }
-}
-
-if (!threeSuccess) {
-  activeEngine = '2.5d';
-  container.innerHTML = '';
-  canvas2D = document.createElement('canvas');
-  canvas2D.width = window.innerWidth;
-  canvas2D.height = window.innerHeight;
-  container.appendChild(canvas2D);
-  ctx2D = canvas2D.getContext('2d');
-}
+container.innerHTML = '';
+const canvas = document.createElement('canvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+container.appendChild(canvas);
+const ctx = canvas.getContext('2d');
 
 const engineLbl = document.getElementById("renderEngineLabel");
 if (engineLbl) {
-  engineLbl.innerText = activeEngine === '3d' ? '3D WebGL 第一人稱硬體加速模式' : '2.5D Canvas 萬能相容模式 (零死機)';
+  engineLbl.innerText = '現代 2D ✕ 2.5D 動漫都會冒險引擎 (高幀率・零白屏)';
 }
 
-/* ─── 5. 世界互動地標清單 (路標、公車站、捷運手扶梯、品牌門市) ─── */
+/* ─── 4. 倍增大雙北完整路網與地標資料庫 ─── */
+// 互動地標點位
 const interactables = [
-  // 1. 公車通勤主軸站牌 (忠孝西路專用道候車站 & 中山市場站牌)
-  { id: 'bus_station_zx', x: 0, z: 2, r: 6.0, type: 'bus_stop', name: '台北車站(忠孝)公車專用道站牌', line: '307', dest: 'zhongshan', label: '搭乘 307 公車 (前往中山商圈 / 南京東路)' },
-  { id: 'bus_station_zs', x: 48, z: -35, r: 6.0, type: 'bus_stop', name: '中山市場公車站牌 (CoCo前)', line: '307', dest: 'station', label: '搭乘 307 公車 (前往台北車站)' },
+  // 1. 公車通勤站牌
+  { id: 'bus_station_zx', x: 0, z: 2, r: 8.5, type: 'bus_stop', name: '台北車站(忠孝)公車專用道站牌', line: '307', dest: 'zhongshan', label: '搭乘 307 公車 (前往中山商圈 / 南京東路)' },
+  { id: 'bus_station_zs', x: 70, z: -35, r: 8.5, type: 'bus_stop', name: '中山市場公車站牌 (CoCo前)', line: '307', dest: 'station', label: '搭乘 307 公車 (前往台北車站)' },
   
-  // 2. 捷運站出入口手扶梯 (台北車站 M6 / 中山 R4)
-  { id: 'mrt_escalator_m6', x: 22, z: 24, r: 5.5, type: 'mrt_escalator', name: '捷運站出入口 (M6搭乘手扶梯往地下月台)', label: '搭手扶梯進捷運站月台' },
-  { id: 'mrt_escalator_zs', x: 48, z: 15, r: 5.5, type: 'mrt_escalator', name: '捷運中山站出入口 (搭手扶梯往地下月台)', label: '搭手扶梯進捷運站月台' },
+  // 2. 捷運站出入口手扶梯
+  { id: 'mrt_escalator_m6', x: 24, z: 24, r: 7.5, type: 'mrt_escalator', name: '捷運出入口 M6 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
+  { id: 'mrt_escalator_zs', x: 70, z: 15, r: 7.5, type: 'mrt_escalator', name: '捷運中山站出入口 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
 
-  // 3. 品牌實體外觀門市
-  { id: 'coco_zs', x: 62, z: -30, r: 5.5, type: 'coco', name: 'CoCo 都可 (中山北路門市)', label: '購買 CoCo 手搖飲料 ($50)' },
-  { id: 'fmart_zs', x: 62, z: 20, r: 5.5, type: 'familymart', name: '全家便利商店 (中山北路店)', label: '進入全家便利商店 (買茶葉蛋)' },
-  { id: 'fmart_station', x: -35, z: 24, r: 5.5, type: 'familymart', name: '全家便利商店 (站前館前店)', label: '進入全家便利商店' },
+  // 3. 實體品牌外觀門市
+  { id: 'coco_zs', x: 92, z: -35, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山北路門市)', label: '購買 CoCo 手搖飲料 ($50)' },
+  { id: 'fmart_zs', x: 92, z: 25, r: 8.0, type: 'familymart', name: '全家便利商店 (中山北路店)', label: '進入全家便利商店 (買茶葉蛋)' },
+  { id: 'fmart_station', x: -45, z: 32, r: 8.0, type: 'familymart', name: '全家便利商店 (站前館前店)', label: '進入全家便利商店' },
 
   // 4. 重點調查與線索地標
-  { id: 'clue_flower', x: 14, z: 18, r: 4.5, type: 'clue_ground', name: '站前花圃神祕紙條', label: '翻查站前花圃神祕紙條' },
-  { id: 'nightmarket', x: -90, z: -80, r: 6.5, type: 'nightmarket', name: '寧夏夜市美食小吃街', label: '品嚐寧夏夜市美食 (鹽酥雞 / 章魚燒)' },
-  { id: 'police_cctv', x: 75, z: 75, r: 6.0, type: 'police', name: '北投分局偵查隊', label: '與林巡官調閱 CCTV 監控軌跡' },
-  { id: 'rest_bench', x: 2, z: 26, r: 4.5, type: 'rest', name: '站前綠化長椅', label: '在候車長椅休息恢復體力' }
+  { id: 'clue_flower', x: 12, z: 18, r: 6.0, type: 'clue_ground', name: '站前花圃神祕紙條', label: '翻查站前花圃神祕紙條' },
+  { id: 'nightmarket', x: -110, z: -120, r: 9.0, type: 'nightmarket', name: '建成圓環 ✕ 寧夏夜市美食小吃街', label: '品嚐寧夏夜市美食 (鹽酥雞 / 章魚燒)' },
+  { id: 'police_cctv', x: 130, z: 120, r: 8.5, type: 'police', name: '北投分局刑事偵查隊', label: '與林巡官調閱 CCTV 監控軌跡' },
+  { id: 'ferry_tamsui', x: -160, z: -40, r: 8.5, type: 'ferry', name: '淡水河渡輪觀景棧道', label: '欣賞淡水河風景' },
+  { id: 'rest_bench', x: 2, z: 26, r: 6.0, type: 'rest', name: '站前候車長椅', label: '在長椅休息恢復體力' }
 ];
 
-/* ─── 6. 3D 場景真實雙北道路與建築幾何建置 ─── */
-let bus3D = null;
-const pedestrians3D = [];
-const otherPlayers3D = new Map();
+// 307 幹線公車動態物件
+const bus307 = {
+  x: -40,
+  z: 2,
+  w: 18,
+  d: 4.8,
+  speed: 0.28,
+  dir: 1, // 1 往東，-1 往西
+  currentRoute: 'zx', // 'zx' 忠孝西路, 'zs' 中山北路
+  destName: '中山商圈 / 南京東路'
+};
 
-if (activeEngine === '3d') {
-  buildRealTaipeiRoadNetwork3D();
-  build3DStorefrontsAndLandmarks();
-  bus3D = createTaipeiCityBus3D();
-  scene.add(bus3D.group);
-  spawn3DPedestrians();
+// 雙北街頭行人 NPC (Pedestrians)
+const pedestrians = [
+  { x: 15, z: 28, minX: -60, maxX: 70, dir: 1, speed: 0.08, walkCycle: 0, shirt: '#d97706', pants: '#1e293b', name: '通勤上班族' },
+  { x: -30, z: 28, minX: -80, maxX: 40, dir: -1, speed: 0.07, walkCycle: 2, shirt: '#0284c7', pants: '#334155', name: '高中學生' },
+  { x: 92, z: -10, minZ: -80, maxZ: 60, dir: 1, isZAxis: true, speed: 0.075, walkCycle: 1, shirt: '#10b981', pants: '#0f172a', name: '漫步市民' },
+  { x: 92, z: 40, minZ: -50, maxZ: 70, dir: -1, isZAxis: true, speed: 0.065, walkCycle: 3, shirt: '#ec4899', pants: '#374151', name: '購物遊客' },
+  { x: -6, z: 2, minX: -16, maxX: 16, dir: 1, speed: 0.04, walkCycle: 4, shirt: '#f59e0b', pants: '#1e293b', name: '等車乘客' }
+];
+
+/* ─── 5. 跑步衝刺 (Sprint) 模式切換邏輯 ─── */
+function toggleSprintMode() {
+  gameState.isRunning = !gameState.isRunning;
+  updateSprintUI();
+  playTone(gameState.isRunning ? 620 : 440, 'triangle', 0.08);
 }
 
-/**
- * 建立 1:1 雙北擴大道路網絡 (忠孝西路、中山北路、館前路、重慶南路、市民大道高架)
- */
-function buildRealTaipeiRoadNetwork3D() {
-  const roadMat = new THREE.MeshStandardMaterial({ color: 0x1e242d, roughness: 0.85 });
-  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.7 });
-  const yellowLineMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-  const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
-  const busLaneMat = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.8 }); // 公車專用道深藍柏油
+function updateSprintUI() {
+  const btn = document.getElementById("btnToggleSprint");
+  const icon = document.getElementById("sprintIcon");
+  const text = document.getElementById("sprintText");
+  if (!btn || !icon || !text) return;
 
-  // 1. 忠孝西路 (東西向大道，寬 36m，z 從 -18 到 +18，長度 360m)
-  const zxRoad = new THREE.Mesh(new THREE.PlaneGeometry(380, 36), roadMat);
-  zxRoad.rotation.x = -Math.PI / 2;
-  zxRoad.position.set(0, 0.01, 0);
-  scene.add(zxRoad);
-
-  // 忠孝西路 中央公車專用道 (寬 8m，z: -4 到 +4)
-  const busLane = new THREE.Mesh(new THREE.PlaneGeometry(380, 8), busLaneMat);
-  busLane.rotation.x = -Math.PI / 2;
-  busLane.position.set(0, 0.015, 0);
-  scene.add(busLane);
-
-  // 中央雙黃線 (z: 0)
-  for (let x = -180; x < 180; x += 10) {
-    const yl1 = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.25), yellowLineMat);
-    yl1.rotation.x = -Math.PI / 2;
-    yl1.position.set(x + 4, 0.02, 0.2);
-    scene.add(yl1);
-    const yl2 = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.25), yellowLineMat);
-    yl2.rotation.x = -Math.PI / 2;
-    yl2.position.set(x + 4, 0.02, -0.2);
-    scene.add(yl2);
+  if (gameState.isRunning) {
+    btn.classList.add("running");
+    icon.innerText = "🏃";
+    text.innerText = "奔跑衝刺中 (Shift)";
+  } else {
+    btn.classList.remove("running");
+    icon.innerText = "🚶";
+    text.innerText = "走路慢行 (Shift)";
   }
-
-  // 忠孝西路 北側人行道 (z: -18 到 -38，寬 20m)
-  const northWalk = new THREE.Mesh(new THREE.PlaneGeometry(380, 20), sidewalkMat);
-  northWalk.rotation.x = -Math.PI / 2;
-  northWalk.position.set(0, 0.08, -28);
-  scene.add(northWalk);
-
-  // 忠孝西路 南側人行道 (z: 18 到 38，寬 20m)
-  const southWalk = new THREE.Mesh(new THREE.PlaneGeometry(380, 20), sidewalkMat);
-  southWalk.rotation.x = -Math.PI / 2;
-  southWalk.position.set(0, 0.08, 28);
-  scene.add(southWalk);
-
-  // 2. 中山北路一段 (南北向林蔭大道，寬 30m，x: 35 到 65，z: -180 到 180)
-  const zsRoad = new THREE.Mesh(new THREE.PlaneGeometry(30, 360), roadMat);
-  zsRoad.rotation.x = -Math.PI / 2;
-  zsRoad.position.set(50, 0.02, 0);
-  scene.add(zsRoad);
-
-  // 中山北路 東側林蔭人行道 (x: 65 到 85，寬 20m)
-  const zsEastWalk = new THREE.Mesh(new THREE.PlaneGeometry(20, 360), sidewalkMat);
-  zsEastWalk.rotation.x = -Math.PI / 2;
-  zsEastWalk.position.set(75, 0.08, 0);
-  scene.add(zsEastWalk);
-
-  // 3. 館前路 (南北向站前大道，x: -32 到 -8，寬 24m，z: 18 到 160)
-  const gqRoad = new THREE.Mesh(new THREE.PlaneGeometry(24, 150), roadMat);
-  gqRoad.rotation.x = -Math.PI / 2;
-  gqRoad.position.set(-20, 0.02, 90);
-  scene.add(gqRoad);
-
-  // 4. 重慶南路一段 (x: -102 到 -78，寬 24m，z: -160 到 160)
-  const cqRoad = new THREE.Mesh(new THREE.PlaneGeometry(24, 340), roadMat);
-  cqRoad.rotation.x = -Math.PI / 2;
-  cqRoad.position.set(-90, 0.02, 0);
-  scene.add(cqRoad);
-
-  // 5. 斑馬線 (行人穿越道)
-  function createCrosswalk(cx, cz, w, d, horizontal = true) {
-    const group = new THREE.Group();
-    const count = Math.floor(horizontal ? w / 1.6 : d / 1.6);
-    for (let i = 0; i < count; i++) {
-      const bar = new THREE.Mesh(
-        new THREE.PlaneGeometry(horizontal ? 0.9 : 4.5, horizontal ? 4.5 : 0.9),
-        whiteLineMat
-      );
-      bar.rotation.x = -Math.PI / 2;
-      if (horizontal) {
-        bar.position.set(-w / 2 + i * 1.6 + 0.8, 0.03, 0);
-      } else {
-        bar.position.set(0, 0.03, -d / 2 + i * 1.6 + 0.8);
-      }
-      group.add(bar);
-    }
-    group.position.set(cx, 0, cz);
-    scene.add(group);
-  }
-  // 忠孝西路 ✕ 中山北路 路口斑馬線
-  createCrosswalk(50, 16, 28, 4.5, true);
-  createCrosswalk(50, -16, 28, 4.5, true);
-  createCrosswalk(36, 0, 4.5, 30, false);
-  createCrosswalk(64, 0, 4.5, 30, false);
-
-  // 忠孝西路 ✕ 館前路 路口斑馬線
-  createCrosswalk(-20, 16, 22, 4.5, true);
-
-  // 6. 中山北路 樟樹林蔭大道 (綠意造景)
-  const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.9 });
-  const foliageMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
-  for (let z = -140; z <= 140; z += 22) {
-    if (Math.abs(z) < 22) continue; // 避開路口
-    // 東側樹
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 3.2, 8), treeTrunkMat);
-    trunk.position.set(67, 1.6, z);
-    scene.add(trunk);
-    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.8, 8, 8), foliageMat);
-    leaves.position.set(67, 4.2, z);
-    scene.add(leaves);
-  }
-
-  // 7. 市民大道高架橋 (東西向空中高架橋，z: -55，高 12m)
-  const bridgeDeckMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 });
-  const bridgePillarMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85 });
-  const bridgeDeck = new THREE.Mesh(new THREE.BoxGeometry(380, 1.6, 22), bridgeDeckMat);
-  bridgeDeck.position.set(0, 11, -55);
-  scene.add(bridgeDeck);
-
-  // 高架橋墩柱
-  for (let px = -160; px <= 160; px += 45) {
-    const pier = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 11, 12), bridgePillarMat);
-    pier.position.set(px, 5.5, -55);
-    scene.add(pier);
-  }
-
-  // 8. 交通號誌紅綠燈桿
-  function addTrafficLight(x, z, rotY = 0) {
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 6, 8), poleMat);
-    pole.position.set(x, 3, z);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.15, 0.15), poleMat);
-    arm.position.set(x + 1.5, 5.8, z);
-    const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.4), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
-    box.position.set(x + 2.8, 5.8, z);
-    const greenLight = new THREE.Mesh(new THREE.CircleGeometry(0.16, 12), new THREE.MeshBasicMaterial({ color: 0x22c55e }));
-    greenLight.position.set(x + 3.1, 5.8, z + 0.21);
-    scene.add(pole);
-    scene.add(arm);
-    scene.add(box);
-    scene.add(greenLight);
-  }
-  addTrafficLight(36, 18);
-  addTrafficLight(64, -18);
-  addTrafficLight(-10, 18);
 }
 
-/**
- * 建立 3D 品牌門市、站牌與地標 (CoCo 正宗招牌、全家、台北車站、捷運出入口手扶梯)
- */
-function build3DStorefrontsAndLandmarks() {
-  // ── 1. CoCo 都可 (中山北路門市) ──
-  // 建築本體
-  const cocoBuilding = new THREE.Mesh(
-    new THREE.BoxGeometry(16, 9, 12),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 })
-  );
-  cocoBuilding.position.set(72, 4.5, -30);
-  scene.add(cocoBuilding);
-
-  // CoCo 亮橘色代表性波浪招牌與遮雨棚
-  const cocoOrangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
-  const cocoSign = new THREE.Mesh(new THREE.BoxGeometry(15, 2.2, 0.6), cocoOrangeMat);
-  cocoSign.position.set(72, 7.2, -23.8);
-  scene.add(cocoSign);
-
-  // CoCo 招牌圓形微笑商標
-  const logoEmblem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.8, 0.8, 0.2, 16),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  );
-  logoEmblem.rotation.x = Math.PI / 2;
-  logoEmblem.position.set(67, 7.2, -23.4);
-  scene.add(logoEmblem);
-
-  const innerFace = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.68, 0.68, 0.22, 16),
-    new THREE.MeshBasicMaterial({ color: 0xf97316 })
-  );
-  innerFace.rotation.x = Math.PI / 2;
-  innerFace.position.set(67, 7.2, -23.3);
-  scene.add(innerFace);
-
-  // 實體點餐吧檯 (服務窗口)
-  const counter = new THREE.Mesh(
-    new THREE.BoxGeometry(8, 1.2, 1.8),
-    new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 })
-  );
-  counter.position.set(72, 0.6, -24);
-  scene.add(counter);
-
-  // 不銹鋼大茶桶 2 只 (保溫茶桶)
-  const urnMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
-  const urn1 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.9, 12), urnMat);
-  urn1.position.set(70.5, 1.6, -24.2);
-  scene.add(urn1);
-  const urn2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.9, 12), urnMat);
-  urn2.position.set(73.5, 1.6, -24.2);
-  scene.add(urn2);
-
-  // 溫暖門市射燈
-  const cocoSpot = new THREE.PointLight(0xfed7aa, 1.2, 18);
-  cocoSpot.position.set(72, 4, -22);
-  scene.add(cocoSpot);
-
-  // ── 2. 全家 FamilyMart (中山北路門市 & 站前店) ──
-  function createFamilyMart(x, z, rotY = 0) {
-    const fGroup = new THREE.Group();
-    // 建築白色本體
-    const b = new THREE.Mesh(
-      new THREE.BoxGeometry(18, 9, 12),
-      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 })
-    );
-    b.position.y = 4.5;
-    fGroup.add(b);
-
-    // 經典全家 藍綠雙色彩繪招牌
-    const greenBand = new THREE.Mesh(
-      new THREE.BoxGeometry(17, 1.1, 0.5),
-      new THREE.MeshBasicMaterial({ color: 0x009944 }) // 全家經典綠
-    );
-    greenBand.position.set(0, 7.5, 6.2);
-    fGroup.add(greenBand);
-
-    const blueBand = new THREE.Mesh(
-      new THREE.BoxGeometry(17, 1.1, 0.5),
-      new THREE.MeshBasicMaterial({ color: 0x0068b7 }) // 全家經典藍
-    );
-    blueBand.position.set(0, 6.4, 6.2);
-    fGroup.add(blueBand);
-
-    // 落地透明玻璃大門
-    const glass = new THREE.Mesh(
-      new THREE.BoxGeometry(10, 3.8, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.4 })
-    );
-    glass.position.set(0, 1.9, 6.1);
-    fGroup.add(glass);
-
-    // 門市感應燈
-    const light = new THREE.PointLight(0x6ee7b7, 1.1, 16);
-    light.position.set(0, 3.5, 7.5);
-    fGroup.add(light);
-
-    fGroup.position.set(x, 0, z);
-    fGroup.rotation.y = rotY;
-    scene.add(fGroup);
+// 鍵盤 Shift 按下時動態切換跑步
+window.addEventListener("keydown", e => {
+  if (e.key === "Shift") {
+    gameState.isRunning = true;
+    updateSprintUI();
   }
-  createFamilyMart(72, 20, Math.PI); // 中山全家 (朝向中山北路人行道)
-  createFamilyMart(-35, 28, 0);       // 站前全家 (朝向忠孝西路人行道)
-
-  // ── 3. 台北車站主體建築 (宏偉傳統殿堂屋頂與四鐵共構) ──
-  const stationGroup = new THREE.Group();
-  // 車站基座主樓
-  const baseMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(90, 22, 60),
-    new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 })
-  );
-  baseMesh.position.y = 11;
-  stationGroup.add(baseMesh);
-
-  // 台北車站屋頂四阿頂 (宮殿廡殿頂建築簷口)
-  const roofMesh = new THREE.Mesh(
-    new THREE.ConeGeometry(68, 14, 4),
-    new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.6 })
-  );
-  roofMesh.position.y = 28;
-  roofMesh.rotation.y = Math.PI / 4;
-  stationGroup.add(roofMesh);
-
-  // 站名發光字 "台北車站 TAIPEI MAIN STATION"
-  const clockMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.5, 2.5, 0.4, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  );
-  clockMesh.rotation.x = Math.PI / 2;
-  clockMesh.position.set(0, 18, 30.3);
-  stationGroup.add(clockMesh);
-
-  stationGroup.position.set(0, 0, -68);
-  scene.add(stationGroup);
-
-  // ── 4. 捷運出入口手扶梯亭 (玻璃採光罩與下行電扶梯階梯) ──
-  function createMrtPavilion(x, z) {
-    const pavilion = new THREE.Group();
-    // 鋼構玻璃頂棚 (北捷特色綠藍線條)
-    const glassCanopy = new THREE.Mesh(
-      new THREE.BoxGeometry(8, 0.4, 12),
-      new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.6 })
-    );
-    glassCanopy.position.set(0, 4.2, 0);
-    pavilion.add(glassCanopy);
-
-    // 鋼柱
-    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7 });
-    for (let cx of [-3.8, 3.8]) {
-      for (let cz of [-5.5, 5.5]) {
-        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4.2, 8), pillarMat);
-        p.position.set(cx, 2.1, cz);
-        pavilion.add(p);
-      }
-    }
-
-    // 地下通道開口階梯 (往下延伸進入地底)
-    const stairPit = new THREE.Mesh(
-      new THREE.BoxGeometry(5.5, 2.5, 9),
-      new THREE.MeshStandardMaterial({ color: 0x020617 })
-    );
-    stairPit.position.set(0, -1.2, 0);
-    pavilion.add(stairPit);
-
-    // 手扶梯斜坡與扶手帶
-    const escalatorBelt = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 0.3, 8),
-      new THREE.MeshStandardMaterial({ color: 0x10b981 })
-    );
-    escalatorBelt.rotation.x = -Math.PI / 8;
-    escalatorBelt.position.set(1.4, 0.6, 0);
-    pavilion.add(escalatorBelt);
-
-    // 捷運站名燈箱柱
-    const logoSign = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 2.2, 0.4),
-      new THREE.MeshBasicMaterial({ color: 0x0284c7 })
-    );
-    logoSign.position.set(3.8, 2.8, 6.2);
-    pavilion.add(logoSign);
-
-    pavilion.position.set(x, 0, z);
-    scene.add(pavilion);
+});
+window.addEventListener("keyup", e => {
+  if (e.key === "Shift") {
+    gameState.isRunning = false;
+    updateSprintUI();
   }
-  createMrtPavilion(22, 24); // 站前 M6 出入口
-  createMrtPavilion(48, 15); // 中山 R4 出入口
+});
 
-  // ── 5. 公車專用道候車站島 (忠孝西路專用道候車站) ──
-  const busShelter = new THREE.Group();
-  // 月台島本體
-  const island = new THREE.Mesh(
-    new THREE.BoxGeometry(32, 0.35, 3.5),
-    new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 })
-  );
-  island.position.y = 0.18;
-  busShelter.add(island);
-
-  // 候車亭頂棚
-  const shelterRoof = new THREE.Mesh(
-    new THREE.BoxGeometry(26, 0.25, 4.2),
-    new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6 })
-  );
-  shelterRoof.position.set(0, 3.2, 0);
-  busShelter.add(shelterRoof);
-
-  // 智慧型公車動態電子站牌 (顯示 307 即將進站)
-  const eSign = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 1.8, 1.2),
-    new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-  );
-  eSign.position.set(12, 1.8, 0);
-  busShelter.add(eSign);
-
-  busShelter.position.set(0, 0, 2);
-  scene.add(busShelter);
-
-  // 中山市場路邊站牌
-  const stopPole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.08, 0.08, 2.8, 8),
-    new THREE.MeshStandardMaterial({ color: 0x10b981 })
-  );
-  stopPole.position.set(48, 1.4, -35);
-  scene.add(stopPole);
-
-  const stopBoard = new THREE.Mesh(
-    new THREE.BoxGeometry(0.1, 0.8, 0.6),
-    new THREE.MeshBasicMaterial({ color: 0x10b981 })
-  );
-  stopBoard.position.set(48, 2.4, -35);
-  scene.add(stopBoard);
-
-  // ── 6. 互動標記地面感應發光光圈 ──
-  interactables.forEach(item => {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(item.r * 0.75, item.r * 0.95, 32),
-      new THREE.MeshBasicMaterial({ color: 0x00d2ff, side: THREE.DoubleSide, transparent: true, opacity: 0.75 })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.set(item.x, 0.09, item.z);
-    scene.add(ring);
-  });
-}
-
-/**
- * 建立正宗低底盤「307 幹線公車」3D 模型
- */
-function createTaipeiCityBus3D() {
-  const group = new THREE.Group();
-
-  // 車身本體 (長 12m, 寬 3.0m, 高 3.2m)
-  const busBodyMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.4 }); // 台北綠色低地板
-  const body = new THREE.Mesh(new THREE.BoxGeometry(12, 2.8, 3.0), busBodyMat);
-  body.position.y = 1.6;
-  group.add(body);
-
-  // 車身白色條紋
-  const stripe = new THREE.Mesh(
-    new THREE.BoxGeometry(12.05, 0.5, 3.05),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  );
-  stripe.position.y = 1.2;
-  group.add(stripe);
-
-  // 車窗 (深色透明)
-  const windowMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1 });
-  const windows = new THREE.Mesh(new THREE.BoxGeometry(10.5, 1.0, 3.08), windowMat);
-  windows.position.y = 2.1;
-  group.add(windows);
-
-  // 車頭 LED 路線看板 "307 板橋 ➔ 台北車站 ➔ 撫遠街"
-  const ledSign = new THREE.Mesh(
-    new THREE.BoxGeometry(0.1, 0.45, 2.2),
-    new THREE.MeshBasicMaterial({ color: 0xf59e0b })
-  );
-  ledSign.position.set(6.02, 2.6, 0);
-  group.add(ledSign);
-
-  // 車輪 4 只
-  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 });
-  const wheelGeom = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16);
-  const wheels = [];
-  for (let wx of [-3.8, 3.8]) {
-    for (let wz of [-1.55, 1.55]) {
-      const w = new THREE.Mesh(wheelGeom, wheelMat);
-      w.rotation.x = Math.PI / 2;
-      w.position.set(wx, 0.5, wz);
-      group.add(w);
-      wheels.push(w);
-    }
-  }
-
-  // 車頂空調散熱器
-  const ac = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.4, 1.8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
-  ac.position.set(-1, 3.2, 0);
-  group.add(ac);
-
-  group.position.set(-20, 0, 2); // 停靠於忠孝西路專用道
-  return { group, wheels, currentStopIndex: 0 };
-}
-
-/**
- * 建立具備真實人體軀幹與四肢的 3D 人類角色模型 (Humanoid Mesh)
- */
-function createHumanoidMesh({
-  skinColor = 0xfed7aa,
-  shirtColor = 0x2563eb,
-  pantsColor = 0x1e293b,
-  hairColor = 0x451a03,
-  hasBag = true
-} = {}) {
-  const root = new THREE.Group();
-
-  // 1. 軀幹 (胸部 + 腹部，自然比例)
-  const torsoMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.6 });
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.68, 0.26), torsoMat);
-  torso.position.y = 1.05;
-  root.add(torso);
-
-  // 雙肩背包
-  if (hasBag) {
-    const bag = new THREE.Mesh(
-      new THREE.BoxGeometry(0.38, 0.48, 0.16),
-      new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 })
-    );
-    bag.position.set(0, 1.1, -0.2);
-    root.add(bag);
-  }
-
-  // 2. 頸部與頭部
-  const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.4 });
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.15, 12), skinMat);
-  neck.position.y = 1.45;
-  root.add(neck);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 14), skinMat);
-  head.position.y = 1.62;
-  root.add(head);
-
-  // 頭髮造型
-  const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 12), hairMat);
-  hair.position.set(0, 1.66, -0.04);
-  root.add(hair);
-
-  // 3. 左手臂 (以肩膀為樞軸，可前後擺動)
-  const leftArmPivot = new THREE.Group();
-  leftArmPivot.position.set(-0.32, 1.34, 0);
-  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.62, 0.15), torsoMat);
-  leftArm.position.y = -0.3;
-  leftArmPivot.add(leftArm);
-  root.add(leftArmPivot);
-
-  // 4. 右手臂 (以肩膀為樞軸)
-  const rightArmPivot = new THREE.Group();
-  rightArmPivot.position.set(0.32, 1.34, 0);
-  const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.62, 0.15), torsoMat);
-  rightArm.position.y = -0.3;
-  rightArmPivot.add(rightArm);
-  root.add(rightArmPivot);
-
-  // 5. 左腿 (以髖部為樞軸)
-  const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.7 });
-  const leftLegPivot = new THREE.Group();
-  leftLegPivot.position.set(-0.14, 0.72, 0);
-  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.19), pantsMat);
-  leftLeg.position.y = -0.35;
-  leftLegPivot.add(leftLeg);
-  // 鞋子
-  const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.12, 0.28), new THREE.MeshBasicMaterial({ color: 0x09090b }));
-  leftShoe.position.set(0, -0.7, 0.04);
-  leftLegPivot.add(leftShoe);
-  root.add(leftLegPivot);
-
-  // 6. 右腿 (以髖部為樞軸)
-  const rightLegPivot = new THREE.Group();
-  rightLegPivot.position.set(0.14, 0.72, 0);
-  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.19), pantsMat);
-  rightLeg.position.y = -0.35;
-  rightLegPivot.add(rightLeg);
-  const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.12, 0.28), new THREE.MeshBasicMaterial({ color: 0x09090b }));
-  rightShoe.position.set(0, -0.7, 0.04);
-  rightLegPivot.add(rightShoe);
-  root.add(rightLegPivot);
-
-  return {
-    root,
-    leftArmPivot,
-    rightArmPivot,
-    leftLegPivot,
-    rightLegPivot
-  };
-}
-
-/**
- * 生成漫步於雙北人行道上的 3D 真實行人 (Pedestrians)
- */
-function spawn3DPedestrians() {
-  const configs = [
-    { x: 10, z: 26, minX: -60, maxX: 70, dir: 1, shirt: 0xd97706, pants: 0x1e293b, speed: 0.04 }, // 南側上班族
-    { x: -30, z: 27, minX: -80, maxX: 40, dir: -1, shirt: 0x0284c7, pants: 0x334155, speed: 0.035 }, // 提包學生
-    { x: 74, z: -10, minZ: -80, maxZ: 60, dir: 1, isZAxis: true, shirt: 0x10b981, pants: 0x0f172a, speed: 0.04 }, // 中山林蔭散步者
-    { x: 74, z: 30, minZ: -50, maxZ: 70, dir: -1, isZAxis: true, shirt: 0xec4899, pants: 0x374151, speed: 0.038 }, // 逛街市民
-    { x: -5, z: 2, minX: -15, maxX: 15, dir: 1, shirt: 0xf59e0b, pants: 0x1e293b, speed: 0.02 }  // 公車候車亭乘客
-  ];
-
-  configs.forEach((cfg, idx) => {
-    const ped = createHumanoidMesh({
-      shirtColor: cfg.shirt,
-      pantsColor: cfg.pants,
-      hasBag: idx % 2 === 0
-    });
-    ped.root.position.set(cfg.x, 0, cfg.z);
-    scene.add(ped.root);
-
-    pedestrians3D.push({
-      mesh: ped,
-      config: cfg,
-      walkCycle: Math.random() * 10
-    });
-  });
-}
-
-function update3DPedestrians() {
-  pedestrians3D.forEach(p => {
-    p.walkCycle += 0.12;
-    const cfg = p.config;
-    if (cfg.isZAxis) {
-      cfg.z += cfg.dir * cfg.speed;
-      p.mesh.root.position.z = cfg.z;
-      p.mesh.root.rotation.y = cfg.dir > 0 ? 0 : Math.PI;
-      if (cfg.z >= cfg.maxZ) cfg.dir = -1;
-      else if (cfg.z <= cfg.minZ) cfg.dir = 1;
-    } else {
-      cfg.x += cfg.dir * cfg.speed;
-      p.mesh.root.position.x = cfg.x;
-      p.mesh.root.rotation.y = cfg.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
-      if (cfg.x >= cfg.maxX) cfg.dir = -1;
-      else if (cfg.x <= cfg.minX) cfg.dir = 1;
-    }
-
-    // 手腳擺動動畫
-    const swing = Math.sin(p.walkCycle) * 0.55;
-    p.mesh.leftArmPivot.rotation.x = swing;
-    p.mesh.rightArmPivot.rotation.x = -swing;
-    p.mesh.leftLegPivot.rotation.x = -swing;
-    p.mesh.rightLegPivot.rotation.x = swing;
-  });
-}
-
-/* ─── 7. 2.5D Canvas 萬能高相容渲染器 (保證零死機) ─── */
-function render2DScene() {
-  if (!ctx2D) return;
-  const w = canvas2D.width;
-  const h = canvas2D.height;
-  const cx = w / 2;
-  const cy = h / 2;
-
-  // 鳥瞰快轉時視角拉高縮放
-  let scale = Math.max(14, Math.min(24, w / 55));
-  if (gameState.fastForwarding) {
-    scale = 6.5; // 空拍鳥瞰全景
-  }
-
-  // 1. 天空夜幕底色
-  ctx2D.fillStyle = gameState.weather === 'sunny' ? '#0f1f38' : (gameState.weather === 'sunset' ? '#2e1c2b' : '#070d18');
-  ctx2D.fillRect(0, 0, w, h);
-
-  ctx2D.save();
-  ctx2D.translate(cx, cy);
-
-  const screenX = (val) => (val - playerPos.x) * scale;
-  const screenZ = (val) => (val - playerPos.z) * scale;
-
-  // 2. 忠孝西路 (東西向)
-  ctx2D.fillStyle = '#1e242d';
-  ctx2D.fillRect(screenX(-180), screenZ(-18), 360 * scale, 36 * scale);
-
-  // 公車專用道
-  ctx2D.fillStyle = '#1e3a5f';
-  ctx2D.fillRect(screenX(-180), screenZ(-4), 360 * scale, 8 * scale);
-
-  // 雙黃線
-  ctx2D.fillStyle = '#f59e0b';
-  ctx2D.fillRect(screenX(-180), screenZ(-0.3), 360 * scale, 0.6 * scale);
-
-  // 南北人行道
-  ctx2D.fillStyle = '#475569';
-  ctx2D.fillRect(screenX(-180), screenZ(-36), 360 * scale, 18 * scale);
-  ctx2D.fillRect(screenX(-180), screenZ(18), 360 * scale, 18 * scale);
-
-  // 中山北路 (南北向)
-  ctx2D.fillStyle = '#1e242d';
-  ctx2D.fillRect(screenX(35), screenZ(-180), 30 * scale, 360 * scale);
-
-  // 館前路
-  ctx2D.fillRect(screenX(-32), screenZ(18), 24 * scale, 150 * scale);
-
-  // 斑馬線
-  ctx2D.fillStyle = '#ffffff';
-  for (let z = -14; z <= 14; z += 4) {
-    ctx2D.fillRect(screenX(46), screenZ(z), 8 * scale, 2 * scale);
-  }
-
-  // 3. 建築與門市
-  const b2d = [
-    { x: 72, z: -30, w: 16, d: 12, col: '#ea580c', name: '🧋 CoCo 都可 (中山北路)' },
-    { x: 72, z: 20, w: 18, d: 12, col: '#059669', name: '🏪 全家 FamilyMart (中山店)' },
-    { x: -35, z: 28, w: 18, d: 12, col: '#059669', name: '🏪 全家 (站前館前店)' },
-    { x: 0, z: -68, w: 70, d: 45, col: '#334155', name: '🚇 台北車站大樓' },
-    { x: 22, z: 24, w: 8, d: 10, col: '#0284c7', name: 'Ⓜ️ 捷運 M6 手扶梯出入口' },
-    { x: 0, z: 2, w: 26, d: 3.5, col: '#f59e0b', name: '🚌 忠孝專用道公車站【307】' }
-  ];
-
-  b2d.forEach(b => {
-    const bx = screenX(b.x - b.w / 2);
-    const bz = screenZ(b.z - b.d / 2);
-    ctx2D.fillStyle = b.col;
-    drawSafeRoundRect(ctx2D, bx, bz, b.w * scale, b.d * scale, 6);
-    ctx2D.fill();
-    ctx2D.strokeStyle = '#38bdf8';
-    ctx2D.lineWidth = 1.5;
-    ctx2D.stroke();
-
-    ctx2D.fillStyle = '#ffffff';
-    ctx2D.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
-    ctx2D.textAlign = 'center';
-    ctx2D.fillText(b.name, bx + (b.w * scale) / 2, bz + (b.d * scale) / 2 + 4);
-  });
-
-  // 4. 307 公車
-  ctx2D.fillStyle = '#10b981';
-  drawSafeRoundRect(ctx2D, screenX(-16), screenZ(0.5), 14 * scale, 3.2 * scale, 4);
-  ctx2D.fill();
-  ctx2D.fillStyle = '#ffffff';
-  ctx2D.font = 'bold 11px sans-serif';
-  ctx2D.fillText('🚌 307 幹線公車', screenX(-9), screenZ(2.5));
-
-  // 5. 互動標記感應圈
-  interactables.forEach(it => {
-    const ix = screenX(it.x);
-    const iz = screenZ(it.z);
-    ctx2D.beginPath();
-    ctx2D.arc(ix, iz, it.r * scale * 0.8, 0, Math.PI * 2);
-    ctx2D.strokeStyle = '#00d2ff';
-    ctx2D.lineWidth = 2;
-    ctx2D.setLineDash([5, 5]);
-    ctx2D.stroke();
-    ctx2D.setLineDash([]);
-  });
-
-  // 6. 玩家主角 (第一人稱俯瞰指標 / 人體圖示)
-  const px = screenX(playerPos.x);
-  const pz = screenZ(playerPos.z);
-
-  // 影子
-  ctx2D.beginPath();
-  ctx2D.ellipse(px, pz + 4, 12, 6, 0, 0, Math.PI * 2);
-  ctx2D.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx2D.fill();
-
-  // 身體 (都會調查員)
-  ctx2D.fillStyle = '#2563eb';
-  drawSafeRoundRect(ctx2D, px - 9, pz - 22, 18, 18, 4);
-  ctx2D.fill();
-
-  // 頭部
-  ctx2D.beginPath();
-  ctx2D.arc(px, pz - 28, 8, 0, Math.PI * 2);
-  ctx2D.fillStyle = '#fed7aa';
-  ctx2D.fill();
-
-  // 視角朝向箭頭
-  ctx2D.beginPath();
-  ctx2D.moveTo(px, pz - 28);
-  ctx2D.lineTo(px - Math.sin(fpv.yaw) * 18, pz - 28 - Math.cos(fpv.yaw) * 18);
-  ctx2D.strokeStyle = '#38bdf8';
-  ctx2D.lineWidth = 2.5;
-  ctx2D.stroke();
-
-  // 頭頂對話氣泡
-  ctx2D.fillStyle = 'rgba(10, 25, 50, 0.9)';
-  drawSafeRoundRect(ctx2D, px - 60, pz - 64, 120, 22, 6);
-  ctx2D.fill();
-  ctx2D.strokeStyle = '#00d2ff';
-  ctx2D.lineWidth = 1.2;
-  ctx2D.stroke();
-
-  ctx2D.fillStyle = '#ffffff';
-  ctx2D.font = 'bold 11px sans-serif';
-  ctx2D.textAlign = 'center';
-  ctx2D.fillText(gameState.currentBubble, px, pz - 49);
-
-  // 7. 同儕遠端玩家
-  remotePlayers.forEach(rp => {
-    const rx = screenX(rp.x);
-    const rz = screenZ(rp.z);
-    ctx2D.fillStyle = '#059669';
-    drawSafeRoundRect(ctx2D, rx - 9, rz - 22, 18, 18, 4);
-    ctx2D.fill();
-    ctx2D.beginPath();
-    ctx2D.arc(rx, rz - 28, 8, 0, Math.PI * 2);
-    ctx2D.fillStyle = '#fed7aa';
-    ctx2D.fill();
-
-    ctx2D.fillStyle = '#34d399';
-    ctx2D.font = 'bold 10px sans-serif';
-    ctx2D.fillText(rp.nickname, rx, rz - 44);
-  });
-
-  ctx2D.restore();
-}
-
-/* ─── 8. 第一人稱視角 (FPV) 控制與滑鼠視角鎖定 ─── */
+/* ─── 6. 控制器輸入與平滑移動運算 ─── */
 const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.key.toLowerCase()] = true;
   if (e.key === "e" || e.key === "E") triggerCurrentInteraction();
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-// 畫布點擊鎖定滑鼠視角 (Pointer Lock API)
-container.addEventListener("click", () => {
-  if (container.requestPointerLock) {
-    container.requestPointerLock();
-  }
-});
-
-document.addEventListener("pointerlockchange", () => {
-  fpv.isPointerLocked = (document.pointerLockElement === container);
-  const hint = document.getElementById("fpvHint");
-  if (hint) {
-    hint.innerHTML = fpv.isPointerLocked
-      ? `<span>🔒 視角已鎖定：移動滑鼠環顧四周，[WASD] 移動，按 [ESC] 釋放游標</span>`
-      : `<span>👀 第一人稱視角：滑鼠點擊畫面轉動視角，[WASD] 移動，[E] 互動</span>`;
-  }
-});
-
-// 滑鼠環顧視角 (Yaw & Pitch)
-window.addEventListener("mousemove", e => {
-  if (fpv.isPointerLocked || e.buttons === 1) { // 鎖定游標或拖曳左鍵
-    fpv.yaw -= e.movementX * fpv.mouseSensitivity;
-    fpv.pitch -= e.movementY * fpv.mouseSensitivity;
-    // 限制上下仰角在 -80 度至 +80 度之間
-    fpv.pitch = Math.max(-1.35, Math.min(1.35, fpv.pitch));
-  }
-});
-
-// 行動裝置觸控滑動旋轉視角
-container.addEventListener("touchstart", e => {
-  if (e.touches.length === 1) {
-    fpv.isTouching = true;
-    fpv.lastTouchX = e.touches[0].clientX;
-    fpv.lastTouchY = e.touches[0].clientY;
-  }
-}, { passive: true });
-
-container.addEventListener("touchmove", e => {
-  if (fpv.isTouching && e.touches.length === 1) {
-    const dx = e.touches[0].clientX - fpv.lastTouchX;
-    const dy = e.touches[0].clientY - fpv.lastTouchY;
-    fpv.yaw -= dx * fpv.touchSensitivity;
-    fpv.pitch -= dy * fpv.touchSensitivity;
-    fpv.pitch = Math.max(-1.35, Math.min(1.35, fpv.pitch));
-    fpv.lastTouchX = e.touches[0].clientX;
-    fpv.lastTouchY = e.touches[0].clientY;
-  }
-}, { passive: true });
-
-container.addEventListener("touchend", () => {
-  fpv.isTouching = false;
-});
 
 function bindMobileDpad(id, key) {
   const el = document.getElementById(id);
@@ -1075,7 +258,7 @@ bindMobileDpad("dpadLeft", "a");
 bindMobileDpad("dpadRight", "d");
 
 /**
- * 依據主角視角 (FPV Yaw) 進行自然前進、後退與左右橫移平移
+ * 玩家雙速平滑位移運算
  */
 function updateMovement() {
   if (gameState.fastForwarding) {
@@ -1083,60 +266,67 @@ function updateMovement() {
     return;
   }
 
-  let spd = gameState.hasSkateboard ? gameState.speed * 1.65 : gameState.speed;
-  if (gameState.stamina < 15) spd *= 0.55;
-
-  let forward = 0;
-  let strafe = 0;
-
-  if (keys["w"] || keys["arrowup"]) forward += 1;
-  if (keys["s"] || keys["arrowdown"]) forward -= 1;
-  if (keys["a"] || keys["arrowleft"]) strafe -= 1;
-  if (keys["d"] || keys["arrowright"]) strafe += 1;
-
-  if (forward !== 0 || strafe !== 0) {
-    // 依據視角 yaw 進行向量合成
-    const sinYaw = Math.sin(fpv.yaw);
-    const cosYaw = Math.cos(fpv.yaw);
-
-    // forward 沿著視線向前 (0, 0, -1)
-    const moveX = (-sinYaw * forward) + (cosYaw * strafe);
-    const moveZ = (-cosYaw * forward) + (-sinYaw * strafe);
-
-    const len = Math.hypot(moveX, moveZ);
-    if (len > 0) {
-      playerPos.x += (moveX / len) * spd;
-      playerPos.z += (moveZ / len) * spd;
+  // 計算當前速度係數
+  let currentSpeed = gameState.isRunning ? gameState.runSpeed : gameState.walkSpeed;
+  if (gameState.hasSkateboard) currentSpeed = 1.10; // 滑板極速飛馳
+  if (gameState.stamina < 15) {
+    currentSpeed *= 0.55; // 體力不支自動降速
+    if (gameState.isRunning) {
+      gameState.isRunning = false;
+      updateSprintUI();
     }
+  }
 
-    walkCycle += 0.24;
-    if (Math.floor(walkCycle) % 8 === 0) {
-      playTone(160, 'square', 0.03, 0.02);
-      if (Math.random() < 0.25) {
+  let moveX = 0;
+  let moveZ = 0;
+
+  if (keys["w"] || keys["arrowup"]) { moveZ -= 1; playerPos.facing = 'up'; }
+  if (keys["s"] || keys["arrowdown"]) { moveZ += 1; playerPos.facing = 'down'; }
+  if (keys["a"] || keys["arrowleft"]) { moveX -= 1; playerPos.facing = 'left'; }
+  if (keys["d"] || keys["arrowright"]) { moveX += 1; playerPos.facing = 'right'; }
+
+  playerPos.isMoving = (moveX !== 0 || moveZ !== 0);
+
+  if (playerPos.isMoving) {
+    const len = Math.hypot(moveX, moveZ);
+    playerPos.x += (moveX / len) * currentSpeed;
+    playerPos.z += (moveZ / len) * currentSpeed;
+
+    // 步態擺動節奏
+    const cycleStep = gameState.isRunning ? 0.38 : 0.22;
+    playerPos.walkCycle += cycleStep;
+
+    // 跑步衝刺體力消耗與塵土氣流粒子
+    if (gameState.isRunning) {
+      if (Math.random() < 0.45) {
+        sprintParticles.push({
+          x: playerPos.x + (Math.random() - 0.5) * 1.5,
+          z: playerPos.z + 0.5,
+          radius: Math.random() * 2 + 1.5,
+          alpha: 0.65,
+          decay: 0.04
+        });
+      }
+      if (Math.floor(playerPos.walkCycle) % 12 === 0) {
         gameState.stamina = Math.max(8, gameState.stamina - 0.35);
         updateBars();
       }
     }
+
+    // 腳步輕微音效
+    if (Math.floor(playerPos.walkCycle) % 8 === 0) {
+      playTone(gameState.isRunning ? 210 : 170, 'square', 0.03, 0.02);
+    }
   }
 
-  // 雙北擴大道路邊界限制
-  playerPos.x = Math.max(-170, Math.min(170, playerPos.x));
-  playerPos.z = Math.max(-150, Math.min(150, playerPos.z));
+  // 雙倍大地圖邊界限制 (-195 ~ +195, -170 ~ +170)
+  playerPos.x = Math.max(-195, Math.min(195, playerPos.x));
+  playerPos.z = Math.max(-170, Math.min(170, playerPos.z));
 
-  // 更新 FPV 3D 攝影機
-  if (activeEngine === '3d' && camera) {
-    // 步態自然晃動 (Head-Bobbing)
-    const bob = (forward !== 0 || strafe !== 0) ? Math.sin(walkCycle * 2) * 0.04 : 0;
-    camera.position.set(playerPos.x, fpv.eyeHeight + bob, playerPos.z);
-
-    // 依據 yaw 與 pitch 計算注視點目標
-    const lookTarget = new THREE.Vector3(
-      playerPos.x - Math.sin(fpv.yaw) * Math.cos(fpv.pitch) * 10,
-      fpv.eyeHeight + bob + Math.sin(fpv.pitch) * 10,
-      playerPos.z - Math.cos(fpv.yaw) * Math.cos(fpv.pitch) * 10
-    );
-    camera.lookAt(lookTarget);
-  }
+  // 動態攝影機平滑跟隨 (Smooth Lerp Camera)
+  camera.x += (playerPos.x - camera.x) * 0.12;
+  camera.z += (playerPos.z - camera.z) * 0.12;
+  camera.currentScale += (camera.targetScale - camera.currentScale) * 0.1;
 
   // 更新圓形雷達小地圖指針
   updateMinimapRadar();
@@ -1147,26 +337,27 @@ function updateMovement() {
 function updateMinimapRadar() {
   const dot = document.getElementById("radarPlayerDot");
   if (!dot) return;
-  // 將地圖世界座標 (-170~170, -150~150) 映射至雷達圓圈 (0~80px)
-  const normX = ((playerPos.x + 170) / 340) * 72 + 4;
-  const normZ = ((playerPos.z + 150) / 300) * 72 + 4;
+  // 將雙倍大地圖座標 (-195~195, -170~170) 映射至雷達圓圈
+  const normX = ((playerPos.x + 195) / 390) * 72 + 4;
+  const normZ = ((playerPos.z + 170) / 340) * 72 + 4;
   dot.style.left = `${normX}px`;
   dot.style.top = `${normZ}px`;
 }
 
-/* ─── 9. 公車通勤與鳥瞰快轉過場動畫系統 (Fast-Forward Transit Cutscene) ─── */
+/* ─── 7. 公車移動與空拍鳥瞰過場系統 ─── */
+function updateBusWorld() {
+  // 307 公車沿著專用道巡迴行駛
+  bus307.x += bus307.dir * bus307.speed;
+  if (bus307.x > 50) bus307.dir = -1;
+  else if (bus307.x < -60) bus307.dir = 1;
+}
+
 const transitHud = document.getElementById("transitHud");
 const transitBadge = document.getElementById("transitBadge");
 const transitStatus = document.getElementById("transitStatus");
 
-/**
- * 登上公車，顯示快轉按鈕 HUD
- */
 function boardTaipeiBus(line, dest) {
-  if (gameState.money < 15) {
-    alert("悠遊卡餘額不足一段票 $15 囉！");
-    return;
-  }
+  if (gameState.money < 15) return alert("悠遊卡餘額不足一段票 $15 囉！");
   gameState.money -= 15;
   playBusChime();
   updateBars();
@@ -1176,22 +367,16 @@ function boardTaipeiBus(line, dest) {
   gameState.transitDest = dest;
 
   transitBadge.innerText = `🚌 307 幹線公車 (${dest === 'zhongshan' ? '台北車站 ➔ 中山商圈' : '中山商圈 ➔ 台北車站'})`;
-  transitStatus.innerText = "車輛平穩行駛中，可點擊右方按鈕啟用鳥瞰快轉過場動畫...";
+  transitStatus.innerText = "車輛已發車平穩行駛中，可點擊右方按鈕啟用鳥瞰快轉過場...";
   transitHud.style.display = "flex";
 
-  showNavToast("🚌 悠遊卡扣款 $15！已登上 307 公車，可點擊右下快轉鍵直接過場！");
+  showNavToast("🚌 悠遊卡扣款 $15！已登上 307 公車，可點擊快轉鍵啟用高空鳥瞰過場！");
   gameState.quests.bus = true;
   updateQuestProgress();
 }
 
-/**
- * 捷運地下月台搭車
- */
 function boardMrtTrain(line) {
-  if (gameState.money < 20) {
-    alert("悠遊卡餘額不足 $20 囉！");
-    return;
-  }
+  if (gameState.money < 20) return alert("悠遊卡餘額不足 $20 囉！");
   gameState.money -= 20;
   playMrtChime();
   updateBars();
@@ -1208,72 +393,474 @@ function boardMrtTrain(line) {
   showNavToast("🚇 嗶！悠遊卡扣款 $20！列車已發車，可點擊快轉鍵啟用鳥瞰過場！");
 }
 
-/**
- * 點擊【⏩ 快轉過場動畫 (空拍鳥瞰)】
- */
 function triggerFastForwardTransition() {
   if (!gameState.inTransit) return;
   gameState.fastForwarding = true;
   gameState.fastForwardProgress = 0;
+  camera.targetScale = 5.2; // 縮小為高空衛星鳥瞰大地圖視角
   playTone(880, 'sine', 0.25, 0.2);
-  transitStatus.innerText = "🚀 鏡頭拉升至高空空拍鳥瞰！全速行駛中...";
+  transitStatus.innerText = "🚀 鏡頭平滑拉升至高空空拍鳥瞰！全速行駛中...";
 }
 
-/**
- * 空拍鳥瞰過場逐幀插值演算 (從第一人稱平滑拉到空拍 140m，再降回第一人稱)
- */
 function updateFastForwardCutscene() {
-  gameState.fastForwardProgress += 0.012;
+  gameState.fastForwardProgress += 0.014;
   const p = gameState.fastForwardProgress;
 
-  // 目標目的地座標
   const destCoords = (gameState.transitDest === 'zhongshan')
-    ? { x: 48, z: -35, name: '中山商圈・CoCo門市前' }
+    ? { x: 70, z: -35, name: '中山商圈・CoCo門市前' }
     : { x: 0, z: 14, name: '台北車站・忠孝西路站前' };
 
-  // 玩家世界座標平滑滑向目的地
-  playerPos.x += (destCoords.x - playerPos.x) * 0.04;
-  playerPos.z += (destCoords.z - playerPos.z) * 0.04;
+  playerPos.x += (destCoords.x - playerPos.x) * 0.045;
+  playerPos.z += (destCoords.z - playerPos.z) * 0.045;
 
-  if (activeEngine === '3d' && camera) {
-    let camHeight = 1.7;
-    let targetPitch = 0;
-
-    if (p < 0.3) {
-      // 階段 1：鏡頭迅速拉升至 135m 空拍鳥瞰
-      const ratio = p / 0.3;
-      camHeight = 1.7 + (135 - 1.7) * Math.sin(ratio * Math.PI / 2);
-      targetPitch = -(Math.PI / 2) * ratio; // 垂直俯視
-    } else if (p < 0.75) {
-      // 階段 2：在高空快速滑行俯瞰雙北完整路網與車流
-      camHeight = 135;
-      targetPitch = -Math.PI / 2;
-    } else if (p < 1.0) {
-      // 階段 3：抵達目標站牌，鏡頭平滑下降回 1.7m 主角第一人稱之眼
-      const ratio = (1.0 - p) / 0.25;
-      camHeight = 1.7 + (135 - 1.7) * Math.sin(ratio * Math.PI / 2);
-      targetPitch = -(Math.PI / 2) * ratio;
-    }
-
-    camera.position.set(playerPos.x, camHeight, playerPos.z);
-    camera.rotation.x = targetPitch;
+  if (p >= 0.75) {
+    camera.targetScale = 19; // 降回地面正常視角
   }
 
-  // 過場完成抵達
   if (p >= 1.0) {
     gameState.fastForwarding = false;
     gameState.inTransit = false;
     transitHud.style.display = "none";
     playerPos.x = destCoords.x;
     playerPos.z = destCoords.z;
-    fpv.pitch = 0;
+    camera.targetScale = 19;
     playBusChime();
     showNavToast(`📍 抵達【${destCoords.name}】！請親自步行探索街區！`);
     showDetectiveDialogue(`「已順利抵達目的地！下車步行調查吧！」`, "都會調查員");
   }
 }
 
-/* ─── 10. 步行距離檢測與互動觸發 ─── */
+/* ─── 8. 現代 2D/2.5D 動漫都會冒險渲染核心 (Y-Sorting 深度分層) ─── */
+function renderScene() {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const scale = camera.currentScale;
+
+  // 1. 背景天色 (依據天氣時段)
+  ctx.fillStyle = gameState.weather === 'sunny' ? '#0f1f38' : (gameState.weather === 'sunset' ? '#2e1c2b' : '#070d18');
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const screenX = (val) => (val - camera.x) * scale;
+  const screenZ = (val) => (val - camera.z) * scale;
+
+  // ──────────────────────────────────────────
+  // 第一層：地表鋪面與路網 (Ground Roads & Pavement)
+  // ──────────────────────────────────────────
+
+  // 忠孝西路 (東西向大道，寬 40m，z: -20 ~ 20)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-200), screenZ(-20), 400 * scale, 40 * scale);
+
+  // 忠孝西路 中央公車專用道 (深藍柏油)
+  ctx.fillStyle = '#1e385c';
+  ctx.fillRect(screenX(-200), screenZ(-5), 400 * scale, 10 * scale);
+
+  // 公車專用道白色虛線分道線
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath();
+  ctx.moveTo(screenX(-200), screenZ(-5));
+  ctx.lineTo(screenX(200), screenZ(-5));
+  ctx.moveTo(screenX(-200), screenZ(5));
+  ctx.lineTo(screenX(200), screenZ(5));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 雙黃線 (z: 0)
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-200), screenZ(-0.4), 400 * scale, 0.8 * scale);
+
+  // 南北兩側人行道
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(screenX(-200), screenZ(-40), 400 * scale, 20 * scale);
+  ctx.fillRect(screenX(-200), screenZ(20), 400 * scale, 20 * scale);
+
+  // 中山北路一段 (南北向林蔭大道，寬 36m，x: 60 ~ 96)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(60), screenZ(-180), 36 * scale, 360 * scale);
+  // 中山北路東側人行道 (x: 96 ~ 120)
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(screenX(96), screenZ(-180), 24 * scale, 360 * scale);
+
+  // 館前路 (南北向站前大道，x: -35 ~ -5, z: 20 ~ 170)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-35), screenZ(20), 30 * scale, 150 * scale);
+
+  // 重慶南路 (x: -125 ~ -95, z: -180 ~ 180)
+  ctx.fillRect(screenX(-125), screenZ(-180), 30 * scale, 360 * scale);
+
+  // 斑馬線 (行人穿越道)
+  ctx.fillStyle = '#ffffff';
+  // 中山北路 ✕ 忠孝西路 路口斑馬線
+  for (let z = -16; z <= 16; z += 4.5) {
+    ctx.fillRect(screenX(55), screenZ(z), 5 * scale, 2.2 * scale);
+    ctx.fillRect(screenX(96), screenZ(z), 5 * scale, 2.2 * scale);
+  }
+  // 館前路口斑馬線
+  for (let x = -30; x <= 0; x += 4.5) {
+    ctx.fillRect(screenX(x), screenZ(18), 2.2 * scale, 5 * scale);
+  }
+
+  // 淡水河水面波紋 (x: -180 ~ -140)
+  ctx.fillStyle = '#0369a1';
+  ctx.fillRect(screenX(-200), screenZ(-90), 55 * scale, 100 * scale);
+  ctx.fillStyle = '#38bdf8';
+  const waveOffset = (Date.now() / 300) % 10;
+  for (let wy = -85; wy <= 0; wy += 12) {
+    ctx.fillRect(screenX(-195 + waveOffset), screenZ(wy), 18 * scale, 1.5 * scale);
+  }
+
+  // ──────────────────────────────────────────
+  // 第二層：地標發光圈與地板裝飾 (Pill Markers)
+  // ──────────────────────────────────────────
+  interactables.forEach(it => {
+    const ix = screenX(it.x);
+    const iz = screenZ(it.z);
+    ctx.beginPath();
+    ctx.arc(ix, iz, it.r * scale * 0.75, 0, Math.PI * 2);
+    ctx.strokeStyle = '#00d2ff';
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // 奔跑塵土粒子渲染
+  for (let i = sprintParticles.length - 1; i >= 0; i--) {
+    const p = sprintParticles[i];
+    p.alpha -= p.decay;
+    if (p.alpha <= 0) {
+      sprintParticles.splice(i, 1);
+      continue;
+    }
+    ctx.beginPath();
+    ctx.arc(screenX(p.x), screenZ(p.z), p.radius * scale * 0.15, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226, 232, 240, ${p.alpha})`;
+    ctx.fill();
+  }
+
+  // ──────────────────────────────────────────
+  // 第三層：動態深度排序 (Y-Sorting Render List)
+  // ──────────────────────────────────────────
+  // 將所有建築、公車、NPC 行人與玩家依照 Z 座標排序，呈現精緻遮蔽感
+  const renderList = [];
+
+  // 1. 建築物件加入渲染清單
+  // CoCo 都可 (中山北路門市)
+  renderList.push({
+    z: -35,
+    draw: () => {
+      const bx = screenX(92 - 12);
+      const bz = screenZ(-35 - 10);
+      // 店面主體
+      ctx.fillStyle = '#ffffff';
+      drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // CoCo 正宗亮橘波浪招牌
+      ctx.fillStyle = '#f97316';
+      drawSafeRoundRect(ctx, bx - 2, bz, 28 * scale, 5.5 * scale, 4);
+      ctx.fill();
+
+      // 圓形微笑標誌
+      ctx.beginPath();
+      ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 2.2 * scale, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 1.6 * scale, 0, Math.PI * 2);
+      ctx.fillStyle = '#f97316';
+      ctx.fill();
+
+      // 招牌大字 "CoCo 都可"
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(12, scale * 0.85)}px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText('CoCo 都可 (手搖飲)', bx + 8 * scale, bz + 3.8 * scale);
+
+      // 服務點餐木質吧檯與 2 只大茶桶
+      ctx.fillStyle = '#78350f';
+      drawSafeRoundRect(ctx, bx + 5 * scale, bz + 12 * scale, 14 * scale, 4 * scale, 3);
+      ctx.fill();
+      // 不銹鋼大茶桶
+      ctx.fillStyle = '#e2e8f0';
+      drawSafeRoundRect(ctx, bx + 7 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+      ctx.fill();
+      drawSafeRoundRect(ctx, bx + 14 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+      ctx.fill();
+    }
+  });
+
+  // 全家 FamilyMart (中山店)
+  renderList.push({
+    z: 25,
+    draw: () => {
+      const bx = screenX(92 - 12);
+      const bz = screenZ(25 - 10);
+      ctx.fillStyle = '#f8fafc';
+      drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 經典藍綠雙色燈箱
+      ctx.fillStyle = '#009944';
+      ctx.fillRect(bx, bz, 24 * scale, 3 * scale);
+      ctx.fillStyle = '#0068b7';
+      ctx.fillRect(bx, bz + 3 * scale, 24 * scale, 2.5 * scale);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(12, scale * 0.8)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('FamilyMart 全家 (中山店)', bx + 12 * scale, bz + 4 * scale);
+    }
+  });
+
+  // 台北車站主體大樓
+  renderList.push({
+    z: -65,
+    draw: () => {
+      const bx = screenX(-35);
+      const bz = screenZ(-90);
+      // 車站基座
+      ctx.fillStyle = '#334155';
+      drawSafeRoundRect(ctx, bx, bz, 70 * scale, 36 * scale, 8);
+      ctx.fill();
+      // 傳統宮殿屋頂
+      ctx.fillStyle = '#7c2d12';
+      drawSafeRoundRect(ctx, bx - 4 * scale, bz - 6 * scale, 78 * scale, 14 * scale, 6);
+      ctx.fill();
+
+      // 站名文字與站前大鐘
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = `bold ${Math.max(14, scale * 1.1)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🚇 台北車站 TAIPEI MAIN STATION', bx + 35 * scale, bz + 18 * scale);
+    }
+  });
+
+  // 捷運出入口 M6 亭
+  renderList.push({
+    z: 24,
+    draw: () => {
+      const bx = screenX(24 - 6);
+      const bz = screenZ(24 - 5);
+      ctx.fillStyle = '#0284c7';
+      drawSafeRoundRect(ctx, bx, bz, 12 * scale, 10 * scale, 5);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Ⓜ️ 捷運 M6 手扶梯', bx + 6 * scale, bz + 6 * scale);
+    }
+  });
+
+  // 公車專用道候車站島
+  renderList.push({
+    z: 2,
+    draw: () => {
+      const bx = screenX(-18);
+      const bz = screenZ(0);
+      ctx.fillStyle = '#334155';
+      drawSafeRoundRect(ctx, bx, bz, 36 * scale, 4.5 * scale, 4);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🚌 忠孝專用道候車站【307】', bx + 18 * scale, bz + 3.2 * scale);
+    }
+  });
+
+  // 307 幹線公車本體
+  renderList.push({
+    z: bus307.z,
+    draw: () => {
+      const bx = screenX(bus307.x - bus307.w / 2);
+      const bz = screenZ(bus307.z - bus307.d / 2);
+
+      // 車身陰影
+      ctx.beginPath();
+      ctx.ellipse(bx + (bus307.w / 2) * scale, bz + (bus307.d) * scale, (bus307.w / 2) * scale, 3 * scale, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fill();
+
+      // 低底盤綠色車身
+      ctx.fillStyle = '#10b981';
+      drawSafeRoundRect(ctx, bx, bz, bus307.w * scale, bus307.d * scale, 5);
+      ctx.fill();
+
+      // 白色腰線
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(bx, bz + 1.6 * scale, bus307.w * scale, 1.2 * scale);
+
+      // LED 路線看板
+      ctx.fillStyle = '#0f172a';
+      drawSafeRoundRect(ctx, bx + 2 * scale, bz + 0.4 * scale, 14 * scale, 1.5 * scale, 2);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = `bold ${Math.max(9, scale * 0.55)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('307 幹線 ➔ 南京東路', bx + 9 * scale, bz + 1.5 * scale);
+    }
+  });
+
+  // NPC 行人
+  pedestrians.forEach(p => {
+    // 行人步行動畫位移
+    p.walkCycle += 0.12;
+    if (p.isZAxis) {
+      p.z += p.dir * p.speed;
+      if (p.z >= p.maxZ) p.dir = -1;
+      else if (p.z <= p.minZ) p.dir = 1;
+    } else {
+      p.x += p.dir * p.speed;
+      if (p.x >= p.maxX) p.dir = -1;
+      else if (p.x <= p.minX) p.dir = 1;
+    }
+
+    renderList.push({
+      z: p.z,
+      draw: () => {
+        const px = screenX(p.x);
+        const pz = screenZ(p.z);
+        // 影子
+        ctx.beginPath();
+        ctx.ellipse(px, pz + 2, 8, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fill();
+
+        // 身體
+        ctx.fillStyle = p.shirt;
+        drawSafeRoundRect(ctx, px - 6, pz - 16, 12, 12, 3);
+        ctx.fill();
+        // 頭部
+        ctx.beginPath();
+        ctx.arc(px, pz - 21, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fed7aa';
+        ctx.fill();
+        // 褲子與腳擺動
+        ctx.fillStyle = p.pants;
+        const legSwing = Math.sin(p.walkCycle) * 3;
+        ctx.fillRect(px - 4, pz - 4, 3, 5 + legSwing);
+        ctx.fillRect(px + 1, pz - 4, 3, 5 - legSwing);
+      }
+    });
+  });
+
+  // 遠端連線其他玩家
+  remotePlayers.forEach(rp => {
+    renderList.push({
+      z: rp.z || 0,
+      draw: () => {
+        const rx = screenX(rp.x || 0);
+        const rz = screenZ(rp.z || 0);
+        ctx.fillStyle = '#059669';
+        drawSafeRoundRect(ctx, rx - 7, rz - 18, 14, 14, 3);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(rx, rz - 23, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#fed7aa';
+        ctx.fill();
+
+        ctx.fillStyle = '#34d399';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(rp.nickname, rx, rz - 34);
+      }
+    });
+  });
+
+  // 主角 (都會調查員)
+  renderList.push({
+    z: playerPos.z,
+    draw: () => {
+      const px = screenX(playerPos.x);
+      const pz = screenZ(playerPos.z);
+
+      // 影子 (奔跑時拉長)
+      ctx.beginPath();
+      const shadowW = gameState.isRunning ? 14 : 10;
+      ctx.ellipse(px, pz + 2, shadowW, 5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fill();
+
+      // 滑板
+      if (gameState.hasSkateboard) {
+        ctx.fillStyle = '#ef4444';
+        drawSafeRoundRect(ctx, px - 12, pz, 24, 5, 2);
+        ctx.fill();
+      }
+
+      // 軀幹 (深藍調查風衣)
+      ctx.fillStyle = '#1d4ed8';
+      drawSafeRoundRect(ctx, px - 7, pz - 18, 14, 14, 3);
+      ctx.fill();
+
+      // 雙臂與雙腿動畫
+      ctx.fillStyle = '#1e293b';
+      const legSwing = Math.sin(playerPos.walkCycle) * (gameState.isRunning ? 5 : 3);
+      ctx.fillRect(px - 5, pz - 4, 3.5, 6 + legSwing);
+      ctx.fillRect(px + 1.5, pz - 4, 3.5, 6 - legSwing);
+
+      // 頸部與頭部
+      ctx.beginPath();
+      ctx.arc(px, pz - 24, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#fed7aa';
+      ctx.fill();
+
+      // 調查員鴨舌帽
+      ctx.fillStyle = '#0f172a';
+      drawSafeRoundRect(ctx, px - 8, pz - 31, 16, 7, 3);
+      ctx.fill();
+
+      // 頭頂對話氣泡
+      ctx.fillStyle = 'rgba(10, 25, 50, 0.9)';
+      drawSafeRoundRect(ctx, px - 65, pz - 60, 130, 22, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#00d2ff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(gameState.currentBubble, px, pz - 45);
+    }
+  });
+
+  // 依據 Z 軸進行排序並繪製
+  renderList.sort((a, b) => a.z - b.z);
+  renderList.forEach(item => item.draw());
+
+  // ──────────────────────────────────────────
+  // 第四層：頂層高架橋與動態光影遮罩 (Overhead Viaduct & Lighting)
+  // ──────────────────────────────────────────
+  // 市民大道空中高架橋 (z: -120，懸浮於所有街道上方)
+  const bridgeZ = screenZ(-120);
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(screenX(-200), bridgeZ - 10 * scale, 400 * scale, 18 * scale);
+  // 高架橋金屬護欄與標線
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(screenX(-200), bridgeZ - 10 * scale, 400 * scale, 1.5 * scale);
+  ctx.fillRect(screenX(-200), bridgeZ + 8 * scale, 400 * scale, 1.5 * scale);
+  // 高架橋在地面投射之立體陰影
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  ctx.fillRect(screenX(-200), bridgeZ + 8 * scale, 400 * scale, 12 * scale);
+
+  ctx.restore();
+}
+
+/* ─── 9. 地點偵測與互動判定 ─── */
 const interactPrompt = document.getElementById("interactPrompt");
 const interactLabel = document.getElementById("interactLabel");
 const actionPillsStack = document.getElementById("actionPillsStack");
@@ -1282,26 +869,26 @@ let lastNearestId = null;
 let hasPlayedDoorbell = false;
 
 function checkProximityAndLocation() {
-  // 1. 動態街道名稱判定
   let currentLoc = "忠孝西路一段 ✕ 館前路口";
-  if (Math.hypot(playerPos.x - 72, playerPos.z - (-30)) < 18) currentLoc = "中山北路一段・CoCo都可手搖飲門市";
-  else if (Math.hypot(playerPos.x - 72, playerPos.z - 20) < 18) currentLoc = "中山北路一段・全家便利商店";
-  else if (Math.hypot(playerPos.x - 0, playerPos.z - 2) < 16) currentLoc = "忠孝西路公車專用道【台北車站(忠孝)】";
-  else if (Math.hypot(playerPos.x - 22, playerPos.z - 24) < 16) currentLoc = "台北車站南側廣場 ✕ M6捷運出入口";
-  else if (Math.hypot(playerPos.x - (-35), playerPos.z - 28) < 16) currentLoc = "館前路商圈・站前全家超商";
-  else if (Math.hypot(playerPos.x - (-90), playerPos.z - (-80)) < 24) currentLoc = "建成圓環 ✕ 寧夏夜市美食街";
-  else if (Math.hypot(playerPos.x - 75, playerPos.z - 75) < 20) currentLoc = "北投分局・刑事偵查隊";
+  if (Math.hypot(playerPos.x - 92, playerPos.z - (-35)) < 18) currentLoc = "中山北路一段・CoCo都可手搖飲門市";
+  else if (Math.hypot(playerPos.x - 92, playerPos.z - 25) < 18) currentLoc = "中山北路一段・全家便利商店";
+  else if (Math.hypot(playerPos.x - 0, playerPos.z - 2) < 16) currentLoc = "忠孝西路中央公車專用道【台北車站(忠孝)】";
+  else if (Math.hypot(playerPos.x - 24, playerPos.z - 24) < 16) currentLoc = "台北車站南側廣場 ✕ M6捷運出入口";
+  else if (Math.hypot(playerPos.x - (-45), playerPos.z - 32) < 18) currentLoc = "館前路商業廊道・站前全家超商";
+  else if (Math.hypot(playerPos.x - (-110), playerPos.z - (-120)) < 24) currentLoc = "建成圓環 ✕ 寧夏夜市美食小吃街";
+  else if (Math.hypot(playerPos.x - 130, playerPos.z - 120) < 22) currentLoc = "北投分局・刑事偵查隊";
+  else if (Math.hypot(playerPos.x - (-160), playerPos.z - (-40)) < 22) currentLoc = "淡水河水岸碼頭棧道";
 
   if (gameState.currentLocationName !== currentLoc) {
     gameState.currentLocationName = currentLoc;
     if (locationText) locationText.innerText = currentLoc;
   }
 
-  // 2. 體力警報
+  // 體力警告
   const warnBanner = document.getElementById("staminaWarningBanner");
   if (warnBanner) warnBanner.style.display = gameState.stamina <= 18 ? "flex" : "none";
 
-  // 3. 實體互動範圍判定
+  // 實體互動範圍
   let nearest = null;
   let minD = 999;
 
@@ -1354,6 +941,8 @@ function updateActionPills(item) {
     addActionPill("🚓 進行筆錄對質逮捕", "🚨", () => openInterrogateModal());
   } else if (item.type === "nightmarket") {
     addActionPill("🏮 品嚐夜市美食", "E", () => openNightMarketModal());
+  } else if (item.type === "ferry") {
+    addActionPill("🚢 欣賞淡水河風景", "E", () => openFerryModal());
   } else if (item.type === "clue_ground") {
     addActionPill("📜 調查花圃暗號紙條", "E", () => guideToClue());
   } else if (item.type === "rest") {
@@ -1383,6 +972,7 @@ function triggerCurrentInteraction() {
   else if (type === "familymart") openStoreModal();
   else if (type === "police") openCctvModal();
   else if (type === "nightmarket") openNightMarketModal();
+  else if (type === "ferry") openFerryModal();
   else if (type === "rest") openRestModal();
   else if (type === "clue_ground") guideToClue();
 }
@@ -1394,21 +984,20 @@ function guideToClue() {
   updateQuestProgress();
 }
 
-/* ─── 11. 雙北地圖路線規劃 (嚴格禁止直接傳送，僅供路線指引) ─── */
 function alertPlanRoute(routeId) {
   if (routeId === 'bus_307') {
     showNavToast("🚌 307 幹線公車：請走到忠孝西路中央專用道候車站牌，嗶卡上車即可啟用快轉過場！");
   } else if (routeId === 'bus_zs') {
     showNavToast("🚌 中山幹線公車：沿中山北路林蔭大道行駛，停靠 CoCo 都可門市前站牌！");
   } else if (routeId === 'mrt_red') {
-    showNavToast("🚇 捷運淡水信義線：請走到站前 M6 或 中山 R4 出入口，搭乘手扶梯進入地下月台！");
+    showNavToast("🚇 捷運淡水信義線：請走到站前 M6 或 中山出入口，搭乘手扶梯進入地下月台！");
   } else if (routeId === 'bus_cd') {
     showNavToast("🚌 承德幹線：沿重慶北路通往寧夏夜市，請前往西側站牌搭乘！");
   }
   closeModal('mapModal');
 }
 
-/* ─── 12. 商店消費、物品與對質逮捕 ─── */
+/* ─── 10. 消費、物品與對質逮捕 ─── */
 function buyBobaTea() {
   if (gameState.money < 50) return alert("悠遊卡餘額不足 $50 囉！");
   gameState.money -= 50;
@@ -1463,7 +1052,7 @@ function buySkateboard() {
   const btn = document.getElementById("btnSkateboard");
   if (btn) { btn.innerText = "已裝備"; btn.disabled = true; }
   playTone(850, 'triangle', 0.15);
-  alert("🛹 裝備極速電動滑板！移動速度提升 65%！穿梭雙北街頭如風馳掣！");
+  alert("🛹 裝備極速電動滑板！移動速度提升至 1.10！疾馳全雙北街區！");
   closeModal('storeModal');
 }
 
@@ -1482,7 +1071,7 @@ function restAndRecover() {
   gameState.stamina = Math.min(100, gameState.stamina + 50);
   updateBars();
   playTone(520, 'sine', 0.15);
-  alert("🛏️ 在綠化候車長椅閉目休息片刻，體力恢復 +50！");
+  alert("🛏️ 在候車長椅閉目休息片刻，體力恢復 +50！");
   closeModal('restModal');
 }
 
@@ -1591,7 +1180,7 @@ function closeDialogueBox() {
   if (box) box.style.display = "none";
 }
 
-/* ─── 13. 天氣、彈窗與 UI 控制 ─── */
+/* ─── 11. 天氣、彈窗與 UI 控制 ─── */
 function toggleWeather() {
   const icon = document.getElementById("weatherIcon");
   const text = document.getElementById("weatherTimeText");
@@ -1600,26 +1189,14 @@ function toggleWeather() {
     gameState.weather = 'sunset';
     if (icon) icon.innerText = "🌇";
     if (text) text.innerText = "傍晚 17:15";
-    if (scene && sunLight) {
-      sunLight.color.setHex(0xf97316);
-      scene.fog.color.setHex(0x2a1b2d);
-    }
   } else if (gameState.weather === 'sunset') {
     gameState.weather = 'night';
     if (icon) icon.innerText = "🌙";
     if (text) text.innerText = "晴夜 20:30";
-    if (scene && sunLight) {
-      sunLight.color.setHex(0x38bdf8);
-      scene.fog.color.setHex(0x060d1a);
-    }
   } else {
     gameState.weather = 'sunny';
     if (icon) icon.innerText = "☀️";
     if (text) text.innerText = "晴天 10:24";
-    if (scene && sunLight) {
-      sunLight.color.setHex(0xfffaed);
-      scene.fog.color.setHex(0x0a1426);
-    }
   }
   playTone(500, 'sine', 0.05);
 }
@@ -1637,6 +1214,7 @@ function openCocoModal() { document.getElementById("cocoModal").style.display = 
 function openStoreModal() { document.getElementById("storeModal").style.display = "flex"; }
 function openMrtStationModal() { document.getElementById("mrtStationModal").style.display = "flex"; }
 function openNightMarketModal() { document.getElementById("nightMarketModal").style.display = "flex"; }
+function openFerryModal() { document.getElementById("ferryModal").style.display = "flex"; }
 function openRestModal() { document.getElementById("restModal").style.display = "flex"; }
 function openCctvModal() {
   gameState.quests.tib = true;
@@ -1651,7 +1229,7 @@ function openMapModal() { updateQuestProgress(); document.getElementById("mapMod
 function openSettingsModal() { document.getElementById("settingsModal").style.display = "flex"; }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
-/* ─── 14. 專屬私服器 (WebSocket) 連線與多人同屏 ─── */
+/* ─── 12. 專屬私服器 (WebSocket) 連線與多人同屏 ─── */
 let socket = null;
 const remotePlayers = new Map();
 let isOnlineWithServer = false;
@@ -1670,9 +1248,9 @@ function initPrivateServerConnection() {
     socket.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === 'init') msg.players.forEach(p => syncRemotePlayer(p));
-        else if (msg.type === 'player_move') syncRemotePlayer(msg);
-        else if (msg.type === 'player_leave') removeRemotePlayer(msg.id);
+        if (msg.type === 'init') msg.players.forEach(p => remotePlayers.set(p.id, p));
+        else if (msg.type === 'player_move') remotePlayers.set(msg.id, msg);
+        else if (msg.type === 'player_leave') remotePlayers.delete(msg.id);
         else if (msg.type === 'chat_broadcast') appendChatMessage(msg.nickname, msg.text);
       } catch (err) {}
     };
@@ -1683,33 +1261,12 @@ function initPrivateServerConnection() {
   }
 }
 
-function syncRemotePlayer(p) {
-  remotePlayers.set(p.id, p);
-  if (activeEngine === '3d' && scene) {
-    let r3d = otherPlayers3D.get(p.id);
-    if (!r3d) {
-      r3d = createHumanoidMesh({ shirtColor: 0x059669, pantsColor: 0x1e293b });
-      scene.add(r3d.root);
-      otherPlayers3D.set(p.id, r3d);
-    }
-    r3d.root.position.set(p.x || 0, 0, p.z || 0);
-  }
-}
-
-function removeRemotePlayer(id) {
-  remotePlayers.delete(id);
-  if (otherPlayers3D.has(id)) {
-    scene.remove(otherPlayers3D.get(id).root);
-    otherPlayers3D.delete(id);
-  }
-}
-
 function spawnSimulatedCitizens() {
   if (remotePlayers.size > 0) return;
   const bot1 = { id: 'bot_1', nickname: '市民_小涵', x: 26, z: 20 };
-  const bot2 = { id: 'bot_2', nickname: '市民_益碩', x: 55, z: -25 };
-  syncRemotePlayer(bot1);
-  syncRemotePlayer(bot2);
+  const bot2 = { id: 'bot_2', nickname: '市民_益碩', x: 75, z: -25 };
+  remotePlayers.set(bot1.id, bot1);
+  remotePlayers.set(bot2.id, bot2);
 }
 
 function sendChatMessage() {
@@ -1759,30 +1316,17 @@ function reconnectCustomServer() {
   }
 }
 
-/* ─── 15. 視窗適應與主渲染循環 ─── */
+/* ─── 13. 視窗適應與 60FPS 現代遊戲循環 ─── */
 window.addEventListener("resize", () => {
-  if (activeEngine === '3d' && camera && renderer) {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  } else if (activeEngine === '2.5d' && canvas2D) {
-    canvas2D.width = window.innerWidth;
-    canvas2D.height = window.innerHeight;
-  }
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 });
 
 function gameLoop() {
   requestAnimationFrame(gameLoop);
   updateMovement();
-
-  if (activeEngine === '3d') {
-    update3DPedestrians();
-    if (renderer && scene && camera) {
-      renderer.render(scene, camera);
-    }
-  } else if (activeEngine === '2.5d') {
-    render2DScene();
-  }
+  updateBusWorld();
+  renderScene();
 }
 gameLoop();
 

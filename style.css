@@ -1071,3 +1071,49 @@ body {
   to { box-shadow: 0 0 24px rgba(16, 185, 129, 0.85); transform: scale(1.03); }
 }
 
+/* 跑步 / 走路雙速衝刺切換按鈕 */
+.sprint-toggle-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 175px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1.5px solid #38bdf8;
+  border-radius: 22px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+  cursor: pointer;
+  z-index: 25;
+  box-shadow: 0 4px 16px rgba(0, 210, 255, 0.35);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.sprint-toggle-btn:hover {
+  transform: scale(1.06);
+  border-color: #f59e0b;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
+.sprint-toggle-btn.running {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #fbbf24;
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.7);
+}
+
+@media (max-width: 768px) {
+  .sprint-toggle-btn {
+    bottom: 155px;
+    left: 16px;
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+}
+
+
