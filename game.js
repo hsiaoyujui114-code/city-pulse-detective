@@ -161,156 +161,131 @@ if (engineLbl) {
 /* ─── 4. 1:1 還原真實雙北街廓拓撲 ✕ 連鎖品牌門市資料庫 (50% 剪裁法則) ─── */
 // 互動地標點位 (留存店家與市場 100% 精確對齊現實路名、門牌號碼與街區相對位置，全圖超過 110+ 處真實點位)
 const interactables = [
-  // 1. 公車通勤站牌 (以 307 幹線為主軸)
-  { id: 'bus_station_zx', x: 0, z: 2, r: 8.5, type: 'bus_stop', name: '台北車站(忠孝)公車專用道站牌', line: '307', dest: 'zhongshan', label: '搭乘 307 公車 (前往中山商圈 / 南京東路)' },
-  { id: 'bus_station_zs', x: 70, z: -35, r: 8.5, type: 'bus_stop', name: '中山市場公車站牌 (CoCo前)', line: '307', dest: 'station', label: '搭乘 307 公車 (前往台北車站)' },
-  { id: 'bus_station_xf', x: -120, z: 120, r: 8.5, type: 'bus_stop', name: '板橋學府路一段公車站牌', line: '307', dest: 'station', label: '搭乘 307 公車 (經板橋至台北車站)' },
-
-  // 2. 捷運站出入口手扶梯
-  { id: 'mrt_escalator_m6', x: 24, z: 24, r: 7.5, type: 'mrt_escalator', name: '捷運出入口 M6 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
-  { id: 'mrt_escalator_zs', x: 70, z: 15, r: 7.5, type: 'mrt_escalator', name: '捷運中山站出入口 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
-  { id: 'mrt_escalator_fz', x: -140, z: 145, r: 7.5, type: 'mrt_escalator', name: '捷運府中站出入口 (板橋區)', label: '搭手扶梯進地下月台' },
-
-  // 3. 實體品牌連鎖門市與傳統市場 (遵守 50% 剪裁法則，留存門市 100% 精確對齊現實)：
-  // ──────────────────────────────────────────
-  // (A) 7-Eleven 統一超商 (28 間真實門市，經典橘綠紅三色招牌、OPENPOINT)
-  // ──────────────────────────────────────────
-  { id: 'seven_zx', x: -15, z: 28, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前忠孝店)', address: '中正區忠孝西路一段 49 號', label: '進入 7-Eleven (站前忠孝店)' },
-  { id: 'seven_gq', x: -25, z: 55, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前館前店)', address: '中正區館前路 59 號', label: '進入 7-Eleven (站前館前店)' },
-  { id: 'seven_ny', x: -5, z: 40, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前南陽店)', address: '中正區南陽街 24 號', label: '進入 7-Eleven (站前南陽店)' },
-  { id: 'seven_xc', x: 10, z: 60, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前許昌店)', address: '中正區許昌街 42 號', label: '進入 7-Eleven (站前許昌店)' },
-  { id: 'seven_gy', x: 35, z: 45, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前公園店)', address: '中正區公園路 20 號', label: '進入 7-Eleven (站前公園店)' },
-  { id: 'seven_kf', x: -25, z: 85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前開封店)', address: '中正區開封街一段 19 號', label: '進入 7-Eleven (站前開封店)' },
-  { id: 'seven_cq', x: -115, z: 75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶南路店)', address: '中正區重慶南路一段 70 號', label: '進入 7-Eleven (重慶南路店)' },
-  { id: 'seven_wc', x: -100, z: 35, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中正武昌店)', address: '中正區武昌街一段 18 號', label: '進入 7-Eleven (中正武昌店)' },
-  { id: 'seven_hy', x: -115, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中正衡陽店)', address: '中正區衡陽路 51 號', label: '進入 7-Eleven (中正衡陽店)' },
-  { id: 'seven_zs', x: 92, z: -95, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山南京店)', address: '中山區中山北路一段 120 號', label: '進入 7-Eleven (中山南京店)' },
-  { id: 'seven_ca', x: 75, z: -45, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山長安店)', address: '中山區長安西路 18 號', label: '進入 7-Eleven (中山長安店)' },
-  { id: 'seven_ms', x: 92, z: -150, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山民生店)', address: '中山區民生西路 45 號', label: '進入 7-Eleven (中山民生店)' },
-  { id: 'seven_mq', x: 92, z: -185, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山民權店)', address: '中山區中山北路二段 92 號', label: '進入 7-Eleven (中山民權店)' },
-  { id: 'seven_ls', x: 115, z: -60, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (林森條通店)', address: '中山區林森北路 119 號', label: '進入 7-Eleven (林森條通店)' },
-  { id: 'seven_circle', x: -90, z: -140, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (寧夏夜市店)', address: '大同區民生西路 188 號', label: '進入 7-Eleven (寧夏夜市店)' },
-  { id: 'seven_cqn', x: -115, z: -85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶北路店)', address: '大同區重慶北路二段 88 號', label: '進入 7-Eleven (重慶北路店)' },
-  { id: 'seven_yp', x: -145, z: -75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (延平北路店)', address: '大同區延平北路二段 135 號', label: '進入 7-Eleven (延平北路店)' },
-  { id: 'seven_dh', x: -145, z: -130, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (大稻埕迪化店)', address: '大同區迪化街一段 54 號', label: '進入 7-Eleven (大稻埕迪化店)' },
-  { id: 'seven_cj', x: -115, z: -180, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (大同昌吉店)', address: '大同區昌吉街 68 號', label: '進入 7-Eleven (大同昌吉店)' },
-  { id: 'seven_xm_hz', x: -135, z: 35, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門漢中店)', address: '萬華區漢中街 101 號', label: '進入 7-Eleven (西門漢中店)' },
-  { id: 'seven_xm_zh', x: -135, z: 80, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門中華店)', address: '萬華區中華路一段 144 號', label: '進入 7-Eleven (西門中華店)' },
-  { id: 'seven_xm_cd', x: -155, z: 50, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門成都店)', address: '萬華區成都路 27 號', label: '進入 7-Eleven (西門成都店)' },
-  { id: 'seven_xf', x: -75, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋學府門市)', address: '板橋區學府路一段 62 號', label: '進入 7-Eleven (板橋學府門市)' },
-  { id: 'seven_xf2', x: -160, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋學府二店)', address: '板橋區學府路一段 158 號', label: '進入 7-Eleven (板橋學府二店)' },
-  { id: 'seven_banqiao', x: -160, z: 160, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (府中重慶店)', address: '板橋區重慶路 15 號', label: '進入 7-Eleven (府中重慶店)' },
-  { id: 'seven_xm_bd', x: -180, z: 85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (府中縣民店)', address: '板橋區縣民大道一段 88 號', label: '進入 7-Eleven (府中縣民店)' },
-  { id: 'seven_wh', x: -95, z: 170, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋文化店)', address: '板橋區文化路一段 136 號', label: '進入 7-Eleven (板橋文化店)' },
-  { id: 'seven_wh2', x: -175, z: 170, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋文化二店)', address: '板橋區文化路一段 210 號', label: '進入 7-Eleven (板橋文化二店)' },
-
-  // ──────────────────────────────────────────
-  // (B) 全家便利商店 FamilyMart (28 間真實門市，綠藍雙色燈箱、FamiPort)
-  // ──────────────────────────────────────────
-  { id: 'fmart_station', x: -20, z: 45, r: 8.0, type: 'familymart', name: '全家便利商店 (站前館前店)', address: '中正區館前路 43 號', label: '進入全家 (站前館前店)' },
-  { id: 'fmart_zx', x: -35, z: 28, r: 8.0, type: 'familymart', name: '全家便利商店 (站前忠孝店)', address: '中正區忠孝西路一段 36 號', label: '進入全家 (站前忠孝店)' },
-  { id: 'fmart_xc', x: 5, z: 55, r: 8.0, type: 'familymart', name: '全家便利商店 (站前許昌店)', address: '中正區許昌街 17 號', label: '進入全家 (站前許昌店)' },
-  { id: 'fmart_kf', x: -15, z: 80, r: 8.0, type: 'familymart', name: '全家便利商店 (站前開封店)', address: '中正區開封街一段 14 號', label: '進入全家 (站前開封店)' },
-  { id: 'fmart_ny', x: -10, z: 60, r: 8.0, type: 'familymart', name: '全家便利商店 (站前南陽店)', address: '中正區南陽街 15 號', label: '進入全家 (站前南陽店)' },
-  { id: 'fmart_cq', x: -115, z: 95, r: 8.0, type: 'familymart', name: '全家便利商店 (重慶南路店)', address: '中正區重慶南路一段 99 號', label: '進入全家 (重慶南路店)' },
-  { id: 'fmart_hn', x: -60, z: 65, r: 8.0, type: 'familymart', name: '全家便利商店 (懷寧襄陽店)', address: '中正區襄陽路 9 號', label: '進入全家 (懷寧襄陽店)' },
-  { id: 'fmart_zs', x: 92, z: 25, r: 8.0, type: 'familymart', name: '全家便利商店 (中山北路店)', address: '中山區中山北路一段 105 號', label: '進入全家 (中山北路店)' },
-  { id: 'fmart_nj', x: 45, z: -95, r: 8.0, type: 'familymart', name: '全家便利商店 (中山南京店)', address: '中山區南京西路 12 號', label: '進入全家 (中山南京店)' },
-  { id: 'fmart_ca', x: 85, z: -45, r: 8.0, type: 'familymart', name: '全家便利商店 (中山長安店)', address: '中山區長安西路 40 號', label: '進入全家 (中山長安店)' },
-  { id: 'fmart_sl', x: 65, z: -150, r: 8.0, type: 'familymart', name: '全家便利商店 (中山雙連店)', address: '中山區民生西路 66 號', label: '進入全家 (中山雙連店)' },
-  { id: 'fmart_mq', x: 75, z: -185, r: 8.0, type: 'familymart', name: '全家便利商店 (中山民權店)', address: '中山區民權西路 32 號', label: '進入全家 (中山民權店)' },
-  { id: 'fmart_ls', x: 115, z: -110, r: 8.0, type: 'familymart', name: '全家便利商店 (林森錦州店)', address: '中山區林森北路 260 號', label: '進入全家 (林森錦州店)' },
-  { id: 'fmart_circle', x: -105, z: -75, r: 8.0, type: 'familymart', name: '全家便利商店 (建成圓環店)', address: '大同區重慶北路二段 12 號', label: '進入全家 (建成圓環店)' },
-  { id: 'fmart_nx', x: -95, z: -115, r: 8.0, type: 'familymart', name: '全家便利商店 (寧夏夜市店)', address: '大同區寧夏路 45 號', label: '進入全家 (寧夏夜市店)' },
-  { id: 'fmart_yp', x: -145, z: -95, r: 8.0, type: 'familymart', name: '全家便利商店 (延平北路店)', address: '大同區延平北路二段 96 號', label: '進入全家 (延平北路店)' },
-  { id: 'fmart_ml', x: -155, z: -125, r: 8.0, type: 'familymart', name: '全家便利商店 (迪化民樂店)', address: '大同區民樂街 22 號', label: '進入全家 (迪化民樂店)' },
-  { id: 'fmart_dq', x: -145, z: -175, r: 8.0, type: 'familymart', name: '全家便利商店 (大同大橋店)', address: '大同區延平北路三段 18 號', label: '進入全家 (大同大橋店)' },
-  { id: 'fmart_xm', x: -125, z: 50, r: 8.0, type: 'familymart', name: '全家便利商店 (西門町漢中店)', address: '萬華區漢中街 52 號', label: '進入全家 (西門漢中店)' },
-  { id: 'fmart_wc', x: -145, z: 35, r: 8.0, type: 'familymart', name: '全家便利商店 (西門武昌店)', address: '萬華區武昌街二段 37 號', label: '進入全家 (西門武昌店)' },
-  { id: 'fmart_zh', x: -135, z: 95, r: 8.0, type: 'familymart', name: '全家便利商店 (西門中華店)', address: '萬華區中華路一段 118 號', label: '進入全家 (西門中華店)' },
-  { id: 'fmart_xf', x: -145, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府店)', address: '板橋區學府路一段 146 號', label: '進入全家 (板橋學府店)' },
-  { id: 'fmart_xf2', x: -105, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府二店)', address: '板橋區學府路一段 98 號', label: '進入全家 (板橋學府二店)' },
-  { id: 'fmart_xf3', x: -185, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府三店)', address: '板橋區學府路一段 188 號', label: '進入全家 (板橋學府三店)' },
-  { id: 'fmart_fz', x: -135, z: 165, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋府中店)', address: '板橋區府中路 35 號', label: '進入全家 (板橋府中店)' },
-  { id: 'fmart_cq_bq', x: -150, z: 175, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋重慶店)', address: '板橋區重慶路 28 號', label: '進入全家 (板橋重慶店)' },
-  { id: 'fmart_xm_bq', x: -155, z: 85, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋縣民店)', address: '板橋區縣民大道一段 110 號', label: '進入全家 (板橋縣民店)' },
-  { id: 'fmart_wh_bq', x: -135, z: 170, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋文化店)', address: '板橋區文化路一段 168 號', label: '進入全家 (板橋文化店)' },
-
-  // ──────────────────────────────────────────
-  // (C) 家樂福 Carrefour (12 間旗艦大賣場與超市便利購，紅白藍雙環 C 標)
-  // ──────────────────────────────────────────
-  { id: 'carrefour_cq_flagship', x: -110, z: -150, r: 10.5, type: 'carrefour', name: '家樂福 重慶旗艦店 (雙層大賣場)', address: '大同區重慶北路二段 171 號', isFlagship: true, label: '進入家樂福重慶旗艦店 (大賣場)' },
-  { id: 'carrefour_gl_flagship', x: -150, z: 110, r: 10.5, type: 'carrefour', name: '家樂福 桂林旗艦店 (24H量販店)', address: '萬華區桂林路 1 號', isFlagship: true, label: '進入家樂福桂林旗艦店 (24H量販店)' },
-  { id: 'carrefour_xf', x: -170, z: 115, r: 9.0, type: 'carrefour', name: '家樂福便利購 (板橋學府店)', address: '板橋區學府路一段 192 號', isFlagship: false, label: '進入家樂福便利購 (學府店)' },
-  { id: 'carrefour_cq_south', x: -115, z: 110, r: 9.0, type: 'carrefour', name: '家樂福超市 (重慶南店)', address: '中正區重慶南路一段 118 號', isFlagship: false, label: '進入家樂福超市 (重慶南店)' },
-  { id: 'carrefour_zs', x: 92, z: -55, r: 9.0, type: 'carrefour', name: '家樂福超市 (中山店)', address: '中山區中山北路一段 88 號', isFlagship: false, label: '進入家樂福超市 (中山店)' },
-  { id: 'carrefour_fz', x: -130, z: 170, r: 9.0, type: 'carrefour', name: '家樂福超市 (板橋府中店)', address: '板橋區府中路 29 號', isFlagship: false, label: '進入家樂福超市 (府中店)' },
-  { id: 'carrefour_nj', x: 0, z: -95, r: 9.0, type: 'carrefour', name: '家樂福超市 (南京西店)', address: '中山區南京西路 22 號', isFlagship: false, label: '進入家樂福超市 (南京西店)' },
-  { id: 'carrefour_kf', x: -30, z: 75, r: 9.0, type: 'carrefour', name: '家樂福超市 (站前開封店)', address: '中正區開封街一段 38 號', isFlagship: false, label: '進入家樂福超市 (站前開封店)' },
-  { id: 'carrefour_wh', x: -160, z: 175, r: 9.0, type: 'carrefour', name: '家樂福超市 (板橋文化店)', address: '板橋區文化路一段 188 號', isFlagship: false, label: '進入家樂福超市 (板橋文化店)' },
-  { id: 'carrefour_yp', x: -145, z: -140, r: 9.0, type: 'carrefour', name: '家樂福便利購 (延平北店)', address: '大同區延平北路二段 202 號', isFlagship: false, label: '進入家樂福便利購 (延平北店)' },
-  { id: 'carrefour_sl', x: 80, z: -145, r: 9.0, type: 'carrefour', name: '家樂福超市 (雙連店)', address: '中山區民生西路 78 號', isFlagship: false, label: '進入家樂福超市 (雙連店)' },
-  { id: 'carrefour_hz', x: -135, z: 65, r: 9.0, type: 'carrefour', name: '家樂福超市 (西門漢中店)', address: '萬華區漢中街 120 號', isFlagship: false, label: '進入家樂福超市 (西門漢中店)' },
-
-  // ──────────────────────────────────────────
-  // (D) 全聯福利中心 PX Mart (14 間社區生鮮門市，深藍底紅白雙圓蝴蝶標)
-  // ──────────────────────────────────────────
-  { id: 'pxmart_xf', x: -130, z: 130, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋學府店)', address: '板橋區學府路一段 180 號', label: '進入全聯 (板橋學府店)' },
-  { id: 'pxmart_fz', x: -140, z: 180, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋府中店)', address: '板橋區府中路 48 號', label: '進入全聯 (板橋府中店)' },
-  { id: 'pxmart_wh', x: -115, z: 175, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋文化店)', address: '板橋區文化路一段 145 號', label: '進入全聯 (板橋文化店)' },
-  { id: 'pxmart_xm_bq', x: -135, z: 85, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋縣民店)', address: '板橋區縣民大道一段 150 號', label: '進入全聯 (板橋縣民店)' },
-  { id: 'pxmart_yp', x: -145, z: -110, r: 8.5, type: 'pxmart', name: '全聯福利中心 (延平店)', address: '大同區延平北路二段 247 號', label: '進入全聯 (延平店)' },
-  { id: 'pxmart_cq', x: -110, z: -180, r: 8.5, type: 'pxmart', name: '全聯福利中心 (重慶店)', address: '大同區重慶北路三段 154 號', label: '進入全聯 (重慶店)' },
-  { id: 'pxmart_wc', x: -115, z: 45, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中正武昌店)', address: '中正區重慶南路一段 86 號', label: '進入全聯 (中正武昌店)' },
-  { id: 'pxmart_kf', x: -25, z: 95, r: 8.5, type: 'pxmart', name: '全聯福利中心 (站前開封店)', address: '中正區開封街一段 55 號', label: '進入全聯 (站前開封店)' },
-  { id: 'pxmart_nj', x: 25, z: -95, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山南京店)', address: '中山區南京西路 36 號', label: '進入全聯 (中山南京店)' },
-  { id: 'pxmart_jl', x: 110, z: -90, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山吉林店)', address: '中山區吉林路 108 號', label: '進入全聯 (中山吉林店)' },
-  { id: 'pxmart_sl', x: 88, z: -160, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山雙連店)', address: '中山區民生西路 90 號', label: '進入全聯 (中山雙連店)' },
-  { id: 'pxmart_cs', x: -150, z: 75, r: 8.5, type: 'pxmart', name: '全聯福利中心 (西門長沙店)', address: '萬華區長沙街二段 60 號', label: '進入全聯 (西門長沙店)' },
-  { id: 'pxmart_dh', x: -130, z: -150, r: 8.5, type: 'pxmart', name: '全聯福利中心 (大稻埕民生店)', address: '大同區民生西路 230 號', label: '進入全聯 (大稻埕民生店)' },
-  { id: 'pxmart_hk', x: -20, z: 115, r: 8.5, type: 'pxmart', name: '全聯福利中心 (站前漢口店)', address: '中正區漢口街一段 45 號', label: '進入全聯 (站前漢口店)' },
-
-  // ──────────────────────────────────────────
-  // (E) CoCo 都可 手搖飲門市 (14 間門市，亮橘微笑圓標、經典珍珠奶茶)
-  // ──────────────────────────────────────────
-  { id: 'coco_ny', x: -20, z: 65, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前南陽店)', address: '中正區南陽街 18 號', label: '購買 CoCo 手搖飲 (南陽店)' },
-  { id: 'coco_xc', x: 0, z: 65, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前許昌店)', address: '中正區許昌街 28 號', label: '購買 CoCo 手搖飲 (許昌店)' },
-  { id: 'coco_kf', x: -20, z: 85, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前開封店)', address: '中正區開封街一段 22 號', label: '購買 CoCo 手搖飲 (開封店)' },
-  { id: 'coco_cq', x: -115, z: 15, r: 8.0, type: 'coco', name: 'CoCo 都可 (重慶書店街店)', address: '中正區重慶南路一段 55 號', label: '購買 CoCo 手搖飲 (重慶店)' },
-  { id: 'coco_zs', x: 92, z: -35, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山北路門市)', address: '中山區中山北路一段 92 號', label: '購買 CoCo 手搖飲 (中山門市)' },
-  { id: 'coco_nj', x: 35, z: -95, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山南京店)', address: '中山區南京西路 18 號', label: '購買 CoCo 手搖飲 (南京店)' },
-  { id: 'coco_sl', x: 75, z: -140, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山雙連店)', address: '中山區民生西路 52 號', label: '購買 CoCo 手搖飲 (雙連店)' },
-  { id: 'coco_circle', x: -105, z: -55, r: 8.0, type: 'coco', name: 'CoCo 都可 (建成圓環店)', address: '大同區重慶北路二段 28 號', label: '購買 CoCo 手搖飲 (圓環店)' },
-  { id: 'coco_nx', x: -85, z: -130, r: 8.0, type: 'coco', name: 'CoCo 都可 (寧夏民生店)', address: '大同區民生西路 172 號', label: '購買 CoCo 手搖飲 (寧夏店)' },
-  { id: 'coco_yp', x: -145, z: -85, r: 8.0, type: 'coco', name: 'CoCo 都可 (延平北路店)', address: '大同區延平北路二段 80 號', label: '購買 CoCo 手搖飲 (延平店)' },
-  { id: 'coco_xm', x: -140, z: 45, r: 8.0, type: 'coco', name: 'CoCo 都可 (西門武昌店)', address: '萬華區武昌街二段 20 號', label: '購買 CoCo 手搖飲 (西門店)' },
-  { id: 'coco_fz', x: -150, z: 150, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋府中店)', address: '板橋區重慶路 12 號', label: '購買 CoCo 手搖飲 (府中店)' },
-  { id: 'coco_xf', x: -120, z: 120, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋學府店)', address: '板橋區學府路一段 128 號', label: '購買 CoCo 手搖飲 (學府店)' },
-  { id: 'coco_wh', x: -145, z: 175, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋文化店)', address: '板橋區文化路一段 175 號', label: '購買 CoCo 手搖飲 (文化店)' },
-
-  // ──────────────────────────────────────────
-  // (F) 傳統市場與觀光夜市 (10 處雙北老字號傳統市集與夜市，古早味小吃與生鮮)
-  // ──────────────────────────────────────────
-  { id: 'market_zs', x: 68, z: -48, r: 9.5, type: 'market', name: '中山傳統市場', address: '中山區長安西路 3 號 (中山北路口)', label: '進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)' },
-  { id: 'market_sl', x: 75, z: -155, r: 9.5, type: 'market', name: '雙連傳統市場', address: '大同區民生西路 198 號 (文昌宮旁)', label: '進入 雙連傳統市場 (品嚐文昌宮古早味美食)' },
-  { id: 'market_cz', x: -65, z: 50, r: 9.5, type: 'market', name: '城中市場老市集', address: '中正區武昌街一段 22 巷 (省城隍廟口)', label: '進入 城中市場老市集 (老台北在地情報與小吃)' },
-  { id: 'market_yl', x: -150, z: -85, r: 9.5, type: 'market', name: '大稻埕永樂市場', address: '大同區迪化街一段 21 號', label: '進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)' },
-  { id: 'market_nx', x: -110, z: -120, r: 10.0, type: 'market', name: '建成圓環 ✕ 寧夏觀光夜市', address: '大同區寧夏路民生西路口', label: '進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)' },
-  { id: 'market_xm', x: -138, z: 62, r: 9.5, type: 'market', name: '西門市場 ✕ 紅樓文創市集', address: '萬華區成都路 10 號', label: '進入 西門市場/紅樓文創市集 (潮流古著與點心)' },
-  { id: 'market_hs', x: -138, z: 175, r: 9.5, type: 'market', name: '板橋黃石傳統市場', address: '板橋區宮口街 37 號 (府中商圈)', label: '進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)' },
-  { id: 'market_ny', x: -175, z: 195, r: 10.0, type: 'market', name: '板橋湳雅觀光夜市', address: '板橋區南雅東路 87 號', label: '進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)' },
-  { id: 'market_qg', x: 92, z: -195, r: 9.5, type: 'market', name: '晴光傳統商圈市場', address: '中山區雙城街 12 巷 (晴光商圈)', label: '進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)' },
-  { id: 'market_lz', x: -110, z: -185, r: 9.5, type: 'market', name: '大同蘭州傳統市場', address: '大同區昌吉街 55 號', label: '進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)' },
-
-  // 4. 重點調查與線索地標
-  { id: 'clue_flower', x: 12, z: 18, r: 6.0, type: 'clue_ground', name: '站前花圃神祕紙條', label: '翻查站前花圃神祕紙條' },
-  { id: 'nightmarket', x: -110, z: -120, r: 9.0, type: 'nightmarket', name: '建成圓環 ✕ 寧夏夜市美食小吃街', label: '品嚐寧夏夜市美食 (鹽酥雞 / 章魚燒)' },
-  { id: 'police_cctv', x: 130, z: 120, r: 8.5, type: 'police', name: '北投分局刑事偵查隊', label: '與林巡官調閱 CCTV 監控軌跡' },
-  { id: 'ferry_tamsui', x: -180, z: -40, r: 8.5, type: 'ferry', name: '淡水河渡輪觀景棧道', label: '欣賞淡水河風景' },
-  { id: 'rest_bench', x: 2, z: 26, r: 6.0, type: 'rest', name: '站前候車長椅', label: '在長椅休息恢復體力' },
-  { id: 'rest_bench_xf', x: -110, z: 128, r: 6.0, type: 'rest', name: '板橋學府路候車休憩椅', label: '在長椅休息恢復體力' }
+  {"id": "station_bldg", "x": 0, "z": -70, "w": 64, "d": 32, "r": 8.5, "type": "station", "name": "台北車站大樓", "label": "調查 台北車站大樓"},
+  {"id": "bus_station_zx", "x": 0, "z": 2, "w": 20, "d": 8, "r": 8.5, "type": "bus_stop", "name": "台北車站(忠孝)公車專用道站牌", "dest": "zhongshan", "label": "搭乘 307 公車 (前往中山商圈 / 南京東路)"},
+  {"id": "clue_flower", "x": 14, "z": 14, "w": 8, "d": 8, "r": 8.5, "type": "clue_ground", "name": "站前花圃神祕紙條", "label": "翻查站前花圃神祕紙條"},
+  {"id": "mrt_escalator_m6", "x": 26, "z": 28, "w": 12, "d": 10, "r": 8.5, "type": "mrt_escalator", "name": "捷運出入口 M6", "label": "搭手扶梯進地下月台"},
+  {"id": "rest_bench", "x": -2, "z": 24, "w": 10, "d": 6, "r": 8.5, "type": "rest", "name": "站前候車長椅", "label": "在長椅休息恢復體力"},
+  {"id": "bus_station_zs", "x": 20, "z": -32, "w": 12, "d": 8, "r": 8.5, "type": "bus_stop", "name": "中山市場公車站牌", "dest": "station", "label": "搭乘 307 公車 (前往台北車站)"},
+  {"id": "mrt_escalator_zs", "x": 45, "z": -90, "w": 12, "d": 10, "r": 8.5, "type": "mrt_escalator", "name": "捷運中山站出入口", "label": "搭手扶梯進地下月台"},
+  {"id": "bus_station_xf", "x": -115, "z": 144, "w": 12, "d": 8, "r": 8.5, "type": "bus_stop", "name": "板橋學府路一段公車站牌", "dest": "station", "label": "搭乘 307 公車 (經板橋至台北車站)"},
+  {"id": "rest_bench_xf", "x": -85, "z": 144, "w": 10, "d": 6, "r": 8.5, "type": "rest", "name": "板橋學府路候車休憩椅", "label": "在長椅休息恢復體力"},
+  {"id": "mrt_escalator_fz", "x": -145, "z": 206, "w": 13, "d": 10, "r": 8.5, "type": "mrt_escalator", "name": "板橋府中捷運出入口", "label": "搭手扶梯進地下月台"},
+  {"id": "police_cctv", "x": 185, "z": 120, "w": 18, "d": 14, "r": 8.5, "type": "police", "name": "北投分局刑事偵查隊", "label": "與林巡官調閱 CCTV 監控軌跡"},
+  {"id": "ferry_tamsui", "x": -210, "z": -95, "w": 18, "d": 14, "r": 8.5, "type": "ferry", "name": "淡水河渡輪觀景棧道", "label": "欣賞淡水河風景"},
+  {"id": "seven_zx", "x": -32, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前忠孝店)", "address": "中正區忠孝西路一段 49 號", "label": "進入 7-Eleven (站前忠孝店)"},
+  {"id": "fmart_zx", "x": -62, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (站前忠孝店)", "address": "中正區忠孝西路一段 36 號", "label": "進入全家 (站前忠孝店)"},
+  {"id": "seven_gy", "x": 52, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前公園店)", "address": "中正區公園路 20 號", "label": "進入 7-Eleven (站前公園店)"},
+  {"id": "coco_xc", "x": -8, "z": 44, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (站前許昌店)", "address": "中正區許昌街 28 號", "label": "購買 CoCo 手搖飲 (許昌店)"},
+  {"id": "seven_xc", "x": 24, "z": 44, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前許昌店)", "address": "中正區許昌街 42 號", "label": "進入 7-Eleven (站前許昌店)"},
+  {"id": "fmart_xc", "x": -42, "z": 44, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (站前許昌店)", "address": "中正區許昌街 17 號", "label": "進入全家 (站前許昌店)"},
+  {"id": "coco_ny", "x": 15, "z": 72, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (站前南陽店)", "address": "中正區南陽街 18 號", "label": "購買 CoCo 手搖飲 (南陽店)"},
+  {"id": "seven_ny", "x": 15, "z": 98, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前南陽店)", "address": "中正區南陽街 24 號", "label": "進入 7-Eleven (站前南陽店)"},
+  {"id": "fmart_ny", "x": 42, "z": 72, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (站前南陽店)", "address": "中正區南陽街 15 號", "label": "進入全家 (站前南陽店)"},
+  {"id": "fmart_station", "x": -32, "z": 72, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (站前館前店)", "address": "中正區館前路 43 號", "label": "進入全家 (站前館前店)"},
+  {"id": "seven_gq", "x": -32, "z": 98, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前館前店)", "address": "中正區館前路 59 號", "label": "進入 7-Eleven (站前館前店)"},
+  {"id": "carrefour_kf", "x": -62, "z": 72, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入家樂福超市 (站前開封店)"},
+  {"id": "pxmart_kf", "x": -62, "z": 98, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (站前開封店)", "address": "中正區開封街一段 55 號", "label": "進入全聯 (站前開封店)"},
+  {"id": "fmart_kf", "x": 43, "z": 118, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (站前開封店)", "address": "中正區開封街一段 14 號", "label": "進入全家 (站前開封店)"},
+  {"id": "seven_kf", "x": 42, "z": 98, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前開封店)", "address": "中正區開封街一段 19 號", "label": "進入 7-Eleven (站前開封店)"},
+  {"id": "coco_kf", "x": 70, "z": 98, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (站前開封店)", "address": "中正區開封街一段 22 號", "label": "購買 CoCo 手搖飲 (開封店)"},
+  {"id": "pxmart_hk", "x": -23, "z": 118, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (站前漢口店)", "address": "中正區漢口街一段 45 號", "label": "進入全聯 (站前漢口店)"},
+  {"id": "coco_cq", "x": -92, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (重慶書店街店)", "address": "中正區重慶南路一段 55 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
+  {"id": "seven_cq", "x": -92, "z": 38, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (重慶南路店)", "address": "中正區重慶南路一段 70 號", "label": "進入 7-Eleven (重慶南路店)"},
+  {"id": "market_cz", "x": -92, "z": 66, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "城中市場老市集", "address": "中正區武昌街一段 22 巷 (省城隍廟口)", "label": "進入 城中市場老市集 (老台北在地情報與小吃)"},
+  {"id": "fmart_cq", "x": -92, "z": 96, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (重慶南路店)", "address": "中正區重慶南路一段 99 號", "label": "進入全家 (重慶南路店)"},
+  {"id": "carrefour_cq_south", "x": -92, "z": 120, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (重慶南店)", "address": "中正區重慶南路一段 118 號", "label": "進入家樂福超市 (重慶南店)"},
+  {"id": "seven_wc", "x": -118, "z": 38, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正武昌店)", "address": "中正區武昌街一段 18 號", "label": "進入 7-Eleven (中正武昌店)"},
+  {"id": "pxmart_wc", "x": -118, "z": 66, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中正武昌店)", "address": "中正區重慶南路一段 86 號", "label": "進入全聯 (中正武昌店)"},
+  {"id": "seven_hy", "x": -118, "z": 96, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正衡陽店)", "address": "中正區衡陽路 51 號", "label": "進入 7-Eleven (中正衡陽店)"},
+  {"id": "fmart_hn", "x": -62, "z": 120, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (懷寧襄陽店)", "address": "中正區襄陽路 9 號", "label": "進入全家 (懷寧襄陽店)"},
+  {"id": "seven_xm_zh", "x": -148, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (西門中華店)", "address": "萬華區中華路一段 144 號", "label": "進入 7-Eleven (西門中華店)"},
+  {"id": "fmart_zh", "x": -148, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門中華店)", "address": "萬華區中華路一段 118 號", "label": "進入全家 (西門中華店)"},
+  {"id": "market_xm", "x": -148, "z": 70, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "西門市場 ✕ 紅樓文創市集", "address": "萬華區成都路 10 號", "label": "進入 西門市場/紅樓文創市集 (潮流古著與點心)"},
+  {"id": "seven_xm_hz", "x": -178, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (西門漢中店)", "address": "萬華區漢中街 101 號", "label": "進入 7-Eleven (西門漢中店)"},
+  {"id": "fmart_xm", "x": -178, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門町漢中店)", "address": "萬華區漢中街 52 號", "label": "進入全家 (西門漢中店)"},
+  {"id": "carrefour_hz", "x": -178, "z": 70, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (西門漢中店)", "address": "萬華區漢中街 120 號", "label": "進入家樂福超市 (西門漢中店)"},
+  {"id": "pxmart_cs", "x": -178, "z": 98, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (西門長沙店)", "address": "萬華區長沙街二段 60 號", "label": "進入全聯 (西門長沙店)"},
+  {"id": "fmart_wc", "x": -208, "z": 14, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門武昌店)", "address": "萬華區武昌街二段 37 號", "label": "進入全家 (西門武昌店)"},
+  {"id": "coco_xm", "x": -208, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (西門武昌店)", "address": "萬華區武昌街二段 20 號", "label": "購買 CoCo 手搖飲 (西門店)"},
+  {"id": "seven_xm_cd", "x": -208, "z": 70, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (西門成都店)", "address": "萬華區成都路 27 號", "label": "進入 7-Eleven (西門成都店)"},
+  {"id": "carrefour_gl_flagship", "x": -208, "z": 98, "w": 32, "d": 24, "r": 9.5, "type": "carrefour", "name": "家樂福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入家樂福桂林旗艦店 (24H量販店)"},
+  {"id": "coco_circle", "x": -85, "z": -25, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (建成圓環店)", "address": "大同區重慶北路二段 28 號", "label": "購買 CoCo 手搖飲 (圓環店)"},
+  {"id": "fmart_circle", "x": -85, "z": -52, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (建成圓環店)", "address": "大同區重慶北路二段 12 號", "label": "進入全家 (建成圓環店)"},
+  {"id": "seven_cqn", "x": -85, "z": -80, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (重慶北路店)", "address": "大同區重慶北路二段 88 號", "label": "進入 7-Eleven (重慶北路店)"},
+  {"id": "carrefour_cq_flagship", "x": -85, "z": -125, "w": 32, "d": 24, "r": 9.5, "type": "carrefour", "name": "家樂福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入家樂福重慶旗艦店 (大賣場)"},
+  {"id": "pxmart_cq", "x": -85, "z": -165, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (重慶店)", "address": "大同區重慶北路三段 154 號", "label": "進入全聯 (重慶店)"},
+  {"id": "coco_nx", "x": -55, "z": -60, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (寧夏民生店)", "address": "大同區民生西路 172 號", "label": "購買 CoCo 手搖飲 (寧夏店)"},
+  {"id": "market_nx", "x": -55, "z": -95, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "建成圓環 ✕ 寧夏觀光夜市", "address": "大同區寧夏路民生西路口", "label": "進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)"},
+  {"id": "fmart_nx", "x": -55, "z": -130, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (寧夏夜市店)", "address": "大同區寧夏路 45 號", "label": "進入全家 (寧夏夜市店)"},
+  {"id": "seven_circle", "x": -55, "z": -165, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (寧夏夜市店)", "address": "大同區民生西路 188 號", "label": "進入 7-Eleven (寧夏夜市店)"},
+  {"id": "coco_yp", "x": -145, "z": -35, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (延平北路店)", "address": "大同區延平北路二段 80 號", "label": "購買 CoCo 手搖飲 (延平店)"},
+  {"id": "seven_yp", "x": -145, "z": -65, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (延平北路店)", "address": "大同區延平北路二段 135 號", "label": "進入 7-Eleven (延平北路店)"},
+  {"id": "fmart_yp", "x": -145, "z": -95, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (延平北路店)", "address": "大同區延平北路二段 96 號", "label": "進入全家 (延平北路店)"},
+  {"id": "pxmart_dh", "x": -145, "z": -125, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入全聯 (大稻埕民生店)"},
+  {"id": "carrefour_yp", "x": -145, "z": -155, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福便利購 (延平北店)", "address": "大同區延平北路二段 202 號", "label": "進入家樂福便利購 (延平北店)"},
+  {"id": "pxmart_yp", "x": -145, "z": -185, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (延平店)", "address": "大同區延平北路二段 247 號", "label": "進入全聯 (延平店)"},
+  {"id": "seven_cj", "x": -115, "z": -155, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大同昌吉店)", "address": "大同區昌吉街 68 號", "label": "進入 7-Eleven (大同昌吉店)"},
+  {"id": "market_lz", "x": -115, "z": -190, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大同蘭州傳統市場", "address": "大同區昌吉街 55 號", "label": "進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)"},
+  {"id": "seven_dh", "x": -185, "z": -40, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化店)", "address": "大同區迪化街一段 54 號", "label": "進入 7-Eleven (大稻埕迪化店)"},
+  {"id": "market_yl", "x": -185, "z": -75, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大稻埕永樂市場", "address": "大同區迪化街一段 21 號", "label": "進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)"},
+  {"id": "fmart_ml", "x": -185, "z": -115, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (迪化民樂店)", "address": "大同區民樂街 22 號", "label": "進入全家 (迪化民樂店)"},
+  {"id": "fmart_dq", "x": -185, "z": -155, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (大同大橋店)", "address": "大同區延平北路三段 18 號", "label": "進入全家 (大同大橋店)"},
+  {"id": "seven_ca", "x": 48, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山長安店)", "address": "中山區長安西路 18 號", "label": "進入 7-Eleven (中山長安店)"},
+  {"id": "market_zs", "x": 78, "z": -45, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "中山傳統市場", "address": "中山區長安西路 3 號 (中山北路口)", "label": "進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)"},
+  {"id": "fmart_ca", "x": 108, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山長安店)", "address": "中山區長安西路 40 號", "label": "進入全家 (中山長安店)"},
+  {"id": "carrefour_zs", "x": 48, "z": -15, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (中山店)", "address": "中山區中山北路一段 88 號", "label": "進入家樂福超市 (中山店)"},
+  {"id": "fmart_zs", "x": 78, "z": -15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山北路店)", "address": "中山區中山北路一段 105 號", "label": "進入全家 (中山北路店)"},
+  {"id": "seven_ls", "x": 108, "z": -15, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (林森條通店)", "address": "中山區林森北路 119 號", "label": "進入 7-Eleven (林森條通店)"},
+  {"id": "coco_zs", "x": 48, "z": -68, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山北路門市)", "address": "中山區中山北路一段 92 號", "label": "購買 CoCo 手搖飲 (中山門市)"},
+  {"id": "pxmart_nj", "x": 78, "z": -68, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入全聯 (中山南京店)"},
+  {"id": "seven_zs", "x": 108, "z": -68, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山南京店)", "address": "中山區中山北路一段 120 號", "label": "進入 7-Eleven (中山南京店)"},
+  {"id": "carrefour_nj", "x": 48, "z": -112, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (南京西店)", "address": "中山區南京西路 22 號", "label": "進入家樂福超市 (南京西店)"},
+  {"id": "coco_nj", "x": 78, "z": -112, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山南京店)", "address": "中山區南京西路 18 號", "label": "購買 CoCo 手搖飲 (南京店)"},
+  {"id": "fmart_nj", "x": 108, "z": -112, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山南京店)", "address": "中山區南京西路 12 號", "label": "進入全家 (中山南京店)"},
+  {"id": "fmart_ls", "x": 138, "z": -112, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (林森錦州店)", "address": "中山區林森北路 260 號", "label": "進入全家 (林森錦州店)"},
+  {"id": "coco_sl", "x": 48, "z": -140, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山雙連店)", "address": "中山區民生西路 52 號", "label": "購買 CoCo 手搖飲 (雙連店)"},
+  {"id": "fmart_sl", "x": 78, "z": -140, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山雙連店)", "address": "中山區民生西路 66 號", "label": "進入全家 (中山雙連店)"},
+  {"id": "market_sl", "x": 108, "z": -140, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "雙連傳統市場", "address": "大同區民生西路 198 號 (文昌宮旁)", "label": "進入 雙連傳統市場 (品嚐文昌宮古早味美食)"},
+  {"id": "carrefour_sl", "x": 48, "z": -168, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (雙連店)", "address": "中山區民生西路 78 號", "label": "進入家樂福超市 (雙連店)"},
+  {"id": "pxmart_sl", "x": 78, "z": -168, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中山雙連店)", "address": "中山區民生西路 90 號", "label": "進入全聯 (中山雙連店)"},
+  {"id": "seven_ms", "x": 108, "z": -168, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山民生店)", "address": "中山區民生西路 45 號", "label": "進入 7-Eleven (中山民生店)"},
+  {"id": "fmart_mq", "x": 48, "z": -195, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山民權店)", "address": "中山區民權西路 32 號", "label": "進入全家 (中山民權店)"},
+  {"id": "seven_mq", "x": 78, "z": -195, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山民權店)", "address": "中山區中山北路二段 92 號", "label": "進入 7-Eleven (中山民權店)"},
+  {"id": "market_qg", "x": 108, "z": -195, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "晴光傳統商圈市場", "address": "中山區雙城街 12 巷 (晴光商圈)", "label": "進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)"},
+  {"id": "pxmart_jl", "x": 155, "z": -90, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入全聯 (中山吉林店)"},
+  {"id": "seven_sj", "x": 155, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (松江長安店)", "address": "中山區松江路 68 號", "label": "進入 7-Eleven (松江長安店)"},
+  {"id": "fmart_sj", "x": 155, "z": -15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (松江南京店)", "address": "中山區松江路 102 號", "label": "進入全家 (松江南京店)"},
+  {"id": "coco_sj", "x": 185, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (松江南京店)", "address": "中山區松江路 120 號", "label": "購買 CoCo 手搖飲 (松江店)"},
+  {"id": "carrefour_sj", "x": 185, "z": -90, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (松江店)", "address": "中山區松江路 168 號", "label": "進入家樂福超市 (松江店)"},
+  {"id": "fmart_fx", "x": 185, "z": -15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (復興南京店)", "address": "中山區復興北路 45 號", "label": "進入全家 (復興南京店)"},
+  {"id": "seven_fx", "x": 185, "z": 25, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (復興長安店)", "address": "中山區復興北路 88 號", "label": "進入 7-Eleven (復興長安店)"},
+  {"id": "seven_xm_bd", "x": -175, "z": 132, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (府中縣民店)", "address": "板橋區縣民大道一段 88 號", "label": "進入 7-Eleven (府中縣民店)"},
+  {"id": "fmart_xm_bq", "x": -145, "z": 132, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋縣民店)", "address": "板橋區縣民大道一段 110 號", "label": "進入全家 (板橋縣民店)"},
+  {"id": "pxmart_xm_bq", "x": -121, "z": 121, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋縣民店)", "address": "板橋區縣民大道一段 150 號", "label": "進入全聯 (板橋縣民店)"},
+  {"id": "fmart_xf3", "x": -180, "z": 156, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋學府三店)", "address": "板橋區學府路一段 188 號", "label": "進入全家 (板橋學府三店)"},
+  {"id": "fmart_xf", "x": -155, "z": 156, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋學府店)", "address": "板橋區學府路一段 146 號", "label": "進入全家 (板橋學府店)"},
+  {"id": "seven_wh2", "x": -127, "z": 158, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化二店)", "address": "板橋區文化路一段 210 號", "label": "進入 7-Eleven (板橋文化二店)"},
+  {"id": "coco_xf", "x": -55, "z": 156, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋學府店)", "address": "板橋區學府路一段 128 號", "label": "購買 CoCo 手搖飲 (學府店)"},
+  {"id": "fmart_xf2", "x": -25, "z": 156, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋學府二店)", "address": "板橋區學府路一段 98 號", "label": "進入全家 (板橋學府二店)"},
+  {"id": "carrefour_xf", "x": -180, "z": 180, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福便利購 (板橋學府店)", "address": "板橋區學府路一段 192 號", "label": "進入家樂福便利購 (學府店)"},
+  {"id": "pxmart_xf", "x": -155, "z": 180, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋學府店)", "address": "板橋區學府路一段 180 號", "label": "進入全聯 (板橋學府店)"},
+  {"id": "seven_xf2", "x": -115, "z": 180, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋學府二店)", "address": "板橋區學府路一段 158 號", "label": "進入 7-Eleven (板橋學府二店)"},
+  {"id": "seven_xf", "x": -55, "z": 180, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋學府門市)", "address": "板橋區學府路一段 62 號", "label": "進入 7-Eleven (板橋學府門市)"},
+  {"id": "market_hs", "x": -175, "z": 206, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋黃石傳統市場", "address": "板橋區宮口街 37 號 (府中商圈)", "label": "進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)"},
+  {"id": "carrefour_fz", "x": -145, "z": 230, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (板橋府中店)", "address": "板橋區府中路 29 號", "label": "進入家樂福超市 (府中店)"},
+  {"id": "fmart_fz", "x": -110, "z": 206, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋府中店)", "address": "板橋區府中路 35 號", "label": "進入全家 (板橋府中店)"},
+  {"id": "pxmart_fz", "x": -80, "z": 206, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋府中店)", "address": "板橋區府中路 48 號", "label": "進入全聯 (板橋府中店)"},
+  {"id": "coco_fz", "x": -205, "z": 132, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋府中店)", "address": "板橋區重慶路 12 號", "label": "購買 CoCo 手搖飲 (府中店)"},
+  {"id": "seven_banqiao", "x": -205, "z": 206, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (府中重慶店)", "address": "板橋區重慶路 15 號", "label": "進入 7-Eleven (府中重慶店)"},
+  {"id": "fmart_cq_bq", "x": -50, "z": 206, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋重慶店)", "address": "板橋區重慶路 28 號", "label": "進入全家 (板橋重慶店)"},
+  {"id": "seven_wh", "x": -25, "z": 180, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"},
+  {"id": "pxmart_wh", "x": -20, "z": 206, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入全聯 (板橋文化店)"},
+  {"id": "fmart_wh_bq", "x": 10, "z": 180, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋文化店)", "address": "板橋區文化路一段 168 號", "label": "進入全家 (板橋文化店)"},
+  {"id": "coco_wh", "x": 10, "z": 206, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋文化店)", "address": "板橋區文化路一段 175 號", "label": "購買 CoCo 手搖飲 (文化店)"},
+  {"id": "carrefour_wh", "x": -85, "z": 180, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (板橋文化店)", "address": "板橋區文化路一段 188 號", "label": "進入家樂福超市 (板橋文化店)"},
+  {"id": "market_ny", "x": -215, "z": 170, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋湳雅觀光夜市", "address": "板橋區南雅東路 87 號", "label": "進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)"},
 ];
-
 
 // 307 幹線公車動態物件
 const bus307 = {
@@ -472,12 +447,15 @@ function updateGhostDroneHUD() {
     coordsEl.innerText = `X: ${Math.round(camera.x)}, Z: ${Math.round(camera.z)}`;
   }
   if (distEl) {
-    let name = "中正區・忠孝西路一段 ✕ 台北車站";
-    if (camera.x <= -60 && camera.z >= 80) name = "🏫 板橋區・學府路一段 (1:1 真實商圈)";
-    else if (camera.x <= -70 && camera.z <= -60) name = "🏮 大同區・建成圓環 ✕ 寧夏夜市";
-    else if (camera.x >= 40 && camera.z <= 0) name = "🌳 中山區・中山北路林蔭大道 ✕ 南京商圈";
-    else if (camera.x <= -80 && camera.z > 0 && camera.z < 80) name = "📚 萬華/中正・重慶南路書店街 ✕ 西門町";
-    else if (camera.x <= -150 && camera.z >= -60 && camera.z <= 0) name = "🌊 萬華/大同・淡水河水岸碼頭棧道";
+    let name = "🏛️ 中正區・台北車站站前核心 ✕ 忠孝西路一段";
+    if (camera.x <= -60 && camera.z >= 140) name = "🏫 板橋區・學府路一段 (1:1 真實商圈) ✕ 府中商圈";
+    else if (camera.x <= -60 && camera.z >= 110 && camera.z < 140) name = "🏙️ 板橋區・新板特區 ✕ 縣民大道一段";
+    else if (camera.x <= -130 && camera.z >= 0 && camera.z < 110) name = "🎮 萬華區・西門町徒步區 ✕ 中華路 ✕ 桂林路";
+    else if (camera.x > -130 && camera.x <= -40 && camera.z >= 0 && camera.z < 110) name = "📚 中正區・重慶南路書店街 ✕ 城中市場";
+    else if (camera.x <= -40 && camera.z < -20) name = "🏮 大同區・大稻埕迪化街 ✕ 建成圓環 ✕ 寧夏夜市";
+    else if (camera.x >= 130) name = "💼 中山/松山・松江南京金融商圈 ✕ 復興商圈";
+    else if (camera.x >= 40 && camera.x < 130 && camera.z <= 0) name = "🌳 中山區・中山北路林蔭大道 ✕ 南京商圈 ✕ 雙連晴光";
+    else if (camera.x <= -180 && camera.z >= -110 && camera.z <= 10) name = "🌊 萬華/大同・淡水河水岸碼頭觀景棧道";
     distEl.innerText = name;
   }
 }
@@ -749,17 +727,41 @@ function renderScene() {
   const screenZ = (val) => (val - camera.z) * scale;
 
   // ──────────────────────────────────────────
-  // 第一層：地表鋪面與 1:1 真實雙北街廓拓撲 (Ground Roads & Topology)
+  // 第一層：地表鋪面與 1:1 真實雙北街廓拓撲 (Ground Roads & Contiguous Metropolis Topology)
+  // 全區涵蓋 -220m ~ +220m，忠實呈現雙北各大行政區真實道路經緯
   // ──────────────────────────────────────────
 
-  // 1. 忠孝西路一段 (東西向大道，寬 40m，z: -20 ~ 20)
+  // 1. 東西向 9 大主要幹道與街廓 (East-West Major Arterials)
+  // (1) 民權西路 / 民權東路 (z: -195, 寬 24m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-220), screenZ(-20), 440 * scale, 40 * scale);
+  ctx.fillRect(screenX(-220), screenZ(-207), 440 * scale, 24 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-220), screenZ(-195.4), 440 * scale, 0.8 * scale);
 
+  // (2) 民生西路 / 民生東路 (z: -140, 寬 22m)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-220), screenZ(-151), 440 * scale, 22 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-220), screenZ(-140.4), 440 * scale, 0.8 * scale);
+
+  // (3) 南京西路 / 南京東路 (z: -95, 寬 26m)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-220), screenZ(-108), 440 * scale, 26 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-220), screenZ(-95.4), 440 * scale, 0.8 * scale);
+
+  // (4) 長安西路 / 長安東路 (z: -48, 寬 20m)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-220), screenZ(-58), 440 * scale, 20 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-220), screenZ(-48.4), 440 * scale, 0.8 * scale);
+
+  // (5) 忠孝西路一段 / 忠孝東路一段 (z: 0, 寬 36m，台北都會樞紐大動脈)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, 36 * scale);
   // 忠孝西路 中央公車專用道 (深藍柏油，z: -5 ~ 5)
   ctx.fillStyle = '#1e385c';
   ctx.fillRect(screenX(-220), screenZ(-5), 440 * scale, 10 * scale);
-
   // 公車專用道白色虛線分道線
   ctx.strokeStyle = '#f8fafc';
   ctx.lineWidth = 1.5;
@@ -771,122 +773,168 @@ function renderScene() {
   ctx.lineTo(screenX(220), screenZ(5));
   ctx.stroke();
   ctx.setLineDash([]);
-
   // 雙黃線 (z: 0)
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-0.4), 440 * scale, 0.8 * scale);
-
-  // 忠孝西路 南北兩側人行道
+  // 忠孝西路 南北兩側人行道石板地磚
   ctx.fillStyle = '#475569';
-  ctx.fillRect(screenX(-220), screenZ(-38), 440 * scale, 18 * scale);
-  ctx.fillRect(screenX(-220), screenZ(20), 440 * scale, 18 * scale);
+  ctx.fillRect(screenX(-220), screenZ(-36), 440 * scale, 18 * scale);
+  ctx.fillRect(screenX(-220), screenZ(18), 440 * scale, 18 * scale);
 
-  // 2. 中山北路一段 (南北向林蔭大道，寬 36m，x: 60 ~ 96)
+  // (6) 許昌街 / 開封街一段 (z: 44, 寬 18m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(60), screenZ(-220), 36 * scale, 440 * scale);
-  // 中山北路中央綠蔭安全島 (樟樹綠帶，x: 76 ~ 80)
-  ctx.fillStyle = '#15803d';
-  ctx.fillRect(screenX(76), screenZ(-220), 4 * scale, 440 * scale);
-  // 中山北路東側人行道 (x: 96 ~ 120)
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(screenX(96), screenZ(-220), 24 * scale, 440 * scale);
+  ctx.fillRect(screenX(-130), screenZ(35), 205 * scale, 18 * scale);
 
-  // 3. 南京西路 / 南京東路 (東西向大道，x: -140 ~ 200, z: -105 ~ -85)
+  // (7) 漢口街一段 / 武昌街一段 (z: 72, 寬 18m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-140), screenZ(-105), 340 * scale, 20 * scale);
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillRect(screenX(-140), screenZ(-95.4), 340 * scale, 0.8 * scale);
+  ctx.fillRect(screenX(-220), screenZ(63), 295 * scale, 18 * scale);
 
-  // 4. 館前路 (南北向站前大道，x: -35 ~ -5, z: 20 ~ 160)
+  // (8) 衡陽路 / 襄陽路 (z: 98, 寬 20m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-35), screenZ(20), 30 * scale, 140 * scale);
+  ctx.fillRect(screenX(-220), screenZ(88), 295 * scale, 20 * scale);
 
-  // 5. 重慶南路一段 (南北向書店街，x: -125 ~ -95, z: 20 ~ 200)
+  // (9) 板橋縣民大道一段 (z: 130, 寬 26m，新板特區綠帶大道)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-125), screenZ(20), 30 * scale, 180 * scale);
+  ctx.fillRect(screenX(-220), screenZ(117), 220 * scale, 26 * scale);
+  ctx.fillStyle = '#15803d'; // 中央安全島綠帶
+  ctx.fillRect(screenX(-220), screenZ(128.5), 220 * scale, 3 * scale);
 
-  // 6. 重慶北路二段 (南北向圓環段，x: -125 ~ -95, z: -220 ~ -20)
+  // (10) 板橋學府路一段 (特別由玩家點名指定！z: 168, 寬 26m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-125), screenZ(-220), 30 * scale, 200 * scale);
-
-  // 7. 中華路一段 (南北向西門町林蔭大道，x: -150 ~ -120, z: 20 ~ 110)
-  ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-150), screenZ(20), 30 * scale, 90 * scale);
-  ctx.fillStyle = '#15803d';
-  ctx.fillRect(screenX(-137), screenZ(20), 4 * scale, 90 * scale);
-
-  // 8. 【板橋區核心街道 - 1:1 還原真實路網】
-  // (A) 板橋學府路一段 (特別由玩家點名指定！東西向幹道，x: -195 ~ -65, z: 110 ~ 138)
-  ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-195), screenZ(110), 130 * scale, 28 * scale);
-  // 學府路一段中央黃虛線
+  ctx.fillRect(screenX(-220), screenZ(155), 220 * scale, 26 * scale);
   ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 1.2;
   ctx.setLineDash([6, 6]);
   ctx.beginPath();
-  ctx.moveTo(screenX(-195), screenZ(124));
-  ctx.lineTo(screenX(-65), screenZ(124));
+  ctx.moveTo(screenX(-220), screenZ(168));
+  ctx.lineTo(screenX(0), screenZ(168));
   ctx.stroke();
   ctx.setLineDash([]);
-  // 學府路一段兩側人行道
+  // 學府路一段人行道
   ctx.fillStyle = '#475569';
-  ctx.fillRect(screenX(-195), screenZ(104), 130 * scale, 6 * scale);
-  ctx.fillRect(screenX(-195), screenZ(138), 130 * scale, 6 * scale);
+  ctx.fillRect(screenX(-220), screenZ(149), 220 * scale, 6 * scale);
+  ctx.fillRect(screenX(-220), screenZ(181), 220 * scale, 6 * scale);
 
-  // (B) 縣民大道 (新板特區綠帶大道，x: -215 ~ -65, z: 70 ~ 95)
+  // (11) 板橋文化路一段 / 府中路 (z: 195, 寬 28m)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-215), screenZ(70), 150 * scale, 25 * scale);
-  ctx.fillStyle = '#15803d';
-  ctx.fillRect(screenX(-215), screenZ(81), 150 * scale, 3 * scale);
+  ctx.fillRect(screenX(-220), screenZ(181), 260 * scale, 28 * scale);
 
-  // (C) 文化路一段 (板橋主要幹道，x: -215 ~ -65, z: 155 ~ 180)
+  // 2. 南北向 9 大主要幹道與街廓 (North-South Major Arterials)
+  // (1) 淡水河畔環河路 / 迪化街一段 (x: -185, 寬 22m, z: -220 ~ 0)
   ctx.fillStyle = '#1c222b';
-  ctx.fillRect(screenX(-215), screenZ(155), 150 * scale, 25 * scale);
+  ctx.fillRect(screenX(-196), screenZ(-220), 22 * scale, 220 * scale);
 
-  // 9. 斑馬線路口紋理
+  // (2) 萬華漢中街 (西門町徒步區) (x: -178, 寬 20m, z: 0 ~ 115)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-188), screenZ(0), 20 * scale, 115 * scale);
+
+  // (3) 大同延平北路二段/三段 (x: -145, 寬 22m, z: -220 ~ 0)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-156), screenZ(-220), 22 * scale, 220 * scale);
+
+  // (4) 萬華中華路一段 (林蔭大道，寬 32m, z: 0 ~ 115)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-161), screenZ(0), 32 * scale, 115 * scale);
+  ctx.fillStyle = '#15803d'; // 中央綠帶
+  ctx.fillRect(screenX(-147), screenZ(0), 4 * scale, 115 * scale);
+
+  // (5) 大同重慶北路二段/三段 (x: -85, 寬 26m, z: -220 ~ 0)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-98), screenZ(-220), 26 * scale, 220 * scale);
+
+  // (6) 中正重慶南路一段 (書店街) (x: -92, 寬 24m, z: 0 ~ 140)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-104), screenZ(0), 24 * scale, 140 * scale);
+
+  // (7) 大同寧夏路 (夜市街區) (x: -55, 寬 20m, z: -220 ~ 0)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-65), screenZ(-220), 20 * scale, 220 * scale);
+
+  // (8) 站前館前路 (x: -32, 寬 22m, z: 0 ~ 115)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-43), screenZ(0), 22 * scale, 115 * scale);
+
+  // (9) 站前南陽街 (x: 15, 寬 18m, z: 20 ~ 115)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(6), screenZ(20), 18 * scale, 95 * scale);
+
+  // (10) 站前公園路 (x: 48, 寬 24m, z: 0 ~ 115)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(36), screenZ(0), 24 * scale, 115 * scale);
+
+  // (11) 中山北路一段/二段 (樟樹林蔭大道，寬 36m, z: -220 ~ 30)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(60), screenZ(-220), 36 * scale, 250 * scale);
+  ctx.fillStyle = '#15803d'; // 中央綠蔭安全島
+  ctx.fillRect(screenX(76), screenZ(-220), 4 * scale, 250 * scale);
+  ctx.fillStyle = '#475569'; // 東側人行道
+  ctx.fillRect(screenX(96), screenZ(-220), 20 * scale, 250 * scale);
+
+  // (12) 林森北路 (條通商圈) (x: 108, 寬 22m, z: -220 ~ 30)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(97), screenZ(-220), 22 * scale, 250 * scale);
+
+  // (13) 松江路 (金融商圈) (x: 155, 寬 28m, z: -220 ~ 140)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(141), screenZ(-220), 28 * scale, 360 * scale);
+
+  // (14) 復興北路/南路 (文湖線軸線) (x: 185, 寬 28m, z: -220 ~ 140)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(171), screenZ(-220), 28 * scale, 360 * scale);
+
+  // (15) 板橋府中路 / 重慶路 (x: -175 ~ -110, z: 120 ~ 220)
+  ctx.fillStyle = '#1c222b';
+  ctx.fillRect(screenX(-185), screenZ(120), 24 * scale, 100 * scale);
+  ctx.fillRect(screenX(-155), screenZ(120), 24 * scale, 100 * scale);
+
+  // 3. 淡水河水面波紋 (x: -220 ~ -195, z: -220 ~ 10)
+  ctx.fillStyle = '#0369a1';
+  ctx.fillRect(screenX(-220), screenZ(-220), 25 * scale, 230 * scale);
+  ctx.fillStyle = '#38bdf8';
+  const waveOffset = (Date.now() / 300) % 12;
+  for (let wy = -215; wy <= 5; wy += 14) {
+    ctx.fillRect(screenX(-218 + waveOffset), screenZ(wy), 18 * scale, 1.8 * scale);
+  }
+
+  // 4. 十字路口精密斑馬線
   ctx.fillStyle = '#ffffff';
-  // 中山北路 ✕ 忠孝西路 路口斑馬線
+  // 中山北路 ✕ 忠孝西路
   for (let z = -16; z <= 16; z += 4.5) {
     ctx.fillRect(screenX(55), screenZ(z), 5 * scale, 2.2 * scale);
     ctx.fillRect(screenX(96), screenZ(z), 5 * scale, 2.2 * scale);
   }
-  // 館前路口斑馬線
-  for (let x = -30; x <= 0; x += 4.5) {
+  // 館前路 ✕ 忠孝西路
+  for (let x = -40; x <= -20; x += 4.5) {
     ctx.fillRect(screenX(x), screenZ(18), 2.2 * scale, 5 * scale);
   }
   // 板橋學府路一段路口斑馬線
-  for (let z = 112; z <= 136; z += 4.5) {
-    ctx.fillRect(screenX(-70), screenZ(z), 5 * scale, 2.2 * scale);
+  for (let z = 158; z <= 178; z += 4.5) {
+    ctx.fillRect(screenX(-60), screenZ(z), 5 * scale, 2.2 * scale);
     ctx.fillRect(screenX(-190), screenZ(z), 5 * scale, 2.2 * scale);
   }
 
-  // 10. 淡水河水面波紋 (x: -220 ~ -155, z: -120 ~ 20)
-  ctx.fillStyle = '#0369a1';
-  ctx.fillRect(screenX(-220), screenZ(-120), 65 * scale, 140 * scale);
-  ctx.fillStyle = '#38bdf8';
-  const waveOffset = (Date.now() / 300) % 12;
-  for (let wy = -115; wy <= 15; wy += 14) {
-    ctx.fillRect(screenX(-215 + waveOffset), screenZ(wy), 22 * scale, 1.8 * scale);
-  }
-
-  // 11. 瀝青路面科技路名直接繪製 (Road Surface Typography)
+  // 5. 瀝青路面科技路名直接繪製 (Road Surface Typography)
   ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
   ctx.font = `bold ${Math.max(10, scale * 0.8)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('【忠孝西路一段 ✕ 公車專用道】', screenX(0), screenZ(-1));
-  ctx.fillText('【板橋學府路一段 (1:1 真實商圈)】', screenX(-130), screenZ(126));
-  ctx.fillText('【縣民大道・新板特區】', screenX(-130), screenZ(84));
-  ctx.fillText('【中山北路一段・林蔭大道】', screenX(88), screenZ(-30));
-  ctx.fillText('【重慶南路一段・書店街】', screenX(-110), screenZ(50));
-  ctx.fillText('【南京西路商圈】', screenX(20), screenZ(-93));
-  ctx.fillText('【中華路一段・西門町】', screenX(-135), screenZ(40));
+  ctx.fillText('【板橋學府路一段 (1:1 真實商圈)】', screenX(-110), screenZ(169));
+  ctx.fillText('【縣民大道・新板特區】', screenX(-110), screenZ(131));
+  ctx.fillText('【文化路一段・府中商圈】', screenX(-110), screenZ(196));
+  ctx.fillText('【中山北路一段・樟樹林蔭大道】', screenX(78), screenZ(-30));
+  ctx.fillText('【重慶南路一段・書店街】', screenX(-92), screenZ(50));
+  ctx.fillText('【南京西路商圈】', screenX(10), screenZ(-93));
+  ctx.fillText('【中華路一段・西門町】', screenX(-145), screenZ(40));
+  ctx.fillText('【民生西路・大稻埕與雙連】', screenX(10), screenZ(-138));
+  ctx.fillText('【民權西路・晴光商圈】', screenX(10), screenZ(-193));
+  ctx.fillText('【松江路・金融特區】', screenX(155), screenZ(-40));
 
-  // 12. 雙北行政區微縮銘板 (District HUD Badges)
+  // 6. 雙北行政區微縮銘板 (District HUD Badges)
   function drawDistrictBadge(text, x, z, col) {
     const bx = screenX(x);
     const bz = screenZ(z);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    drawSafeRoundRect(ctx, bx - 40 * scale * 0.35, bz - 8 * scale * 0.35, 80 * scale * 0.35, 16 * scale * 0.35, 3);
+    drawSafeRoundRect(ctx, bx - 42 * scale * 0.35, bz - 8 * scale * 0.35, 84 * scale * 0.35, 16 * scale * 0.35, 3);
     ctx.fill();
     ctx.strokeStyle = col;
     ctx.lineWidth = 1;
@@ -897,12 +945,14 @@ function renderScene() {
     ctx.fillText(text, bx, bz + 4 * scale * 0.35);
   }
   drawDistrictBadge('🏛️ 中正區・站前核心', 0, -28, '#38bdf8');
-  drawDistrictBadge('🏫 板橋區・學府商圈', -130, 102, '#34d399');
-  drawDistrictBadge('🌳 中山區・林蔭商圈', 80, -115, '#a78bfa');
-  drawDistrictBadge('🏮 大同區・圓環寧夏', -110, -135, '#fbbf24');
-  drawDistrictBadge('🎮 萬華區・西門商圈', -135, 25, '#f472b6');
+  drawDistrictBadge('📚 中正區・重慶南路書街', -92, 25, '#60a5fa');
+  drawDistrictBadge('🎮 萬華區・西門商圈', -178, 25, '#f472b6');
+  drawDistrictBadge('🏮 大同區・大稻埕寧夏', -115, -120, '#fbbf24');
+  drawDistrictBadge('🌳 中山區・林蔭商圈', 78, -115, '#a78bfa');
+  drawDistrictBadge('💼 中山區・松江南京', 170, -60, '#38bdf8');
+  drawDistrictBadge('🏫 板橋區・學府商圈 (1:1)', -120, 156, '#34d399');
+  drawDistrictBadge('🏙️ 板橋區・新板府中', -145, 215, '#10b981');
 
-  // ──────────────────────────────────────────
   // 第二層：連鎖品牌雷達光波與物流光纖線路 (Brand Radar Laser Network & Pulses)
   // ──────────────────────────────────────────
   if (gameState.activeBrandFilter !== 'all') {
@@ -1259,7 +1309,7 @@ function renderScene() {
     ctx.fillText('老字號', bx + 14 * scale, bz + 19 * scale);
   }
 
-  // 將全雙北 5 大連鎖門市加入深度排序清單
+  // 全雙北 124+ 處互動地標與連鎖門市動態加入深度排序清單 (Y-Sorting)
   interactables.forEach(it => {
     if (it.type === 'coco') {
       const bName = it.name.replace('CoCo 都可 (', '').replace(')', '');
@@ -1279,79 +1329,132 @@ function renderScene() {
     } else if (it.type === 'market') {
       const bName = it.name.replace('傳統市場', '').replace('觀光夜市', '').replace('老市集', '');
       renderList.push({ z: it.z, draw: () => drawMarketPlace(it.x, it.z, bName) });
+    } else if (it.type === 'station') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - it.w / 2);
+          const bz = screenZ(it.z - it.d / 2);
+          ctx.fillStyle = '#334155';
+          drawSafeRoundRect(ctx, bx, bz, it.w * scale, it.d * scale, 8);
+          ctx.fill();
+          // 傳統廡殿頂造型
+          ctx.fillStyle = '#7c2d12';
+          drawSafeRoundRect(ctx, bx - 4 * scale, bz - 6 * scale, (it.w + 8) * scale, 14 * scale, 6);
+          ctx.fill();
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = `bold ${Math.max(13, scale * 1.05)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('🚇 台北車站 TAIPEI MAIN STATION', bx + (it.w / 2) * scale, bz + 18 * scale);
+        }
+      });
+    } else if (it.type === 'mrt_escalator') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - 6);
+          const bz = screenZ(it.z - 5);
+          ctx.fillStyle = '#0284c7';
+          drawSafeRoundRect(ctx, bx, bz, 12 * scale, 10 * scale, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(9, scale * 0.6)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(`Ⓜ️ ${it.name.split(' ')[0]}`, bx + 6 * scale, bz + 6 * scale);
+        }
+      });
+    } else if (it.type === 'bus_stop') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - 7);
+          const bz = screenZ(it.z - 3);
+          ctx.fillStyle = '#1e293b';
+          drawSafeRoundRect(ctx, bx, bz, 14 * scale, 6 * scale, 3);
+          ctx.fill();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = `bold ${Math.max(8.5, scale * 0.55)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(`🚏 307 站牌`, bx + 7 * scale, bz + 4 * scale);
+        }
+      });
+    } else if (it.type === 'police') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - 9);
+          const bz = screenZ(it.z - 7);
+          ctx.fillStyle = '#1e3a8a';
+          drawSafeRoundRect(ctx, bx, bz, 18 * scale, 14 * scale, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#60a5fa';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(9, scale * 0.6)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('👮 刑事偵查隊', bx + 9 * scale, bz + 8 * scale);
+        }
+      });
+    } else if (it.type === 'ferry') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - 9);
+          const bz = screenZ(it.z - 7);
+          ctx.fillStyle = '#0e7490';
+          drawSafeRoundRect(ctx, bx, bz, 18 * scale, 14 * scale, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#22d3ee';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(9, scale * 0.6)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('🚢 水岸渡輪棧道', bx + 9 * scale, bz + 8 * scale);
+        }
+      });
+    } else if (it.type === 'rest') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - 5);
+          const bz = screenZ(it.z - 3);
+          ctx.fillStyle = '#78350f';
+          drawSafeRoundRect(ctx, bx, bz, 10 * scale, 6 * scale, 2);
+          ctx.fill();
+          ctx.fillStyle = '#fef3c7';
+          ctx.font = `bold ${Math.max(8, scale * 0.5)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('🪑 休憩長椅', bx + 5 * scale, bz + 4 * scale);
+        }
+      });
+    } else if (it.type === 'clue_ground') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x);
+          const bz = screenZ(it.z);
+          ctx.fillStyle = '#15803d';
+          ctx.beginPath();
+          ctx.arc(bx, bz, 4 * scale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(8, scale * 0.5)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText('🌸 紙條', bx, bz);
+        }
+      });
     }
   });
 
-  // 台北車站主體大樓 (TAIPEI MAIN STATION)
-  renderList.push({
-    z: -65,
-    draw: () => {
-      const bx = screenX(-35);
-      const bz = screenZ(-90);
-      ctx.fillStyle = '#334155';
-      drawSafeRoundRect(ctx, bx, bz, 70 * scale, 36 * scale, 8);
-      ctx.fill();
-      // 傳統宮殿廡殿頂
-      ctx.fillStyle = '#7c2d12';
-      drawSafeRoundRect(ctx, bx - 4 * scale, bz - 6 * scale, 78 * scale, 14 * scale, 6);
-      ctx.fill();
-
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = `bold ${Math.max(14, scale * 1.1)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('🚇 台北車站 TAIPEI MAIN STATION', bx + 35 * scale, bz + 18 * scale);
-    }
-  });
-
-  // 捷運出入口 M6 亭
-  renderList.push({
-    z: 24,
-    draw: () => {
-      const bx = screenX(24 - 6);
-      const bz = screenZ(24 - 5);
-      ctx.fillStyle = '#0284c7';
-      drawSafeRoundRect(ctx, bx, bz, 12 * scale, 10 * scale, 5);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('Ⓜ️ 捷運 M6 手扶梯', bx + 6 * scale, bz + 6 * scale);
-    }
-  });
-
-  // 板橋府中捷運出入口
-  renderList.push({
-    z: 145,
-    draw: () => {
-      const bx = screenX(-140 - 6);
-      const bz = screenZ(145 - 5);
-      ctx.fillStyle = '#0f766e';
-      drawSafeRoundRect(ctx, bx, bz, 13 * scale, 10 * scale, 5);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(9.5, scale * 0.62)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('Ⓜ️ 板橋府中捷運出入口', bx + 6.5 * scale, bz + 6 * scale);
-    }
-  });
-
-  // 忠孝公車專用道候車站島
-  renderList.push({
-    z: 2,
-    draw: () => {
-      const bx = screenX(-18);
-      const bz = screenZ(0);
-      ctx.fillStyle = '#334155';
-      drawSafeRoundRect(ctx, bx, bz, 36 * scale, 4.5 * scale, 4);
-      ctx.fill();
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('🚌 忠孝專用道候車站【307】', bx + 18 * scale, bz + 3.2 * scale);
-    }
-  });
-
-  // 307 幹線公車本體
+    // 307 幹線公車本體
   renderList.push({
     z: bus307.z,
     draw: () => {
@@ -2253,22 +2356,22 @@ function jumpToDistrict(distId) {
     if (btn) btn.classList.add("highlight");
     showNavToast("🏛️ 已跳轉至【台北車站(忠孝) 核心街區】！");
   } else if (distId === 'banqiao_xuefu') {
-    camera.x = -135; camera.z = 120; camera.targetScale = 16;
+    camera.x = -135; camera.z = 168; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpXuefu");
     if (btn) btn.classList.add("highlight");
     showNavToast("🏫 已跳轉至【板橋學府路一段 (1:1 真實街道還原)】！");
   } else if (distId === 'zhongshan') {
-    camera.x = 80; camera.z = -35; camera.targetScale = 16;
+    camera.x = 78; camera.z = -55; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpZhongshan");
     if (btn) btn.classList.add("highlight");
     showNavToast("🌳 已跳轉至【中山北路林蔭大道 ✕ 南京商圈】！");
   } else if (distId === 'chongqing_ximen') {
-    camera.x = -115; camera.z = 50; camera.targetScale = 16;
+    camera.x = -148; camera.z = 50; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpChongqing");
     if (btn) btn.classList.add("highlight");
     showNavToast("📚 已跳轉至【重慶南路書店街 ✕ 西門町】！");
   } else if (distId === 'circle') {
-    camera.x = -105; camera.z = -80; camera.targetScale = 16;
+    camera.x = -85; camera.z = -80; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpCircle");
     if (btn) btn.classList.add("highlight");
     showNavToast("🏮 已跳轉至【建成圓環 ✕ 寧夏夜市】！");
