@@ -12,15 +12,72 @@
   <!-- 2D / 2.5D 現代動漫 RPG 畫布容器 (深色沉浸底色，絕不白屏) -->
   <div id="webgl-container"></div>
 
+  <!-- 🛰️ 天眼幽靈巡航 HUD (高度計、縮放倍率、GPS座標、巡航街區) -->
+  <div class="ghost-drone-hud" id="ghostDroneHud">
+    <div class="ghost-stat-item">
+      <span class="ghost-stat-tag">🛰️ 天眼幽靈巡航</span>
+    </div>
+    <div class="ghost-stat-item">
+      <span>高度:</span> <strong id="hudAltitude">380m</strong>
+    </div>
+    <div class="ghost-stat-item">
+      <span>縮放:</span> <strong id="hudZoom">1.0x</strong>
+    </div>
+    <div class="ghost-stat-item">
+      <span>GPS:</span> <strong id="hudCoords">X: 0, Z: 14</strong>
+    </div>
+    <div class="ghost-stat-item">
+      <span>巡航街廓:</span> <strong id="hudDistrict">忠孝西路一段 ✕ 館前路口</strong>
+    </div>
+  </div>
+
+  <!-- 🏪 連鎖品牌雷達連動面板 (Brand Radar Filter Bar) -->
+  <div class="brand-radar-bar" id="brandRadarBar">
+    <button class="radar-filter-btn active" id="filterAll" onclick="setBrandRadarFilter('all')">
+      <span>🌐 全部路網</span>
+    </button>
+    <button class="radar-filter-btn brand-fmart" id="filterFmart" onclick="setBrandRadarFilter('familymart')">
+      <span>🏪 全家 FamilyMart</span>
+    </button>
+    <button class="radar-filter-btn brand-seven" id="filterSeven" onclick="setBrandRadarFilter('seven')">
+      <span>🍙 7-Eleven 統一超商</span>
+    </button>
+    <button class="radar-filter-btn brand-carrefour" id="filterCarrefour" onclick="setBrandRadarFilter('carrefour')">
+      <span>🛒 家樂福 Carrefour</span>
+    </button>
+    <button class="radar-filter-btn brand-pxmart" id="filterPxmart" onclick="setBrandRadarFilter('pxmart')">
+      <span>🧺 全聯 PX Mart</span>
+    </button>
+    <button class="radar-filter-btn brand-coco" id="filterCoco" onclick="setBrandRadarFilter('coco')">
+      <span>🧋 CoCo 都可</span>
+    </button>
+  </div>
+
+  <!-- 🧭 雙北行政區快速導航條 (District Quick Jump Bar) -->
+  <div class="district-jump-bar" id="districtJumpBar">
+    <span style="font-size:11px; color:#38bdf8; font-weight:800; margin-right:4px;">🧭 街區跳轉:</span>
+    <button class="district-jump-btn highlight" id="btnJumpStation" onclick="jumpToDistrict('station')">🏛️ 台北車站(忠孝)</button>
+    <button class="district-jump-btn" id="btnJumpXuefu" onclick="jumpToDistrict('banqiao_xuefu')">🏫 板橋學府路一段</button>
+    <button class="district-jump-btn" id="btnJumpZhongshan" onclick="jumpToDistrict('zhongshan')">🌳 中山南京商圈</button>
+    <button class="district-jump-btn" id="btnJumpChongqing" onclick="jumpToDistrict('chongqing_ximen')">📚 重慶南路/西門</button>
+    <button class="district-jump-btn" id="btnJumpCircle" onclick="jumpToDistrict('circle')">🏮 建成圓環/寧夏</button>
+  </div>
+
+  <!-- 📡 品牌連鎖雷達特效橫幅 (Chain Radar Broadcast Banner) -->
+  <div class="chain-broadcast-banner" id="chainBroadcastBanner">
+    <span id="chainBroadcastIcon">🛒</span>
+    <span id="chainBroadcastText">家樂福跨區量販補給網絡啟動</span>
+  </div>
+
   <!-- 操作提示橫幅 -->
   <div class="fpv-hint" id="fpvHint">
-    <span>🎮 現代都會 RPG：[WASD/方向鍵] 移動 ｜ 按住 [Shift] 或點擊右下 [🏃 奔跑] 衝刺 ｜ [E] 互動</span>
+    <span>🛰️ 天眼幽靈巡航：[滑鼠拖曳/WASD] 自由飛行 ｜ [滾輪] 無級縮放 ｜ 點擊上方品牌切換連鎖雷達 ｜ 點擊門市檢視店面</span>
   </div>
 
   <!-- 導航提示氣泡 (Navigation Toast) -->
   <div class="nav-hint-toast" id="navHintToast">
     <span>🧭</span>
-    <span id="navHintText">請走到路邊公車站牌【台北車站(忠孝)】搭乘公車！</span>
+    <span id="navHintText">請點擊上方品牌按鈕或探索街區！</span>
   </div>
 
   <!-- 公車 / 捷運乘車與快轉過場動畫 HUD (Transit Cutscene HUD) -->
@@ -154,6 +211,19 @@
   <div class="sprint-toggle-btn" id="btnToggleSprint" onclick="toggleSprintMode()" title="切換走路 / 奔跑模式 [Shift]">
     <span class="sprint-icon" id="sprintIcon">🏃</span>
     <span class="sprint-text" id="sprintText">奔跑模式 [Shift]</span>
+  </div>
+
+  <!-- 幽靈天眼巡航 / 地面角色切換鍵 -->
+  <div class="ghost-mode-toggle-btn spectator" id="btnGhostToggle" onclick="toggleGhostMode()" title="切換幽靈天眼 / 角色模式">
+    <span id="ghostToggleIcon">👻</span>
+    <span id="ghostToggleText">幽靈天眼 (無角色)</span>
+  </div>
+
+  <!-- 浮動縮放控制鍵 (Zoom In / Out / Reset) -->
+  <div class="zoom-controls-floating">
+    <div class="zoom-btn" onclick="zoomInCamera()" title="放大街區視角 [滾輪向上]">➕</div>
+    <div class="zoom-btn" onclick="zoomOutCamera()" title="縮小雙北全景 [滾輪向下]">➖</div>
+    <div class="zoom-btn" onclick="resetCameraCenter()" title="置中重置視野">🎯</div>
   </div>
 
   <!-- 劇情對話 / 內心獨白視窗 -->
@@ -327,6 +397,72 @@
           <h4 style="color:#38bdf8; margin-bottom:4px;">🍵 茶裏王日式無糖綠 ($25)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">回甘就像現泡，解膩生津恢復體力！</p>
           <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyKingTea()">購買 $25 (+20 體力)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3c. 家樂福 Carrefour 量販 ✕ 超市便利購 -->
+  <div class="modal-overlay" id="carrefourModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🛒</span> 家樂福 Carrefour (量販 ✕ 超市便利購)</div>
+        <button class="modal-close" onclick="closeModal('carrefourModal')">×</button>
+      </div>
+      <div style="background:#dc262618; border:1px solid #ef4444; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#f87171; font-weight:800; font-size:14px;" id="carrefourBranchGreeting">店長親切招呼：「天天都便宜，就是家樂福！全雙北量販互聯，提供充足調查能量補給！」</p>
+      </div>
+      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #3b82f6; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
+        🌐 <strong>【連鎖網絡雷達】</strong>：已對齊現實雙北門市（板橋學府便利購、重慶旗艦店、重慶南店、中山店），享有全城大容量物流互聯！
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fca5a5; margin-bottom:4px;">🥖 家庭號能量吐司 ($40)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">烘焙坊現做柔軟白吐司，快速填飽肚子！</p>
+          <button class="chat-send-btn" style="background:#dc2626; width:100%; padding:8px;" onclick="buyCarrefourToast()">購買 $40 (+45 體力)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#93c5fd; margin-bottom:4px;">💧 大瓶量販運動水 ($30)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">1500ml 量販大容量，漫遊全城不怕缺水！</p>
+          <button class="chat-send-btn" style="background:#2563eb; width:100%; padding:8px;" onclick="buyCarrefourWater()">購買 $30 (+35 心情)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fde047; margin-bottom:4px;">🧰 調查員手提補給箱 ($120)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">量販大補給：乾糧、能量棒與電解水！</p>
+          <button class="chat-send-btn" style="background:#ca8a04; width:100%; padding:8px;" onclick="buyCarrefourBox()">購買 $120 (+60 體力/+50 心情)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3d. 全聯福利中心 PX Mart 社區生鮮超市 -->
+  <div class="modal-overlay" id="pxmartModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title"><span>🧺</span> 全聯福利中心 PX Mart (社區生鮮)</div>
+        <button class="modal-close" onclick="closeModal('pxmartModal')">×</button>
+      </div>
+      <div style="background:#1e3a8a22; border:1px solid #3b82f6; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#60a5fa; font-weight:800; font-size:14px;" id="pxmartBranchGreeting">廣播響起：「請支援收銀！買進美好生活，全聯生鮮產地直送！」</p>
+      </div>
+      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #0284c7; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
+        🌐 <strong>【連鎖網絡雷達】</strong>：全雙北門市（板橋學府店、延平店、重慶店、中正武昌店）緊密互聯，生鮮蔬果提供社區級活力支援！
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#86efac; margin-bottom:4px;">🍎 產地直送高纖蘋果 ($35)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">清脆爽口香甜多汁，迅速補充元氣！</p>
+          <button class="chat-send-btn" style="background:#059669; width:100%; padding:8px;" onclick="buyPxmartApple()">購買 $35 (+35 體力)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fdba74; margin-bottom:4px;">🥛 濃醇無糖高纖豆漿 ($25)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">非基改黃豆現磨濃醇，解渴恢復專注！</p>
+          <button class="chat-send-btn" style="background:#ea580c; width:100%; padding:8px;" onclick="buyPxmartSoymilk()">購買 $25 (+25 體力/+20 心情)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#38bdf8; margin-bottom:4px;">🧺 社區生鮮活力籃 ($80)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">時令水果與綜合堅果，調查續航必備！</p>
+          <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyPxmartBasket()">購買 $80 (+50 體力/+40 心情)</button>
         </div>
       </div>
     </div>
