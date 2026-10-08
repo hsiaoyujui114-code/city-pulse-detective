@@ -1199,6 +1199,12 @@ body {
   box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
 }
 
+.radar-filter-btn.active.brand-market {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  border-color: #fde047;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+}
+
 /* ==========================================================================
    雙北行政區快速導航條 (District Quick Jump Bar)
    ========================================================================== */

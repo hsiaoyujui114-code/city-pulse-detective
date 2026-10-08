@@ -89,15 +89,15 @@ const gameState = {
   mood: 90,
   hasSkateboard: false,
   // 雙速移動曲線 (大幅提速)
-  walkSpeed: 0.38,       // 🚶 正常步行速度 (比過去 0.2 提升近一倍)
-  runSpeed: 0.75,        // 🏃 奔跑衝刺速度 (極速奔馳)
+  walkSpeed: 0.65,       // 🚶 正常步行速度 (超快步伐)
+  runSpeed: 1.40,        // 🏃 奔跑衝刺速度 (極速奔馳)
   isRunning: false,      // 當前是否處於跑步衝刺狀態
-  speed: 0.38,
+  speed: 0.65,
   // 幽靈天眼巡航核心狀態 (Ghost Spectator Drone View)
   isGhostMode: true,     // 預設為天眼幽靈自由巡航模式 (無人物，自由飛翔巡視地圖)
-  droneFlySpeed: 0.85,   // 天眼飛行平移速度
-  droneTurboSpeed: 2.2,  // 極速巡航飛行速度
-  activeBrandFilter: 'all', // 當前連鎖雷達篩選品牌: 'all', 'familymart', 'seven', 'carrefour', 'pxmart', 'coco'
+  droneFlySpeed: 3.5,    // 天眼飛行平移速度 (玩家指定大幅提速！極速平移無延遲)
+  droneTurboSpeed: 8.5,  // 極速巡航飛行速度 (Shift 鍵超光速巡視全城)
+  activeBrandFilter: 'all', // 當前連鎖雷達篩選品牌: 'all', 'familymart', 'seven', 'carrefour', 'pxmart', 'coco', 'market'
   weather: 'sunny',
   mosaic: false,
   nickname: "都會調查員 [你]",
@@ -159,7 +159,7 @@ if (engineLbl) {
 }
 
 /* ─── 4. 1:1 還原真實雙北街廓拓撲 ✕ 連鎖品牌門市資料庫 (50% 剪裁法則) ─── */
-// 互動地標點位 (留存店家 100% 精確對齊現實路名、門牌號碼與街區相對位置)
+// 互動地標點位 (留存店家與市場 100% 精確對齊現實路名、門牌號碼與街區相對位置，全圖超過 110+ 處真實點位)
 const interactables = [
   // 1. 公車通勤站牌 (以 307 幹線為主軸)
   { id: 'bus_station_zx', x: 0, z: 2, r: 8.5, type: 'bus_stop', name: '台北車站(忠孝)公車專用道站牌', line: '307', dest: 'zhongshan', label: '搭乘 307 公車 (前往中山商圈 / 南京東路)' },
@@ -171,42 +171,136 @@ const interactables = [
   { id: 'mrt_escalator_zs', x: 70, z: 15, r: 7.5, type: 'mrt_escalator', name: '捷運中山站出入口 (搭手扶梯往地下月台)', label: '搭手扶梯進地下月台' },
   { id: 'mrt_escalator_fz', x: -140, z: 145, r: 7.5, type: 'mrt_escalator', name: '捷運府中站出入口 (板橋區)', label: '搭手扶梯進地下月台' },
 
-  // 3. 實體品牌連鎖門市 (遵守 50% 剪裁法則，留存門市 100% 精確對齊現實)：
-  // (A) 全家便利商店 FamilyMart (綠藍經典雙色燈箱、FamiPort)
-  // 【學府路一段剪裁實施例】：現實約 5 間 ➔ 精簡保留 2 間 (板橋學府店、板橋學府二店)，符合 <= 50% 剪裁法則！
+  // 3. 實體品牌連鎖門市與傳統市場 (遵守 50% 剪裁法則，留存門市 100% 精確對齊現實)：
+  // ──────────────────────────────────────────
+  // (A) 7-Eleven 統一超商 (28 間真實門市，經典橘綠紅三色招牌、OPENPOINT)
+  // ──────────────────────────────────────────
+  { id: 'seven_zx', x: -15, z: 28, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前忠孝店)', address: '中正區忠孝西路一段 49 號', label: '進入 7-Eleven (站前忠孝店)' },
+  { id: 'seven_gq', x: -25, z: 55, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前館前店)', address: '中正區館前路 59 號', label: '進入 7-Eleven (站前館前店)' },
+  { id: 'seven_ny', x: -5, z: 40, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前南陽店)', address: '中正區南陽街 24 號', label: '進入 7-Eleven (站前南陽店)' },
+  { id: 'seven_xc', x: 10, z: 60, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前許昌店)', address: '中正區許昌街 42 號', label: '進入 7-Eleven (站前許昌店)' },
+  { id: 'seven_gy', x: 35, z: 45, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前公園店)', address: '中正區公園路 20 號', label: '進入 7-Eleven (站前公園店)' },
+  { id: 'seven_kf', x: -25, z: 85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前開封店)', address: '中正區開封街一段 19 號', label: '進入 7-Eleven (站前開封店)' },
+  { id: 'seven_cq', x: -115, z: 75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶南路店)', address: '中正區重慶南路一段 70 號', label: '進入 7-Eleven (重慶南路店)' },
+  { id: 'seven_wc', x: -100, z: 35, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中正武昌店)', address: '中正區武昌街一段 18 號', label: '進入 7-Eleven (中正武昌店)' },
+  { id: 'seven_hy', x: -115, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中正衡陽店)', address: '中正區衡陽路 51 號', label: '進入 7-Eleven (中正衡陽店)' },
+  { id: 'seven_zs', x: 92, z: -95, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山南京店)', address: '中山區中山北路一段 120 號', label: '進入 7-Eleven (中山南京店)' },
+  { id: 'seven_ca', x: 75, z: -45, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山長安店)', address: '中山區長安西路 18 號', label: '進入 7-Eleven (中山長安店)' },
+  { id: 'seven_ms', x: 92, z: -150, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山民生店)', address: '中山區民生西路 45 號', label: '進入 7-Eleven (中山民生店)' },
+  { id: 'seven_mq', x: 92, z: -185, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山民權店)', address: '中山區中山北路二段 92 號', label: '進入 7-Eleven (中山民權店)' },
+  { id: 'seven_ls', x: 115, z: -60, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (林森條通店)', address: '中山區林森北路 119 號', label: '進入 7-Eleven (林森條通店)' },
+  { id: 'seven_circle', x: -90, z: -140, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (寧夏夜市店)', address: '大同區民生西路 188 號', label: '進入 7-Eleven (寧夏夜市店)' },
+  { id: 'seven_cqn', x: -115, z: -85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶北路店)', address: '大同區重慶北路二段 88 號', label: '進入 7-Eleven (重慶北路店)' },
+  { id: 'seven_yp', x: -145, z: -75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (延平北路店)', address: '大同區延平北路二段 135 號', label: '進入 7-Eleven (延平北路店)' },
+  { id: 'seven_dh', x: -145, z: -130, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (大稻埕迪化店)', address: '大同區迪化街一段 54 號', label: '進入 7-Eleven (大稻埕迪化店)' },
+  { id: 'seven_cj', x: -115, z: -180, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (大同昌吉店)', address: '大同區昌吉街 68 號', label: '進入 7-Eleven (大同昌吉店)' },
+  { id: 'seven_xm_hz', x: -135, z: 35, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門漢中店)', address: '萬華區漢中街 101 號', label: '進入 7-Eleven (西門漢中店)' },
+  { id: 'seven_xm_zh', x: -135, z: 80, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門中華店)', address: '萬華區中華路一段 144 號', label: '進入 7-Eleven (西門中華店)' },
+  { id: 'seven_xm_cd', x: -155, z: 50, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (西門成都店)', address: '萬華區成都路 27 號', label: '進入 7-Eleven (西門成都店)' },
+  { id: 'seven_xf', x: -75, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋學府門市)', address: '板橋區學府路一段 62 號', label: '進入 7-Eleven (板橋學府門市)' },
+  { id: 'seven_xf2', x: -160, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋學府二店)', address: '板橋區學府路一段 158 號', label: '進入 7-Eleven (板橋學府二店)' },
+  { id: 'seven_banqiao', x: -160, z: 160, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (府中重慶店)', address: '板橋區重慶路 15 號', label: '進入 7-Eleven (府中重慶店)' },
+  { id: 'seven_xm_bd', x: -180, z: 85, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (府中縣民店)', address: '板橋區縣民大道一段 88 號', label: '進入 7-Eleven (府中縣民店)' },
+  { id: 'seven_wh', x: -95, z: 170, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋文化店)', address: '板橋區文化路一段 136 號', label: '進入 7-Eleven (板橋文化店)' },
+  { id: 'seven_wh2', x: -175, z: 170, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋文化二店)', address: '板橋區文化路一段 210 號', label: '進入 7-Eleven (板橋文化二店)' },
+
+  // ──────────────────────────────────────────
+  // (B) 全家便利商店 FamilyMart (28 間真實門市，綠藍雙色燈箱、FamiPort)
+  // ──────────────────────────────────────────
+  { id: 'fmart_station', x: -20, z: 45, r: 8.0, type: 'familymart', name: '全家便利商店 (站前館前店)', address: '中正區館前路 43 號', label: '進入全家 (站前館前店)' },
+  { id: 'fmart_zx', x: -35, z: 28, r: 8.0, type: 'familymart', name: '全家便利商店 (站前忠孝店)', address: '中正區忠孝西路一段 36 號', label: '進入全家 (站前忠孝店)' },
+  { id: 'fmart_xc', x: 5, z: 55, r: 8.0, type: 'familymart', name: '全家便利商店 (站前許昌店)', address: '中正區許昌街 17 號', label: '進入全家 (站前許昌店)' },
+  { id: 'fmart_kf', x: -15, z: 80, r: 8.0, type: 'familymart', name: '全家便利商店 (站前開封店)', address: '中正區開封街一段 14 號', label: '進入全家 (站前開封店)' },
+  { id: 'fmart_ny', x: -10, z: 60, r: 8.0, type: 'familymart', name: '全家便利商店 (站前南陽店)', address: '中正區南陽街 15 號', label: '進入全家 (站前南陽店)' },
+  { id: 'fmart_cq', x: -115, z: 95, r: 8.0, type: 'familymart', name: '全家便利商店 (重慶南路店)', address: '中正區重慶南路一段 99 號', label: '進入全家 (重慶南路店)' },
+  { id: 'fmart_hn', x: -60, z: 65, r: 8.0, type: 'familymart', name: '全家便利商店 (懷寧襄陽店)', address: '中正區襄陽路 9 號', label: '進入全家 (懷寧襄陽店)' },
+  { id: 'fmart_zs', x: 92, z: 25, r: 8.0, type: 'familymart', name: '全家便利商店 (中山北路店)', address: '中山區中山北路一段 105 號', label: '進入全家 (中山北路店)' },
+  { id: 'fmart_nj', x: 45, z: -95, r: 8.0, type: 'familymart', name: '全家便利商店 (中山南京店)', address: '中山區南京西路 12 號', label: '進入全家 (中山南京店)' },
+  { id: 'fmart_ca', x: 85, z: -45, r: 8.0, type: 'familymart', name: '全家便利商店 (中山長安店)', address: '中山區長安西路 40 號', label: '進入全家 (中山長安店)' },
+  { id: 'fmart_sl', x: 65, z: -150, r: 8.0, type: 'familymart', name: '全家便利商店 (中山雙連店)', address: '中山區民生西路 66 號', label: '進入全家 (中山雙連店)' },
+  { id: 'fmart_mq', x: 75, z: -185, r: 8.0, type: 'familymart', name: '全家便利商店 (中山民權店)', address: '中山區民權西路 32 號', label: '進入全家 (中山民權店)' },
+  { id: 'fmart_ls', x: 115, z: -110, r: 8.0, type: 'familymart', name: '全家便利商店 (林森錦州店)', address: '中山區林森北路 260 號', label: '進入全家 (林森錦州店)' },
+  { id: 'fmart_circle', x: -105, z: -75, r: 8.0, type: 'familymart', name: '全家便利商店 (建成圓環店)', address: '大同區重慶北路二段 12 號', label: '進入全家 (建成圓環店)' },
+  { id: 'fmart_nx', x: -95, z: -115, r: 8.0, type: 'familymart', name: '全家便利商店 (寧夏夜市店)', address: '大同區寧夏路 45 號', label: '進入全家 (寧夏夜市店)' },
+  { id: 'fmart_yp', x: -145, z: -95, r: 8.0, type: 'familymart', name: '全家便利商店 (延平北路店)', address: '大同區延平北路二段 96 號', label: '進入全家 (延平北路店)' },
+  { id: 'fmart_ml', x: -155, z: -125, r: 8.0, type: 'familymart', name: '全家便利商店 (迪化民樂店)', address: '大同區民樂街 22 號', label: '進入全家 (迪化民樂店)' },
+  { id: 'fmart_dq', x: -145, z: -175, r: 8.0, type: 'familymart', name: '全家便利商店 (大同大橋店)', address: '大同區延平北路三段 18 號', label: '進入全家 (大同大橋店)' },
+  { id: 'fmart_xm', x: -125, z: 50, r: 8.0, type: 'familymart', name: '全家便利商店 (西門町漢中店)', address: '萬華區漢中街 52 號', label: '進入全家 (西門漢中店)' },
+  { id: 'fmart_wc', x: -145, z: 35, r: 8.0, type: 'familymart', name: '全家便利商店 (西門武昌店)', address: '萬華區武昌街二段 37 號', label: '進入全家 (西門武昌店)' },
+  { id: 'fmart_zh', x: -135, z: 95, r: 8.0, type: 'familymart', name: '全家便利商店 (西門中華店)', address: '萬華區中華路一段 118 號', label: '進入全家 (西門中華店)' },
   { id: 'fmart_xf', x: -145, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府店)', address: '板橋區學府路一段 146 號', label: '進入全家 (板橋學府店)' },
   { id: 'fmart_xf2', x: -105, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府二店)', address: '板橋區學府路一段 98 號', label: '進入全家 (板橋學府二店)' },
-  { id: 'fmart_station', x: -20, z: 45, r: 8.0, type: 'familymart', name: '全家便利商店 (站前館前店)', address: '中正區館前路 43 號', label: '進入全家 (站前館前店)' },
-  { id: 'fmart_zs', x: 92, z: 25, r: 8.0, type: 'familymart', name: '全家便利商店 (中山北路店)', address: '中山區中山北路一段 105 號', label: '進入全家 (中山北路店)' },
-  { id: 'fmart_circle', x: -105, z: -75, r: 8.0, type: 'familymart', name: '全家便利商店 (建成圓環店)', address: '大同區重慶北路二段 12 號', label: '進入全家 (建成圓環店)' },
-  { id: 'fmart_xm', x: -125, z: 50, r: 8.0, type: 'familymart', name: '全家便利商店 (西門町漢中店)', address: '萬華區漢中街 52 號', label: '進入全家 (西門漢中店)' },
+  { id: 'fmart_xf3', x: -185, z: 120, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋學府三店)', address: '板橋區學府路一段 188 號', label: '進入全家 (板橋學府三店)' },
+  { id: 'fmart_fz', x: -135, z: 165, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋府中店)', address: '板橋區府中路 35 號', label: '進入全家 (板橋府中店)' },
+  { id: 'fmart_cq_bq', x: -150, z: 175, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋重慶店)', address: '板橋區重慶路 28 號', label: '進入全家 (板橋重慶店)' },
+  { id: 'fmart_xm_bq', x: -155, z: 85, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋縣民店)', address: '板橋區縣民大道一段 110 號', label: '進入全家 (板橋縣民店)' },
+  { id: 'fmart_wh_bq', x: -135, z: 170, r: 8.0, type: 'familymart', name: '全家便利商店 (板橋文化店)', address: '板橋區文化路一段 168 號', label: '進入全家 (板橋文化店)' },
 
-  // (B) 7-Eleven 統一超商 (橘綠紅三色招牌、OPENPOINT)
-  { id: 'seven_xf', x: -75, z: 125, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (板橋學府門市)', address: '板橋區學府路一段 62 號', label: '進入 7-Eleven (板橋學府門市)' },
-  { id: 'seven_zx', x: -15, z: 28, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (站前忠孝店)', address: '中正區忠孝西路一段 49 號', label: '進入 7-Eleven (站前忠孝店)' },
-  { id: 'seven_cq', x: -115, z: 75, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (重慶南路店)', address: '中正區重慶南路一段 70 號', label: '進入 7-Eleven (重慶南路店)' },
-  { id: 'seven_zs', x: 92, z: -95, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (中山南京店)', address: '中山區中山北路一段 120 號', label: '進入 7-Eleven (中山南京店)' },
-  { id: 'seven_circle', x: -90, z: -140, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (寧夏夜市店)', address: '大同區民生西路 188 號', label: '進入 7-Eleven (寧夏夜市店)' },
-  { id: 'seven_banqiao', x: -160, z: 160, r: 8.0, type: 'seven', name: '7-Eleven 統一超商 (府中重慶店)', address: '板橋區重慶路 15 號', label: '進入 7-Eleven (府中重慶店)' },
-
-  // (C) 家樂福 Carrefour (量販 ✕ 超市便利購，紅白藍雙環 C 字標)
-  { id: 'carrefour_xf', x: -170, z: 115, r: 9.0, type: 'carrefour', name: '家樂福便利購 (板橋學府店)', address: '板橋區學府路一段 192 號', isFlagship: false, label: '進入家樂福便利購 (學府店)' },
+  // ──────────────────────────────────────────
+  // (C) 家樂福 Carrefour (12 間旗艦大賣場與超市便利購，紅白藍雙環 C 標)
+  // ──────────────────────────────────────────
   { id: 'carrefour_cq_flagship', x: -110, z: -150, r: 10.5, type: 'carrefour', name: '家樂福 重慶旗艦店 (雙層大賣場)', address: '大同區重慶北路二段 171 號', isFlagship: true, label: '進入家樂福重慶旗艦店 (大賣場)' },
+  { id: 'carrefour_gl_flagship', x: -150, z: 110, r: 10.5, type: 'carrefour', name: '家樂福 桂林旗艦店 (24H量販店)', address: '萬華區桂林路 1 號', isFlagship: true, label: '進入家樂福桂林旗艦店 (24H量販店)' },
+  { id: 'carrefour_xf', x: -170, z: 115, r: 9.0, type: 'carrefour', name: '家樂福便利購 (板橋學府店)', address: '板橋區學府路一段 192 號', isFlagship: false, label: '進入家樂福便利購 (學府店)' },
   { id: 'carrefour_cq_south', x: -115, z: 110, r: 9.0, type: 'carrefour', name: '家樂福超市 (重慶南店)', address: '中正區重慶南路一段 118 號', isFlagship: false, label: '進入家樂福超市 (重慶南店)' },
   { id: 'carrefour_zs', x: 92, z: -55, r: 9.0, type: 'carrefour', name: '家樂福超市 (中山店)', address: '中山區中山北路一段 88 號', isFlagship: false, label: '進入家樂福超市 (中山店)' },
   { id: 'carrefour_fz', x: -130, z: 170, r: 9.0, type: 'carrefour', name: '家樂福超市 (板橋府中店)', address: '板橋區府中路 29 號', isFlagship: false, label: '進入家樂福超市 (府中店)' },
+  { id: 'carrefour_nj', x: 0, z: -95, r: 9.0, type: 'carrefour', name: '家樂福超市 (南京西店)', address: '中山區南京西路 22 號', isFlagship: false, label: '進入家樂福超市 (南京西店)' },
+  { id: 'carrefour_kf', x: -30, z: 75, r: 9.0, type: 'carrefour', name: '家樂福超市 (站前開封店)', address: '中正區開封街一段 38 號', isFlagship: false, label: '進入家樂福超市 (站前開封店)' },
+  { id: 'carrefour_wh', x: -160, z: 175, r: 9.0, type: 'carrefour', name: '家樂福超市 (板橋文化店)', address: '板橋區文化路一段 188 號', isFlagship: false, label: '進入家樂福超市 (板橋文化店)' },
+  { id: 'carrefour_yp', x: -145, z: -140, r: 9.0, type: 'carrefour', name: '家樂福便利購 (延平北店)', address: '大同區延平北路二段 202 號', isFlagship: false, label: '進入家樂福便利購 (延平北店)' },
+  { id: 'carrefour_sl', x: 80, z: -145, r: 9.0, type: 'carrefour', name: '家樂福超市 (雙連店)', address: '中山區民生西路 78 號', isFlagship: false, label: '進入家樂福超市 (雙連店)' },
+  { id: 'carrefour_hz', x: -135, z: 65, r: 9.0, type: 'carrefour', name: '家樂福超市 (西門漢中店)', address: '萬華區漢中街 120 號', isFlagship: false, label: '進入家樂福超市 (西門漢中店)' },
 
-  // (D) 全聯福利中心 PX Mart (深藍底紅白蝴蝶圓形標、社區生鮮)
+  // ──────────────────────────────────────────
+  // (D) 全聯福利中心 PX Mart (14 間社區生鮮門市，深藍底紅白雙圓蝴蝶標)
+  // ──────────────────────────────────────────
+  { id: 'pxmart_xf', x: -130, z: 130, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋學府店)', address: '板橋區學府路一段 180 號', label: '進入全聯 (板橋學府店)' },
+  { id: 'pxmart_fz', x: -140, z: 180, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋府中店)', address: '板橋區府中路 48 號', label: '進入全聯 (板橋府中店)' },
+  { id: 'pxmart_wh', x: -115, z: 175, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋文化店)', address: '板橋區文化路一段 145 號', label: '進入全聯 (板橋文化店)' },
+  { id: 'pxmart_xm_bq', x: -135, z: 85, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋縣民店)', address: '板橋區縣民大道一段 150 號', label: '進入全聯 (板橋縣民店)' },
   { id: 'pxmart_yp', x: -145, z: -110, r: 8.5, type: 'pxmart', name: '全聯福利中心 (延平店)', address: '大同區延平北路二段 247 號', label: '進入全聯 (延平店)' },
   { id: 'pxmart_cq', x: -110, z: -180, r: 8.5, type: 'pxmart', name: '全聯福利中心 (重慶店)', address: '大同區重慶北路三段 154 號', label: '進入全聯 (重慶店)' },
-  { id: 'pxmart_xf', x: -130, z: 130, r: 8.5, type: 'pxmart', name: '全聯福利中心 (板橋學府店)', address: '板橋區學府路一段 180 號', label: '進入全聯 (板橋學府店)' },
   { id: 'pxmart_wc', x: -115, z: 45, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中正武昌店)', address: '中正區重慶南路一段 86 號', label: '進入全聯 (中正武昌店)' },
+  { id: 'pxmart_kf', x: -25, z: 95, r: 8.5, type: 'pxmart', name: '全聯福利中心 (站前開封店)', address: '中正區開封街一段 55 號', label: '進入全聯 (站前開封店)' },
+  { id: 'pxmart_nj', x: 25, z: -95, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山南京店)', address: '中山區南京西路 36 號', label: '進入全聯 (中山南京店)' },
+  { id: 'pxmart_jl', x: 110, z: -90, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山吉林店)', address: '中山區吉林路 108 號', label: '進入全聯 (中山吉林店)' },
+  { id: 'pxmart_sl', x: 88, z: -160, r: 8.5, type: 'pxmart', name: '全聯福利中心 (中山雙連店)', address: '中山區民生西路 90 號', label: '進入全聯 (中山雙連店)' },
+  { id: 'pxmart_cs', x: -150, z: 75, r: 8.5, type: 'pxmart', name: '全聯福利中心 (西門長沙店)', address: '萬華區長沙街二段 60 號', label: '進入全聯 (西門長沙店)' },
+  { id: 'pxmart_dh', x: -130, z: -150, r: 8.5, type: 'pxmart', name: '全聯福利中心 (大稻埕民生店)', address: '大同區民生西路 230 號', label: '進入全聯 (大稻埕民生店)' },
+  { id: 'pxmart_hk', x: -20, z: 115, r: 8.5, type: 'pxmart', name: '全聯福利中心 (站前漢口店)', address: '中正區漢口街一段 45 號', label: '進入全聯 (站前漢口店)' },
 
-  // (E) CoCo 都可 手搖飲門市 (亮橘波浪招牌、經典微笑圓標、保溫茶桶)
+  // ──────────────────────────────────────────
+  // (E) CoCo 都可 手搖飲門市 (14 間門市，亮橘微笑圓標、經典珍珠奶茶)
+  // ──────────────────────────────────────────
   { id: 'coco_ny', x: -20, z: 65, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前南陽店)', address: '中正區南陽街 18 號', label: '購買 CoCo 手搖飲 (南陽店)' },
-  { id: 'coco_zs', x: 92, z: -35, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山北路門市)', address: '中山區中山北路一段 92 號', label: '購買 CoCo 手搖飲 (中山門市)' },
+  { id: 'coco_xc', x: 0, z: 65, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前許昌店)', address: '中正區許昌街 28 號', label: '購買 CoCo 手搖飲 (許昌店)' },
+  { id: 'coco_kf', x: -20, z: 85, r: 8.0, type: 'coco', name: 'CoCo 都可 (站前開封店)', address: '中正區開封街一段 22 號', label: '購買 CoCo 手搖飲 (開封店)' },
   { id: 'coco_cq', x: -115, z: 15, r: 8.0, type: 'coco', name: 'CoCo 都可 (重慶書店街店)', address: '中正區重慶南路一段 55 號', label: '購買 CoCo 手搖飲 (重慶店)' },
+  { id: 'coco_zs', x: 92, z: -35, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山北路門市)', address: '中山區中山北路一段 92 號', label: '購買 CoCo 手搖飲 (中山門市)' },
+  { id: 'coco_nj', x: 35, z: -95, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山南京店)', address: '中山區南京西路 18 號', label: '購買 CoCo 手搖飲 (南京店)' },
+  { id: 'coco_sl', x: 75, z: -140, r: 8.0, type: 'coco', name: 'CoCo 都可 (中山雙連店)', address: '中山區民生西路 52 號', label: '購買 CoCo 手搖飲 (雙連店)' },
+  { id: 'coco_circle', x: -105, z: -55, r: 8.0, type: 'coco', name: 'CoCo 都可 (建成圓環店)', address: '大同區重慶北路二段 28 號', label: '購買 CoCo 手搖飲 (圓環店)' },
+  { id: 'coco_nx', x: -85, z: -130, r: 8.0, type: 'coco', name: 'CoCo 都可 (寧夏民生店)', address: '大同區民生西路 172 號', label: '購買 CoCo 手搖飲 (寧夏店)' },
+  { id: 'coco_yp', x: -145, z: -85, r: 8.0, type: 'coco', name: 'CoCo 都可 (延平北路店)', address: '大同區延平北路二段 80 號', label: '購買 CoCo 手搖飲 (延平店)' },
+  { id: 'coco_xm', x: -140, z: 45, r: 8.0, type: 'coco', name: 'CoCo 都可 (西門武昌店)', address: '萬華區武昌街二段 20 號', label: '購買 CoCo 手搖飲 (西門店)' },
   { id: 'coco_fz', x: -150, z: 150, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋府中店)', address: '板橋區重慶路 12 號', label: '購買 CoCo 手搖飲 (府中店)' },
+  { id: 'coco_xf', x: -120, z: 120, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋學府店)', address: '板橋區學府路一段 128 號', label: '購買 CoCo 手搖飲 (學府店)' },
+  { id: 'coco_wh', x: -145, z: 175, r: 8.0, type: 'coco', name: 'CoCo 都可 (板橋文化店)', address: '板橋區文化路一段 175 號', label: '購買 CoCo 手搖飲 (文化店)' },
+
+  // ──────────────────────────────────────────
+  // (F) 傳統市場與觀光夜市 (10 處雙北老字號傳統市集與夜市，古早味小吃與生鮮)
+  // ──────────────────────────────────────────
+  { id: 'market_zs', x: 68, z: -48, r: 9.5, type: 'market', name: '中山傳統市場', address: '中山區長安西路 3 號 (中山北路口)', label: '進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)' },
+  { id: 'market_sl', x: 75, z: -155, r: 9.5, type: 'market', name: '雙連傳統市場', address: '大同區民生西路 198 號 (文昌宮旁)', label: '進入 雙連傳統市場 (品嚐文昌宮古早味美食)' },
+  { id: 'market_cz', x: -65, z: 50, r: 9.5, type: 'market', name: '城中市場老市集', address: '中正區武昌街一段 22 巷 (省城隍廟口)', label: '進入 城中市場老市集 (老台北在地情報與小吃)' },
+  { id: 'market_yl', x: -150, z: -85, r: 9.5, type: 'market', name: '大稻埕永樂市場', address: '大同區迪化街一段 21 號', label: '進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)' },
+  { id: 'market_nx', x: -110, z: -120, r: 10.0, type: 'market', name: '建成圓環 ✕ 寧夏觀光夜市', address: '大同區寧夏路民生西路口', label: '進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)' },
+  { id: 'market_xm', x: -138, z: 62, r: 9.5, type: 'market', name: '西門市場 ✕ 紅樓文創市集', address: '萬華區成都路 10 號', label: '進入 西門市場/紅樓文創市集 (潮流古著與點心)' },
+  { id: 'market_hs', x: -138, z: 175, r: 9.5, type: 'market', name: '板橋黃石傳統市場', address: '板橋區宮口街 37 號 (府中商圈)', label: '進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)' },
+  { id: 'market_ny', x: -175, z: 195, r: 10.0, type: 'market', name: '板橋湳雅觀光夜市', address: '板橋區南雅東路 87 號', label: '進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)' },
+  { id: 'market_qg', x: 92, z: -195, r: 9.5, type: 'market', name: '晴光傳統商圈市場', address: '中山區雙城街 12 巷 (晴光商圈)', label: '進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)' },
+  { id: 'market_lz', x: -110, z: -185, r: 9.5, type: 'market', name: '大同蘭州傳統市場', address: '大同區昌吉街 55 號', label: '進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)' },
 
   // 4. 重點調查與線索地標
   { id: 'clue_flower', x: 12, z: 18, r: 6.0, type: 'clue_ground', name: '站前花圃神祕紙條', label: '翻查站前花圃神祕紙條' },
@@ -216,6 +310,7 @@ const interactables = [
   { id: 'rest_bench', x: 2, z: 26, r: 6.0, type: 'rest', name: '站前候車長椅', label: '在長椅休息恢復體力' },
   { id: 'rest_bench_xf', x: -110, z: 128, r: 6.0, type: 'rest', name: '板橋學府路候車休憩椅', label: '在長椅休息恢復體力' }
 ];
+
 
 // 307 幹線公車動態物件
 const bus307 = {
@@ -305,8 +400,9 @@ window.addEventListener("mousemove", e => {
   if (isDragging) {
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
-    camera.x = cameraDragStartX - dx / camera.currentScale;
-    camera.z = cameraDragStartZ - dy / camera.currentScale;
+    const dragMultiplier = 1.35; // 提高游標拖曳平移反饋速度，指哪打哪超靈敏
+    camera.x = cameraDragStartX - (dx / camera.currentScale) * dragMultiplier;
+    camera.z = cameraDragStartZ - (dy / camera.currentScale) * dragMultiplier;
     camera.x = Math.max(-215, Math.min(215, camera.x));
     camera.z = Math.max(-215, Math.min(215, camera.z));
     if (!gameState.isGhostMode) {
@@ -816,7 +912,8 @@ function renderScene() {
       seven: { stroke: '#ea580c', fill: 'rgba(234, 88, 12, 0.25)', glow: 'rgba(234, 88, 12, 0.6)' },
       carrefour: { stroke: '#ef4444', fill: 'rgba(59, 130, 246, 0.25)', glow: 'rgba(239, 68, 68, 0.6)' },
       pxmart: { stroke: '#0284c7', fill: 'rgba(2, 132, 199, 0.25)', glow: 'rgba(2, 132, 199, 0.6)' },
-      coco: { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.25)', glow: 'rgba(245, 158, 11, 0.6)' }
+      coco: { stroke: '#f59e0b', fill: 'rgba(245, 158, 11, 0.25)', glow: 'rgba(245, 158, 11, 0.6)' },
+      market: { stroke: '#d97706', fill: 'rgba(217, 119, 6, 0.25)', glow: 'rgba(217, 119, 6, 0.7)' }
     };
     const bColor = brandColors[gameState.activeBrandFilter] || { stroke: '#00d2ff', fill: 'rgba(0, 210, 255, 0.25)', glow: 'rgba(0, 210, 255, 0.6)' };
 
@@ -1094,6 +1191,74 @@ function renderScene() {
     ctx.fill();
   }
 
+  // (6) 傳統市場與觀光夜市 (Traditional Market / Night Market)
+  function drawMarketPlace(x, z, marketName) {
+    const bx = screenX(x - 14);
+    const bz = screenZ(z - 12);
+    // 主建築底色 (傳統暖色磚紅/檜木色)
+    ctx.fillStyle = '#451a03';
+    drawSafeRoundRect(ctx, bx, bz, 28 * scale, 24 * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 傳統中式斜簷 / 紅金雙色遮雨棚 (Striped Canopy)
+    ctx.fillStyle = '#dc2626';
+    drawSafeRoundRect(ctx, bx - 2, bz, 32 * scale, 6 * scale, 4);
+    ctx.fill();
+    ctx.fillStyle = '#f59e0b';
+    for (let stripe = 0; stripe < 32; stripe += 8) {
+      ctx.fillRect(bx - 2 + stripe * scale, bz, 4 * scale, 6 * scale);
+    }
+
+    // 傳統木匾招牌
+    ctx.fillStyle = '#78350f';
+    drawSafeRoundRect(ctx, bx + 2 * scale, bz + 1.2 * scale, 26 * scale, 3.8 * scale, 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = `bold ${Math.max(9, scale * 0.65)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`🏮 ${marketName}`, bx + 15 * scale, bz + 3.8 * scale);
+
+    // 左右兩側懸掛紅燈籠
+    function drawLantern(lx, ly) {
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(lx, ly, 2.2 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(lx - 1 * scale, ly - 0.5 * scale, 2 * scale, 1 * scale);
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(lx - 0.5 * scale, ly + 2.2 * scale, 1 * scale, 1.5 * scale);
+    }
+    drawLantern(bx + 1 * scale, bz + 9 * scale);
+    drawLantern(bx + 27 * scale, bz + 9 * scale);
+
+    // 熱鬧攤販檔口 (生鮮蔬果木箱 / 熱氣小吃吧台)
+    ctx.fillStyle = '#92400e';
+    drawSafeRoundRect(ctx, bx + 4 * scale, bz + 13 * scale, 20 * scale, 8 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 小吃蒸籠 / 食物陳列
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.arc(bx + 9 * scale, bz + 16 * scale, 2.5 * scale, 0, Math.PI * 2);
+    ctx.arc(bx + 19 * scale, bz + 16 * scale, 2.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#b45309';
+    ctx.font = `bold ${Math.max(8, scale * 0.52)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('老字號', bx + 14 * scale, bz + 19 * scale);
+  }
+
   // 將全雙北 5 大連鎖門市加入深度排序清單
   interactables.forEach(it => {
     if (it.type === 'coco') {
@@ -1111,6 +1276,9 @@ function renderScene() {
     } else if (it.type === 'pxmart') {
       const bName = it.name.replace('全聯福利中心 (', '').replace(')', '');
       renderList.push({ z: it.z, draw: () => drawPxMartStore(it.x, it.z, bName) });
+    } else if (it.type === 'market') {
+      const bName = it.name.replace('傳統市場', '').replace('觀光夜市', '').replace('老市集', '');
+      renderList.push({ z: it.z, draw: () => drawMarketPlace(it.x, it.z, bName) });
     }
   });
 
@@ -1405,35 +1573,27 @@ let hasPlayedDoorbell = false;
 
 function checkProximityAndLocation() {
   let currentLoc = "忠孝西路一段 ✕ 館前路口";
-  // 板橋學府路一段與周邊商圈判定
-  if (Math.hypot(playerPos.x - (-145), playerPos.z - 120) < 18) currentLoc = "板橋學府路一段・全家便利商店(板橋學府店)";
-  else if (Math.hypot(playerPos.x - (-105), playerPos.z - 120) < 18) currentLoc = "板橋學府路一段・全家便利商店(板橋學府二店)";
-  else if (Math.hypot(playerPos.x - (-75), playerPos.z - 125) < 18) currentLoc = "板橋學府路一段・7-Eleven 統一超商(學府門市)";
-  else if (Math.hypot(playerPos.x - (-170), playerPos.z - 115) < 18) currentLoc = "板橋學府路一段・家樂福便利購(學府店)";
-  else if (Math.hypot(playerPos.x - (-130), playerPos.z - 130) < 18) currentLoc = "板橋學府路一段・全聯福利中心(板橋學府店)";
-  else if (Math.hypot(playerPos.x - (-120), playerPos.z - 120) < 18) currentLoc = "板橋學府路一段公車站牌 (307 幹線)";
-  else if (Math.hypot(playerPos.x - (-140), playerPos.z - 145) < 18) currentLoc = "板橋府中商圈 ✕ 府中捷運出入口";
-  else if (Math.hypot(playerPos.x - (-150), playerPos.z - 150) < 18) currentLoc = "板橋府中商圈・CoCo 都可手搖飲門市";
-  else if (Math.hypot(playerPos.x - (-110), playerPos.z - (-150)) < 22) currentLoc = "重慶北路二段・家樂福 重慶旗艦店(大賣場)";
-  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 110) < 18) currentLoc = "重慶南路一段・家樂福超市(重慶南店)";
-  else if (Math.hypot(playerPos.x - 92, playerPos.z - (-55)) < 18) currentLoc = "中山北路一段・家樂福超市(中山店)";
-  else if (Math.hypot(playerPos.x - (-145), playerPos.z - (-110)) < 18) currentLoc = "延平北路二段・全聯福利中心(延平店)";
-  else if (Math.hypot(playerPos.x - (-110), playerPos.z - (-180)) < 18) currentLoc = "重慶北路三段・全聯福利中心(重慶店)";
-  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 45) < 18) currentLoc = "重慶南路一段・全聯福利中心(中正武昌店)";
-  else if (Math.hypot(playerPos.x - 92, playerPos.z - (-35)) < 18) currentLoc = "中山北路一段・CoCo都可手搖飲門市";
-  else if (Math.hypot(playerPos.x - (-20), playerPos.z - 65) < 18) currentLoc = "南陽補習街・CoCo都可手搖飲門市";
-  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 15) < 18) currentLoc = "重慶南路書店街・CoCo都可門市";
-  else if (Math.hypot(playerPos.x - 92, playerPos.z - 25) < 18) currentLoc = "中山北路一段・全家便利商店";
-  else if (Math.hypot(playerPos.x - (-20), playerPos.z - 45) < 18) currentLoc = "館前路商業廊道・全家便利商店(站前店)";
-  else if (Math.hypot(playerPos.x - (-105), playerPos.z - (-75)) < 18) currentLoc = "建成圓環商圈・全家便利商店";
-  else if (Math.hypot(playerPos.x - (-15), playerPos.z - 28) < 18) currentLoc = "忠孝西路一段・7-Eleven 統一超商(站前店)";
-  else if (Math.hypot(playerPos.x - (-115), playerPos.z - 75) < 18) currentLoc = "重慶南路一段・7-Eleven 統一超商";
-  else if (Math.hypot(playerPos.x - 92, playerPos.z - (-95)) < 18) currentLoc = "中山南京路口・7-Eleven 統一超商";
-  else if (Math.hypot(playerPos.x - 0, playerPos.z - 2) < 16) currentLoc = "忠孝西路中央公車專用道【台北車站(忠孝)】";
-  else if (Math.hypot(playerPos.x - 24, playerPos.z - 24) < 16) currentLoc = "台北車站南側廣場 ✕ M6捷運出入口";
-  else if (Math.hypot(playerPos.x - (-110), playerPos.z - (-120)) < 24) currentLoc = "建成圓環 ✕ 寧夏夜市美食小吃街";
-  else if (Math.hypot(playerPos.x - 130, playerPos.z - 120) < 22) currentLoc = "北投分局・刑事偵查隊";
-  else if (Math.hypot(playerPos.x - (-180), playerPos.z - (-40)) < 22) currentLoc = "淡水河水岸碼頭棧道";
+  // 動態比對距離最近之真實門市、公車站牌或市集
+  let nearestItem = null;
+  let minItemDist = 20;
+  for (const item of interactables) {
+    const d = Math.hypot(playerPos.x - item.x, playerPos.z - item.z);
+    if (d < minItemDist) {
+      minItemDist = d;
+      nearestItem = item;
+    }
+  }
+
+  if (nearestItem) {
+    currentLoc = `${nearestItem.name} (${nearestItem.address || '雙北核心商圈'})`;
+  } else {
+    // 區域街區名稱備援
+    if (playerPos.z > 95 && playerPos.x < -60) currentLoc = "板橋區・學府路一段 ✕ 新板特區商圈";
+    else if (playerPos.z < -60 && playerPos.x > 30) currentLoc = "中山區・中山北路林蔭大道 ✕ 南京商圈";
+    else if (playerPos.z < -60 && playerPos.x < -60) currentLoc = "大同區・建成圓環 ✕ 寧夏夜市商圈";
+    else if (playerPos.z > 15 && playerPos.x < -90) currentLoc = "萬華/中正・重慶南路書店街 ✕ 西門町商圈";
+    else currentLoc = "中正區・忠孝西路一段 ✕ 台北車站站前廣場";
+  }
 
   if (gameState.currentLocationName !== currentLoc) {
     gameState.currentLocationName = currentLoc;
@@ -1464,7 +1624,7 @@ function checkProximityAndLocation() {
     if (nearest.id !== lastNearestId) {
       lastNearestId = nearest.id;
       updateActionPills(nearest);
-      if ((nearest.type === 'familymart' || nearest.type === 'seven' || nearest.type === 'coco' || nearest.type === 'carrefour' || nearest.type === 'pxmart') && !hasPlayedDoorbell) {
+      if ((nearest.type === 'familymart' || nearest.type === 'seven' || nearest.type === 'coco' || nearest.type === 'carrefour' || nearest.type === 'pxmart' || nearest.type === 'market') && !hasPlayedDoorbell) {
         playStoreChime();
         hasPlayedDoorbell = true;
       }
@@ -1507,6 +1667,11 @@ function updateActionPills(item) {
     addActionPill("🍎 買產地直送高纖蘋果 ($35)", "🍎", () => buyPxmartApple());
     addActionPill("🥛 買濃醇高纖豆漿 ($25)", "🥛", () => buyPxmartSoymilk());
     addActionPill("🧺 買生鮮活力籃 ($80)", "🧺", () => buyPxmartBasket());
+  } else if (item.type === "market") {
+    addActionPill(`🏮 進入 ${item.name}`, "E", () => openMarketModal(item));
+    addActionPill("🍜 買古早味切仔麵 ($45)", "🍜", () => buyMarketFood('noodle', 45));
+    addActionPill("🌯 買現包傳香潤餅 ($50)", "🌯", () => buyMarketFood('roll', 50));
+    addActionPill("🍢 買現炸旗魚黑輪 ($30)", "🍢", () => buyMarketFood('fishcake', 30));
   } else if (item.type === "police") {
     addActionPill("📹 調閱 CCTV 軌跡", "E", () => openCctvModal());
     addActionPill("🚓 進行筆錄對質逮捕", "🚨", () => openInterrogateModal());
@@ -1549,6 +1714,7 @@ function triggerDirectInteraction(it) {
   else if (it.type === "seven") openSevenModal(it);
   else if (it.type === "carrefour") openCarrefourModal(it);
   else if (it.type === "pxmart") openPxmartModal(it);
+  else if (it.type === "market") openMarketModal(it);
   else if (it.type === "police") openCctvModal();
   else if (it.type === "nightmarket") openNightMarketModal();
   else if (it.type === "ferry") openFerryModal();
@@ -1888,6 +2054,47 @@ function openPxmartModal(store) {
   }
 }
 
+function openMarketModal(market) {
+  const modal = document.getElementById("marketModal");
+  if (modal) {
+    if (market && market.name) {
+      const title = document.getElementById("marketModalTitle");
+      if (title) title.innerHTML = `<span>🏮</span> ${market.name}`;
+      const addr = document.getElementById("marketAddress");
+      if (addr) addr.innerText = market.address || "雙北在地市集街區";
+      const greet = document.getElementById("marketGreeting");
+      if (greet) {
+        greet.innerText = `市場攤商熱情招呼：「歡迎來到【${market.name}】！傳承數十載的正宗雙北在地美味，生鮮現採、小吃現煮，吃了精神百倍！」`;
+      }
+    }
+    modal.style.display = "flex";
+  }
+}
+
+function buyMarketFood(foodType, price) {
+  if (gameState.money < price) return alert(`悠遊卡餘額不足 $${price} 囉！`);
+  gameState.money -= price;
+  if (foodType === 'noodle') {
+    gameState.stamina = Math.min(100, gameState.stamina + 40);
+    gameState.mood = Math.min(100, gameState.mood + 25);
+    showNavToast("🍜 享用傳統市場古早味切仔麵！體力 +40、心情 +25！");
+    showDetectiveDialogue("「滾燙大骨高湯配上油麵與豆芽紅燒肉，傳統市場的人情味真暖心！」", "都會調查員");
+  } else if (foodType === 'roll') {
+    gameState.stamina = Math.min(100, gameState.stamina + 35);
+    gameState.mood = Math.min(100, gameState.mood + 30);
+    showNavToast("🌯 享用現包傳香潤餅捲！體力 +35、心情 +30！");
+    showDetectiveDialogue("「滿滿脆甜高麗菜加上香甜花生粉與蛋酥，酥脆爽口！」", "都會調查員");
+  } else if (foodType === 'fishcake') {
+    gameState.stamina = Math.min(100, gameState.stamina + 20);
+    gameState.mood = Math.min(100, gameState.mood + 35);
+    showNavToast("🍢 享用現炸旗魚黑輪！心情 +35！");
+    showDetectiveDialogue("「金黃現炸旗魚黑輪熱氣騰騰，咬開還有包水煮蛋，太滿足了！」", "都會調查員");
+  }
+  updateBars();
+  playTone(660, 'sine', 0.15);
+  closeModal('marketModal');
+}
+
 function openMrtStationModal() { document.getElementById("mrtStationModal").style.display = "flex"; }
 function openNightMarketModal() { document.getElementById("nightMarketModal").style.display = "flex"; }
 function openFerryModal() { document.getElementById("ferryModal").style.display = "flex"; }
@@ -1985,7 +2192,8 @@ function setBrandRadarFilter(brand) {
     seven: 'filterSeven',
     carrefour: 'filterCarrefour',
     pxmart: 'filterPxmart',
-    coco: 'filterCoco'
+    coco: 'filterCoco',
+    market: 'filterMarket'
   };
   const targetBtn = document.getElementById(btnMap[brand]);
   if (targetBtn) targetBtn.classList.add("active");
@@ -2000,33 +2208,39 @@ function setBrandRadarFilter(brand) {
     } else if (brand === 'familymart') {
       banner.style.display = "flex";
       icon.innerText = "🏪";
-      text.innerText = "全家 FamilyMart 全城 FamiPort 互聯網絡已啟動！雙北 6 間門市雷達連線中！";
+      text.innerText = "全家 FamilyMart 全城 FamiPort 互聯網絡已啟動！全雙北 28 間門市雷達連線中！";
       showNavToast("🏪 全家 FamilyMart 連鎖網絡雷達啟動！門市光環展開！");
       playTone(587, 'triangle', 0.15);
     } else if (brand === 'seven') {
       banner.style.display = "flex";
       icon.innerText = "🍙";
-      text.innerText = "7-Eleven OPENPOINT 數位雷達啟動！全雙北 6 間 24H 門市光纖互聯！";
+      text.innerText = "7-Eleven OPENPOINT 數位雷達啟動！全雙北 28 間 24H 門市光纖互聯！";
       showNavToast("🍙 7-Eleven OPENPOINT 數位雷達啟動！");
       playTone(659, 'triangle', 0.15);
     } else if (brand === 'carrefour') {
       banner.style.display = "flex";
       icon.innerText = "🛒";
-      text.innerText = "家樂福 Carrefour 全城量販物流網絡已啟動！板橋學府便利購 ✕ 重慶旗艦店跨區互聯！";
+      text.innerText = "家樂福 Carrefour 全城量販物流網絡已啟動！12 間旗艦大賣場與便利購全城跨區互聯！";
       showNavToast("🛒 家樂福 Carrefour 全城量販物流雷達啟動！");
       playTone(523, 'triangle', 0.15);
     } else if (brand === 'pxmart') {
       banner.style.display = "flex";
       icon.innerText = "🧺";
-      text.innerText = "全聯 PX Mart 社區生鮮互聯網絡啟動！雙北 4 間生鮮超市供應鏈互聯！";
+      text.innerText = "全聯 PX Mart 社區生鮮互聯網絡啟動！雙北 14 間生鮮超市供應鏈互聯！";
       showNavToast("🧺 全聯 PX Mart 社區生鮮網絡雷達啟動！");
       playTone(493, 'triangle', 0.15);
     } else if (brand === 'coco') {
       banner.style.display = "flex";
       icon.innerText = "🧋";
-      text.innerText = "CoCo 都可 跨門市雲端寄杯網絡啟動！站前南陽店寄杯、中山店/府中店隨處領取！";
+      text.innerText = "CoCo 都可 跨門市雲端寄杯網絡啟動！雙北 14 間手搖飲門市雲端寄杯隨處領！";
       showNavToast("🧋 CoCo 都可 跨店雲端寄杯雷達啟動！");
       playTone(698, 'triangle', 0.15);
+    } else if (brand === 'market') {
+      banner.style.display = "flex";
+      icon.innerText = "🏮";
+      text.innerText = "雙北傳統市場與觀光夜市網絡連線！10 處在地市場老字號生鮮與夜市小吃互聯！";
+      showNavToast("🏮 傳統市場與夜市網絡雷達啟動！在地古早味連線！");
+      playTone(622, 'triangle', 0.15);
     }
   }
 }

@@ -51,6 +51,9 @@
     <button class="radar-filter-btn brand-coco" id="filterCoco" onclick="setBrandRadarFilter('coco')">
       <span>🧋 CoCo 都可</span>
     </button>
+    <button class="radar-filter-btn brand-market" id="filterMarket" onclick="setBrandRadarFilter('market')">
+      <span>🏮 傳統市場與夜市</span>
+    </button>
   </div>
 
   <!-- 🧭 雙北行政區快速導航條 (District Quick Jump Bar) -->
@@ -463,6 +466,39 @@
           <h4 style="color:#38bdf8; margin-bottom:4px;">🧺 社區生鮮活力籃 ($80)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">時令水果與綜合堅果，調查續航必備！</p>
           <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyPxmartBasket()">購買 $80 (+50 體力/+40 心情)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3e. 傳統市場與觀光夜市 (Traditional Market & Night Market Modal) -->
+  <div class="modal-overlay" id="marketModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title" id="marketModalTitle"><span>🏮</span> 傳統市場與觀光夜市</div>
+        <button class="modal-close" onclick="closeModal('marketModal')">×</button>
+      </div>
+      <div style="background:#d9770618; border:1px solid #f59e0b; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#fbbf24; font-weight:800; font-size:14px;" id="marketGreeting">市場攤商熱情招呼：「歡迎來到在地市場！傳承數十載的正宗老店美味，生鮮現採、小吃現煮，吃了精神百倍！」</p>
+      </div>
+      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #f59e0b; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
+        📍 <strong>【市場門牌】</strong>：<span id="marketAddress" style="color:#fde047; font-weight:700;">雙北在地特色市場</span> ｜ 在地人情味與生鮮聚集地，是打聽街頭線索的最佳情報站！
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fde047; margin-bottom:4px;">🍜 古早味切仔麵 ($45)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">大骨高湯現煮油麵佐紅燒肉豆芽！</p>
+          <button class="chat-send-btn" style="background:#d97706; width:100%; padding:8px;" onclick="buyMarketFood('noodle', 45)">購買 $45 (+40 體力/+25 心情)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fed7aa; margin-bottom:4px;">🌯 現包傳香潤餅捲 ($50)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">酥脆蛋酥搭配鮮甜高麗菜花生粉！</p>
+          <button class="chat-send-btn" style="background:#b45309; width:100%; padding:8px;" onclick="buyMarketFood('roll', 50)">購買 $50 (+35 體力/+30 心情)</button>
+        </div>
+        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
+          <h4 style="color:#fca5a5; margin-bottom:4px;">🍢 現炸旗魚黑輪 ($30)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">金黃現炸旗魚黑輪包裹水煮蛋！</p>
+          <button class="chat-send-btn" style="background:#ea580c; width:100%; padding:8px;" onclick="buyMarketFood('fishcake', 30)">購買 $30 (+20 體力/+35 心情)</button>
         </div>
       </div>
     </div>
