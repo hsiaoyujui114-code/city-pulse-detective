@@ -665,6 +665,7 @@
       <a href="#sec-04b" class="nav-chip" style="background:#eff6ff; color:#1d4ed8; border-color:#93c5fd;">⚖️ 04B 遊戲化偵查與鑑識</a>
       <a href="#sec-05" class="nav-chip">05 微型學習與鄰近彩蛋</a>
       <a href="#sec-06" class="nav-chip">06 雙軌商店與貨幣</a>
+      <a href="#sec-06a" class="nav-chip" style="background:#fef3c7; color:#b45309; border-color:#fde68a;">📦 06A 實境遊戲盒✕虛擬RPG</a>
       <a href="#sec-07" class="nav-chip">07 NPC語音與信賴度</a>
       <a href="#sec-08" class="nav-chip">08 技術架構</a>
       <a href="#sec-09" class="nav-chip">09 16週研發時程</a>
@@ -1135,6 +1136,16 @@
               <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
             </tr>
     
+
+            <tr>
+              <td style="text-align:center; font-weight:800; color:#d97706;">45</td>
+              <td><span style="font-size:12px; font-weight:700; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:12px; display:inline-block;">實境解謎盒✕虛擬QR雙軌</span></td>
+              <td style="font-size:13px; color:#334155; line-height:1.5;">「<em>我們想要結合製作實境解謎遊戲盒，並且裡面會有遊戲的qr code來讓玩家有現實和虛擬的兩種玩法（現實的會比較沒有那麼多關卡）幫我寫進企劃書，並且請你告訴實境解謎遊戲盒裡可以放什麼</em>」</td>
+              <td><a href="#sec-06a" style="color:#1d4ed8; font-weight:700; text-decoration:none; font-size:13px;">06A 實境遊戲盒✕虛擬雙軌</a></td>
+              <td style="font-size:13px; color:#1e293b; line-height:1.55;">正式增設「06A 實境解謎遊戲盒 ✕ 虛擬線上雙軌聯動系統」：明確規範「現實實境線」採輕量化 3~4 關核心地標（避免走訪體力負擔與安全風險）；盒內隨附「都會調查員專屬 QR Code / NFC 悠遊卡」直通大雙北虛擬線上 RPG。完整規劃盒內 8 大高規格實體配件（手繪大地圖、時空透光硫酸紙、實體打洞車票、花圃便條、超商收據、紅色濾鏡卡、密碼齒輪盤、三位數旋轉密碼木盒與環保帆布袋），實現虛實完美互鎖！</td>
+              <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
+            </tr>
+    
           </tbody>
         </table>
       </div>
@@ -1594,7 +1605,7 @@
       <h2>🚦 02B｜都會交通脈動與戰略偵查機制（取材自組員益碩發想）</h2>
       <p>
         本專案特別整合了研究小組成員益碩提出的<strong>《城市脈動：通勤偵探（City Pulse: The Commute Detective）—— 每一次移動，都是線索》</strong>三大核心玩法機制。
-        我們堅持以「雙北獨立少年偵探」為核心主角設定，將大眾運輸的時空數據轉化為偵破案件的鋒利手術刀：
+        我們堅持以「雙北獨立都會調查員」為核心主角設定，將大眾運輸的時空數據轉化為偵破案件的鋒利手術刀：
       </p>
 
       <div style="text-align:center; margin:18px 0;">
@@ -5813,6 +5824,176 @@
       </table>
     </div>
 
+    <!-- 06A｜實境解謎遊戲盒 ✕ 虛擬線上雙軌聯動系統（ARG Physical Mystery Box & Digital Dual Track） -->
+    <div class="card" id="sec-06a" style="border-top: 6px solid #b45309; background: linear-gradient(to bottom, #ffffff, #fffefc);">
+      <h2>📦 06A｜實境解謎遊戲盒 ✕ 虛擬線上雙軌聯動架構（Physical ARG Mystery Box）</h2>
+
+      <div class="callout tip" style="border-left-color:#b45309; background:#fffbeb;">
+        <div class="callout-title" style="color:#92400e;">🗝️ 虛實雙軌核心哲學：打破螢幕邊界，讓雙北街頭成為破案實境！</div>
+        為使專題研究更具沉浸感、觸覺互動性與展覽實體成果展示價值，本專案正式導入<strong>「實境解謎遊戲盒（Alternate Reality Game Box）✕ 虛擬線上 RPG」雙軌並行體系</strong>。
+        玩家將同時扮演「手持實體調查盒穿梭台北街頭的實境搜查官」與「操作線上 RPG 進行時空大數據運算的數位分析師」，雙向互鎖、步步破案！
+      </div>
+
+      <h3>1. 雙軌玩法設計原則：現實輕量化 (Lite) ✕ 虛擬深廣度 (Full)</h3>
+      <table style="width:100%; margin-bottom:20px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="width:20%;">維度指標</th>
+            <th style="width:40%;">🍃 現實實境線（Real-World Physical Track）</th>
+            <th style="width:40%;">🌐 虛擬線上線（Virtual Digital RPG Track）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>關卡規模與數量</strong></td>
+            <td><strong>輕量精巧（共 3 ~ 4 關）</strong><br>考量小學生走訪體力、天候與交通安全，絕不設計龐雜跨區跑點，集中於站前核心街區。</td>
+            <td><strong>深廣豐沛（數十個任務與事件分支）</strong><br>覆蓋整倍擴大之雙北全路網、寧夏夜市、北投分局、淡水水岸等多個行政區。</td>
+          </tr>
+          <tr>
+            <td><strong>主要遊玩載體</strong></td>
+            <td><strong>實體解謎盒內部實物道具</strong><br>手繪地圖、透光硫酸紙、實體證物袋、濾光片、實體密碼鎖盒。</td>
+            <td><strong>HTML5 現代 2D/2.5D 跨平台引擎</strong><br>透過盒內 QR Code 秒開手機/電腦瀏覽器，60FPS 高幀率、零白屏運作。</td>
+          </tr>
+          <tr>
+            <td><strong>核心體驗焦點</strong></td>
+            <td>實體街景指認、紙本幾何折疊、光學濾鏡辨識、實物鎖具解鎖之<strong>「實體觸感成就」</strong>。</td>
+            <td>307 公車隨車慢活觀光、連鎖超商採買、4 分割 CCTV 監視時空比對之<strong>「科技推理快感」</strong>。</td>
+          </tr>
+          <tr>
+            <td><strong>虛實聯動機制</strong></td>
+            <td>實體道具解開的線索（如證物條碼號），作為線上解鎖高階筆錄的<strong>「驗證密鑰」</strong>。</td>
+            <td>線上破案後出示的 307 公車刷卡時序，化為現實中解開實體小木盒的<strong>「3 位數旋轉密碼」</strong>！</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2. 實境解謎遊戲盒「開盒全配」道具規格清單（盒內到底可以放什麼？）</h3>
+      <p style="font-size:14px; color:#334155;">
+        解謎盒採用<strong>「復古公事公文箱 / 檔案夾」</strong>精美盒裝，外盒印製「雙北交通情報局 (TIB) 專案機密證物箱」字樣，內部精心收納以下 <strong>8 大核心實體道具配件</strong>：
+      </p>
+
+      <div class="team-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:14px;">
+        <!-- 道具 1 -->
+        <div class="team-card" style="border-left:4px solid #d97706; background:#ffffff;">
+          <div class="team-role" style="color:#d97706;">💳 ① 都會調查員專屬悠遊卡 (含線上入口 QR Code)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：磨砂燙金高質感悠遊卡造型，正面印製調查員個人檔案與編號，背面印製<strong>「即掃即玩遊戲專屬 QR Code」</strong>與模擬晶片線路。<br>
+            • <strong>核心功能</strong>：手機鏡頭掃描背面 QR Code（或 NFC 感應），無需下載安裝 App，直接無縫載入線上網頁版遊戲世界並綁定個人檔案！
+          </p>
+        </div>
+
+        <!-- 道具 2 -->
+        <div class="team-card" style="border-left:4px solid #0284c7; background:#ffffff;">
+          <div class="team-role" style="color:#0284c7;">🗺️ ② 雙北街區精美手繪折疊大地圖 (A3 仿古磅紙)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：高磅數仿古手繪質地，精確繪製台北車站、忠孝西路中央公車專用道、中山北路、重慶南路書店街之街道輪廓。<br>
+            • <strong>解謎用途</strong>：地圖邊緣印有神祕經緯度座標標尺、十字校準準心與公車站牌編號，供玩家實體量測行進動線。
+          </p>
+        </div>
+
+        <!-- 道具 3 -->
+        <div class="team-card" style="border-left:4px solid #10b981; background:#ffffff;">
+          <div class="team-role" style="color:#10b981;">🔍 ③ 時空軌跡透光解密片 (透明硫酸紙套板)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：印有半透明幾何網格、監視器扇形視野與 307 公車行車向量的透明賽璐珞膠片。<br>
+            • <strong>解謎用途</strong>：當玩家將膠片精準重疊在大地圖特定地標準心時，對著光源一照，原本分散的線條立刻組合成犯人逃脫的真實座標！
+          </p>
+        </div>
+
+        <!-- 道具 4 -->
+        <div class="team-card" style="border-left:4px solid #ec4899; background:#ffffff;">
+          <div class="team-role" style="color:#ec4899;">📁 ④ 四大實體封緘證物袋 (高度仿真線索物)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>證物 A【307 公車實體打洞車票】</strong>：仿早期實體車票，打洞位置隱藏二進位密碼。<br>
+            • <strong>證物 B【花圃神祕泥漬便條紙】</strong>：摺痕處藏有特殊字跡，與線上花圃線索 100% 呼應！<br>
+            • <strong>證物 C【超商購物感熱紙收據】</strong>：印有 7-Eleven 御飯糰、全家茶葉蛋明細與環保減塑標語，條碼為解謎暗號。<br>
+            • <strong>證物 D【撕碎的時間軸草稿】</strong>：需手工拼貼復原嫌犯 14:03~14:12 的行蹤。
+          </p>
+        </div>
+
+        <!-- 道具 5 -->
+        <div class="team-card" style="border-left:4px solid #dc2626; background:#ffffff;">
+          <div class="team-role" style="color:#dc2626;">🔴 ⑤ 紅色光學濾鏡卡 (暗號解碼片)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：鮮紅透明賽璐珞透鏡卡片。<br>
+            • <strong>解謎用途</strong>：嫌疑犯筆錄上充斥著大量紅藍干擾交錯的雜訊圖案；將紅色透鏡覆蓋其上，紅色干擾線瞬間隱形，真實證詞躍然紙上！
+          </p>
+        </div>
+
+        <!-- 道具 6 -->
+        <div class="team-card" style="border-left:4px solid #8b5cf6; background:#ffffff;">
+          <div class="team-role" style="color:#8b5cf6;">⚙️ ⑥ 便攜雙層密碼旋轉輪盤 (手動密碼儀)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：同心圓可旋轉雙層紙質金屬扣輪盤，外圈為雙北捷運站名縮寫，內圈為英文字母與數字。<br>
+            • <strong>解謎用途</strong>：對齊公車起迄站（如「板橋」對應「撫遠街」）後，即可將證物紙條上的混淆字母解碼為關鍵密文。
+          </p>
+        </div>
+
+        <!-- 道具 7 -->
+        <div class="team-card" style="border-left:4px solid #059669; background:#ffffff;">
+          <div class="team-role" style="color:#059669;">🌱 ⑦ 調查員金屬徽章 ✕ 環保減塑帆布手提包</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：烤漆金屬質感的「都會調查員 (Urban Investigator)」榮譽徽章，以及厚磅純棉手提帆布袋。<br>
+            • <strong>教育宗旨</strong>：將國小六年級專題之<strong>「出門自備環保袋、不索取一次性塑膠袋」</strong>理念實體化，既是實用道具收納包，也是專題成果紀念品！
+          </p>
+        </div>
+
+        <!-- 道具 8 -->
+        <div class="team-card" style="border-left:4px solid #f59e0b; background:#ffffff;">
+          <div class="team-role" style="color:#f59e0b;">🔒 ⑧ 三位數實體旋轉密碼木盒 (終極機關物證箱)</div>
+          <p style="font-size:13px; color:#334155; line-height:1.6; margin-top:6px;">
+            • <strong>實物外觀</strong>：小型原木收藏盒，外掛三位數可調旋轉密碼鎖。<br>
+            • <strong>通關獎勵</strong>：盒內封存<strong>【雙北榮譽破案金印章】</strong>與<strong>【刑事偵查隊結案證明書】</strong>！開鎖密碼需結合實境線索與線上 307 公車刷卡時序，成功開鎖時極具儀式感！
+          </p>
+        </div>
+      </div>
+
+      <h3>3. 現實實境線（3~4 關核心地標）沉浸式路線規劃</h3>
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-top:10px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="background:#d97706; color:#ffffff; font-weight:800; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+            <div>
+              <strong style="color:#1e293b; font-size:14px;">第一關：【站前啟程・M6 捷運採光天棚】（台北車站南側廣場）</strong>
+              <p style="font-size:13px; color:#475569; margin-top:3px; line-height:1.5;">
+                玩家抵達台北車站 M6 出口，核對大地圖上的建築方位，利用【雙層密碼旋轉輪盤】對照出入口編號與採光天棚的支柱數量，解出第一道字根，並在現場掃描悠遊卡上的 QR Code 啟動線上調查！
+              </p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="background:#0284c7; color:#ffffff; font-weight:800; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+            <div>
+              <strong style="color:#1e293b; font-size:14px;">第二關：【公車站島・307 的時空交會】（忠孝西路中央公車專用道站牌）</strong>
+              <p style="font-size:13px; color:#475569; margin-top:3px; line-height:1.5;">
+                走到公車站島，觀察真實 307 公車路線圖與發車間隔，拿出【時空軌跡透光解密片】疊合在手繪大地圖上，透過陽光透光浮現嫌疑犯上下車的站點密碼，同步在線上遊戲中搭上 307 公車！
+              </p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="background:#10b981; color:#ffffff; font-weight:800; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+            <div>
+              <strong style="color:#1e293b; font-size:14px;">第三關：【商圈巡禮・連鎖門市的隱藏條碼】（館前路 / 重慶南路商圈）</strong>
+              <p style="font-size:13px; color:#475569; margin-top:3px; line-height:1.5;">
+                前往實體 7-Eleven 或全家超商周邊，拿出盒內【實體超商感熱紙收據】，使用【紅色光學濾鏡卡】過濾收據上的雜訊防偽條碼，解讀出嫌犯在特定超商購買的物證編號，呼應六年級減塑原則。
+              </p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="background:#f59e0b; color:#ffffff; font-weight:800; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</div>
+            <div>
+              <strong style="color:#1e293b; font-size:14px;">第四關：【花圃終局・開鎖結案蓋印】（站前綠帶花圃）</strong>
+              <p style="font-size:13px; color:#475569; margin-top:3px; line-height:1.5;">
+                來到站前花圃，取出盒內的【泥漬便條紙】，與線上遊戲中「北投分局調閱之 307 公車 14:12 刷卡紀錄」雙向印證，得到旋轉密碼鎖的三位密碼（如 4-1-2）。喀噠一聲打開實體木盒，取出【榮譽破案金印章】蓋在結案報告上，完成全案！
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 07｜城市動態 NPC 作息、社區信賴度 Lv.1~Lv.5 與班級案件工作坊 -->
     <div class="card" id="sec-07">
       <h2>👥 07｜城市動態 NPC 作息、社區信賴度 Lv.1~Lv.5 與班級案件工作坊（延伸擴充功能）</h2>
@@ -6152,6 +6333,9 @@
 6. 🏪 多點連鎖商店分佈機制：
    - 【重要設定細節】：CoCo 都可、全家 FamilyMart、7-Eleven 統一超商等連鎖店，必須在雙北全圖的各個街區（站前、中山、館前、重慶、圓環等）廣泛分佈出現，絕不能全場只有單一一間！
 7. 💻 專屬私服器：根目錄 server.js 支援 WebSocket 多人同步，本地啟動指令為 npm start。
+8. 📦 實境解謎遊戲盒 ✕ 虛擬線上雙軌連動：
+   - 【實境盒配件】：實體盒內附手繪大地圖、時空透光硫酸紙、4大實體證物袋（含307打洞舊車票、花圃泥漬便條、超商減塑收據）、紅色光學濾鏡卡、雙層密碼旋轉輪盤、三位數旋轉密碼木盒與環保帆布袋。
+   - 【雙軌連動法則】：現實實境線採輕量化（3~4 關核心地標，無繁重關卡負擔）；盒內隨附「調查員專屬悠遊卡 / QR Code」可掃碼秒開線上虛擬遊戲，享受大雙北完整路網、公車巡航、CCTV 軌跡與多人連線破案。
 
 🚀 【請你現在執行的第一步】：
 1. 請確認你已閱讀完 docs/ 內的交接文件。
