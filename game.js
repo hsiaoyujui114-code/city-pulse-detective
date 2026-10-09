@@ -232,7 +232,17 @@ const interactables = [
   {"id": "market_hs", "x": -185, "z": 210, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋黃石傳統市場", "address": "板橋區宮口街 37 號 (府中商圈)", "label": "進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)"},
   {"id": "fmart_fz", "x": -100, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋府中店)", "address": "板橋區府中路 35 號", "label": "進入全家 (板橋府中店)"},
   {"id": "pxmart_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入全聯 (板橋文化店)"},
-  {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"}
+  {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"},
+  {"id": "seven_ag", "x": 55, "z": 110, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正愛國店)", "address": "中正區愛國西路 9 號", "label": "進入 7-Eleven (中正愛國店)"},
+  {"id": "fmart_cd", "x": -185, "z": 45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門成都店)", "address": "萬華區成都路 23 號", "label": "進入全家 (西門成都店)"},
+  {"id": "coco_fz", "x": -140, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋府中店)", "address": "板橋區中山路一段 50 號", "label": "購買 CoCo 手搖飲 (府中店)"},
+  {"id": "pxmart_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入全聯 (板橋新埔店)"},
+  {"id": "seven_dh_2", "x": -185, "z": -80, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化二店)", "address": "大同區迪化街一段 82 號", "label": "進入 7-Eleven (迪化二店)"},
+  {"id": "fmart_sd_lq", "x": 105, "z": 155, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (師大龍泉店)", "address": "大安區師大路 59 號", "label": "進入全家 (師大龍泉店)"},
+  {"id": "carrefour_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入家樂福超市 (重慶北店)"},
+  {"id": "landmark_jf_gate", "x": 60, "z": 108, "w": 18, "d": 18, "r": 9.0, "type": "landmark", "name": "國定古蹟 景福門 (東門圓環)", "address": "中正區中山南路 ✕ 凱達格蘭大道口", "label": "瞻仰 景福門古蹟 (台北府城東門)"},
+  {"id": "landmark_museum", "x": -67.5, "z": 66, "w": 24, "d": 16, "r": 9.0, "type": "landmark", "name": "國立臺灣博物館", "address": "中正區襄陽路 2 號 (二二八公園北側)", "label": "參觀 國立臺灣博物館 (希臘多立克式宮殿與百年銅頂)"},
+  {"id": "landmark_lin_garden", "x": -195, "z": 210, "w": 24, "d": 20, "r": 9.0, "type": "landmark", "name": "國定古蹟 林本源園邸 (林家花園)", "address": "板橋區西門街 9 號 (府中生活圈)", "label": "漫遊 林家花園 (百年江南庭園與來青閣)"}
 ];
 
 // ─── 雙北真實路網幹線公車系統 (Real Route Bus Waypoint Network) ───
@@ -245,6 +255,8 @@ const bus307Route = [
   { x: -150, z: 168, stopName: '學府路一段站 (海山生活圈)', street: '板橋・學府路一段 1:1商圈' },
   // 3. 新板特區縣民大道一段
   { x: -150, z: 130, stopName: '新板特區站 (縣民大道)', street: '板橋・縣民大道一段' },
+  // 3.5 華翠大橋跨新店溪 (跨市大橋高架段)
+  { x: -152, z: 108, street: '新店溪・華翠大橋 (跨新店溪 往萬華)' },
   // 4. 經華翠進入萬華中華路一段 (西門町商圈)
   { x: -152, z: 75,  street: '萬華・中華路一段林蔭道' },
   { x: -152, z: 25,  stopName: '捷運西門站 (中華路一段)', street: '萬華・西門町中華路' },
@@ -283,7 +295,9 @@ const bus307Route = [
   { x: -142, z: 2,   street: '萬華・中華路 ✕ 忠孝西路口' },
   { x: -142, z: 25,  stopName: '捷運西門站 (南行)', street: '萬華・中華路一段' },
   { x: -142, z: 75,  street: '萬華・中華路一段 (西門町商圈)' },
-  // 16. 中華路進入新板特區
+  // 15.5 華翠大橋跨新店溪 (跨市大橋南行段)
+  { x: -142, z: 108, street: '新店溪・華翠大橋 (跨新店溪 往板橋)' },
+  // 16. 經華翠進入新板特區
   { x: -142, z: 130, stopName: '新板特區站 (縣民大道南行)', street: '板橋・縣民大道一段' },
   { x: -142, z: 168, stopName: '學府路一段站 (海山生活圈南行)', street: '板橋・學府路一段' },
   { x: -142, z: 195, street: '板橋・文化路一段' }
@@ -574,16 +588,19 @@ function updateGhostDroneHUD() {
   }
   if (distEl) {
     let name = "🏛️ 中正區・台北車站站前核心 ✕ 忠孝西路一段";
-    if (camera.x <= -30 && camera.z >= 155) name = "🏫 板橋區・學府路一段 (1:1 真實商圈) ✕ 府中商圈";
-    else if (camera.x <= -30 && camera.z >= 115 && camera.z < 155) name = "🏙️ 板橋區・新板特區 ✕ 縣民大道一段";
-    else if (camera.x <= -125 && camera.z >= 0 && camera.z < 115) name = "🎮 萬華區・西門町徒步區 ✕ 中華路 ✕ 桂林路";
-    else if (camera.x > -125 && camera.x <= -35 && camera.z >= 0 && camera.z < 115) name = "📚 中正區・重慶南路書店街 ✕ 城中市場";
-    else if (camera.x <= -35 && camera.z < -20) name = "🏮 大同區・大稻埕迪化街 ✕ 建成圓環 ✕ 寧夏夜市";
-    else if (camera.x >= 35 && camera.z >= 110) name = "🏛️ 南區商圈・古亭 ✕ 羅斯福路 ✕ 師大龍泉市場";
+    if (camera.z >= 95 && camera.z <= 126 && camera.x <= -100) name = "🌉 萬華/板橋・新店溪 ✕ 華翠大橋 ✕ 華江橋 (跨市橋樑)";
+    else if (camera.x <= -30 && camera.z >= 155) name = "🏫 板橋區・學府路一段 (1:1 真實商圈) ✕ 府中商圈 ✕ 林家花園";
+    else if (camera.x <= -30 && camera.z >= 115 && camera.z < 155) name = "🏙️ 板橋區・新板特區 ✕ 縣民大道一段 ✕ 新北市政府";
+    else if (camera.x <= -125 && camera.z >= 0 && camera.z < 95) name = "🎮 萬華區・西門町徒步區 ✕ 中華路 ✕ 桂林路家樂福";
+    else if (camera.x > -125 && camera.x <= -35 && camera.z >= 0 && camera.z < 95) name = "📚 中正區・重慶南路書店街 ✕ 城中市場 ✕ 臺灣博物館";
+    else if (camera.x >= 35 && camera.x <= 90 && camera.z >= 90 && camera.z <= 125) name = "🏛️ 中正區・凱達格蘭大道 ✕ 國定古蹟景福門 (東門圓環)";
+    else if (camera.z >= -38 && camera.z <= -20 && camera.x >= -60 && camera.x <= 60) name = "🛣️ 中正區・市民大道一段 (市民高架快速道路 ✕ 站北大道)";
+    else if (camera.x <= -35 && camera.z < -20) name = "🏮 大同區・大稻埕迪化街 ✕ 霞海城隍廟 ✕ 寧夏夜市";
+    else if (camera.x >= 35 && camera.z >= 110) name = "🏛️ 南區商圈・古亭 ✕ 羅斯福路 ✕ 師大夜市/龍泉市場";
     else if (camera.x >= 110 && camera.z >= 50 && camera.z < 110) name = "🌳 大安區・信義商圈 ✕ 敦化南路林蔭大道";
     else if (camera.x >= 135 && camera.z < 50) name = "💼 中山/松山・松江南京金融商圈 ✕ 復興南京";
     else if (camera.x >= 35 && camera.x < 135 && camera.z < 50) name = "🌳 中山區・中山北路林蔭大道 ✕ 南京商圈 ✕ 雙連晴光";
-    else if (camera.x <= -180 && camera.z >= -110 && camera.z <= 10) name = "🌊 萬華/大同・淡水河水岸碼頭觀景棧道";
+    else if (camera.x <= -180 && camera.z >= -110 && camera.z <= 20) name = "🌊 萬華/大同・淡水河水岸 ✕ 忠孝橋";
     distEl.innerText = name;
   }
 }
@@ -897,6 +914,20 @@ function renderScene() {
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-48.4), 440 * scale, 0.8 * scale);
 
+  // (4.5) 市民大道一段 (市民高架橋 ✕ 台北車站北側大道, z: -26, 寬 22m)
+  ctx.fillStyle = '#151921';
+  ctx.fillRect(screenX(-220), screenZ(-37), 440 * scale, 22 * scale);
+  // 市民大道中央雙黃線
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-220), screenZ(-26.4), 440 * scale, 0.8 * scale);
+  // 市民高架水泥高架橋墩 (Elevated Expressway Piers)
+  for (let px = -200; px <= 200; px += 40) {
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(screenX(px - 2), screenZ(-31), 4 * scale, 10 * scale);
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(screenX(px - 1.5), screenZ(-30.5), 3 * scale, 9 * scale);
+  }
+
   // (5) 忠孝西路一段 / 忠孝東路一段 (z: 0, 寬 36m，台北都會樞紐大動脈)
   ctx.fillStyle = '#1c222b';
   ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, 36 * scale);
@@ -933,6 +964,12 @@ function renderScene() {
   // (8) 衡陽路 / 襄陽路 (z: 98, 寬 20m)
   ctx.fillStyle = '#1c222b';
   ctx.fillRect(screenX(-220), screenZ(88), 295 * scale, 20 * scale);
+
+  // (8.5) 凱達格蘭大道 ✕ 愛國西路 (z: 112, 寬 24m)
+  ctx.fillStyle = '#1e242d';
+  ctx.fillRect(screenX(-140), screenZ(100), 220 * scale, 24 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-140), screenZ(111.6), 220 * scale, 0.8 * scale);
 
   // (9) 板橋縣民大道一段 (z: 130, 寬 26m，新板特區綠帶大道)
   ctx.fillStyle = '#1c222b';
@@ -1028,14 +1065,83 @@ function renderScene() {
   ctx.fillRect(screenX(-185), screenZ(120), 24 * scale, 100 * scale);
   ctx.fillRect(screenX(-155), screenZ(120), 24 * scale, 100 * scale);
 
-  // 3. 淡水河水面波紋 (x: -220 ~ -195, z: -220 ~ 10)
-  ctx.fillStyle = '#0369a1';
-  ctx.fillRect(screenX(-220), screenZ(-220), 25 * scale, 230 * scale);
-  ctx.fillStyle = '#38bdf8';
+  // 3. 雙北天然地理界線：淡水河 ✕ 新店溪 ✕ 跨市地標大橋 (Tamsui River, Xindian River & Inter-City Bridges)
   const waveOffset = (Date.now() / 300) % 12;
-  for (let wy = -215; wy <= 5; wy += 14) {
+
+  // (1) 淡水河主河道 (大同區 ✕ 萬華區西側，x: -220 ~ -195, z: -220 ~ 20)
+  ctx.fillStyle = '#0284c7';
+  ctx.fillRect(screenX(-220), screenZ(-220), 25 * scale, 240 * scale);
+  ctx.fillStyle = '#38bdf8';
+  for (let wy = -215; wy <= 15; wy += 14) {
     ctx.fillRect(screenX(-218 + waveOffset), screenZ(wy), 18 * scale, 1.8 * scale);
   }
+
+  // (2) 忠孝橋 (跨淡水河連接台北與三重，x: -220 ~ -195, z: -8 ~ 8)
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(screenX(-220), screenZ(-8), 26 * scale, 16 * scale);
+  ctx.fillStyle = '#f59e0b'; // 中央分隔線
+  ctx.fillRect(screenX(-220), screenZ(-0.4), 26 * scale, 0.8 * scale);
+  // 忠孝橋白色防撞護欄
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(screenX(-220), screenZ(-8), 26 * scale, 1.5 * scale);
+  ctx.fillRect(screenX(-220), screenZ(6.5), 26 * scale, 1.5 * scale);
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = `bold ${Math.max(7, scale * 0.42)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('忠孝橋 (往三重)', screenX(-208), screenZ(2.5));
+
+  // (3) 新店溪天然界河 (萬華區 ✕ 板橋區天然分界，x: -220 ~ -110, z: 98 ~ 124)
+  // 北側：萬華雙園河濱綠帶；南側：板橋江子翠河濱綠帶
+  ctx.fillStyle = '#14532d';
+  ctx.fillRect(screenX(-220), screenZ(95), 115 * scale, 3 * scale);
+  ctx.fillRect(screenX(-220), screenZ(124), 115 * scale, 3 * scale);
+  // 新店溪湛藍水面
+  ctx.fillStyle = '#0369a1';
+  ctx.fillRect(screenX(-220), screenZ(98), 115 * scale, 26 * scale);
+  ctx.fillStyle = '#38bdf8';
+  for (let wx = -215; wx <= -115; wx += 22) {
+    for (let wz = 101; wz <= 120; wz += 7) {
+      ctx.fillRect(screenX(wx + ((wz % 2) * 6) + waveOffset), screenZ(wz), 12 * scale, 1.5 * scale);
+    }
+  }
+
+  // (4) 華翠大橋 (跨新店溪連接萬華中華路與板橋縣民大道，307公車行駛之跨市大橋，x: -156 ~ -138, z: 98 ~ 124)
+  ctx.fillStyle = '#1e293b'; // 橋面柏油
+  ctx.fillRect(screenX(-156), screenZ(96), 18 * scale, 30 * scale);
+  // 橋面中央雙黃線
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-147.4), screenZ(96), 0.8 * scale, 30 * scale);
+  // 兩側白色安全護欄
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(screenX(-156), screenZ(96), 1.5 * scale, 30 * scale);
+  ctx.fillRect(screenX(-139.5), screenZ(96), 1.5 * scale, 30 * scale);
+  // 紅色鋼拱桁架剪影 (Steel Arch Silhouette)
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(screenX(-156), screenZ(96));
+  ctx.quadraticCurveTo(screenX(-147), screenZ(111), screenX(-156), screenZ(126));
+  ctx.moveTo(screenX(-138), screenZ(96));
+  ctx.quadraticCurveTo(screenX(-147), screenZ(111), screenX(-138), screenZ(126));
+  ctx.stroke();
+  // 橋名路標指示
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = `bold ${Math.max(7.5, scale * 0.45)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🌉 華翠大橋 (跨新店溪 往新板)', screenX(-147), screenZ(112));
+
+  // (5) 華江橋 (跨新店溪連接萬華和平西路與板橋文化路，x: -198 ~ -180, z: 98 ~ 124)
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(screenX(-198), screenZ(96), 18 * scale, 30 * scale);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(screenX(-189.4), screenZ(96), 0.8 * scale, 30 * scale);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(screenX(-198), screenZ(96), 1.5 * scale, 30 * scale);
+  ctx.fillRect(screenX(-181.5), screenZ(96), 1.5 * scale, 30 * scale);
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = `bold ${Math.max(7, scale * 0.42)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('華江橋 (往文化路)', screenX(-189), screenZ(112));
 
   // 4. 十字路口精密斑馬線
   ctx.fillStyle = '#ffffff';
@@ -1149,7 +1255,29 @@ function renderScene() {
   ctx.fillStyle = '#86efac';
   ctx.font = `bold ${Math.max(8.5, scale * 0.5)}px sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText('🌲 二二八和平紀念公園 🌲', screenX(-67.5), screenZ(79));
+  ctx.fillText('🌲 二二八和平紀念公園 🌲', screenX(-67.5), screenZ(80));
+
+  // (2.1) 國立臺灣博物館 (228公園北側・希臘多立克式宮殿與百年銅頂)
+  drawCityBlockBuilding(-68, 60, 22, 14, '#334155', '國立臺灣博物館 (希臘多立克式宮殿)');
+
+  // (2.2) 國定古蹟 景福門 (東門圓環 ✕ 凱達格蘭大道 ✕ 中山南路)
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.arc(screenX(60), screenZ(110), 16 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#15803d'; // 圓環中央綠島
+  ctx.beginPath();
+  ctx.arc(screenX(60), screenZ(110), 12 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  // 景福門城樓 (紅柱綠琉璃歇山頂)
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(screenX(55), screenZ(105), 10 * scale, 10 * scale);
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(screenX(53.5), screenZ(103), 13 * scale, 3 * scale);
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = `bold ${Math.max(7.5, scale * 0.45)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('國定古蹟 景福門 (東門)', screenX(60), screenZ(118));
 
   // (3) 大安森林公園 (東南方廣袤綠海)
   ctx.fillStyle = '#14532d';
@@ -1165,8 +1293,11 @@ function renderScene() {
 
   // (4) 新板特區摩天建築群與市民廣場
   drawCityBlockBuilding(-170, 142, 25, 18, '#1e3a8a', '新板大遠百 Mega City');
-  drawCityBlockBuilding(-130, 142, 24, 18, '#0f172a', '新北市政府行政大樓');
-  drawCityBlockBuilding(-85, 142, 22, 18, '#334155', '板橋特區商務中心');
+  drawCityBlockBuilding(-130, 138, 26, 22, '#0f172a', '新北市政府行政大樓 (33層)');
+  drawCityBlockBuilding(-85, 138, 24, 20, '#1e293b', '板橋車站三鐵共構大樓');
+
+  // (4.5) 板橋國定古蹟 林本源園邸 (林家花園 百年江南庭園)
+  drawCityBlockBuilding(-195, 205, 24, 18, '#78350f', '國定古蹟 林本源園邸 (林家花園)');
 
   // (5) 板橋學府路一段 社區校園與住宅街屋 (介於學府路各超商之間，徹底杜絕並排)
   drawCityBlockBuilding(-135, 175, 26, 18, '#1f2937', '板橋學府文教園區');
@@ -1184,7 +1315,8 @@ function renderScene() {
   drawCityBlockBuilding(55, -80, 20, 22, '#334155', '南京西路精品名品館');
   drawCityBlockBuilding(95, -80, 20, 22, '#1e293b', '中山晶華生活圈');
 
-  // (8) 大稻埕迪化街 百年巴洛克仿古街屋 (紅磚街廓)
+  // (8) 大稻埕迪化街 百年巴洛克仿古街屋 ✕ 霞海城隍廟
+  drawCityBlockBuilding(-185, -75, 18, 16, '#991b1b', '台北霞海城隍廟 (百年香火)');
   drawCityBlockBuilding(-175, -95, 20, 24, '#78350f', '迪化街百年南北貨行');
   drawCityBlockBuilding(-135, -95, 20, 24, '#7c2d12', '大稻埕漢藥老茶棧');
   drawCityBlockBuilding(-175, -155, 20, 24, '#78350f', '延平北路古早味街屋');
