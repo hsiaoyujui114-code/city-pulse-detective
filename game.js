@@ -169,6 +169,8 @@ const interactables = [
   {"id": "bus_station_zs", "x": 78, "z": -40, "w": 14, "d": 8, "r": 8.5, "type": "bus_stop", "name": "中山市場公車站牌", "dest": "station", "label": "搭乘 307 公車 (前往台北車站)"},
   {"id": "mrt_escalator_zs", "x": 78, "z": -95, "w": 12, "d": 10, "r": 8.0, "type": "mrt_escalator", "name": "捷運中山站出入口", "label": "搭手扶梯進地下月台"},
   {"id": "bus_station_xf", "x": -150, "z": 168, "w": 14, "d": 8, "r": 8.5, "type": "bus_stop", "name": "板橋學府路一段公車站牌", "dest": "station", "label": "搭乘 307 公車 (經板橋至台北車站)"},
+  {"id": "bus_station_xm", "x": -152, "z": 25, "w": 14, "d": 8, "r": 8.5, "type": "bus_stop", "name": "捷運西門站公車站牌", "dest": "station", "label": "搭乘 307 公車 (前往台北車站 / 南京東路)"},
+  {"id": "bus_station_sj", "x": 155, "z": -97, "w": 14, "d": 8, "r": 8.5, "type": "bus_stop", "name": "捷運松江南京站公車站牌", "dest": "banqiao", "label": "搭乘 307 公車 (前往台北車站 / 板橋府中)"},
   {"id": "rest_bench_xf", "x": -130, "z": 132, "w": 10, "d": 6, "r": 8.0, "type": "rest", "name": "板橋學府路候車休憩椅", "label": "在長椅休息恢復體力"},
   {"id": "mrt_escalator_fz", "x": -145, "z": 210, "w": 13, "d": 10, "r": 8.0, "type": "mrt_escalator", "name": "板橋府中捷運出入口", "label": "搭手扶梯進地下月台"},
   {"id": "police_cctv", "x": 195, "z": 135, "w": 18, "d": 14, "r": 8.5, "type": "police", "name": "北投分局刑事偵查隊", "label": "與林巡官調閱 CCTV 監控軌跡"},
@@ -233,17 +235,195 @@ const interactables = [
   {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"}
 ];
 
-// 307 幹線公車動態物件
-const bus307 = {
-  x: -40,
-  z: 2,
-  w: 18,
-  d: 4.8,
-  speed: 0.28,
-  dir: 1, // 1 往東，-1 往西
-  currentRoute: 'zx', // 'zx' 忠孝西路, 'zs' 中山北路
-  destName: '中山商圈 / 南京東路'
-};
+// ─── 雙北真實路網幹線公車系統 (Real Route Bus Waypoint Network) ───
+// 307 幹線公車真實路線 (板橋府中 ✕ 學府生活圈 ✕ 萬華西門町 ✕ 台北車站專用道 ✕ 中山市場 ✕ 松江南京 ✕ 南京復興)
+const bus307Route = [
+  // 1. 板橋府中商圈 (文化路一段 / 府中路)
+  { x: -175, z: 195, stopName: '板橋府中站 (文化路一段)', street: '板橋・文化路一段 ✕ 府中商圈' },
+  { x: -150, z: 195, street: '板橋・文化路一段' },
+  // 2. 板橋學府路一段 (海山生活圈)
+  { x: -150, z: 168, stopName: '學府路一段站 (海山生活圈)', street: '板橋・學府路一段 1:1商圈' },
+  // 3. 新板特區縣民大道一段
+  { x: -150, z: 130, stopName: '新板特區站 (縣民大道)', street: '板橋・縣民大道一段' },
+  // 4. 經華翠進入萬華中華路一段 (西門町商圈)
+  { x: -152, z: 75,  street: '萬華・中華路一段林蔭道' },
+  { x: -152, z: 25,  stopName: '捷運西門站 (中華路一段)', street: '萬華・西門町中華路' },
+  // 5. 中華路左轉忠孝西路
+  { x: -152, z: -2,  street: '萬華・中華路 ✕ 忠孝西路口' },
+  // 6. 忠孝西路中央公車專用道 (東行)
+  { x: -92,  z: -2,  street: '中正・忠孝西路 (重慶南路口)' },
+  { x: -20,  z: -2,  stopName: '台北車站(忠孝)公車專用道', street: '中正・忠孝西路中央專用道' },
+  { x: 35,   z: -2,  street: '中正・忠孝西路 (公園路口)' },
+  // 7. 忠孝西路左轉中山北路 (行政院)
+  { x: 72,   z: -2,  street: '中山・中山北路口 (行政院前)' },
+  // 8. 中山北路一段林蔭大道 (北行)
+  { x: 72,   z: -45, stopName: '中山市場站 (中山北路一段)', street: '中山・中山北路林蔭大道' },
+  // 9. 中山北路右轉南京東路 (捷運中山站)
+  { x: 72,   z: -97, stopName: '捷運中山站 (南京西路口)', street: '中山・南京西路商圈' },
+  // 10. 南京東路金融商圈 (東行)
+  { x: 120,  z: -97, street: '中山・南京東路一段 (林森商圈)' },
+  { x: 155,  z: -97, stopName: '捷運松江南京站 (南京東路二段)', street: '中山・南京東路 ✕ 松江路' },
+  { x: 185,  z: -97, stopName: '捷運南京復興站 (折返點)', street: '中山・南京東路三段 ✕ 復興北路' },
+
+  // ─── 返程 (西向與南向車道，靠右行駛) ───
+  // 11. 南京東路西行
+  { x: 185, z: -92, street: '中山・南京東路三段 (返程西行)' },
+  { x: 155, z: -92, stopName: '捷運松江南京站 (西行)', street: '中山・南京東路二段' },
+  { x: 120, z: -92, street: '中山・南京東路一段' },
+  // 12. 南京西路左轉中山北路 (南行)
+  { x: 84,  z: -92, stopName: '捷運中山站 (南行)', street: '中山・中山北路一段' },
+  { x: 84,  z: -45, stopName: '中山市場站 (南行)', street: '中山・中山北路林蔭大道' },
+  // 13. 中山北路右轉忠孝西路
+  { x: 84,  z: 2,   street: '中正・中山北路 ✕ 忠孝西路口' },
+  // 14. 忠孝西路公車專用道西行
+  { x: 35,   z: 2,   street: '中正・忠孝西路 (公園路口)' },
+  { x: -20,  z: 2,   stopName: '台北車站(忠孝)公車專用道 (西行)', street: '中正・忠孝西路中央專用道' },
+  { x: -92,  z: 2,   street: '中正・忠孝西路 (重慶南路口)' },
+  // 15. 忠孝西路左轉中華路一段 (南行)
+  { x: -142, z: 2,   street: '萬華・中華路 ✕ 忠孝西路口' },
+  { x: -142, z: 25,  stopName: '捷運西門站 (南行)', street: '萬華・中華路一段' },
+  { x: -142, z: 75,  street: '萬華・中華路一段 (西門町商圈)' },
+  // 16. 中華路進入新板特區
+  { x: -142, z: 130, stopName: '新板特區站 (縣民大道南行)', street: '板橋・縣民大道一段' },
+  { x: -142, z: 168, stopName: '學府路一段站 (海山生活圈南行)', street: '板橋・學府路一段' },
+  { x: -142, z: 195, street: '板橋・文化路一段' }
+];
+
+// 中山幹線公車真實路線 (晴光商圈 ✕ 雙連市場 ✕ 中山站 ✕ 台北車站公園路 ✕ 中正紀念堂 ✕ 師大夜市)
+const busZhongshanRoute = [
+  { x: 72, z: -195, stopName: '晴光商圈站 (雙城街口)', street: '中山・晴光商圈 ✕ 雙城街' },
+  { x: 72, z: -140, stopName: '雙連傳統市場站 (民生西路口)', street: '中山・民生西路 ✕ 雙連市場' },
+  { x: 72, z: -95,  stopName: '捷運中山站 (南京西路)', street: '中山・中山北路 ✕ 南京西路' },
+  { x: 72, z: -45,  stopName: '中山市場站 (長安西路口)', street: '中山・長安西路 ✕ 中山市場' },
+  { x: 72, z: 0,    street: '中正・忠孝西路口 (行政院)' },
+  { x: 48, z: 25,   stopName: '台北車站 (公園路站)', street: '中正・公園路 ✕ 捷運 M8 出口' },
+  { x: 48, z: 75,   stopName: '中正紀念堂 (中山南路)', street: '中正・中山南路 ✕ 紀念堂' },
+  { x: 78, z: 135,  stopName: '古亭和平站 (和平西路口)', street: '中正・和平西路一段' },
+  { x: 78, z: 185,  stopName: '師大夜市/龍泉站 (師大路口)', street: '大安・師大夜市 ✕ 龍泉市場' },
+  // 返程 (北行)
+  { x: 84, z: 185,  street: '大安・師大路 (北行)' },
+  { x: 84, z: 135,  stopName: '古亭和平站 (北行)', street: '中正・和平西路一段' },
+  { x: 54, z: 75,   stopName: '中正紀念堂 (北行)', street: '中正・中山南路' },
+  { x: 54, z: 25,   stopName: '台北車站 (公園路北行)', street: '中正・公園路' },
+  { x: 84, z: 0,    street: '中正・忠孝西路口' },
+  { x: 84, z: -45,  stopName: '中山市場站 (北行)', street: '中山・中山北路一段' },
+  { x: 84, z: -95,  stopName: '捷運中山站 (北行)', street: '中山・中山北路' },
+  { x: 84, z: -140, stopName: '雙連市場站 (北行)', street: '中山・民生西路' },
+  { x: 84, z: -195, stopName: '晴光商圈站 (北行終點)', street: '中山・雙城街口' }
+];
+
+// 雙北真實路網巡航車隊
+const cityBuses = [
+  {
+    id: 'bus_307_a',
+    lineName: '307 幹線',
+    ledText: '307 ➔ 南京東路',
+    themeColor: '#059669', // 經典首都/台北客運綠
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus307Route,
+    currentWaypointIndex: 0,
+    x: bus307Route[0].x,
+    z: bus307Route[0].z,
+    angle: 0,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus307Route[0].street,
+    nextStopName: bus307Route[2].stopName
+  },
+  {
+    id: 'bus_307_b',
+    lineName: '307 幹線',
+    ledText: '307 ➔ 板橋府中',
+    themeColor: '#059669',
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus307Route,
+    currentWaypointIndex: 16,
+    x: bus307Route[16].x,
+    z: bus307Route[16].z,
+    angle: Math.PI,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus307Route[16].street,
+    nextStopName: bus307Route[18].stopName
+  },
+  {
+    id: 'bus_zhongshan',
+    lineName: '中山幹線',
+    ledText: '中山幹線 ➔ 師大',
+    themeColor: '#0284c7', // 綠能低底盤天藍
+    w: 18,
+    d: 5.2,
+    speed: 0.26,
+    waypoints: busZhongshanRoute,
+    currentWaypointIndex: 0,
+    x: busZhongshanRoute[0].x,
+    z: busZhongshanRoute[0].z,
+    angle: Math.PI / 2,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: busZhongshanRoute[0].street,
+    nextStopName: busZhongshanRoute[1].stopName
+  }
+];
+
+// 向下相容物件 (供既有模組與全域狀態引用)
+const bus307 = cityBuses[0];
+
+// 幹線公車真實路網動態動力學與自動站點導航
+function updateBusPhysics(bus) {
+  if (bus.isStopped) {
+    bus.stopTimer--;
+    if (bus.stopTimer <= 0) {
+      bus.isStopped = false;
+    }
+    return;
+  }
+
+  const target = bus.waypoints[bus.currentWaypointIndex];
+  const dx = target.x - bus.x;
+  const dz = target.z - bus.z;
+  const dist = Math.hypot(dx, dz);
+
+  // 目標轉向角與平滑角插值
+  const targetAngle = Math.atan2(dz, dx);
+  let diff = targetAngle - bus.angle;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  bus.angle += diff * 0.16;
+
+  if (target.street) bus.currentStreet = target.street;
+
+  if (dist <= bus.speed * 1.5) {
+    bus.x = target.x;
+    bus.z = target.z;
+    if (target.stopName && !target.justStopped) {
+      bus.isStopped = true;
+      bus.stopTimer = 100; // 停站約 1.7 秒載客
+      bus.currentStopName = target.stopName;
+      target.justStopped = true;
+      setTimeout(() => { target.justStopped = false; }, 9000);
+    }
+    bus.currentWaypointIndex = (bus.currentWaypointIndex + 1) % bus.waypoints.length;
+    const nextPt = bus.waypoints[bus.currentWaypointIndex];
+    if (nextPt.stopName) {
+      bus.nextStopName = nextPt.stopName;
+      if (bus.id === 'bus_307_a') {
+        bus.ledText = bus.currentWaypointIndex < 16 ? '307 ➔ 南京東路' : '307 ➔ 板橋府中';
+      } else if (bus.id === 'bus_307_b') {
+        bus.ledText = bus.currentWaypointIndex < 16 ? '307 ➔ 南京東路' : '307 ➔ 板橋府中';
+      } else if (bus.id === 'bus_zhongshan') {
+        bus.ledText = bus.currentWaypointIndex < 9 ? '中山幹線 ➔ 師大' : '中山幹線 ➔ 晴光商圈';
+      }
+    }
+  } else {
+    bus.x += Math.cos(bus.angle) * bus.speed;
+    bus.z += Math.sin(bus.angle) * bus.speed;
+  }
+}
 
 // 雙北街頭行人 NPC (Pedestrians)
 const pedestrians = [
@@ -419,10 +599,11 @@ function updateMovement() {
     }
     // 玩家搭乘公車或捷運，未快轉時隨車平穩漫遊欣賞街景
     if (gameState.transitType === 'bus') {
-      playerPos.x = bus307.x;
-      playerPos.z = bus307.z;
+      const activeBus = gameState.activeBus || cityBuses[0];
+      playerPos.x = activeBus.x;
+      playerPos.z = activeBus.z;
       if (transitStatus) {
-        transitStatus.innerText = `🚌 307 公車行駛中 (位置: X:${Math.round(bus307.x)}, Z:${Math.round(bus307.z)})，隨車漫遊欣賞街景中... 可點擊【到站下車】或【快轉】。`;
+        transitStatus.innerText = `🚌 ${activeBus.lineName} 行駛中：【${activeBus.currentStreet || '雙北幹道'}】➔ 即將抵達【${activeBus.nextStopName || '下一站'}】(位置: X:${Math.round(activeBus.x)}, Z:${Math.round(activeBus.z)})。隨車漫遊欣賞真實街景中... 可隨時點擊【到站下車】或【快轉】。`;
       }
     } else if (gameState.transitType === 'mrt') {
       const dest = (gameState.transitDest === 'zhongshan') ? { x: 70, z: 15 } : { x: 24, z: 24 };
@@ -550,10 +731,7 @@ function updateMinimapRadar() {
 
 /* ─── 7. 公車移動與空拍鳥瞰過場系統 ─── */
 function updateBusWorld() {
-  // 307 公車沿著專用道巡迴行駛
-  bus307.x += bus307.dir * bus307.speed;
-  if (bus307.x > 50) bus307.dir = -1;
-  else if (bus307.x < -60) bus307.dir = 1;
+  cityBuses.forEach(b => updateBusPhysics(b));
 }
 
 const transitHud = document.getElementById("transitHud");
@@ -570,11 +748,23 @@ function boardTaipeiBus(line, dest) {
   gameState.transitType = 'bus';
   gameState.transitDest = dest;
 
-  transitBadge.innerText = `🚌 307 幹線公車 (${dest === 'zhongshan' ? '台北車站 ➔ 中山商圈' : '中山商圈 ➔ 台北車站'})`;
-  transitStatus.innerText = "車輛已發車平穩行駛中，可點擊右方按鈕啟用鳥瞰快轉過場...";
+  // 依玩家目前所在位置尋找最近的一班公車搭乘
+  let chosenBus = cityBuses[0];
+  let minD = 99999;
+  cityBuses.forEach(b => {
+    const d = Math.hypot(b.x - playerPos.x, b.z - playerPos.z);
+    if (d < minD) {
+      minD = d;
+      chosenBus = b;
+    }
+  });
+  gameState.activeBus = chosenBus;
+
+  transitBadge.innerText = `🚌 ${chosenBus.lineName} (${chosenBus.ledText})`;
+  transitStatus.innerText = `車輛發車於【${chosenBus.currentStreet || '雙北幹道'}】，沿真實路線平穩行駛中，可隨車欣賞街景或點擊快轉/下車...`;
   transitHud.style.display = "flex";
 
-  showNavToast("🚌 悠遊卡扣款 $15！已登上 307 公車，可點擊快轉鍵啟用高空鳥瞰過場！");
+  showNavToast(`🚌 悠遊卡扣款 $15！已登上 ${chosenBus.lineName}，沿真實路網平穩行駛中！`);
   gameState.quests.bus = true;
   updateQuestProgress();
 }
@@ -645,10 +835,11 @@ function disembarkTransit() {
   if (transitHud) transitHud.style.display = "none";
 
   if (wasType === 'bus') {
-    playerPos.x = bus307.x;
-    playerPos.z = bus307.z + 5.5; // 下車至路旁人行道
+    const activeBus = gameState.activeBus || cityBuses[0];
+    playerPos.x = activeBus.x + Math.cos(activeBus.angle + Math.PI / 2) * 5.5;
+    playerPos.z = activeBus.z + Math.sin(activeBus.angle + Math.PI / 2) * 5.5;
     playBusChime();
-    showNavToast("🚶 已從 307 公車下車至人行道！恢復自由探索！");
+    showNavToast(`🚶 已從 ${activeBus.lineName} 下車至【${activeBus.currentStreet || '人行道'}】！恢復自由探索！`);
     showDetectiveDialogue("「呼～到站下車！在雙北街頭吹吹風，繼續調查！」", "都會調查員");
   } else {
     playerPos.z = playerPos.z + 4;
@@ -1124,6 +1315,84 @@ function renderScene() {
   // ──────────────────────────────────────────
   const renderList = [];
 
+  // (0) 雙北現代低底盤幹線公車 (Rotated 2.5D City Bus)
+  function drawRotatedBus(bus) {
+    const cx = screenX(bus.x);
+    const cz = screenZ(bus.z);
+    const busW = bus.w * scale;
+    const busD = bus.d * scale;
+
+    ctx.save();
+    ctx.translate(cx, cz);
+    ctx.rotate(bus.angle);
+
+    // 1. 車身地面投影陰影
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+    drawSafeRoundRect(ctx, -busW / 2 + 1.2 * scale, -busD / 2 + 1.8 * scale, busW, busD, 3.5 * scale);
+    ctx.fill();
+
+    // 2. 雙色低底盤車身塗裝 (首都/台北客運經典綠白相間 或 中山幹線藍)
+    ctx.fillStyle = bus.themeColor || '#059669';
+    drawSafeRoundRect(ctx, -busW / 2, -busD / 2, busW, busD, 3.5 * scale);
+    ctx.fill();
+
+    // 3. 車頂與白色腰線裝飾
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(-busW / 2 + 1.8 * scale, -busD / 2 + 1.1 * scale, busW - 3.6 * scale, busD - 2.2 * scale);
+
+    // 4. 車頂空調散熱機殼
+    ctx.fillStyle = '#cbd5e1';
+    drawSafeRoundRect(ctx, -busW / 4, -busD / 4, busW / 2, busD / 2, 1.5 * scale);
+    ctx.fill();
+
+    // 5. 車頭前擋風玻璃 (車頭朝向 +X)
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, busW / 2 - 3.6 * scale, -busD / 2 + 0.6 * scale, 3 * scale, busD - 1.2 * scale, 1.8 * scale);
+    ctx.fill();
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(busW / 2 - 3.2 * scale, -busD / 2 + 1.0 * scale, 1.2 * scale, busD - 2.0 * scale);
+
+    // 6. 兩側大面積全景車窗玻璃
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-busW / 2 + 3 * scale, -busD / 2 + 0.3 * scale, busW - 7 * scale, 0.9 * scale);
+    ctx.fillRect(-busW / 2 + 3 * scale, busD / 2 - 1.2 * scale, busW - 7 * scale, 0.9 * scale);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(busW / 2 - 5 * scale, busD / 2 - 1.3 * scale, 1.8 * scale, 1.1 * scale);
+    ctx.fillRect(-busW / 2 + 4 * scale, busD / 2 - 1.3 * scale, 1.8 * scale, 1.1 * scale);
+
+    // 7. LED 車頭電子路線看板 (朝前方)
+    ctx.fillStyle = '#020617';
+    drawSafeRoundRect(ctx, busW / 2 - 1.5 * scale, -busD / 2 + 1.1 * scale, 1.4 * scale, busD - 2.2 * scale, 0.8 * scale);
+    ctx.fill();
+
+    // 車頂 LED 路線文字
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = `bold ${Math.max(7.5, scale * 0.48)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(bus.ledText || '307 幹線', 0, 1.3 * scale);
+
+    // 8. 車頭明亮大燈與路面照地燈光 (Headlight Beams)
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(busW / 2 - 0.4 * scale, -busD / 2 + 0.6 * scale, 0.8 * scale, 1.0 * scale);
+    ctx.fillRect(busW / 2 - 0.4 * scale, busD / 2 - 1.6 * scale, 0.8 * scale, 1.0 * scale);
+
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.22)';
+    ctx.beginPath();
+    ctx.moveTo(busW / 2, -busD / 2 + 0.6 * scale);
+    ctx.lineTo(busW / 2 + 14 * scale, -busD * 1.5);
+    ctx.lineTo(busW / 2 + 14 * scale, busD * 1.5);
+    ctx.lineTo(busW / 2, busD / 2 - 0.6 * scale);
+    ctx.closePath();
+    ctx.fill();
+
+    // 9. 車尾煞車警示紅燈
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-busW / 2 - 0.4 * scale, -busD / 2 + 0.6 * scale, 0.8 * scale, 1.0 * scale);
+    ctx.fillRect(-busW / 2 - 0.4 * scale, busD / 2 - 1.6 * scale, 0.8 * scale, 1.0 * scale);
+
+    ctx.restore();
+  }
+
   // (1) CoCo 都可 手搖飲門市立面
   function drawCocoStore(x, z, branchName) {
     const bx = screenX(x - 12);
@@ -1542,37 +1811,12 @@ function renderScene() {
     }
   });
 
-    // 307 幹線公車本體
-  renderList.push({
-    z: bus307.z,
-    draw: () => {
-      const bx = screenX(bus307.x - bus307.w / 2);
-      const bz = screenZ(bus307.z - bus307.d / 2);
-
-      // 車身陰影
-      ctx.beginPath();
-      ctx.ellipse(bx + (bus307.w / 2) * scale, bz + (bus307.d) * scale, (bus307.w / 2) * scale, 3 * scale, 0, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fill();
-
-      // 低底盤綠色車身
-      ctx.fillStyle = '#10b981';
-      drawSafeRoundRect(ctx, bx, bz, bus307.w * scale, bus307.d * scale, 5);
-      ctx.fill();
-
-      // 白色腰線
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(bx, bz + 1.6 * scale, bus307.w * scale, 1.2 * scale);
-
-      // LED 路線看板
-      ctx.fillStyle = '#0f172a';
-      drawSafeRoundRect(ctx, bx + 2 * scale, bz + 0.4 * scale, 14 * scale, 1.5 * scale, 2);
-      ctx.fill();
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = `bold ${Math.max(9, scale * 0.55)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('307 幹線 ➔ 板橋 ✕ 南京東路', bx + 9 * scale, bz + 1.5 * scale);
-    }
+  // 雙北真實路網幹線公車車隊渲染 (Rotated 2.5D City Buses)
+  cityBuses.forEach(bus => {
+    renderList.push({
+      z: bus.z,
+      draw: () => drawRotatedBus(bus)
+    });
   });
 
   // 【人物與居民渲染】：依據使用者要求，在幽靈天眼模式下隱藏人物與居民！地面模式下才顯示！
