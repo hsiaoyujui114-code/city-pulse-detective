@@ -13,7 +13,8 @@
 > 
 > 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~32 回合全部原始對話對白、時間戳記、技術交付成果與決策歷程）
 > 2. 📋 **[【AI 接手開發規格手冊】AI_HANDOFF_PROJECT_SPEC.md](./AI_HANDOFF_PROJECT_SPEC.md)**（含 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則、公車循徑系統與工作 SOP）
-> 3. 🌐 **[線上獨立研究企劃書](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)**：頂部按鈕「🤖 其他 AI 繼續製作」可一鍵複製最新交接提示詞！
+> 3. 💎 **[【完整企劃書官方 Markdown 版】PROJECT_PROPOSAL.md](./PROJECT_PROPOSAL.md)**（六年級獨立研究完整專案企劃書全文，含 50 宗大案、10 示範案、交通脈動戰略與三軌道具）
+> 4. 🌐 **[線上獨立研究企劃書 (HTML 互動版)](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)**：頂部按鈕「🤖 其他 AI 繼續製作」可一鍵複製最新交接提示詞！
 > 
 > ⚠️ **【委託人最高鐵則（絕不可違背）】**：
 > - 🈲 **嚴格禁用「少年偵探」稱號**：一律稱呼「都會調查員」或「市民」。
@@ -46,7 +47,7 @@
 4. **專屬私服器多人同屏同步**：
    - 基於 Node.js + WebSocket，支援局域網同學與線上玩家同屏可見、步行動畫同步、頭頂對話氣泡與全服破案號外推播。
 5. **完整 AI 接續協作手冊與對話全誌**：
-   - 根目錄附帶 `COMPLETE_CONVERSATION_CHRONICLE.md` 與 `AI_HANDOFF_PROJECT_SPEC.md`，任何接續的 AI Agent / 工程師可 100% 無縫接軌。
+   - 根目錄附帶 `COMPLETE_CONVERSATION_CHRONICLE.md`、`AI_HANDOFF_PROJECT_SPEC.md` 與 `PROJECT_PROPOSAL.md`，任何接續的 AI Agent / 工程師可 100% 無縫接軌。
 
 ---
 
@@ -56,6 +57,7 @@
 
 | 分類項目 | 文件路徑 | 重點說明 |
 | :--- | :--- | :--- |
+| **完整企劃書** | [💎 `PROJECT_PROPOSAL.md`](./PROJECT_PROPOSAL.md) | **【企劃全覽】** 官方 Markdown 完整版（16週研發、50案、10示範案、三軌道具） |
 | **對話全誌** | [📜 `COMPLETE_CONVERSATION_CHRONICLE.md`](./COMPLETE_CONVERSATION_CHRONICLE.md) | **【歷史大典】** 1~32 回合 100% 原始對話全文、時間戳與技術成果 |
 | **規格手冊** | [📋 `AI_HANDOFF_PROJECT_SPEC.md`](./AI_HANDOFF_PROJECT_SPEC.md) | **【交接首選】** 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則 |
 | **導航總覽** | [📚 `docs/README.md`](./docs/README.md) | AI 協作文檔導航中樞與推薦閱讀順序 |

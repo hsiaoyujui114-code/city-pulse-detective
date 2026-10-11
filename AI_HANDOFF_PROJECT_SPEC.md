@@ -135,10 +135,12 @@
 ```
 crew-deck-role/
 ├── ai-engineer/
-│   ├── AI_HANDOFF_COMPLETE_PROMPT.md        # 【本交接提示詞總手冊】
-│   ├── COMPLETE_CONVERSATION_CHRONICLE_全對話紀錄全誌.md # 【1~32回合原始對話紀錄全誌】
+│   ├── COMPLETE_CONVERSATION_CHRONICLE.md   # 【1~32回合原始對話全誌】
+│   ├── PROJECT_PROPOSAL.md                  # 【官方企劃書全文 Markdown】
 │   ├── taipei-metro-detective-rpg/          # 主遊戲倉庫 (Git)
 │   │   ├── AI_HANDOFF_PROJECT_SPEC.md       # 本規格手冊
+│   │   ├── PROJECT_PROPOSAL.md              # 完整企劃書 Markdown
+│   │   ├── COMPLETE_CONVERSATION_CHRONICLE.md # 1~32回合對話全誌
 │   │   ├── index.html                       # 遊戲主頁 (HUD、地圖、CCTV、背包、渡輪)
 │   │   ├── game.js                          # 核心遊戲邏輯 (2D/2.5D 引擎、天眼幽靈、路網)
 │   │   ├── server.js                        # Node.js + WebSocket 私服器 (npm start)
@@ -152,6 +154,7 @@ crew-deck-role/
 │   │       └── 05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md
 │   └── city-pulse-detective/                # 備用鏡像遊戲倉庫 (Git)
 └── planner/
+    ├── PROJECT_PROPOSAL.md                  # 企劃總部企劃書 Markdown
     └── proposal.html                        # 企劃總部企劃書 (Git)
 ```
 
