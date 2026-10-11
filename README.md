@@ -7,6 +7,24 @@
 
 ---
 
+## 🤖 給接續開發的 AI Agent / AI Engineer（必讀入口與工作指南）
+
+> **如果你是被指派接續本專案的 AI，請務必先閱讀以下核心文件，以 100% 掌握委託人的真實要求與絕對禁忌：**
+> 
+> 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~32 回合全部原始對話對白、時間戳記、技術交付成果與決策歷程）
+> 2. 📋 **[【AI 接手開發規格手冊】AI_HANDOFF_PROJECT_SPEC.md](./AI_HANDOFF_PROJECT_SPEC.md)**（含 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則、公車循徑系統與工作 SOP）
+> 3. 🌐 **[線上獨立研究企劃書](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)**：頂部按鈕「🤖 其他 AI 繼續製作」可一鍵複製最新交接提示詞！
+> 
+> ⚠️ **【委託人最高鐵則（絕不可違背）】**：
+> - 🈲 **嚴格禁用「少年偵探」稱號**：一律稱呼「都會調查員」或「市民」。
+> - 🈲 **嚴禁點地圖直接瞬移**：必須親自走到站牌搭公車或進捷運。
+> - 🈲 **嚴禁商店連續並排**：每間店各自獨立座落於街角，物理間距 $\ge 38\text{m}$。
+> - 🈲 **公車嚴禁死板來回**：公車必須依照交通部 TDX / OSM 之真實 Shape 節點循徑行駛。
+> - 🛑 **「先不要做修改代碼」**：動工前必須先提出完整規劃與委託人討論確認！
+> - 🔄 **「每指令改動必上 GitHub ✕ 交接提示詞必同步更新」**：委託人下達指令做完後，必須立即 commit & push 至遠端 GitHub 倉庫，並同步更新交接手冊與企劃書按鈕！
+
+---
+
 ## 📖 專案簡介
 
 本專案融合**國小六年級獨立研究主題（環保減塑政策、雙北都會生活考據）**與**都市交通大數據推理玩法（TIB 交通情報局、悠遊卡刷卡時序、CCTV 監視器軌跡追蹤）**。
@@ -27,8 +45,8 @@
    - 只有親自抵達北投分局與林巡官會面交談，方可解鎖四分割 CCTV 監控與悠遊卡進出站時序分析。
 4. **專屬私服器多人同屏同步**：
    - 基於 Node.js + WebSocket，支援局域網同學與線上玩家同屏可見、步行動畫同步、頭頂對話氣泡與全服破案號外推播。
-5. **完整 AI 接續協作手冊**：
-   - 附帶完整文檔庫，供任何接續的 AI Agent / 工程師無縫交接。
+5. **完整 AI 接續協作手冊與對話全誌**：
+   - 根目錄附帶 `COMPLETE_CONVERSATION_CHRONICLE.md` 與 `AI_HANDOFF_PROJECT_SPEC.md`，任何接續的 AI Agent / 工程師可 100% 無縫接軌。
 
 ---
 
@@ -38,10 +56,12 @@
 
 | 分類項目 | 文件路徑 | 重點說明 |
 | :--- | :--- | :--- |
+| **對話全誌** | [📜 `COMPLETE_CONVERSATION_CHRONICLE.md`](./COMPLETE_CONVERSATION_CHRONICLE.md) | **【歷史大典】** 1~32 回合 100% 原始對話全文、時間戳與技術成果 |
+| **規格手冊** | [📋 `AI_HANDOFF_PROJECT_SPEC.md`](./AI_HANDOFF_PROJECT_SPEC.md) | **【交接首選】** 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則 |
 | **導航總覽** | [📚 `docs/README.md`](./docs/README.md) | AI 協作文檔導航中樞與推薦閱讀順序 |
 | **01. AI 交接** | [🤖 `docs/01_ai_handover/AI_HANDOVER.md`](./docs/01_ai_handover/AI_HANDOVER.md) | **【最重要】** 核心痛點、雙引擎切換、設計誡命與工作流 |
 | **02. 系統規格** | [📋 `docs/02_project_spec/PROJECT_SPEC.md`](./docs/02_project_spec/PROJECT_SPEC.md) | 遊戲循環、數值體系、捷運站點配置、道具規格 |
-| **03. 討論紀錄** | [📜 `docs/03_discussion_history/DISCUSSION_LOG.md`](./docs/03_discussion_history/DISCUSSION_LOG.md) | 第 1 ~ 5 回合所有使用者對話、需求與修改決策 |
+| **03. 討論紀錄** | [📜 `docs/03_discussion_history/DISCUSSION_LOG.md`](./docs/03_discussion_history/DISCUSSION_LOG.md) | 第 1 ~ 18 回合歷次使用者對話、需求與修改決策摘要 |
 | **04. 美術情境** | [🎨 `docs/04_art_and_style/ART_STYLE_GUIDE.md`](./docs/04_art_and_style/ART_STYLE_GUIDE.md) | 雲端 41 張概念圖分析、視覺基調（非彈窗貼圖） |
 | **05. 真實地圖與Server** | [🌐 `docs/05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md`](./docs/05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md) | 所有人同服 Server 架構、免費部署、雙北真實道路 (OSM) 轉換 |
 
