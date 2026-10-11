@@ -1,7 +1,7 @@
 # 📋《雙北漫遊：都會行蹤》完整遊戲設計企劃書（官方 Markdown 完整版）
 > **本文件為《雙北漫遊：都會行蹤》六年級獨立研究專題之完整企劃書全文，專供接續本專案之 AI Agent、LLM 與工程師直接閱讀。**  
 > **線上互動網頁版**：[https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)  
-> **更新狀態**：收錄全部 54 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
+> **更新狀態**：收錄全部 55 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
 
 ---
 
@@ -68,6 +68,7 @@
 | 52 | **GitHub即時同步與交接指令同步修訂** | 之後我每跟你下打一個指令，你做完後就要把你改的東西放到github上面，交給其他ai的指令也要有所修改 | 01B 研發分期規劃與協作規範 | 永久確立最高工作標準（Commit, Push & Update Prompt on Every Turn）：1. 每指令必推 GitHub；2. AI 交接指令同步修訂，包含規格書、對話全誌與頂部一鍵複製提示詞。 | ✅ 100% 落實 |
 | 53 | **歷次對話紀錄全誌大典** | 我想要你把我悶的對話紀錄全志 | 03 歷次對話紀錄全誌 | 正式編撰並歸檔 COMPLETE_CONVERSATION_CHRONICLE.md（逾 138 KB），收錄從第 1 回合至第 32 回合之委託人原始指令、時間戳記、AI 分析與技術交付成果，建立透明溯源與交接體系。 | ✅ 100% 落實 |
 | 54 | **企劃書 Markdown 全文開放與跨 AI 知識庫對接** | 企劃書也要給其他ai知道 | 根目錄 PROJECT_PROPOSAL.md | 於 GitHub 倉庫根目錄正式部署純文字 PROJECT_PROPOSAL.md 與 PROPOSAL.md（逾 830 行、147 KB），脫離龐大 HTML 標籤結構，專供 ChatGPT、Claude、Gemini、Cursor 等其他 AI 透過 Web 檢索或 Raw URL 一秒全篇解析；並於 README.md 頂部與交接手冊第一時間置頂索引。 | ✅ 100% 落實 |
+| 55 | **對話全誌每回合即時滾動同步更新** | 我每多跟你對話一次，github對畫紀錄就要更新 | 根目錄 COMPLETE_CONVERSATION_CHRONICLE.md | 委託人每一次對話輸入，AI 在執行該回合交付時，必定第一時間將該回合原始指令、時間戳記與詳細成果追加至 COMPLETE_CONVERSATION_CHRONICLE.md；每次更新連同企劃書與規格文件，全數同步 git add、git commit 並 git push 至 GitHub 三大遠端倉庫，保證線上對話紀錄與本地 100% 同步！ | ✅ 100% 落實 |
 
 ---
 

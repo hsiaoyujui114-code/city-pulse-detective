@@ -11,7 +11,7 @@
 
 > **如果你是被指派接續本專案的 AI，請務必先閱讀以下核心文件，以 100% 掌握委託人的真實要求與絕對禁忌：**
 > 
-> 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~32 回合全部原始對話對白、時間戳記、技術交付成果與決策歷程）
+> 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~35 回合全部原始對話對白（每回合即時更新）、時間戳記、技術交付成果與決策歷程）
 > 2. 📋 **[【AI 接手開發規格手冊】AI_HANDOFF_PROJECT_SPEC.md](./AI_HANDOFF_PROJECT_SPEC.md)**（含 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則、公車循徑系統與工作 SOP）
 > 3. 💎 **[【完整企劃書官方 Markdown 版】PROJECT_PROPOSAL.md](./PROJECT_PROPOSAL.md)**（六年級獨立研究完整專案企劃書全文，含 50 宗大案、10 示範案、交通脈動戰略與三軌道具）
 > 4. 🌐 **[線上獨立研究企劃書 (HTML 互動版)](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)**：頂部按鈕「🤖 其他 AI 繼續製作」可一鍵複製最新交接提示詞！
@@ -22,7 +22,7 @@
 > - 🈲 **嚴禁商店連續並排**：每間店各自獨立座落於街角，物理間距 $\ge 38\text{m}$。
 > - 🈲 **公車嚴禁死板來回**：公車必須依照交通部 TDX / OSM 之真實 Shape 節點循徑行駛。
 > - 🛑 **「先不要做修改代碼」**：動工前必須先提出完整規劃與委託人討論確認！
-> - 🔄 **「每指令改動必上 GitHub ✕ 交接提示詞必同步更新」**：委託人下達指令做完後，必須立即 commit & push 至遠端 GitHub 倉庫，並同步更新交接手冊與企劃書按鈕！
+> - 🔄 **「每指令改動必上 GitHub ✕ 交接提示詞必同步更新 ✕ 對話紀錄每回合必滾動更新」**：委託人每對話一次，做完後必須立即將最新對話追加至對話全誌，連同代碼與文件 commit & push 至 GitHub 遠端倉庫，並同步更新交接手冊與企劃書按鈕！
 
 ---
 
