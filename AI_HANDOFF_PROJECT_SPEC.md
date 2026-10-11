@@ -136,6 +136,7 @@
 crew-deck-role/
 ├── ai-engineer/
 │   ├── AI_HANDOFF_COMPLETE_PROMPT.md        # 【本交接提示詞總手冊】
+│   ├── COMPLETE_CONVERSATION_CHRONICLE_全對話紀錄全誌.md # 【1~32回合原始對話紀錄全誌】
 │   ├── taipei-metro-detective-rpg/          # 主遊戲倉庫 (Git)
 │   │   ├── AI_HANDOFF_PROJECT_SPEC.md       # 本規格手冊
 │   │   ├── index.html                       # 遊戲主頁 (HUD、地圖、CCTV、背包、渡輪)
@@ -146,7 +147,7 @@ crew-deck-role/
 │   │   └── docs/                            # 專屬規格手冊目錄
 │   │       ├── 01_ai_handover/AI_HANDOVER.md
 │   │       ├── 02_project_spec/PROJECT_SPEC.md
-│   │       ├── 03_discussion_history/DISCUSSION_LOG.md
+│   │       ├── 03_discussion_history/DISCUSSION_LOG.md (含全對話全誌)
 │   │       ├── 04_art_and_style/ART_STYLE_GUIDE.md
 │   │       └── 05_multiplayer_and_real_map/SERVER_AND_GIS_GUIDE.md
 │   └── city-pulse-detective/                # 備用鏡像遊戲倉庫 (Git)

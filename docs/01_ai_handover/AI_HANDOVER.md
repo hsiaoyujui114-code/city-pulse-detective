@@ -108,7 +108,7 @@ taipei-metro-detective-rpg/
 │   ├── README.md           # 文檔總覽導航與推薦閱讀順序
 │   ├── 01_ai_handover/     # 🤖 AI_HANDOVER.md (本文件)
 │   ├── 02_project_spec/    # 📋 PROJECT_SPEC.md (系統功能規格書)
-│   ├── 03_discussion_history/ # 📜 DISCUSSION_LOG.md (第 1~7 回合歷次使用者討論紀錄)
+│   ├── 03_discussion_history/ # 📜 DISCUSSION_LOG.md 與 COMPLETE_CONVERSATION_CHRONICLE_全對話紀錄全誌.md (第 1~32 回合歷次對話全誌)
 │   ├── 04_art_and_style/   # 🎨 ART_STYLE_GUIDE.md (美術情境指導手冊)
 │   └── 05_multiplayer_and_real_map/ # 🌐 SERVER_AND_GIS_GUIDE.md (私服器架構與雙北路網演算法)
 └── assets/
