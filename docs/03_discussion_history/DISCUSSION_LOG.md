@@ -276,14 +276,25 @@
 
 ---
 
-### 第 17 回合 (當前里程碑)：全案指令與需求總彙整 ✕ 給其他 AI 的交接記錄檔案建立
+### 第 17 回合：全案指令與需求總彙整 ✕ 給其他 AI 的交接記錄檔案建立
 - **使用者最新重要指示**：
   > 「幫我把所有我跟你說的東西，檔案記錄下來，我要給其他ai」
 - **本回合產出**：
-  1. 建立本專案最強完整的 AI 交接手冊 `AI_HANDOFF_PROJECT_SPEC.md`。
+  1. 建立本專案最強完整的 AI 交接手冊 `AI_HANDOFF_PROJECT_SPEC.md` 與 `AI_HANDOFF_COMPLETE_PROMPT.md`。
   2. 更新 `docs/01_ai_handover/AI_HANDOVER.md`。
   3. 更新 `proposal.html`（Section 00, 02C）與 `[🤖 其他 AI 繼續製作]` 一鍵複製按鈕之 Prompt 文本。
   4. 完整同步三個 Git 倉庫，確保任何後續 AI 一鍵讀取即可 100% 無縫接軌。
+
+---
+
+### 第 18 回合 (當前里程碑)：每回合改動必上 GitHub ✕ AI 交接指令必同步修改（永久確立）
+- **使用者最新重要指示**：
+  > 「之後我每跟你下打一個指令，你做完後就要把你改的東西放到github上面，交給其他ai的指令也要有所修改」
+- **確立最高工作鐵則**：
+  1. **每指令必 Push GitHub**：委託人下達的任何指令完成後，必須立刻執行 `git add`、`git commit` 並 `git push` 至 GitHub 遠端倉庫。
+  2. **AI 交接指令必同步修訂**：同步修改 `AI_HANDOFF_PROJECT_SPEC.md`、`AI_HANDOFF_COMPLETE_PROMPT.md`、`docs/` 與企劃書中一鍵複製的 `aiHandoverPromptText`，讓後續接手 AI 永遠拿到最新版交接指令。
+  3. **透明回報**：每次向委託人回報時，清楚條列 GitHub Commit 雜湊與交接指令更新項目。
+
 
 
 

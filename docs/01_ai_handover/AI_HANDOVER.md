@@ -143,3 +143,8 @@ taipei-metro-detective-rpg/
    - 任何改動前請先執行語法檢查。
    - 完成修改後使用 git 提交並 push 至 `origin main`，GitHub Pages 會自動觸發部署。
    - 保持 `docs/` 內文件的最新更新。
+5. **★ 每回合必做：改動必上 GitHub ✕ AI 交接指令必同步更新（委託人最高鐵則！）**：
+   - 每次完成委託人下達的任何一個指令，**必須立即將所有修改內容 commit 並 push 至 GitHub 倉庫**！
+   - 同時，**給其他 AI 的交接指令（`AI_HANDOFF_PROJECT_SPEC.md`、`AI_HANDOFF_COMPLETE_PROMPT.md`、`docs/` 與企劃書內的提示詞按鈕）也必須根據最新改動同步修改更新**！
+   - 絕不可只改代碼而不推送到 GitHub，也不可漏掉更新交接指令！
+
