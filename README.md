@@ -11,7 +11,7 @@
 
 > **如果你是被指派接續本專案的 AI，請務必先閱讀以下核心文件，以 100% 掌握委託人的真實要求與絕對禁忌：**
 > 
-> 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~41 回合全部原始對話對白（每回合即時更新）、時間戳記、技術交付成果與決策歷程）
+> 1. 📜 **[【歷次對話全誌大典】COMPLETE_CONVERSATION_CHRONICLE.md](./COMPLETE_CONVERSATION_CHRONICLE.md)**（收錄第 1~42 回合全部原始對話對白（每回合即時更新）、時間戳記、技術交付成果與決策歷程）
 > 2. 📋 **[【AI 接手開發規格手冊】AI_HANDOFF_PROJECT_SPEC.md](./AI_HANDOFF_PROJECT_SPEC.md)**（含 15 大核心禁忌、1:1 雙北地圖規範、50% 剪裁法則、公車循徑系統與工作 SOP）
 > 3. 💎 **[【完整企劃書官方 Markdown 版】PROJECT_PROPOSAL.md](./PROJECT_PROPOSAL.md)**（六年級獨立研究完整專案企劃書全文，含 50 宗大案、10 示範案、交通脈動戰略與三軌道具）
 > 5. 🗺️ **[【全案技術實作規劃書】TECH_IMPLEMENTATION_PLAN.md](./TECH_IMPLEMENTATION_PLAN.md)**（企劃書每項功能 ✕ 圖資 ✕ 套件對照、16 週分期、需辦手續）
