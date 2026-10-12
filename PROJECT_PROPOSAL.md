@@ -1,7 +1,7 @@
 # 📋《雙北漫遊：都會行蹤》完整遊戲設計企劃書（官方 Markdown 完整版）
 > **本文件為《雙北漫遊：都會行蹤》六年級獨立研究專題之完整企劃書全文，專供接續本專案之 AI Agent、LLM 與工程師直接閱讀。**  
 > **線上互動網頁版**：[https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)  
-> **更新狀態**：收錄全部 57 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
+> **更新狀態**：收錄全部 58 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
 
 ---
 
@@ -71,6 +71,7 @@
 | 55 | **對話全誌每回合即時滾動同步更新** | 我每多跟你對話一次，github對畫紀錄就要更新 | 根目錄 COMPLETE_CONVERSATION_CHRONICLE.md | 委託人每一次對話輸入，AI 在執行該回合交付時，必定第一時間將該回合原始指令、時間戳記與詳細成果追加至 COMPLETE_CONVERSATION_CHRONICLE.md；每次更新連同企劃書與規格文件，全數同步 git add、git commit 並 git push 至 GitHub 三大遠端倉庫，保證線上對話紀錄與本地 100% 同步！ | ✅ 100% 落實 |
 | 56 | **2D/2.5D 遊戲開源套件生態系評估與儲備** | 我的2d遊戲有蛇麼套件可以使用嗎 | 08 技術選型與開源套件庫 | 全面盤點 PixiJS（極致效能渲染）、Phaser 3（全功能遊戲框架）、MapLibre GL JS（2.5D 向量地圖）、ngraph.path（真實 OSM 路網尋路）、SAT.js（幾何碰撞）、Howler.js（都會環境音效）與 Bondage.js（分支對話樹），建立輕量無白屏之技術儲備！ | ✅ 100% 落實 |
 | 57 | **開源遊戲套件與技術官方網頁批次瀏覽器啟動** | 幫我把這些網頁全部打開 | 08 技術選型與開源套件庫 | 自動化調用 macOS 系統 Chrome 瀏覽器一次性完整開啟 PixiJS、Phaser 3、Excalibur.js、MapLibre GL JS、Leaflet.js、OSMBuildings、ngraph.path、SAT.js、Matter.js、Bondage.js、Howler.js 等 11 大核心套件官方網址，便利實機評估與決策。 | ✅ 100% 落實 |
+| 58 | **獨立視窗強制置頂開啟 11 大套件分頁** | 你沒開 | 08 技術選型與開源套件庫 | 針對分頁隱藏於背景問題，改採專屬 AppleScript 於 macOS 桌面中央新建 Chrome 獨立視窗排入 11 大套件分頁，並調用 set index to 1 與 activate 指令強制拉至螢幕最前端置頂。 | ✅ 100% 落實 |
 
 ---
 
