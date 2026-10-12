@@ -2905,17 +2905,7 @@ function postStory() {
 }
 
 function toggleMosaic() {
-  gameState.mosaic = !gameState.mosaic;
-  const box = document.getElementById("webgl-container");
-  const btn = document.getElementById("btnMosaic");
-  if (gameState.mosaic) {
-    if (box) box.classList.add("mosaic-mode");
-    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：開";
-  } else {
-    if (box) box.classList.remove("mosaic-mode");
-    if (btn) btn.innerText = "👁️ 防嚇馬賽克保護：關";
-  }
-  playTone(600, 'sine', 0.05);
+  // 依委託人第 44 回合最新指令：防嚇馬賽克已全面取消，畫面一律自然清晰呈現
 }
 
 
