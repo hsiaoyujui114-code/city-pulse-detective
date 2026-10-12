@@ -2954,7 +2954,7 @@ function initPrivateServerConnection() {
 function spawnSimulatedCitizens() {
   if (remotePlayers.size > 0) return;
   const bot1 = { id: 'bot_1', nickname: '市民_小涵', x: 26, z: 20 };
-  const bot2 = { id: 'bot_2', nickname: '市民_益碩', x: 75, z: -25 };
+  const bot2 = { id: 'bot_2', nickname: '市民_志明', x: 75, z: -25 };
   remotePlayers.set(bot1.id, bot1);
   remotePlayers.set(bot2.id, bot2);
 }
