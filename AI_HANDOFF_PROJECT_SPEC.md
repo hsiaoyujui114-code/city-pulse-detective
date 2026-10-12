@@ -117,13 +117,15 @@
 6. **[政府資料開放平臺](https://data.gov.tw/)**：台灣門牌地址、地籍與公共設施。
 7. **[TGOS 國土測繪圖資](https://www.tgos.tw/tgos)**：國土測繪空間資訊。
 
-### 3. 地圖渲染與遊戲引擎
-1. **[MapLibre GL JS](https://maplibre.org/)**：支援向量圖磚、自訂 2D/2.5D 樣式、極致流暢平移縮放。
-2. **[Leaflet.js](https://leafletjs.com/)**：輕量化 Web 地圖庫。
-3. **[OSMBuildings](https://osmbuildings.org/)**：2.5D / 3D 真實建築擠出渲染庫。
-4. **[PixiJS](https://pixijs.com/)**：高性能 2D WebGL 渲染引擎。
-5. **[Phaser 3](https://phaser.io/)**：完整 2D 遊戲框架。
-6. **[Three.js](https://threejs.org/)**：3D/2.5D 幾何引擎。
+### 3. 地圖渲染、2D遊戲引擎與專用輔助套件庫
+1. **[PixiJS](https://pixijs.com/)**：極速 2D WebGL 渲染引擎（Canvas 萬能降級），最適合自訂高空俯瞰真實地圖與萬級物件渲染。
+2. **[Phaser 3](https://phaser.io/)**：完整 2D 遊戲框架，自帶場景、物理碰撞、動畫、Tweens 與瓦片地圖。
+3. **[MapLibre GL JS](https://maplibre.org/)**：支援向量圖磚、自訂 2D/2.5D 樣式（`fill-extrusion` 建築立體擠出）、極致流暢平移縮放。
+4. **[Leaflet.js](https://leafletjs.com/)**：超輕量化 Web 地圖庫，與 Canvas/SVG 圖層套疊性極佳。
+5. **[ngraph.path](https://github.com/anvaka/ngraph.path)**：專為真實圖論路網設計的極速 A* / Dijkstra 尋路庫（適配 OSM 雙北道路節點）。
+6. **[SAT.js](https://github.com/jriecken/sat-js)**：分離軸定理（Separating Axis Theorem）2D 幾何多邊形與圓形精準碰撞檢測。
+7. **[Howler.js](https://howlerjs.com/)**：Web 音訊標準庫，完美處理公車關門音、捷運警示音、環境白噪音與 BGM。
+8. **[Bondage.js / Yarn Spinner](https://github.com/hylyh/bondage.js)**：專門處理多分支對話樹、NPC 劇本與信賴度變數。
 
 ### 4. 輔助與資料處理工具
 1. **[QGIS 官網](https://qgis.org/)**：免費開源專業地理軟體，可直接將 `taiwan.osm.pbf` 拖入檢視、篩選雙北超商與路網。
