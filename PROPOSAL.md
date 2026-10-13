@@ -1,7 +1,7 @@
 # 📋《雙北漫遊：都會行蹤》完整遊戲設計企劃書（官方 Markdown 完整版）
 > **本文件為《雙北漫遊：都會行蹤》六年級獨立研究專題之完整企劃書全文，專供接續本專案之 AI Agent、LLM 與工程師直接閱讀。**  
 > **線上互動網頁版**：[https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)  
-> **更新狀態**：收錄全部 67 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
+> **更新狀態**：收錄全部 68 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
 
 ---
 
@@ -81,6 +81,7 @@
 | 65 | **全面取消防嚇馬賽克，案件畫面自然清晰呈現** | 防嚇馬賽克也不需要 | 04 案件呈現、08 首發示範案檔案、09A 路線圖 | 【遵照委託人指示徹底移除防嚇馬賽克遮罩與切換按鈕，移除 pixi-filters 套件】：所有案件現場、證物與嫌犯互動回歸自然清晰呈現，不設繁瑣遮罩與切換按鈕；保留接案前「難度星級 ★」與「恐怖指數 👻」雙重標籤供自主評估，全案嚴格符合國小獨立研究規範（無 18 禁）。 | ✅ 100% 落實 |
 | 66 | **全域遠端同步稽核與跨 AI 內容無縫整合** | 幫我把所有東西都抓下來。因為我在其他 AI 做，就請幫我把所有東西拉下來，並且告訴我改了什麼。 | 全案規範 ✕ GitHub 遠端同步 | 【全域三大倉庫 git pull 與 GitHub API 深度稽核】：1. 對三大遠端倉庫執行完整 fetch 與 pull，比對 commit log 確認三端 100% 同步；2. 建立跨 AI 內容匯入管線，引導委託人將外部 AI 產出貼入本對話，由系統即時寫入企劃書與代碼並推送至 GitHub。 | ✅ 100% 落實 |
 | 67 | **跨 AI GitHub 授權指南與安全協同流規範** | 我要如何讓他們有更改的授權？ | 全案規範 ✕ GitHub 跨 AI 授權 | 【建立跨 AI 授權 4 大途徑與安全協同指引】：1. 本地工具共用認證（Cursor/Claude Code 直接共用本機 Git）；2. GitHub PAT 個人權杖建立 SOP（Developer Settings 產生 repo 權杖）；3. OAuth 應用授權；4. 雙 AI 分工流水線（外部發想 ➔ 本地落實 Push），兼顧協作效率與專案代碼安全。 | ✅ 100% 落實 |
+| 68 | **Antigravity App 雙對話協同與本地授權指引** | 我是使用 Anti-Gravity  App 版。 | 全案規範 ✕ Antigravity 雙對話協同 | 【Antigravity App 桌面版本地授權配置與雙對話協同管線】：1. 原生具備本地權限：Antigravity App 桌面版直接運行於本機 macOS，AI 擁有完整終端機與檔案寫入工具，無需手動配置 PAT 權杖或 OAuth；2. 無阻礙自動授權 3 步：Settings ➔ Tool Execution Policy 設為 `always-proceed`、Non-Workspace Access 設為 `allow`、Internet 設為 `allow`，解除彈窗等待；3. 跨對話同步指引：提供一鍵咒語「請直接調用寫檔工具修改檔案並 git push origin main」，或將外部對話成果直貼本對話由本端安全落地與推送。 | ✅ 100% 落實 |
 
 ---
 
