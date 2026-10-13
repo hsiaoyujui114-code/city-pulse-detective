@@ -2112,3 +2112,28 @@ flowchart TD
    * 三大倉庫已全數同步更新並推送到 GitHub！
 
 ---
+
+## 💬 第 46 回合 (2026-10-13)：我要如何讓他們有更改的授權？
+
+- **委託人原始指令 (User Prompt)**：
+```text
+我要如何讓他們有更改的授權？
+```
+
+- **AI 回覆與交付成果摘要 (Assistant Response & Deliverables)**：
+
+遵照委託人指示，完整整理與提供「如何讓其他 AI 具備 GitHub 修改與推送授權」之具體操作手冊與安全架構分析：
+
+**核心交付成果**：
+1. **完整提供 4 大跨 AI 授權與協同方案**：
+   * **方案一（最安全推薦・本機 AI 工具免密共用）**：使用 Cursor、Claude Code 等本地開發工具，直接共用您這台 Mac 已配置好的 GitHub 認證，自動具備 `git commit` 與 `git push` 權限，完全無需在網頁上暴露金鑰。
+   * **方案二（GitHub Personal Access Token, PAT 權杖產生 SOP）**：完整提供 7 步操作指引（GitHub Settings ➔ Developer settings ➔ Personal access tokens ➔ Tokens (classic) ➔ 勾選 `repo` 權限 ➔ 產生 `ghp_...` 權杖），供支援 GitHub API/Git 串接的外部工具使用。
+   * **方案三（GitHub App / OAuth 授權）**：針對支援 OAuth 的 AI 服務（如 GitHub Copilot Workspace），直接點擊「Connect to GitHub」授權指定倉庫存取。
+   * **方案四（零風險高效雙 AI 流水線）**：外部 AI 負責發想劇本、撰寫功能原型，完成後將對話文字直接貼入本終端，由我負責安全校驗、整合入企劃書與代碼，並代為自動提交至 GitHub。
+2. **企劃書需求對照表擴展至 67 項**：
+   * 徽章更新為：**`67 項核心指示 ✕ 100% 驗證收錄`**。
+   * 新增第 67 項核心指示：「跨 AI GitHub 授權指南與安全協同流規範」。
+3. **三大倉庫同步 Push 完成**：
+   * 三大倉庫已全數同步更新並推送到 GitHub！
+
+---
