@@ -36,6 +36,7 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   let reqPath = req.url.split('?')[0];
   if (reqPath === '/') reqPath = '/index.html';
+  if (reqPath === '/map' || reqPath === '/realmap' || reqPath === '/cyber-map') reqPath = '/cyber-realmap.html';
 
   const filePath = path.join(PUBLIC_DIR, reqPath);
 

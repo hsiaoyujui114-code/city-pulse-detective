@@ -1,0 +1,463 @@
+/* ==========================================================================
+   NEO-TAIPEI 1:1 REAL HOLO-MAP (雙北全息科技地圖 - 附檔樣式表)
+   風格：賽博龐克・黑曜石深邃底板・全息霓虹光譜・高科技戰術 HUD
+   ========================================================================== */
+
+:root {
+  --bg-space: #020617;
+  --panel-bg: rgba(15, 23, 42, 0.85);
+  --panel-border: rgba(0, 240, 255, 0.35);
+  --cyan-glow: #00f0ff;
+  --blue-neon: #0088ff;
+  --emerald-neon: #10b981;
+  --magenta-neon: #f43f5e;
+  --amber-neon: #f59e0b;
+  --text-main: #e2e8f0;
+  --text-dim: #94a3b8;
+  --font-mono: 'SF Mono', Monaco, Menlo, 'Consolas', 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-space);
+  font-family: var(--font-sans);
+  color: var(--text-main);
+  user-select: none;
+}
+
+/* 1:1 真實 MapLibre 畫布容器 */
+#map {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background-color: #020617;
+}
+
+/* 頂部全息戰術導航條 (Top Tactical Navigation Bar) */
+.holo-top-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  height: 52px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 0 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 12px rgba(0, 240, 255, 0.08);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.holo-badge-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 136, 255, 0.3));
+  border: 1px solid var(--cyan-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+  animation: pulse-border 2.5s infinite;
+}
+
+.brand-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-main-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.companion-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--emerald-neon);
+  color: #34d399;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.brand-sub-title {
+  font-size: 10px;
+  color: var(--cyan-glow);
+  letter-spacing: 0.5px;
+}
+
+/* 特區快速躍遷按鈕列 (Quick Jump Sectors Bar) */
+.jump-scroll-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 58%;
+  padding: 4px 0;
+}
+
+.jump-scroll-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.jump-chip {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jump-chip:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-glow);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.jump-chip.active {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.8), rgba(3, 105, 161, 0.9));
+  border-color: var(--cyan-glow);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+/* 主附切換按鈕 */
+.dual-track-btn {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dual-track-btn:hover {
+  background: linear-gradient(135deg, #0369a1, #1d4ed8);
+  border-color: #7dd3fc;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+/* 左側即時遙測 HUD 面板 (Left Telemetry Panel) */
+.left-telemetry-panel {
+  position: absolute;
+  top: 76px;
+  left: 12px;
+  width: 250px;
+  z-index: 100;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-mono);
+}
+
+.panel-header {
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--cyan-glow);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.telemetry-label {
+  color: var(--text-dim);
+}
+
+.telemetry-val {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.telemetry-val.highlight {
+  color: #4ade80;
+}
+
+/* 特區探測器大標籤 */
+.sector-detector-box {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+}
+
+.sector-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sector-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
+/* 右側戰術圖層控制與掃描工具箱 (Right Tactical Control Panel) */
+.right-tactical-panel {
+  position: absolute;
+  top: 76px;
+  right: 12px;
+  width: 220px;
+  z-index: 100;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.tool-btn-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tactical-tool-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #f1f5f9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.tactical-tool-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-glow);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.tactical-tool-btn.active {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: var(--emerald-neon);
+  color: #34d399;
+}
+
+/* 底部操作提示 (Bottom Hint Bar) */
+.bottom-hint-bar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 6px 20px;
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  pointer-events: none;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+}
+
+.hint-key {
+  color: var(--cyan-glow);
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+/* 全息雷達掃描動畫遮罩 (Radar Scan Wave) */
+.radar-scan-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0.03) 40%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.radar-scan-wave.active {
+  opacity: 1;
+  animation: radar-pulse 2s infinite ease-out;
+}
+
+@keyframes radar-pulse {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 240, 255, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(0, 240, 255, 0.7); }
+}
+
+/* MapLibre 彈窗高科技賽博樣式 (Holographic Store Popup) */
+.maplibregl-popup {
+  max-width: 300px !important;
+  z-index: 200;
+}
+
+.maplibregl-popup-content {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid var(--cyan-glow) !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.4) !important;
+  color: #f1f5f9 !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--cyan-glow) !important;
+}
+
+.maplibregl-popup-close-button {
+  color: var(--cyan-glow) !important;
+  font-size: 16px !important;
+  padding: 4px 8px !important;
+}
+
+.store-popup-header {
+  font-size: 13px;
+  font-weight: 900;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.store-popup-type {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.type-wanjiafu {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #f87171;
+}
+
+.type-lejiakang {
+  background: rgba(0, 240, 255, 0.2);
+  border: 1px solid var(--cyan-glow);
+  color: #38bdf8;
+}
+
+.type-cvs {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--emerald-neon);
+  color: #34d399;
+}
+
+.store-popup-address {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.store-popup-supplies {
+  font-size: 10px;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-top: 6px;
+}
+
+.supply-tag {
+  display: inline-block;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin: 2px 2px 2px 0;
+  color: #cbd5e1;
+}

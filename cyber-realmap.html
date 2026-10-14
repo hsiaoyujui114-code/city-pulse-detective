@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEO-TAIPEI 1:1 REAL HOLO-MAP 雙北全息科技地圖 (附檔) ✕ 雙軌同步架構</title>
+  
+  <!-- MapLibre GL CSS (本機 vendor 優先，CDN 備援) -->
+  <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css" onerror="this.onerror=null;this.href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';">
+  
+  <!-- 專屬全息賽博樣式表 -->
+  <link rel="stylesheet" href="cyber-realmap.css">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+</head>
+<body>
+
+  <!-- 全息雷達掃描遮罩動畫 -->
+  <div class="radar-scan-wave" id="radarScanWave"></div>
+
+  <!-- 1:1 真實 MapLibre GL 向量畫布 -->
+  <div id="map"></div>
+
+  <!-- 頂部全息戰術導航條 (Top Tactical Navigation Bar) -->
+  <header class="holo-top-bar">
+    <div class="brand-section">
+      <div class="holo-badge-icon">🌐</div>
+      <div class="brand-title-wrap">
+        <div class="brand-main-title">
+          <span>NEO-TAIPEI 1:1 HOLO-GRID</span>
+          <span class="companion-badge">附檔・雙軌同步</span>
+        </div>
+        <div class="brand-sub-title">雙北全境 41 行政特區 1:1 真實拓撲向量圖資・無手繪純實體</div>
+      </div>
+    </div>
+
+    <!-- 特區快速躍遷晶片列 -->
+    <div class="jump-scroll-wrap" id="jumpScrollWrap">
+      <!-- 由 JS 動態注入 -->
+    </div>
+
+    <!-- 雙軌切換按鈕 (切換回主檔) -->
+    <div>
+      <a href="index.html" class="dual-track-btn" id="btnSwitchToMain">
+        <span>🎮 返回全息戰術沙盤 (主檔)</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
+  <aside class="left-telemetry-panel">
+    <div class="panel-header">
+      <span>🛰️ SATELLITE TELEMETRY</span>
+      <span style="color:#4ade80;">ONLINE</span>
+    </div>
+    
+    <div class="telemetry-row">
+      <span class="telemetry-label">經度 LON (E):</span>
+      <span class="telemetry-val" id="hudLon">121.53500°</span>
+    </div>
+    <div class="telemetry-row">
+      <span class="telemetry-label">緯度 LAT (N):</span>
+      <span class="telemetry-val" id="hudLat">25.04500°</span>
+    </div>
+    <div class="telemetry-row">
+      <span class="telemetry-label">全息縮放 ZOOM:</span>
+      <span class="telemetry-val highlight" id="hudZoom">12.0x</span>
+    </div>
+    <div class="telemetry-row">
+      <span class="telemetry-label">視角俯仰 PITCH:</span>
+      <span class="telemetry-val" id="hudPitch">45°</span>
+    </div>
+    <div class="telemetry-row">
+      <span class="telemetry-label">指南航向 BEARING:</span>
+      <span class="telemetry-val" id="hudBearing">348°</span>
+    </div>
+
+    <!-- 特區探測器 -->
+    <div class="sector-detector-box">
+      <div class="sector-title" id="currentSectorTitle">TPE-CC｜中正核心樞紐</div>
+      <div class="sector-sub" id="currentSectorSub">政治中樞・台北車站・站前商圈</div>
+    </div>
+  </aside>
+
+  <!-- 右側戰術圖層控制與工具箱 (Right Tactical Control Panel) -->
+  <aside class="right-tactical-panel">
+    <div class="panel-header">
+      <span>⚙️ TACTICAL CONTROLS</span>
+      <span>v1.0.0</span>
+    </div>
+
+    <div class="tool-btn-grid">
+      <button class="tactical-tool-btn active" id="btnToggle3D" onclick="toggle3DMode()">
+        <span>🏙️ 3D 傾斜視角</span>
+        <span style="color:#4ade80;">ON</span>
+      </button>
+      <button class="tactical-tool-btn" id="btnRadarScan" onclick="triggerRadarScan()">
+        <span>📡 全息雷達掃描</span>
+        <span style="color:#94a3b8;">STANDBY</span>
+      </button>
+    </div>
+
+    <!-- 品牌標記圖例 (Legend) -->
+    <div style="margin-top:12px; border-top:1px solid rgba(0,240,255,0.2); padding-top:8px; font-size:10px; color:#94a3b8;">
+      <div style="margin-bottom:4px; font-weight:800; color:#38bdf8;">📍 實體門市圖例 (100% 真實座標):</div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444; border:1px solid #fff;"></span>
+        <span>萬家福 (WanJiaFu) 大賣場旗艦</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#0284c7; border:1px solid #38bdf8;"></span>
+        <span>樂家康 (LeJiaKang) 超市便利購</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ea580c;"></span>
+        <span>7-Eleven / 全家便利商店</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="display:inline-block; width:12px; height:2px; background:#0070bd; box-shadow:0 0 4px #0070bd;"></span>
+        <span>雙北捷運 / 307 幹線路網</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 底部操作提示 (Bottom Hint Bar) -->
+  <div class="bottom-hint-bar">
+    <span><span class="hint-key">[滑鼠左鍵]</span> 自由平移探索 41 特區</span>
+    <span><span class="hint-key">[滑鼠右鍵/Ctrl+拖曳]</span> 360° 旋轉天際線與俯仰傾角</span>
+    <span><span class="hint-key">[滾輪]</span> 1:1 無級縮放至巷弄門牌</span>
+    <span><span class="hint-key">[點擊門市]</span> 調取即時物資卡</span>
+  </div>
+
+  <!-- MapLibre GL JS (本機 vendor 優先，CDN 備援) -->
+  <script src="vendor/maplibre/maplibre-gl.js" onerror="this.onerror=null;this.src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';"></script>
+  
+  <!-- 核心地圖邏輯腳本 -->
+  <script src="cyber-realmap.js"></script>
+</body>
+</html>
