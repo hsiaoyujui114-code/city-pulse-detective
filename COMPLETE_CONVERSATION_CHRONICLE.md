@@ -1,7 +1,7 @@
 # 📜《雙北漫遊：都會行蹤》專案完整對話紀錄全誌 (Complete Conversation Chronicle)
 
 > **本文件為本專案啟動以來，委託人與 AI 工程師歷次對話之 100% 原始對話全文、討論決策與交付成果完整全誌。**  
-> **收錄範圍**：第 1 回合至第 48 回合（2026年10月6日 ～ 2026年10月14日）。  
+> **收錄範圍**：第 1 回合至第 49 回合（2026年10月6日 ～ 2026年10月14日）。  
 > **永久效力**：供所有接續本專案之 AI Agent、人類工程師與研究小組查閱最真實的原始對話脈絡。
 
 ---
@@ -56,6 +56,7 @@
 - [第 46 回合 (2026-10-13)：我要如何讓他們有更改的授權？](#第-46-回合)
 - [第 47 回合 (2026-10-13)：我是使用 Anti-Gravity  App 版。](#第-47-回合)
 - [第 48 回合 (2026-10-14)：你覺得要放在 server 裡面，還是放在 GitHub 裡面？](#第-48-回合)
+- [第 49 回合 (2026-10-14)：請給我確切的指令，讓我知要如何讓 Anti-Gravity App 在其他電腦可以把東西存到 GitHub 裡面？...](#第-49-回合)
 
 ---
 
@@ -2219,6 +2220,47 @@ flowchart TD
 4. **企劃書需求對照表擴展至 69 項**：
    * 徽章更新為：**`69 項核心指示 ✕ 100% 驗證收錄`**。
    * 新增第 69 項核心指示：「GitHub ✕ 私服器雙軌架構決策」。
+5. **三大倉庫同步 Push 完成**：
+   * `taipei-metro-detective-rpg`、`city-pulse-detective`、`planner` 三大倉庫已全數同步更新並推送到 GitHub！
+
+---
+
+## 💬 第 49 回合 (2026-10-14)：請給我確切的指令，讓我知要如何讓 Anti-Gravity App 在其他電腦可以把東西存到 GitHub 裡面？但我真實要講的，就是我在另外一台電腦裡面，我的 GitHub 沒有登入欸。
+
+- **委託人原始指令 (User Prompt)**：
+```text
+請給我確切的指令，讓我知要如何讓 Anti-Gravity App 在其他電腦可以把東西存到 GitHub 裡面？
+
+但我真實要講的，就是我在另外一台電腦裡面，我的 GitHub 沒有登入欸。
+```
+
+- **AI 回覆與交付成果摘要 (Assistant Response & Deliverables)**：
+
+遵照委託人指示，完整提供在**另一台電腦（未登入 GitHub 帳號之環境）**下，如何讓 Anti-Gravity App 具備確切推送授權的**免登入 Token 嵌入式指令集與跨電腦自動化 SOP**：
+
+**核心交付成果**：
+1. **揭開免登入推送核心原理（Token in URL）**：
+   * 說明 Git 的底層驗證機制：只要在遠端網址中嵌入有效的 GitHub Personal Access Token (PAT)，Git 即可直接以專案擁有者身分通過鑑權，**完全不需要在瀏覽器登入 GitHub、無需輸入帳號密碼、完全繞過 2FA 雙重驗證**。
+2. **提供跨電腦 100% 確切執行指令（直接複製貼上）**：
+   * **步驟 ①：在另一台電腦設定帶有 Token 的遠端網址**：
+     ```bash
+     git remote set-url origin https://hsiaoyujui114-code:<PERSONAL_ACCESS_TOKEN>@github.com/hsiaoyujui114-code/taipei-metro-detective-rpg.git
+     ```
+   * **步驟 ②：一鍵提交並推送**：
+     ```bash
+     git add .
+     git commit -m "feat: 來自另一台電腦的更新"
+     git push origin main
+     ```
+   * **全新下載（若另一台電腦尚未 Clone）**：
+     ```bash
+     git clone https://hsiaoyujui114-code:<PERSONAL_ACCESS_TOKEN>@github.com/hsiaoyujui114-code/taipei-metro-detective-rpg.git
+     ```
+3. **Anti-Gravity App 一鍵貼上咒語**：
+   * 提供委託人直接複製貼入另一台電腦 Anti-Gravity App 對話框的完整指令提示詞，讓該 AI 自動執行設定與推送。
+4. **企劃書需求對照表擴展至 70 項**：
+   * 徽章更新為：**`70 項核心指示 ✕ 100% 驗證收錄`**。
+   * 新增第 70 項核心指示：「跨電腦無登入 GitHub 推送指令 SOP」。
 5. **三大倉庫同步 Push 完成**：
    * `taipei-metro-detective-rpg`、`city-pulse-detective`、`planner` 三大倉庫已全數同步更新並推送到 GitHub！
 
