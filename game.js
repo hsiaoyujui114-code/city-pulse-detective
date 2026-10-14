@@ -137,8 +137,8 @@ const camera = {
   z: 14,
   targetScale: 15, // 正常視野比例
   currentScale: 15,
-  minScale: 2.8,   // 縮小為整座雙北大地圖全覽
-  maxScale: 25.0   // 放大為門市近景立面
+  minScale: 1.0,   // 縮小為整座雙北大地圖全景總覽 (全域可視)
+  maxScale: 28.0   // 放大為門市近景立面
 };
 
 // 奔跑腳底塵土/氣流粒子系統
@@ -885,6 +885,324 @@ function renderScene() {
   const screenZ = (val) => (val - camera.z) * scale;
 
   // ──────────────────────────────────────────
+  // 第 0 層：雙北全境宏觀地理拓撲、盆地山系、四大河系與六大捷運全線路網
+  // (Full Shuangbei Metropolitan Macro-Topology, Basin Geography & MRT Network)
+  // 覆蓋範圍達 -420m ~ +420m，完美呈現雙北全域地圖樣式！
+  // ──────────────────────────────────────────
+
+  // 0.1 雙北盆地宏觀地基底板 (-420m ~ +420m)
+  ctx.fillStyle = '#0d1726';
+  ctx.fillRect(screenX(-420), screenZ(-420), 840 * scale, 840 * scale);
+
+  // 0.2 雙北周邊自然山系地形與森林綠帶 (Taipei Basin Mountain Silhouette)
+  // (1) 北壁：陽明山系、大屯火山群、七星山 (z: -420 ~ -250, x: -140 ~ 320)
+  ctx.fillStyle = '#06281b';
+  ctx.beginPath();
+  ctx.moveTo(screenX(-150), screenZ(-240));
+  ctx.quadraticCurveTo(screenX(-50), screenZ(-330), screenX(50), screenZ(-310));
+  ctx.quadraticCurveTo(screenX(150), screenZ(-360), screenX(280), screenZ(-300));
+  ctx.lineTo(screenX(420), screenZ(-420));
+  ctx.lineTo(screenX(-420), screenZ(-420));
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#093625';
+  ctx.beginPath();
+  ctx.moveTo(screenX(-100), screenZ(-270));
+  ctx.quadraticCurveTo(screenX(20), screenZ(-350), screenX(160), screenZ(-320));
+  ctx.quadraticCurveTo(screenX(220), screenZ(-340), screenX(300), screenZ(-300));
+  ctx.lineTo(screenX(420), screenZ(-420));
+  ctx.lineTo(screenX(-200), screenZ(-420));
+  ctx.closePath();
+  ctx.fill();
+
+  // (2) 西壁：觀音山、八里林口台地 (z: -380 ~ -80, x: -420 ~ -230)
+  ctx.fillStyle = '#082a1d';
+  ctx.beginPath();
+  ctx.moveTo(screenX(-240), screenZ(-360));
+  ctx.quadraticCurveTo(screenX(-300), screenZ(-250), screenX(-250), screenZ(-140));
+  ctx.quadraticCurveTo(screenX(-280), screenZ(-80), screenX(-420), screenZ(-60));
+  ctx.lineTo(screenX(-420), screenZ(-420));
+  ctx.closePath();
+  ctx.fill();
+
+  // (3) 東壁：南港山、四獸山(象山)、汐止山系 (z: -60 ~ 240, x: 260 ~ 420)
+  ctx.fillStyle = '#07261a';
+  ctx.beginPath();
+  ctx.moveTo(screenX(260), screenZ(-60));
+  ctx.quadraticCurveTo(screenX(330), screenZ(60), screenX(270), screenZ(150));
+  ctx.quadraticCurveTo(screenX(320), screenZ(220), screenX(420), screenZ(240));
+  ctx.lineTo(screenX(420), screenZ(-60));
+  ctx.closePath();
+  ctx.fill();
+
+  // (4) 南壁：新店山區、烏來山脈、雪山山脈前緣 (z: 260 ~ 420, x: -200 ~ 420)
+  ctx.fillStyle = '#052116';
+  ctx.beginPath();
+  ctx.moveTo(screenX(-220), screenZ(280));
+  ctx.quadraticCurveTo(screenX(0), screenZ(320), screenX(160), screenZ(290));
+  ctx.quadraticCurveTo(screenX(280), screenZ(340), screenX(420), screenZ(300));
+  ctx.lineTo(screenX(420), screenZ(420));
+  ctx.lineTo(screenX(-420), screenZ(420));
+  ctx.closePath();
+  ctx.fill();
+
+  // 0.3 雙北四大河流全境水系 (Four Major Rivers of Greater Taipei)
+  const macroWave = (Date.now() / 400) % 16;
+  ctx.fillStyle = '#0284c7'; // 蔚藍大河
+
+  // (1) 淡水河 (Tamsui River Main Stem): 從板橋江子翠向北經關渡至淡水出海口
+  ctx.beginPath();
+  ctx.moveTo(screenX(-160), screenZ(98)); // 江子翠
+  ctx.quadraticCurveTo(screenX(-225), screenZ(10), screenX(-215), screenZ(-120));
+  ctx.quadraticCurveTo(screenX(-210), screenZ(-210), screenX(-235), screenZ(-270)); // 關渡隘口
+  ctx.quadraticCurveTo(screenX(-250), screenZ(-330), screenX(-265), screenZ(-420)); // 淡水出海口西岸
+  ctx.lineTo(screenX(-225), screenZ(-420)); // 東岸
+  ctx.quadraticCurveTo(screenX(-215), screenZ(-330), screenX(-205), screenZ(-270));
+  ctx.quadraticCurveTo(screenX(-180), screenZ(-210), screenX(-185), screenZ(-120));
+  ctx.quadraticCurveTo(screenX(-195), screenZ(10), screenX(-140), screenZ(98));
+  ctx.closePath();
+  ctx.fill();
+
+  // (2) 基隆河 (Keelung River): 從汐止南港蜿蜒經內湖、松山、大直、士林社子島匯入淡水河
+  ctx.beginPath();
+  ctx.moveTo(screenX(420), screenZ(-30)); // 汐止
+  ctx.quadraticCurveTo(screenX(280), screenZ(-90), screenX(200), screenZ(-110));
+  ctx.quadraticCurveTo(screenX(130), screenZ(-155), screenX(30), screenZ(-175)); // 大直圓山
+  ctx.quadraticCurveTo(screenX(-70), screenZ(-185), screenX(-190), screenZ(-210)); // 社子島匯流口
+  ctx.lineTo(screenX(-190), screenZ(-195));
+  ctx.quadraticCurveTo(screenX(-70), screenZ(-170), screenX(30), screenZ(-160));
+  ctx.quadraticCurveTo(screenX(130), screenZ(-140), screenX(200), screenZ(-95));
+  ctx.quadraticCurveTo(screenX(280), screenZ(-75), screenX(420), screenZ(-15));
+  ctx.closePath();
+  ctx.fill();
+
+  // (3) 新店溪 (Xindian River): 從新店碧潭向西北流經景美、公館、永和、板橋江子翠
+  ctx.beginPath();
+  ctx.moveTo(screenX(80), screenZ(360)); // 新店碧潭上游
+  ctx.quadraticCurveTo(screenX(70), screenZ(260), screenX(40), screenZ(190)); // 景美公館
+  ctx.quadraticCurveTo(screenX(-10), screenZ(145), screenX(-80), screenZ(120)); // 永和中正橋
+  ctx.quadraticCurveTo(screenX(-120), screenZ(110), screenX(-160), screenZ(98)); // 江子翠
+  ctx.lineTo(screenX(-160), screenZ(115));
+  ctx.quadraticCurveTo(screenX(-120), screenZ(125), screenX(-80), screenZ(135));
+  ctx.quadraticCurveTo(screenX(-10), screenZ(160), screenX(55), screenZ(205));
+  ctx.quadraticCurveTo(screenX(85), screenZ(275), screenX(95), screenZ(360));
+  ctx.closePath();
+  ctx.fill();
+
+  // (4) 大漢溪 (Dahan River): 從新莊三峽樹林向東流至江子翠
+  ctx.beginPath();
+  ctx.moveTo(screenX(-420), screenZ(145));
+  ctx.quadraticCurveTo(screenX(-280), screenZ(130), screenX(-160), screenZ(98));
+  ctx.lineTo(screenX(-160), screenZ(115));
+  ctx.quadraticCurveTo(screenX(-280), screenZ(148), screenX(-420), screenZ(165));
+  ctx.closePath();
+  ctx.fill();
+
+  // 0.4 六大捷運發光路網 (6 Glowing Metro Corridors)
+  function drawMetroCorridor(points, color, name) {
+    if (points.length < 2) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(3.2, scale * 0.22);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1.2, scale * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    }
+    ctx.stroke();
+
+    points.forEach((pt) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(screenX(pt[0]), screenZ(pt[1]), Math.max(2.5, scale * 0.16), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (pt[2] && scale >= 3.0) {
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = `bold ${Math.max(8, scale * 0.35)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(pt[2], screenX(pt[0]), screenZ(pt[1] - 4));
+      }
+    });
+  }
+
+  // 🔴 淡水信義線 (Red Line)
+  drawMetroCorridor([
+    [-240, -340, "淡水"], [-230, -270, "關渡"], [-180, -250, "北投"], [-90, -210, "士林"],
+    [50, -180, "圓山"], [78, -95, "中山"], [0, 0, "台北車站"], [30, 120, "中正紀念堂"],
+    [140, 80, "大安"], [230, 50, "台北101"], [280, 70, "象山"]
+  ], '#ef4444', "淡水信義線");
+
+  // 🔵 板南線 (Blue Line)
+  drawMetroCorridor([
+    [-320, 220, "頂埔"], [-200, 170, "新埔"], [-130, 130, "板橋"], [-120, 110, "江子翠"],
+    [-160, 80, "龍山寺"], [-160, 25, "西門"], [0, 0, "台北車站"], [150, 0, "忠孝復興"],
+    [230, 0, "市政府"], [360, -20, "南港展覽館"]
+  ], '#3b82f6', "板南線");
+
+  // 🟢 松山新店線 (Green Line)
+  drawMetroCorridor([
+    [80, 310, "新店"], [60, 220, "景美"], [40, 160, "公館"], [30, 120, "中正紀念堂"],
+    [-160, 25, "西門"], [78, -95, "中山"], [155, -95, "松江南京"], [185, -95, "南京復興"],
+    [290, -95, "松山"]
+  ], '#10b981', "松山新店線");
+
+  // 🟠 中和新蘆線 (Orange Line)
+  drawMetroCorridor([
+    [-20, 210, "南勢角"], [-40, 180, "景安"], [20, 130, "古亭"], [155, -95, "松江南京"],
+    [60, -195, "民權西路"], [-220, -170, "三重"], [-240, -210, "蘆洲"]
+  ], '#f97316', "中和新蘆線");
+
+  // 🟤 文湖線 (Brown Line)
+  drawMetroCorridor([
+    [200, 240, "動物園"], [160, 110, "科技大樓"], [140, 80, "大安"], [150, 0, "忠孝復興"],
+    [185, -95, "南京復興"], [185, -150, "松山機場"], [130, -170, "劍南路"], [260, -140, "港墘"],
+    [350, -60, "南港軟體園區"]
+  ], '#a16207', "文湖線");
+
+  // 🟡 環狀線 (Circular Line)
+  drawMetroCorridor([
+    [70, 260, "大坪林"], [-40, 180, "景安"], [-130, 130, "板橋車站"], [-220, 100, "頭前庄"],
+    [-240, 60, "新北產業園區"]
+  ], '#eab308', "環狀線");
+
+  // 0.5 雙北全境東西向延伸大動脈 (Macro Arterials Extents)
+  ctx.fillStyle = '#1c222b';
+  // 忠孝東路三段至七段 (往信義、南港延伸, z: 0)
+  ctx.fillRect(screenX(220), screenZ(-16), 200 * scale, 32 * scale);
+  // 信義路 (信義計畫區軸線, z: 50)
+  ctx.fillRect(screenX(0), screenZ(40), 420 * scale, 22 * scale);
+  // 仁愛路 (林蔭大道, z: 25)
+  ctx.fillRect(screenX(0), screenZ(15), 420 * scale, 24 * scale);
+  // 南京東路二段至六段 (往松山、內湖延伸, z: -95)
+  ctx.fillRect(screenX(220), screenZ(-108), 200 * scale, 26 * scale);
+  // 基隆路一段 (穿越南北向金融幹道, x: 230)
+  ctx.fillRect(screenX(218), screenZ(-150), 24 * scale, 300 * scale);
+  // 新北三重重新路 (x: -420 ~ -220, z: -10 ~ 10)
+  ctx.fillRect(screenX(-420), screenZ(-12), 200 * scale, 24 * scale);
+  // 新莊中正路 (x: -420 ~ -200, z: 90 ~ 110)
+  ctx.fillRect(screenX(-420), screenZ(88), 220 * scale, 24 * scale);
+
+  // 0.6 著名地標立體科技剪影 (台北101、圓山大飯店、大直美麗華、淡水情人橋、大安森林公園)
+  // (1) 台北 101 大樓 (Taipei 101, x: 230, z: 50)
+  const sx101 = screenX(230);
+  const sz101 = screenZ(50);
+  ctx.fillStyle = '#0f766e'; // 科技竹節綠
+  for (let s = 0; s < 8; s++) {
+    const sw = (20 - s * 1.5) * scale * 0.4;
+    const sh = 10 * scale * 0.4;
+    ctx.fillRect(sx101 - sw / 2, sz101 - s * sh, sw, sh);
+    ctx.strokeStyle = '#2dd4bf';
+    ctx.strokeRect(sx101 - sw / 2, sz101 - s * sh, sw, sh);
+  }
+  // 101 避雷天線與頂部激光
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillRect(sx101 - 1, sz101 - 8 * 10 * scale * 0.4 - 15, 2, 15);
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(sx101, sz101 - 8 * 10 * scale * 0.4 - 15, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  if (scale >= 1.5) {
+    ctx.fillStyle = '#6ee7b7';
+    ctx.font = `bold ${Math.max(9, scale * 0.45)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🏙️ 台北 101 (Taipei 101)', sx101, sz101 + 14);
+  }
+
+  // (2) 圓山大飯店 (The Grand Hotel, x: 50, z: -180)
+  const sxGrand = screenX(50);
+  const szGrand = screenZ(-180);
+  ctx.fillStyle = '#991b1b'; // 宮殿紅
+  ctx.fillRect(sxGrand - 18 * scale * 0.35, szGrand - 10 * scale * 0.35, 36 * scale * 0.35, 20 * scale * 0.35);
+  ctx.fillStyle = '#f59e0b'; // 金色琉璃屋頂
+  ctx.beginPath();
+  ctx.moveTo(sxGrand - 22 * scale * 0.35, szGrand - 10 * scale * 0.35);
+  ctx.lineTo(sxGrand + 22 * scale * 0.35, szGrand - 10 * scale * 0.35);
+  ctx.lineTo(sxGrand, szGrand - 20 * scale * 0.35);
+  ctx.closePath();
+  ctx.fill();
+  if (scale >= 1.8) {
+    ctx.fillStyle = '#fde68a';
+    ctx.font = `bold ${Math.max(8.5, scale * 0.4)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🏛️ 圓山大飯店', sxGrand, szGrand + 12);
+  }
+
+  // (3) 大直美麗華摩天輪 (Miramar Ferris Wheel, x: 130, z: -160)
+  const sxFerris = screenX(130);
+  const szFerris = screenZ(-160);
+  const wheelAng = (Date.now() / 2500) % (Math.PI * 2);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sxFerris, szFerris, 14 * scale * 0.35, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let sp = 0; sp < 6; sp++) {
+    const a = wheelAng + (sp * Math.PI) / 3;
+    ctx.beginPath();
+    ctx.moveTo(sxFerris, szFerris);
+    ctx.lineTo(sxFerris + Math.cos(a) * 14 * scale * 0.35, szFerris + Math.sin(a) * 14 * scale * 0.35);
+    ctx.stroke();
+  }
+  if (scale >= 1.8) {
+    ctx.fillStyle = '#6ee7b7';
+    ctx.font = `bold ${Math.max(8, scale * 0.4)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🎡 大直美麗華', sxFerris, szFerris + 12);
+  }
+
+  // (4) 大安森林公園 (Daan Forest Park, x: 120, z: 80)
+  ctx.fillStyle = '#14532d';
+  drawSafeRoundRect(ctx, screenX(100), screenZ(65), 45 * scale, 35 * scale, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#22c55e';
+  ctx.stroke();
+  if (scale >= 1.8) {
+    ctx.fillStyle = '#86efac';
+    ctx.font = `bold ${Math.max(8.5, scale * 0.42)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🌲 大安森林公園', screenX(122), screenZ(82));
+  }
+
+  // (5) 關渡大橋 (Guandu Bridge, x: -220, z: -270)
+  const sxgd = screenX(-220);
+  const szgd = screenZ(-270);
+  ctx.strokeStyle = '#ef4444'; // 經典鮮紅鋼拱
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(sxgd, szgd, 16 * scale * 0.3, Math.PI, 0);
+  ctx.stroke();
+  if (scale >= 1.8) {
+    ctx.fillStyle = '#fca5a5';
+    ctx.font = `bold ${Math.max(8, scale * 0.4)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🌉 關渡大橋 (紅拱)', sxgd, szgd + 10);
+  }
+
+  // (6) 淡水老街與金色水岸 (Tamsui Promenade, x: -225, z: -320)
+  if (scale >= 1.8) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = `bold ${Math.max(9, scale * 0.45)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('🌊 淡水老街金色水岸 ✕ 八里左岸', screenX(-225), screenZ(-320));
+  }
+
+  // ──────────────────────────────────────────
   // 第一層：地表鋪面與 1:1 真實雙北街廓拓撲 (Ground Roads & Contiguous Metropolis Topology)
   // 全區涵蓋 -220m ~ +220m，忠實呈現雙北各大行政區真實道路經緯
   // ──────────────────────────────────────────
@@ -1197,9 +1515,18 @@ function renderScene() {
   drawDistrictBadge('🏮 大同區・大稻埕寧夏', -115, -120, '#fbbf24');
   drawDistrictBadge('🌳 中山區・林蔭商圈', 78, -115, '#a78bfa');
   drawDistrictBadge('💼 中山區・松江南京', 170, -60, '#38bdf8');
+  drawDistrictBadge('🌲 大安區・森林公園', 120, 80, '#34d399');
+  drawDistrictBadge('🏙️ 信義區・台北101', 230, 50, '#f59e0b');
+  drawDistrictBadge('🎤 松山區・小巨蛋饒河', 230, -95, '#fb7185');
+  drawDistrictBadge('⛩️ 士林區・士林夜市', -60, -210, '#f43f5e');
+  drawDistrictBadge('♨️ 北投區・溫泉關渡', -160, -260, '#a855f7');
+  drawDistrictBadge('🌊 淡水區・老街出海口', -230, -320, '#38bdf8');
   drawDistrictBadge('🏫 板橋區・學府商圈 (1:1)', -120, 156, '#34d399');
-  drawDistrictBadge('🏙️ 板橋區・新板府中', -145, 215, '#10b981');
-  drawDistrictBadge('🏛️ 南區・古亭師大大安', 105, 120, '#f97316');
+  drawDistrictBadge('🏙️ 板橋區・新板特區', -145, 215, '#10b981');
+  drawDistrictBadge('🏭 三重區・重新商圈', -270, -30, '#94a3b8');
+  drawDistrictBadge('🛍️ 新莊區・輔大廟街', -300, 100, '#e2e8f0');
+  drawDistrictBadge('🏘️ 中和／永和區', -40, 175, '#c084fc');
+  drawDistrictBadge('🚣 新店區・碧潭水岸', 80, 280, '#22d3ee');
 
   // ──────────────────────────────────────────
   // 1.5 雙北街廓真實都會建築群、綠帶公園與林蔭行道樹 (Urban Fabric & Architecture)
@@ -2671,9 +2998,9 @@ function openCctvModal() {
   updateQuestProgress();
   document.getElementById("cctvModal").style.display = "flex";
 }
-function openInterrogateModal() { document.getElementById("interrogateModal").style.display = "flex"; }
-function openVictoryModal() { document.getElementById("victoryModal").style.display = "flex"; }
-function openInventoryModal() { updateQuestProgress(); document.getElementById("inventoryModal").style.display = "flex"; }
+function openInterrogateModal() { const el = document.getElementById("interrogateModal"); if (el) el.style.display = "flex"; }
+function openVictoryModal() { const el = document.getElementById("victoryModal"); if (el) el.style.display = "flex"; }
+function openInventoryModal() { showNavToast("🗺️ 當前為雙北地圖全景樣式版，背包系統已依指示隱藏！"); }
 function openQuestsModal() { updateQuestProgress(); document.getElementById("questsModal").style.display = "flex"; }
 function openMapModal() { updateQuestProgress(); document.getElementById("mapModal").style.display = "flex"; }
 function openSettingsModal() { document.getElementById("settingsModal").style.display = "flex"; }
@@ -2814,7 +3141,12 @@ function setBrandRadarFilter(brand) {
 
 function jumpToDistrict(distId) {
   document.querySelectorAll(".district-jump-btn").forEach(b => b.classList.remove("highlight"));
-  if (distId === 'station') {
+  if (distId === 'overview') {
+    camera.x = 0; camera.z = 10; camera.targetScale = 1.35;
+    const btn = document.getElementById("btnJumpOverview");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🗺️ 已切換為【雙北全圖樣式總覽】！一覽台北市與新北市全境拓撲！");
+  } else if (distId === 'station') {
     camera.x = 0; camera.z = 14; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpStation");
     if (btn) btn.classList.add("highlight");
@@ -2831,14 +3163,34 @@ function jumpToDistrict(distId) {
     showNavToast("🌳 已跳轉至【中山北路林蔭大道 ✕ 南京商圈】！");
   } else if (distId === 'chongqing_ximen') {
     camera.x = -145; camera.z = 25; camera.targetScale = 16;
-    const btn = document.getElementById("btnJumpChongqing");
+    const btn = document.getElementById("btnJumpXimen") || document.getElementById("btnJumpChongqing");
     if (btn) btn.classList.add("highlight");
     showNavToast("📚 已跳轉至【重慶南路書街 ✕ 西門町商圈】！");
+  } else if (distId === 'daan_park') {
+    camera.x = 120; camera.z = 80; camera.targetScale = 14;
+    const btn = document.getElementById("btnJumpDaan");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🌲 已跳轉至【大安森林公園 ✕ 都會綠帶】！");
+  } else if (distId === 'xinyi_101') {
+    camera.x = 220; camera.z = 50; camera.targetScale = 14;
+    const btn = document.getElementById("btnJumpXinyi");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🏙️ 已跳轉至【信義計畫區 ✕ 台北 101 大樓】！");
   } else if (distId === 'circle') {
     camera.x = -95; camera.z = -45; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpCircle");
     if (btn) btn.classList.add("highlight");
-    showNavToast("🏮 已跳轉至【建成圓環 ✕ 寧夏夜市】！");
+    showNavToast("🏮 已跳轉至【建成圓環 ✕ 大稻埕寧夏夜市】！");
+  } else if (distId === 'tamsui') {
+    camera.x = -220; camera.z = -300; camera.targetScale = 13;
+    const btn = document.getElementById("btnJumpTamsui");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🌊 已跳轉至【淡水金色水岸 ✕ 八里渡船頭出海口】！");
+  } else if (distId === 'xindian_bitan') {
+    camera.x = 80; camera.z = 280; camera.targetScale = 13;
+    const btn = document.getElementById("btnJumpBitan");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🚣 已跳轉至【新店溪水岸 ✕ 碧潭風景區】！");
   }
   updateMinimapRadar();
   updateGhostDroneHUD();
