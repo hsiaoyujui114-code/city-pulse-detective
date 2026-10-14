@@ -133,12 +133,12 @@ const playerPos = {
 };
 
 const camera = {
-  x: 70,
-  z: -20,
-  targetScale: 0.95, // 預設即為雙北全景樣式總覽！完整呈現臺北 12 區 ✕ 新北 29 特區
-  currentScale: 0.95,
-  minScale: 0.35,    // 支援宏觀超廣角衛星全景
-  maxScale: 28.0     // 放大為街廓與門市立面
+  x: 0,
+  z: 14,
+  targetScale: 5.2, // 預設舒適街區視角：開局即見清晰街道、萬家福/樂家康、307公車與角色，徹底告別黑屏！
+  currentScale: 5.2,
+  minScale: 0.85,   // 支援宏觀雙北全景總覽
+  maxScale: 28.0    // 放大為街廓與門市立面
 };
 
 // 奔跑腳底塵土/氣流粒子系統
@@ -925,8 +925,12 @@ function renderScene() {
   const cy = h / 2;
   const scale = camera.currentScale;
 
-  // 1. 極致黑曜石賽博空間底色 (Deep Obsidian Void - 零邊界切斷・永無斷層藍色空白)
-  ctx.fillStyle = '#020617';
+  // 1. 深邃星空全息科技漸層底色 (Deep Cyber Space Gradient - 告別純黑，鮮明高科技對比)
+  const bgGrad = ctx.createRadialGradient(cx, cy, 30, cx, cy, Math.max(w, h));
+  bgGrad.addColorStop(0, '#0c1a3b');
+  bgGrad.addColorStop(0.65, '#070e24');
+  bgGrad.addColorStop(1, '#020512');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
 
   ctx.save();
@@ -958,7 +962,7 @@ function renderScene() {
   const endZ = Math.ceil(maxWorldZ / subStep) * subStep;
 
   // 次級賽博格線 (Sub-Grid Lines)
-  ctx.strokeStyle = 'rgba(30, 58, 138, 0.22)';
+  ctx.strokeStyle = 'rgba(30, 68, 160, 0.35)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = startX; x <= endX; x += subStep) {
@@ -976,8 +980,8 @@ function renderScene() {
   ctx.stroke();
 
   // 主要賽博全息格線 (Major Cyber Grid Lines)
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
-  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.28)';
+  ctx.lineWidth = 1.3;
   ctx.beginPath();
   for (let x = startX; x <= endX; x += gridStep) {
     ctx.moveTo(screenX(x), screenZ(minWorldZ));
@@ -1074,24 +1078,24 @@ function renderScene() {
     ctx.fillRect(sx + sw - cornerSize, sz + sh - 1.5, cornerSize, 1.5);
     ctx.fillRect(sx + sw - 1.5, sz + sh - cornerSize, 1.5, cornerSize);
 
-    // 特區全像標籤與編號 (Sleek Sci-Fi Badge)
+    // 特區全像標籤與編號 (Sleek Sci-Fi Badge - 確保縮放時絕不扁平重疊)
     if (scale <= 4.0) {
-      const tagW = Math.min(sw * 0.9, 130 * scale * 0.35);
-      const tagH = 18 * scale * 0.35;
+      const tagW = Math.max(90, Math.min(sw * 0.95, 135));
+      const tagH = 22;
       const tcx = sx + sw / 2;
       const tcy = sz + sh / 2;
 
-      ctx.fillStyle = 'rgba(3, 7, 18, 0.85)';
-      drawSafeRoundRect(ctx, tcx - tagW / 2, tcy - tagH / 2, tagW, tagH, 3);
+      ctx.fillStyle = 'rgba(7, 13, 36, 0.92)';
+      drawSafeRoundRect(ctx, tcx - tagW / 2, tcy - tagH / 2, tagW, tagH, 4);
       ctx.fill();
       ctx.strokeStyle = sec.col;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.3;
       ctx.stroke();
 
-      ctx.fillStyle = sec.col;
-      ctx.font = `bold ${Math.max(8, scale * 0.45)}px sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(sec.name, tcx, tcy + 3.5 * scale * 0.35);
+      ctx.fillText(sec.name.split('・')[0], tcx, tcy + 4);
     }
   });
 
@@ -2043,9 +2047,13 @@ function renderScene() {
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(10, scale * 0.72)}px sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText(`CoCo (${branchName})`, bx + 7.5 * scale, bz + 3.8 * scale);
+    // 招牌名稱
+    if (scale >= 2.2) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(10, scale * 0.72)}px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`CoCo (${branchName})`, bx + 7.5 * scale, bz + 3.8 * scale);
+    }
 
     // 服務點餐木質吧檯與不銹鋼茶桶
     ctx.fillStyle = '#78350f';
@@ -2075,10 +2083,12 @@ function renderScene() {
     ctx.fillStyle = '#0068b7';
     ctx.fillRect(bx, bz + 3 * scale, 24 * scale, 2.5 * scale);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(`FamilyMart (${branchName})`, bx + 12 * scale, bz + 4 * scale);
+    if (scale >= 2.2) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`FamilyMart (${branchName})`, bx + 12 * scale, bz + 4 * scale);
+    }
 
     // 玻璃自動門
     ctx.fillStyle = 'rgba(219, 234, 254, 0.45)';
@@ -2109,10 +2119,12 @@ function renderScene() {
     ctx.fillStyle = '#dc2626';
     ctx.fillRect(bx, bz + stripeH * 2, 24 * scale, stripeH);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(`7-Eleven (${branchName})`, bx + 12 * scale, bz + 3.8 * scale);
+    if (scale >= 2.2) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`7-Eleven (${branchName})`, bx + 12 * scale, bz + 3.8 * scale);
+    }
 
     // 落地透光自動門
     ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
@@ -2158,10 +2170,12 @@ function renderScene() {
     ctx.fill();
 
     // 招牌名稱
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(9, scale * 0.68)}px sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText(isFlagship ? `萬家福旗艦 (${branchName})` : `樂家康 (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
+    if (scale >= 2.2) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(9, scale * 0.68)}px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(isFlagship ? `萬家福旗艦 (${branchName})` : `樂家康 (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
+    }
 
     // 挑高全息玻璃帷幕與能量補給站門面
     ctx.fillStyle = isFlagship ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 240, 255, 0.15)';
@@ -2577,6 +2591,49 @@ function renderScene() {
   // 高架橋在地面投射之立體陰影
   ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
   ctx.fillRect(screenX(-220), bridgeZ + 6 * scale, 440 * scale, 10 * scale);
+
+  // ──────────────────────────────────────────
+  // 第 4.5 層：10 大生活科學探究示範案件現場光標 (🚨 Demonstration Crime Beacons)
+  // ──────────────────────────────────────────
+  const demoCases = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
+  demoCases.forEach(c => {
+    const sx = screenX(c.worldX);
+    const sz = screenZ(c.worldZ);
+    const pulse = (Math.sin(Date.now() / 240) + 1) / 2;
+
+    // 外層光暈波紋
+    ctx.strokeStyle = 'rgba(244, 63, 94, 0.75)';
+    ctx.lineWidth = Math.max(1.8, scale * 0.18);
+    ctx.beginPath();
+    ctx.arc(sx, sz, (13 + pulse * 10) * Math.min(2.5, Math.max(0.65, scale * 0.22)), 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 核心警報標記
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(sx, sz, 8.5 * Math.min(2.5, Math.max(0.65, scale * 0.22)), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 標籤卡片
+    if (scale >= 1.5) {
+      const tagW = 120;
+      const tagH = 20;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 1.2;
+      drawSafeRoundRect(ctx, sx - tagW / 2, sz - 28, tagW, tagH, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fecdd3';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🚨 ${c.id}: 案${c.num}`, sx, sz - 14);
+    }
+  });
 
   ctx.restore();
 }
@@ -3230,7 +3287,7 @@ function setBrandRadarFilter(brand) {
 function jumpToDistrict(distId) {
   document.querySelectorAll(".district-jump-btn").forEach(b => b.classList.remove("highlight"));
   if (distId === 'overview') {
-    camera.x = 70; camera.z = -20; camera.targetScale = 0.95;
+    camera.x = 70; camera.z = -20; camera.targetScale = 1.15;
     const btn = document.getElementById("btnJumpOverview");
     if (btn) btn.classList.add("highlight");
     showNavToast("🗺️ 已切換為【雙北全圖樣式總覽】！一覽台北市 12 區與新北市 29 特區全境拓撲！");
@@ -3337,12 +3394,112 @@ function zoomOutCamera() {
 }
 
 function resetCameraCenter() {
-  camera.x = 70;
-  camera.z = -20;
-  camera.targetScale = 0.95;
+  camera.x = 0;
+  camera.z = 14;
+  camera.targetScale = 5.2;
   playTone(600, 'sine', 0.08);
   updateGhostDroneHUD();
-  showNavToast("🎯 鏡頭已重置置中為【雙北全境科幻全像總覽】！");
+  showNavToast("🎯 鏡頭已重置置中於【台北車站 忠孝西路核心街區】！");
+}
+
+// ──────────────────────────────────────────
+// 13. 10 大生活科學探究示範案件系統 (落實評審顧問 50 建議)
+// ──────────────────────────────────────────
+function initDemonstrationCasesUI() {
+  const scrollWrap = document.getElementById('casesChipsScroll');
+  if (!scrollWrap) return;
+  scrollWrap.innerHTML = '';
+
+  const cases = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
+  cases.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'case-nav-btn';
+    btn.innerHTML = `🚨 案${c.num}: ${c.title.split('案')[0].replace('西門老牌連鎖咖啡雙倍濃縮拿鐵', '西門拿鐵').replace('北車忠孝西路地下道虹吸水壓失衡', '北車虹吸').replace('大安森林公園紅土泥地受力壓痕', '大安泥地').replace('萬華龍山寺百年青草茶酸鹼變色', '萬華茶湯').replace('新北板橋學府路生鮮冷鏈凝露', '學府冷鏈').replace('內湖高能運算園區伺服器散熱對流', '內科對流').replace('新店碧潭水電中樞連通管水位失衡', '碧潭水電').replace('南港生技光谷酵素低溫活性失常', '南港酵素').replace('淡水金色水岸船舶擱淺潮汐落差', '淡水潮汐').replace('大同迪化乾貨街海鹽過飽和結晶', '迪化海鹽')} <span style="font-size:9.5px; opacity:0.85;">[${c.subject.split('（')[1]?.replace('）','') || '探究'}]</span>`;
+    btn.title = `${c.title} - ${c.subject}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.case-nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      camera.x = c.worldX;
+      camera.z = c.worldZ;
+      camera.targetScale = 5.5;
+      playTone(659, 'triangle', 0.12);
+      openCaseDossierModal(c.id);
+      showNavToast(`🚨 已定位至示範案現場：【${c.title}】！`);
+    };
+    scrollWrap.appendChild(btn);
+  });
+}
+
+function openCaseDossierModal(caseId) {
+  const cases = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
+  const c = cases.find(item => item.id === caseId);
+  if (!c) return;
+
+  const modal = document.getElementById('caseDossierModal');
+  const card = document.getElementById('caseDossierCard');
+  if (!modal || !card) return;
+
+  const suspectsHtml = c.suspects.map(s => `
+    <div style="display:flex; gap:6px; margin-bottom:4px; font-size:12.5px;">
+      <strong style="color:#fbbf24; white-space:nowrap;">👤 ${s.name} (${s.role})：</strong>
+      <span style="color:#cbd5e1;">${s.motive}</span>
+    </div>
+  `).join('');
+
+  const stepsHtml = c.investigationSteps.map(step => `
+    <li style="margin-bottom:4px; color:#cbd5e1; font-size:12.5px;">${step}</li>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="modal-header" style="border-bottom:1px solid rgba(0,240,255,0.3); padding-bottom:10px;">
+      <div class="modal-title" style="display:flex; flex-direction:column; gap:2px;">
+        <span style="font-size:11px; color:#f43f5e; font-weight:900;">🚨 示範案件 ${c.id} ｜ ${c.sectorName}</span>
+        <span style="font-size:18px; color:#ffffff; font-weight:900;">${c.title}</span>
+        <span style="font-size:12px; color:#38bdf8;">探究主題：${c.subtitle}</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('caseDossierModal')">×</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px; padding-top:14px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(2,6,23,0.6); padding:10px; border-radius:8px; border:1px solid rgba(0,240,255,0.2);">
+        <div><span style="color:#94a3b8; font-size:11px;">📍 現場門牌：</span><br><strong style="color:#f1f5f9; font-size:12px;">${c.location}</strong></div>
+        <div><span style="color:#94a3b8; font-size:11px;">🧪 課綱學門：</span><br><strong style="color:#38bdf8; font-size:12px;">${c.subject}</strong></div>
+        <div style="grid-column:1 / -1;"><span style="color:#94a3b8; font-size:11px;">📚 學習指標：</span><br><strong style="color:#a78bfa; font-size:12px;">${c.curriculumMapping}</strong></div>
+      </div>
+
+      <!-- 校園安全無害替代教具 (落實顧問 50 建議) -->
+      <div style="background:rgba(16,185,129,0.15); border:1px solid #10b981; border-radius:8px; padding:12px;">
+        <div style="color:#34d399; font-weight:900; font-size:12.5px; margin-bottom:4px;">🛡️ 評審亮點：校園教學安全無毒替代教具</div>
+        <p style="color:#a7f3d0; font-size:12px; line-height:1.5; margin:0;">${c.safeClassroomKit}</p>
+      </div>
+
+      <div style="background:rgba(15,23,42,0.7); border-radius:8px; padding:10px;">
+        <h4 style="color:#38bdf8; font-size:13px; margin-bottom:4px;">🔍 案件前情提要</h4>
+        <p style="color:#e2e8f0; font-size:12.5px; line-height:1.5; margin:0;">${c.brief}</p>
+      </div>
+
+      <div style="background:rgba(15,23,42,0.7); border-radius:8px; padding:10px;">
+        <h4 style="color:#fbbf24; font-size:13px; margin-bottom:6px;">👥 涉案嫌疑人調查網</h4>
+        ${suspectsHtml}
+      </div>
+
+      <div style="background:rgba(15,23,42,0.7); border-radius:8px; padding:10px;">
+        <h4 style="color:#34d399; font-size:13px; margin-bottom:6px;">🔬 實地自然探究三步驟</h4>
+        <ol style="padding-left:18px; margin:0;">${stepsHtml}</ol>
+      </div>
+
+      <div style="background:rgba(0,240,255,0.08); border-left:4px solid #00f0ff; border-radius:4px; padding:10px;">
+        <h4 style="color:#00f0ff; font-size:13px; margin-bottom:4px;">⚖️ 破案科學邏輯打臉依據</h4>
+        <p style="color:#cbd5e1; font-size:12px; line-height:1.5; margin:0;">${c.conclusion}</p>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1);">
+      <button class="chat-send-btn" style="background:#0284c7;" onclick="closeModal('caseDossierModal')">關閉並前往現場探究</button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
 }
 
 function takeScenicPhoto() {
@@ -3466,3 +3623,4 @@ function gameLoop() {
 gameLoop();
 
 initPrivateServerConnection();
+initDemonstrationCasesUI();

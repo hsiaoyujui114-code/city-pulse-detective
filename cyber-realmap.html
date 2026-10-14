@@ -47,6 +47,14 @@
     </div>
   </header>
 
+  <!-- 🚨 10 大生活科學探究示範案件跳轉條 (落實評審顧問 50 建議) -->
+  <div class="cases-top-strip" id="casesTopStrip">
+    <div class="cases-strip-label">🚨 10大自然科學探究案:</div>
+    <div class="cases-chips-wrap" id="casesChipsWrap">
+      <!-- 由 JS 動態依 DEMO_10_CASES 產生 -->
+    </div>
+  </div>
+
   <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
   <aside class="left-telemetry-panel">
     <div class="panel-header">
@@ -122,13 +130,23 @@
     </div>
   </aside>
 
+  <!-- 案件戰術詳情彈窗 (Case Tactical Brief Modal) -->
+  <div class="case-brief-modal" id="caseBriefModal" style="display:none;" onclick="if(event.target===this)closeCaseModal();">
+    <div class="case-brief-card" id="caseBriefCard">
+      <!-- 由 JS 動態注入 -->
+    </div>
+  </div>
+
   <!-- 底部操作提示 (Bottom Hint Bar) -->
   <div class="bottom-hint-bar">
     <span><span class="hint-key">[滑鼠左鍵]</span> 自由平移探索 41 特區</span>
     <span><span class="hint-key">[滑鼠右鍵/Ctrl+拖曳]</span> 360° 旋轉天際線與俯仰傾角</span>
     <span><span class="hint-key">[滾輪]</span> 1:1 無級縮放至巷弄門牌</span>
-    <span><span class="hint-key">[點擊門市]</span> 調取即時物資卡</span>
+    <span><span class="hint-key">[點擊門市/🚨警報]</span> 調取即時物資卡與自然科學案情</span>
   </div>
+
+  <!-- 雙軌 SSOT 單一資料源 -->
+  <script src="shared-data.js"></script>
 
   <!-- MapLibre GL JS (本機 vendor 優先，CDN 備援) -->
   <script src="vendor/maplibre/maplibre-gl.js" onerror="this.onerror=null;this.src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';"></script>

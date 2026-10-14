@@ -53,6 +53,14 @@
     <button class="district-jump-btn" id="btnJumpSanchong" onclick="jumpToDistrict('sanchong')">🏭 三重新莊創新工坊</button>
   </div>
 
+  <!-- 🚨 10 大生活科學探究示範案件跳轉條 (落實評審顧問 50 建議) -->
+  <div class="cases-selector-strip" id="casesSelectorStrip">
+    <span class="cases-strip-tag">🚨 10大生活科學案:</span>
+    <div class="cases-chips-scroll" id="casesChipsScroll">
+      <!-- 由 JS 動態注入 10 大案件按鈕 -->
+    </div>
+  </div>
+
   <!-- 操作提示橫幅 -->
   <div class="fpv-hint" id="fpvHint">
     <span>🌐 雙北全境科幻全像拓撲：[預設全域總覽] ｜ [滾輪] 自由縮放 ｜ [滑鼠拖曳/WASD] 巡航雙北 29+12 特區 ｜ [點擊上方特區] 即時戰術定位</span>
@@ -554,7 +562,15 @@
     </div>
   </div>
 
-  <!-- 背包、委託任務與設定模態框已依委託人第 54 回合指示徹底清除，全屏純淨呈現雙北科幻大地圖 -->
+  <!-- 示範案件戰術檔案彈窗 (Demonstration Case Dossier Modal) -->
+  <div class="modal-overlay" id="caseDossierModal" style="display:none;" onclick="if(event.target===this)closeModal('caseDossierModal')">
+    <div class="modal-card case-dossier-card" id="caseDossierCard" style="max-width:720px; max-height:85vh; overflow-y:auto;">
+      <!-- 由 JS 動態注入 -->
+    </div>
+  </div>
+
+  <!-- 雙軌單一資料源 (SSOT) ✕ 遊戲引擎核心 -->
+  <script src="shared-data.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

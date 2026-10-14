@@ -34,12 +34,12 @@ body {
   width: 100vw;
 }
 
-/* 3D / 2.5D 畫布容器 */
+/* 3D / 2.5D 畫布容器 (深星空賽博底色，保證開局絕不黑屏) */
 #webgl-container {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: #020617;
+  background: #070e24;
 }
 
 #webgl-container canvas {
@@ -647,13 +647,13 @@ body {
   background: #0284c7;
 }
 
-/* 聊天室 */
+/* 聊天室 (移至左下角，不遮蔽雙北地圖與頂部案件條) */
 .chat-window {
   position: absolute;
-  top: 92px;
-  left: 280px;
-  width: 270px;
-  height: 140px;
+  bottom: 80px;
+  left: 16px;
+  width: 280px;
+  height: 120px;
   background: rgba(7, 21, 45, 0.88);
   border: 1px solid rgba(0, 210, 255, 0.4);
   border-radius: 12px;
@@ -1444,5 +1444,67 @@ body {
   }
 }
 
+/* ==========================================================================
+   🚨 10 大生活科學探究示範案件跳轉條 (Demonstration Cases Selector Strip)
+   ========================================================================== */
+.cases-selector-strip {
+  position: absolute;
+  top: 116px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 18, 38, 0.94);
+  border: 1.5px solid rgba(244, 63, 94, 0.45);
+  border-radius: 18px;
+  padding: 4px 14px;
+  z-index: 21;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 16px rgba(244, 63, 94, 0.3);
+  backdrop-filter: blur(12px);
+  max-width: 96vw;
+  overflow-x: auto;
+  white-space: nowrap;
+}
 
+.cases-strip-tag {
+  font-size: 11px;
+  font-weight: 900;
+  color: #f43f5e;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
+.cases-chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.case-nav-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fda4af;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.case-nav-btn:hover, .case-nav-btn.active {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.5), rgba(225, 29, 72, 0.7));
+  border-color: #f43f5e;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.7);
+  transform: translateY(-1px);
+}
+
+.case-dossier-card {
+  border: 1.5px solid #00f0ff !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 240, 255, 0.3) !important;
+}
