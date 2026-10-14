@@ -1,7 +1,7 @@
 # 📋《雙北漫遊：都會行蹤》完整遊戲設計企劃書（官方 Markdown 完整版）
 > **本文件為《雙北漫遊：都會行蹤》六年級獨立研究專題之完整企劃書全文，專供接續本專案之 AI Agent、LLM 與工程師直接閱讀。**  
 > **線上互動網頁版**：[https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html](https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html)  
-> **更新狀態**：收錄全部 71 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
+> **更新狀態**：收錄全部 72 項核心指示、交通大數據時空推理、連鎖店 50% 剪裁法則、1:1 雙北街廓與 10 大首發示範案。
 
 ---
 
@@ -84,7 +84,8 @@
 | 68 | **Antigravity App 雙對話協同與本地授權指引** | 我是使用 Anti-Gravity  App 版。 | 全案規範 ✕ Antigravity 雙對話協同 | 【Antigravity App 桌面版本地授權配置與雙對話協同管線】：1. 原生具備本地權限：Antigravity App 桌面版直接運行於本機 macOS，AI 擁有完整終端機與檔案寫入工具，無需手動配置 PAT 權杖或 OAuth；2. 無阻礙自動授權 3 步：Settings ➔ Tool Execution Policy 設為 `always-proceed`、Non-Workspace Access 設為 `allow`、Internet 設為 `allow`，解除彈窗等待；3. 跨對話同步指引：提供一鍵咒語「請直接調用寫檔工具修改檔案並 git push origin main」，或將外部對話成果直貼本對話由本端安全落地與推送。 | ✅ 100% 落實 |
 | 69 | **GitHub ✕ 私服器雙軌架構決策** | 你覺得要放在 server 裡面，還是放在 GitHub 裡面？ | 全案架構 ✕ GitHub 與私服器分工 | 【GitHub 靜態基石 ✕ 專屬私服器多人連線雙軌分工體系】：1. 強烈推薦雙軌結合，無需二選一：GitHub 負責檔案保存、版本控管、企劃書與 GitHub Pages 免費靜態前端（零成本、永久在線、單人模式永不宕機）；2. Server 負責多人私服心臟：Node.js + Socket.io 私服器負責全班同屏移動、聊天與全服突發案件廣播，平時由本機/免費雲端啟動；3. 代碼與 AI 協同歸屬：所有原始碼、企劃與對話紀錄 100% 存放於 GitHub 遠端倉庫，Server 僅透過 `git pull` 取得代碼執行，確保代碼永不遺失且跨 AI 零阻礙對接。 | ✅ 100% 落實 |
 | 70 | **跨電腦無登入 GitHub 推送指令 SOP** | 請給我確切的指令，讓我知要如何讓 Anti-Gravity App 在其他電腦可以把東西存到 GitHub 裡面？但我真實要講的，就是我在另外一台電腦裡面，我的 GitHub 沒有登入欸。 | 全案規範 ✕ 跨電腦免登入推送 | 【跨電腦免瀏覽器登入・Token 嵌入遠端網址直接推送 SOP】：1. 免登入遠端授權指令：於另一台電腦執行 `git remote set-url origin https://<USER>:<TOKEN>@github.com/...`，直接繞過瀏覽器登入與 2FA 雙重驗證；2. 一鍵推送直效指令：提供完整 `git add . && git commit -m "..." && git push origin main` 實操指令；3. Anti-Gravity 跨電腦指令句：提供可直接複製給另一台電腦 AI 的執行命令，讓無登入之第二台電腦亦可秒速上傳至 GitHub。 | ✅ 100% 落實 |
-| 71 | **Insta AI 伺服器生成與接續開發工作流** | 哦，對了，server 的問題，我有一個 Insta AI 助理，因為它本身就包含 AI 和 server，所以我可以請它生成一個 server 之後，再叫你繼續更改 server 裡面的內容嗎？ | 全案架構 ✕ Insta AI 伺服器協同 | 【Insta AI 伺服器實例生成 ✕ Antigravity 深度開發無縫協同管線】：1. 完全可行且高度推薦：由 Insta AI 快速生成伺服器實例環境與基礎框架，再交由 Antigravity 深度擴充雙北多人連線、同屏座標廣播與全服案件推播；2. 三大多元接軌途徑：提供（A）GitHub 倉庫代碼直通橋接、（B）代碼直接貼入對話框接手重構、（C）WebSocket URL 外部連線串接 3 大彈性模式；3. 全域品質與安全守門員：Antigravity 接手時自動執行專案憲法級禁忌審查（徹底排查「藝碩／益碩」、「少年偵探」等）並恪守「動工前向委託人提出規劃討論」之鐵律。 | ✅ 100% 落實 |
+| 71 | **instic 伺服器生成與接續開發工作流** | 哦，對了，server 的問題，我有一個 instic AI 助理，因為它本身就包含 AI 和 server，所以我可以請它生成一個 server 之後，再叫你繼續更改 server 裡面的內容嗎？ | 全案架構 ✕ instic 伺服器協同 | 【instic 伺服器實例生成 ✕ Antigravity 深度開發無縫協同管線】：1. 完全可行且高度推薦：由 instic 快速生成伺服器實例環境與基礎框架，再交由 Antigravity 深度擴充雙北多人連線、同屏座標廣播與全服案件推播；2. 三大多元接軌途徑：提供（A）GitHub 倉庫代碼直通橋接、（B）代碼直接貼入對話框接手重構、（C）WebSocket URL 外部連線串接 3 大彈性模式；3. 全域品質與安全守門員：Antigravity 接手時自動執行專案憲法級禁忌審查（徹底排查「藝碩／益碩」、「少年偵探」等）並恪守「動工前向委託人提出規劃討論」之鐵律。 | ✅ 100% 落實 |
+| 72 | **instic 平台精準名稱校正與協同對接** | 是instic | 全案架構 ✕ instic 平台對接 | 【instic 伺服器生成平台精準校準與無縫代碼交接機制】：1. 名稱精確收錄與修正：全面對齊委託人指定之 `instic` 伺服器助理平台，確立跨 AI 協同開發架構；2. instic 實體交接 SOP：由 instic 產生 Node.js / Socket.io 伺服器地基後，透過代碼直貼或 GitHub 遠端同步交由 Antigravity 擴充雙北即時座標廣播與全服案件通知；3. 全域禁忌嚴格守門：無論 instic 生成何種代碼，Antigravity 均 100% 執行「藝碩／益碩」、「少年偵探」等禁忌全面排查。 | ✅ 100% 落實 |
 
 ---
 
