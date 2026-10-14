@@ -94,19 +94,19 @@ const gameState = {
   isRunning: false,      // 當前是否處於跑步衝刺狀態
   speed: 0.65,
   // 幽靈天眼巡航核心狀態 (Ghost Spectator Drone View)
-  isGhostMode: true,     // 預設為天眼幽靈自由巡航模式 (無人物，自由飛翔巡視地圖)
-  droneFlySpeed: 3.5,    // 天眼飛行平移速度 (玩家指定大幅提速！極速平移無延遲)
-  droneTurboSpeed: 8.5,  // 極速巡航飛行速度 (Shift 鍵超光速巡視全城)
-  activeBrandFilter: 'all', // 當前連鎖雷達篩選品牌: 'all', 'familymart', 'seven', 'carrefour', 'pxmart', 'coco', 'market'
+  isGhostMode: true,     // 預設為天眼幽靈自由巡航模式 (全域俯瞰，無死角巡視地圖)
+  droneFlySpeed: 4.5,    // 天眼飛行平移速度 (極速平移無延遲)
+  droneTurboSpeed: 10.5, // 極速巡航飛行速度 (Shift 鍵超光速巡視全城)
+  activeBrandFilter: 'all', // 當前連鎖雷達篩選品牌: 'all'
   weather: 'sunny',
   mosaic: false,
-  nickname: "都會調查員 [你]",
-  currentBubble: "🛰️ 天眼幽靈巡航雙北街區",
+  nickname: "全息戰術終端",
+  currentBubble: "🛰️ 雙北全境科幻拓撲連線中",
   cluesFound: 0,
   hasBoba: false,
   hasTeaEgg: false,
-  currentDistrict: 'station',
-  currentLocationName: "忠孝西路一段 ✕ 館前路口",
+  currentDistrict: 'overview',
+  currentLocationName: "雙北全境全息拓撲 ✕ 大台北都會區總覽",
   inTransit: false,
   transitType: null,
   transitDest: null,
@@ -133,12 +133,12 @@ const playerPos = {
 };
 
 const camera = {
-  x: 0,
-  z: 14,
-  targetScale: 15, // 正常視野比例
-  currentScale: 15,
-  minScale: 1.0,   // 縮小為整座雙北大地圖全景總覽 (全域可視)
-  maxScale: 28.0   // 放大為門市近景立面
+  x: 70,
+  z: -20,
+  targetScale: 0.95, // 預設即為雙北全景樣式總覽！完整呈現臺北 12 區 ✕ 新北 29 特區
+  currentScale: 0.95,
+  minScale: 0.35,    // 支援宏觀超廣角衛星全景
+  maxScale: 28.0     // 放大為街廓與門市立面
 };
 
 // 奔跑腳底塵土/氣流粒子系統
@@ -157,6 +157,57 @@ const engineLbl = document.getElementById("renderEngineLabel");
 if (engineLbl) {
   engineLbl.innerText = '現代 2D ✕ 2.5D 高空俯瞰創新科技冒險引擎 (高幀率・零白屏)';
 }
+
+// ──────────────────────────────────────────
+// 雙北全境 29+12 行政特區賽博全息晶片板塊 (All 41 Greater Taipei Sectors)
+// 【完整涵蓋：臺北市 12 區 ✕ 新北市全境 29 行政區，絕無遺漏！】
+// ──────────────────────────────────────────
+const shuangbeiSectors = [
+  // ── 臺北市 12 核心行政特區 (Taipei Metropolis 12 Core Sectors) ──
+  { id: 'TPE-01', name: '中正特區・核心樞紐', x: 0, z: 20, w: 95, h: 80, col: '#00f0ff', desc: '北車 ✕ 重慶書街 ✕ 古蹟群' },
+  { id: 'TPE-02', name: '萬華特區・西門霓虹', x: -150, z: 45, w: 85, h: 80, col: '#f472b6', desc: '西門町 ✕ 龍山寺 ✕ 青年公園' },
+  { id: 'TPE-03', name: '大同特區・大稻埕', x: -110, z: -110, w: 80, h: 95, col: '#fbbf24', desc: '迪化街 ✕ 寧夏夜市 ✕ 圓環' },
+  { id: 'TPE-04', name: '中山特區・金融廊道', x: 90, z: -70, w: 95, h: 95, col: '#a78bfa', desc: '條通商圈 ✕ 松江南京 ✕ 美麗華' },
+  { id: 'TPE-05', name: '大安特區・森林穹頂', x: 110, z: 80, w: 85, h: 90, col: '#34d399', desc: '大安森林 ✕ 師大夜市 ✕ 敦南' },
+  { id: 'TPE-06', name: '信義特區・101星港', x: 235, z: 50, w: 90, h: 85, col: '#f59e0b', desc: '台北101 ✕ 市府 ✕ 象山星港' },
+  { id: 'TPE-07', name: '松山特區・光子核心', x: 220, z: -85, w: 80, h: 75, col: '#fb7185', desc: '小巨蛋 ✕ 松山機場 ✕ 饒河夜市' },
+  { id: 'TPE-08', name: '內湖特區・科技園區', x: 270, z: -160, w: 120, h: 90, col: '#38bdf8', desc: '內科高能園區 ✕ 碧湖 ✕ 大湖' },
+  { id: 'TPE-09', name: '南港特區・生技光谷', x: 370, z: -60, w: 100, h: 85, col: '#818cf8', desc: '南港軟體港 ✕ 展覽館 ✕ 三鐵樞紐' },
+  { id: 'TPE-10', name: '士林特區・夜市矩陣', x: -60, z: -210, w: 110, h: 90, col: '#f43f5e', desc: '士林夜市 ✕ 故宮 ✕ 天母國際特區' },
+  { id: 'TPE-11', name: '北投特區・地熱能量', x: -160, z: -270, w: 105, h: 90, col: '#c084fc', desc: '溫泉能量谷 ✕ 關渡隘口 ✕ 大屯火山' },
+  { id: 'TPE-12', name: '文山特區・貓空生態', x: 170, z: 230, w: 110, h: 100, col: '#10b981', desc: '木柵動物園 ✕ 貓空纜車 ✕ 仙跡岩' },
+
+  // ── 新北市 29 全境行政特區 (New Taipei Metropolis 29 Full Sectors) ──
+  { id: 'NTP-01', name: '板橋特區・新北總部 (學府1:1)', x: -130, z: 155, w: 100, h: 95, col: '#34d399', desc: '新板行政大樓 ✕ 學府路商圈 ✕ 府中' },
+  { id: 'NTP-02', name: '三重特區・重新工坊', x: -260, z: -40, w: 90, h: 85, col: '#38bdf8', desc: '重新路幹道 ✕ 三和夜市 ✕ 忠孝橋頭' },
+  { id: 'NTP-03', name: '蘆洲特區・微風水岸', x: -250, z: -160, w: 85, h: 80, col: '#22d3ee', desc: '湧蓮寺 ✕ 蘆洲捷運機廠 ✕ 水河綠帶' },
+  { id: 'NTP-04', name: '新莊特區・創新高地', x: -310, z: 80, w: 100, h: 90, col: '#a3e635', desc: '新莊副都心 ✕ 輔大校區 ✕ 廟街夜市' },
+  { id: 'NTP-05', name: '中和特區・高密量子', x: -35, z: 175, w: 80, h: 80, col: '#c084fc', desc: '景安雙捷運 ✕ 遠東科技園 ✕ 烘爐地' },
+  { id: 'NTP-06', name: '永和特區・迷宮水岸', x: -65, z: 135, w: 65, h: 65, col: '#e879f9', desc: '樂華夜市 ✕ 頂溪水岸 ✕ 密集街廓' },
+  { id: 'NTP-07', name: '土城特區・能源晶谷', x: -120, z: 250, w: 90, h: 90, col: '#2dd4bf', desc: '土城科技園區 ✕ 頂埔高科技 ✕ 廣明樂家康' },
+  { id: 'NTP-08', name: '樹林特區・鐵道機廠', x: -220, z: 240, w: 85, h: 85, col: '#4ade80', desc: '樹林車站 ✕ 柑園生態園區 ✕ 大同山' },
+  { id: 'NTP-09', name: '三峽特區・古風光谷', x: -260, z: 320, w: 95, h: 95, col: '#fb923c', desc: '三峽老街 ✕ 祖師廟 ✕ 鳶山能源陣列' },
+  { id: 'NTP-10', name: '鶯歌特區・奈米陶瓷', x: -330, z: 310, w: 85, h: 85, col: '#f472b6', desc: '陶瓷博物館 ✕ 老街科技工坊 ✕ 三鶯線' },
+  { id: 'NTP-11', name: '新店特區・碧潭水電', x: 80, z: 270, w: 110, h: 100, col: '#06b6d4', desc: '碧潭水能基地 ✕ 大坪林 ✕ 烏來隘口' },
+  { id: 'NTP-12', name: '淡水特區・數位水能港', x: -230, z: -330, w: 105, h: 95, col: '#00f0ff', desc: '金色水岸 ✕ 漁人碼頭 ✕ 淡海輕軌' },
+  { id: 'NTP-13', name: '八里特區・光能左岸', x: -310, z: -300, w: 90, h: 85, col: '#38bdf8', desc: '八里渡船頭 ✕ 台北港物流 ✕ 十三行' },
+  { id: 'NTP-14', name: '五股特區・綠能樞紐', x: -310, z: -80, w: 85, h: 80, col: '#10b981', desc: '新北產業園區 ✕ 五股水碓 ✕ 觀音前緣' },
+  { id: 'NTP-15', name: '泰山特區・貴子光軌', x: -340, z: 0, w: 80, h: 75, col: '#60a5fa', desc: '明志科技廊道 ✕ 機場捷運 ✕ 楓樹水脈' },
+  { id: 'NTP-16', name: '汐止特區・雲端運算', x: 390, z: -30, w: 105, h: 90, col: '#818cf8', desc: '東方科學園區 ✕ 汐科站 ✕ 基隆河廊' },
+  { id: 'NTP-17', name: '深坑特區・豆腐光廊', x: 250, z: 210, w: 80, h: 80, col: '#4ade80', desc: '深坑老街 ✕ 景美溪上游 ✕ 炮子崙' },
+  { id: 'NTP-18', name: '石碇特區・高嶺中繼', x: 330, z: 260, w: 85, h: 85, col: '#a78bfa', desc: '千島湖 ✕ 皇帝殿岩稜 ✕ 北宜科技中繼' },
+  { id: 'NTP-19', name: '坪林特區・包種光學', x: 370, z: 330, w: 90, h: 90, col: '#34d399', desc: '茶業生技博物館 ✕ 北勢溪水源 ✕ 雪山前哨' },
+  { id: 'NTP-20', name: '烏來特區・地熱生態', x: 110, z: 380, w: 120, h: 100, col: '#2dd4bf', desc: '烏來瀑布 ✕ 地熱溫泉中樞 ✕ 泰雅高山生態' },
+  { id: 'NTP-21', name: '林口特區・台地星雲', x: -380, z: -180, w: 110, h: 95, col: '#facc15', desc: '影視影城光谷 ✕ 三井聚落 ✕ 霧都台地' },
+  { id: 'NTP-22', name: '瑞芳特區・黃金礦嶺', x: 480, z: -60, w: 95, h: 90, col: '#fbbf24', desc: '九份全息山城 ✕ 金瓜石 ✕ 猴硐貓村' },
+  { id: 'NTP-23', name: '平溪特區・天燈光子', x: 430, z: 160, w: 85, h: 85, col: '#f472b6', desc: '十分瀑布 ✕ 平溪鐵道 ✕ 全息光子天燈' },
+  { id: 'NTP-24', name: '雙溪特區・清流綠境', x: 490, z: 220, w: 85, h: 85, col: '#22c55e', desc: '雙溪低碳示範特區 ✕ 虎豹潭 ✕ 牡丹古道' },
+  { id: 'NTP-25', name: '貢寮特區・極東海洋', x: 560, z: 210, w: 90, h: 90, col: '#38bdf8', desc: '三貂角燈塔 ✕ 福隆海水浴場 ✕ 洋流發電基地' },
+  { id: 'NTP-26', name: '金山特區・北海巨浪', x: -150, z: -420, w: 95, h: 85, col: '#0284c7', desc: '金山老街 ✕ 燭臺雙嶼 ✕ 溫泉海岸' },
+  { id: 'NTP-27', name: '萬里特區・野柳光岩', x: 70, z: -420, w: 95, h: 85, col: '#00f0ff', desc: '女王頭地質 ✕ 翡翠灣星港 ✕ 北海岸公路' },
+  { id: 'NTP-28', name: '石門特區・極北風能', x: -220, z: -450, w: 90, h: 80, col: '#38bdf8', desc: '富貴角燈塔 ✕ 石門風力發電陣列 ✕ 老梅石槽' },
+  { id: 'NTP-29', name: '三芝特區・櫻色光廊', x: -290, z: -410, w: 90, h: 80, col: '#06b6d4', desc: '淺水灣 ✕ 飛碟屋遺址 ✕ 北海岸藝術水岸' }
+];
 
 /* ─── 4. 1:1 還原真實雙北街廓拓撲 ✕ 連鎖品牌門市資料庫 (50% 剪裁法則) ─── */
 // 互動地標點位 (留存店家與市場 100% 精確對齊現實路名、門牌號碼與街區相對位置，全圖超過 110+ 處真實點位)
@@ -179,7 +230,7 @@ const interactables = [
   {"id": "seven_gq", "x": -20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前館前店)", "address": "中正區館前路 59 號", "label": "進入 7-Eleven (站前館前店)"},
   {"id": "coco_ny", "x": 20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (台北站前店)", "address": "中正區南陽街 13 號", "label": "購買 CoCo 手搖飲 (站前店)"},
   {"id": "seven_gy", "x": 60, "z": 35, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前公園店)", "address": "中正區公園路 20 號", "label": "進入 7-Eleven (站前公園店)"},
-  {"id": "carrefour_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入家樂福超市 (站前開封店)"},
+  {"id": "wanjiafu_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入樂家康超市 (站前開封店)"},
   {"id": "coco_cq", "x": -95, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (重慶書店街店)", "address": "中正區重慶南路一段 55 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
   {"id": "market_cz", "x": -95, "z": 55, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "城中市場老市集", "address": "中正區武昌街一段 22 巷 (省城隍廟口)", "label": "進入 城中市場老市集 (老台北在地情報與小吃)"},
   {"id": "seven_hy", "x": -95, "z": 95, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正衡陽店)", "address": "中正區衡陽路 51 號", "label": "進入 7-Eleven (中正衡陽店)"},
@@ -188,37 +239,37 @@ const interactables = [
   {"id": "fmart_wc", "x": -205, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門武昌店)", "address": "萬華區武昌街二段 37 號", "label": "進入全家 (西門武昌店)"},
   {"id": "coco_xm", "x": -175, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (西門町店)", "address": "萬華區武昌街二段 4 號", "label": "購買 CoCo 手搖飲 (西門町店)"},
   {"id": "market_xm", "x": -135, "z": 52, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "西門市場 ✕ 紅樓文創市集", "address": "萬華區成都路 10 號", "label": "進入 西門市場/紅樓文創市集 (潮流古著與點心)"},
-  {"id": "pxmart_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入全聯 (萬華長沙店)"},
-  {"id": "carrefour_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "carrefour", "name": "家樂福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入家樂福桂林旗艦店 (24H量販店)"},
+  {"id": "wanjiafu_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入樂家康超市 (萬華長沙店)"},
+  {"id": "wanjiafu_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入萬家福桂林旗艦店 (24H量販店)"},
   {"id": "fmart_circle", "x": -95, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (建成圓環店)", "address": "大同區重慶北路二段 12 號", "label": "進入全家 (建成圓環店)"},
   {"id": "market_nx", "x": -55, "z": -95, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "建成圓環 ✕ 寧夏觀光夜市", "address": "大同區寧夏路民生西路口", "label": "進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)"},
   {"id": "seven_circle", "x": -55, "z": -145, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (寧夏夜市店)", "address": "大同區民生西路 188 號", "label": "進入 7-Eleven (寧夏夜市店)"},
-  {"id": "carrefour_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "carrefour", "name": "家樂福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入家樂福重慶旗艦店 (大賣場)"},
-  {"id": "pxmart_cq", "x": -95, "z": -175, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (重慶店)", "address": "大同區重慶北路三段 154 號", "label": "進入全聯 (重慶店)"},
+  {"id": "wanjiafu_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入萬家福重慶旗艦店 (大賣場)"},
+  {"id": "wanjiafu_cq_store", "x": -95, "z": -175, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (重慶北店)", "address": "大同區重慶北路三段 154 號", "label": "進入樂家康便利購 (重慶北店)"},
   {"id": "coco_yp", "x": -145, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (延平北路店)", "address": "大同區延平北路二段 80 號", "label": "購買 CoCo 手搖飲 (延平店)"},
-  {"id": "pxmart_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入全聯 (大稻埕民生店)"},
+  {"id": "wanjiafu_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入樂家康便利購 (大稻埕民生店)"},
   {"id": "market_yl", "x": -185, "z": -60, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大稻埕永樂市場", "address": "大同區迪化街一段 21 號", "label": "進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)"},
   {"id": "seven_dh", "x": -185, "z": -125, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化店)", "address": "大同區迪化街一段 54 號", "label": "進入 7-Eleven (大稻埕迪化店)"},
   {"id": "market_lz", "x": -145, "z": -185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大同蘭州傳統市場", "address": "大同區昌吉街 55 號", "label": "進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)"},
   {"id": "market_zs", "x": 35, "z": -45, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "中山傳統市場", "address": "中山區長安西路 3 號 (中山北路口)", "label": "進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)"},
   {"id": "fmart_zs", "x": 125, "z": -20, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山北路店)", "address": "中山區中山北路一段 105 號", "label": "進入全家 (中山北路店)"},
   {"id": "seven_ls", "x": 125, "z": -60, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (林森條通店)", "address": "中山區林森北路 119 號", "label": "進入 7-Eleven (林森條通店)"},
-  {"id": "pxmart_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入全聯 (中山南京店)"},
+  {"id": "wanjiafu_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入樂家康超市 (中山南京店)"},
   {"id": "coco_zs", "x": 115, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山北路門市)", "address": "中山區中山北路一段 92 號", "label": "購買 CoCo 手搖飲 (中山門市)"},
   {"id": "market_sl", "x": 45, "z": -145, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "雙連傳統市場", "address": "大同區民生西路 198 號 (文昌宮旁)", "label": "進入 雙連傳統市場 (品嚐文昌宮古早味美食)"},
   {"id": "fmart_sl", "x": 105, "z": -150, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山雙連店)", "address": "中山區民生西路 66 號", "label": "進入全家 (中山雙連店)"},
   {"id": "market_qg", "x": 85, "z": -195, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "晴光傳統商圈市場", "address": "中山區雙城街 12 巷 (晴光商圈)", "label": "進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)"},
   {"id": "seven_mq", "x": 35, "z": -195, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山民權店)", "address": "中山區中山北路二段 92 號", "label": "進入 7-Eleven (中山民權店)"},
-  {"id": "pxmart_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入全聯 (中山吉林店)"},
+  {"id": "wanjiafu_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入樂家康超市 (中山吉林店)"},
   {"id": "fmart_sj", "x": 165, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (松江南京店)", "address": "中山區松江路 102 號", "label": "進入全家 (松江南京店)"},
   {"id": "coco_sj", "x": 165, "z": -155, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (松江南京店)", "address": "中山區松江路 120 號", "label": "購買 CoCo 手搖飲 (松江店)"},
   {"id": "seven_fx", "x": 205, "z": -55, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (復興長安店)", "address": "中山區復興北路 88 號", "label": "進入 7-Eleven (復興長安店)"},
-  {"id": "carrefour_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入家樂福超市 (中山松江店)"},
+  {"id": "wanjiafu_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入樂家康超市 (中山松江店)"},
   {"id": "fmart_fx", "x": 205, "z": -175, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (復興南京店)", "address": "中山區復興北路 45 號", "label": "進入全家 (復興南京店)"},
   {"id": "seven_ms", "x": 80, "z": 75, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正紀念堂店)", "address": "中正區中山南路 21 號", "label": "進入 7-Eleven (中正紀念堂店)"},
-  {"id": "pxmart_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入全聯 (古亭和平店)"},
+  {"id": "wanjiafu_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入樂家康便利購 (古亭和平店)"},
   {"id": "seven_rf", "x": 55, "z": 185, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (羅斯福師大店)", "address": "中正區羅斯福路二段 88 號", "label": "進入 7-Eleven (羅斯福師大店)"},
-  {"id": "carrefour_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福便利購 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入家樂福便利購 (師大店)"},
+  {"id": "wanjiafu_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入樂家康便利購 (師大店)"},
   {"id": "market_sd", "x": 105, "z": 185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "師大夜市 ✕ 龍泉傳統市場", "address": "大安區師大路 49 巷", "label": "進入 師大夜市/龍泉市場 (生煎包 / 鹽水雞 / 滷味)"},
   {"id": "fmart_da", "x": 155, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (大安信義店)", "address": "大安區信義路三段 102 號", "label": "進入全家 (大安信義店)"},
   {"id": "coco_da", "x": 155, "z": 125, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (大安復興店)", "address": "大安區復興南路一段 150 號", "label": "購買 CoCo 手搖飲 (大安店)"},
@@ -228,18 +279,18 @@ const interactables = [
   {"id": "market_ny", "x": -205, "z": 168, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋湳雅觀光夜市", "address": "板橋區南雅東路 87 號", "label": "進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)"},
   {"id": "seven_xf", "x": -95, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (學城門市)", "address": "新北海山生活圈 學府路一段 118 號", "label": "進入 7-Eleven (學城門市)"},
   {"id": "coco_xf", "x": -40, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋重慶店)", "address": "板橋生活圈 重慶路 179 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
-  {"id": "carrefour_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福便利購 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入家樂福便利購 (廣明店)"},
+  {"id": "wanjiafu_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入樂家康便利購 (廣明店)"},
   {"id": "market_hs", "x": -185, "z": 210, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋黃石傳統市場", "address": "板橋區宮口街 37 號 (府中商圈)", "label": "進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)"},
   {"id": "fmart_fz", "x": -100, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋府中店)", "address": "板橋區府中路 35 號", "label": "進入全家 (板橋府中店)"},
-  {"id": "pxmart_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入全聯 (板橋文化店)"},
+  {"id": "wanjiafu_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入樂家康超市 (板橋文化店)"},
   {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"},
   {"id": "seven_ag", "x": 55, "z": 110, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正愛國店)", "address": "中正區愛國西路 9 號", "label": "進入 7-Eleven (中正愛國店)"},
   {"id": "fmart_cd", "x": -185, "z": 45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門成都店)", "address": "萬華區成都路 23 號", "label": "進入全家 (西門成都店)"},
   {"id": "coco_fz", "x": -140, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋府中店)", "address": "板橋區中山路一段 50 號", "label": "購買 CoCo 手搖飲 (府中店)"},
-  {"id": "pxmart_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 8.5, "type": "pxmart", "name": "全聯福利中心 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入全聯 (板橋新埔店)"},
+  {"id": "wanjiafu_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入樂家康便利購 (板橋新埔店)"},
   {"id": "seven_dh_2", "x": -185, "z": -80, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化二店)", "address": "大同區迪化街一段 82 號", "label": "進入 7-Eleven (迪化二店)"},
   {"id": "fmart_sd_lq", "x": 105, "z": 155, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (師大龍泉店)", "address": "大安區師大路 59 號", "label": "進入全家 (師大龍泉店)"},
-  {"id": "carrefour_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "carrefour", "name": "家樂福超市 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入家樂福超市 (重慶北店)"},
+  {"id": "wanjiafu_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入樂家康超市 (重慶北店)"},
   {"id": "landmark_jf_gate", "x": 60, "z": 108, "w": 18, "d": 18, "r": 9.0, "type": "landmark", "name": "國定古蹟 景福門 (東門圓環)", "address": "中正區中山南路 ✕ 凱達格蘭大道口", "label": "瞻仰 景福門古蹟 (台北府城東門)"},
   {"id": "landmark_museum", "x": -67.5, "z": 66, "w": 24, "d": 16, "r": 9.0, "type": "landmark", "name": "國立臺灣博物館", "address": "中正區襄陽路 2 號 (二二八公園北側)", "label": "參觀 國立臺灣博物館 (希臘多立克式宮殿與百年銅頂)"},
   {"id": "landmark_lin_garden", "x": -195, "z": 210, "w": 24, "d": 20, "r": 9.0, "type": "landmark", "name": "國定古蹟 林本源園邸 (林家花園)", "address": "板橋區西門街 9 號 (府中生活圈)", "label": "漫遊 林家花園 (百年江南庭園與來青閣)"}
@@ -518,8 +569,9 @@ window.addEventListener("mousemove", e => {
     const dragMultiplier = 1.35; // 提高游標拖曳平移反饋速度，指哪打哪超靈敏
     camera.x = cameraDragStartX - (dx / camera.currentScale) * dragMultiplier;
     camera.z = cameraDragStartZ - (dy / camera.currentScale) * dragMultiplier;
-    camera.x = Math.max(-215, Math.min(215, camera.x));
-    camera.z = Math.max(-215, Math.min(215, camera.z));
+    // 擴大相機巡航範圍至雙北全境 41 行政特區 (-460 ~ +650, -520 ~ +460)
+    camera.x = Math.max(-460, Math.min(650, camera.x));
+    camera.z = Math.max(-520, Math.min(460, camera.z));
     if (!gameState.isGhostMode) {
       playerPos.x = camera.x;
       playerPos.z = camera.z;
@@ -587,20 +639,18 @@ function updateGhostDroneHUD() {
     coordsEl.innerText = `X: ${Math.round(camera.x)}, Z: ${Math.round(camera.z)}`;
   }
   if (distEl) {
-    let name = "🏛️ 中正區・台北車站站前核心 ✕ 忠孝西路一段";
+    let name = "🛰️ 雙北全息戰術拓撲空間";
+    for (const sec of shuangbeiSectors) {
+      if (Math.abs(camera.x - sec.x) <= sec.w / 2 && Math.abs(camera.z - sec.z) <= sec.h / 2) {
+        name = `${sec.name} ｜ ${sec.desc}`;
+        break;
+      }
+    }
+    // 特殊微觀地標精準補充
     if (camera.z >= 95 && camera.z <= 126 && camera.x <= -100) name = "🌉 萬華/板橋・新店溪 ✕ 華翠大橋 ✕ 華江橋 (跨市橋樑)";
-    else if (camera.x <= -30 && camera.z >= 155) name = "🏫 板橋區・學府路一段 (1:1 真實商圈) ✕ 府中商圈 ✕ 林家花園";
-    else if (camera.x <= -30 && camera.z >= 115 && camera.z < 155) name = "🏙️ 板橋區・新板特區 ✕ 縣民大道一段 ✕ 新北市政府";
-    else if (camera.x <= -125 && camera.z >= 0 && camera.z < 95) name = "🎮 萬華區・西門町徒步區 ✕ 中華路 ✕ 桂林路家樂福";
-    else if (camera.x > -125 && camera.x <= -35 && camera.z >= 0 && camera.z < 95) name = "📚 中正區・重慶南路書店街 ✕ 城中市場 ✕ 臺灣博物館";
-    else if (camera.x >= 35 && camera.x <= 90 && camera.z >= 90 && camera.z <= 125) name = "🏛️ 中正區・凱達格蘭大道 ✕ 國定古蹟景福門 (東門圓環)";
-    else if (camera.z >= -38 && camera.z <= -20 && camera.x >= -60 && camera.x <= 60) name = "🛣️ 中正區・市民大道一段 (市民高架快速道路 ✕ 站北大道)";
-    else if (camera.x <= -35 && camera.z < -20) name = "🏮 大同區・大稻埕迪化街 ✕ 霞海城隍廟 ✕ 寧夏夜市";
-    else if (camera.x >= 35 && camera.z >= 110) name = "🏛️ 南區商圈・古亭 ✕ 羅斯福路 ✕ 師大夜市/龍泉市場";
-    else if (camera.x >= 110 && camera.z >= 50 && camera.z < 110) name = "🌳 大安區・信義商圈 ✕ 敦化南路林蔭大道";
-    else if (camera.x >= 135 && camera.z < 50) name = "💼 中山/松山・松江南京金融商圈 ✕ 復興南京";
-    else if (camera.x >= 35 && camera.x < 135 && camera.z < 50) name = "🌳 中山區・中山北路林蔭大道 ✕ 南京商圈 ✕ 雙連晴光";
-    else if (camera.x <= -180 && camera.z >= -110 && camera.z <= 20) name = "🌊 萬華/大同・淡水河水岸 ✕ 忠孝橋";
+    else if (camera.x <= -30 && camera.z >= 155 && camera.z <= 190) name = "🏫 板橋區・學府路一段 (1:1 真實商圈) ✕ 樂家康便利購";
+    else if (camera.x <= -125 && camera.z >= 0 && camera.z < 95) name = "🎮 萬華區・西門町徒步區 ✕ 萬家福桂林旗艦店";
+    else if (camera.x >= -35 && camera.x <= 35 && camera.z >= -10 && camera.z <= 30) name = "🏛️ 中正區・台北車站站前核心 ✕ 忠孝西路一段";
     distEl.innerText = name;
   }
 }
@@ -654,8 +704,9 @@ function updateMovement() {
       const len = Math.hypot(moveX, moveZ);
       camera.x += (moveX / len) * flySpeed;
       camera.z += (moveZ / len) * flySpeed;
-      camera.x = Math.max(-215, Math.min(215, camera.x));
-      camera.z = Math.max(-215, Math.min(215, camera.z));
+      // 雙北全境 41 特區無障礙穿梭巡航 (-460 ~ +650, -520 ~ +460)
+      camera.x = Math.max(-460, Math.min(650, camera.x));
+      camera.z = Math.max(-520, Math.min(460, camera.z));
       playerPos.x = camera.x;
       playerPos.z = camera.z;
     }
@@ -720,9 +771,9 @@ function updateMovement() {
     }
   }
 
-  // 雙倍大地圖邊界限制 (-215 ~ +215, -215 ~ +215)
-  playerPos.x = Math.max(-215, Math.min(215, playerPos.x));
-  playerPos.z = Math.max(-215, Math.min(215, playerPos.z));
+  // 雙北全境 41 特區無障礙移動範圍 (-460 ~ +650, -520 ~ +460)
+  playerPos.x = Math.max(-460, Math.min(650, playerPos.x));
+  playerPos.z = Math.max(-520, Math.min(460, playerPos.z));
 
   // 動態攝影機平滑跟隨 (Smooth Lerp Camera)
   camera.x += (playerPos.x - camera.x) * 0.12;
@@ -739,9 +790,9 @@ function updateMovement() {
 function updateMinimapRadar() {
   const dot = document.getElementById("radarPlayerDot");
   if (!dot) return;
-  // 將雙倍大地圖座標 (-195~195, -170~170) 映射至雷達圓圈
-  const normX = ((playerPos.x + 195) / 390) * 72 + 4;
-  const normZ = ((playerPos.z + 170) / 340) * 72 + 4;
+  // 將雙北全境大地圖座標 (-460~650, -520~460) 映射至雷達圓圈
+  const normX = ((playerPos.x + 460) / 1110) * 72 + 4;
+  const normZ = ((playerPos.z + 520) / 980) * 72 + 4;
   dot.style.left = `${normX}px`;
   dot.style.top = `${normZ}px`;
 }
@@ -839,7 +890,7 @@ function updateFastForwardCutscene() {
     camera.targetScale = 19;
     playBusChime();
     showNavToast(`📍 抵達【${destCoords.name}】！請親自步行探索街區！`);
-    showDetectiveDialogue(`「已順利抵達目的地！下車步行調查吧！」`, "都會調查員");
+    showDetectiveDialogue(`「已順利抵達目的地！進行街區探索吧！」`, "戰術中樞");
   }
 }
 
@@ -857,12 +908,12 @@ function disembarkTransit() {
     playerPos.z = activeBus.z + Math.sin(activeBus.angle + Math.PI / 2) * 5.5;
     playBusChime();
     showNavToast(`🚶 已從 ${activeBus.lineName} 下車至【${activeBus.currentStreet || '人行道'}】！恢復自由探索！`);
-    showDetectiveDialogue("「呼～到站下車！在雙北街頭吹吹風，繼續調查！」", "都會調查員");
+    showDetectiveDialogue("「抵達站點！在雙北街廓自由巡航！」", "戰術中樞");
   } else {
     playerPos.z = playerPos.z + 4;
     playMrtChime();
     showNavToast("🚶 已從捷運列車下車抵達站台！恢復自由探索！");
-    showDetectiveDialogue("「捷運列車到站，走出手扶梯繼續調查！」", "都會調查員");
+    showDetectiveDialogue("「超軌列車到站，走出手扶梯繼續漫遊！」", "戰術中樞");
   }
 }
 
@@ -874,8 +925,8 @@ function renderScene() {
   const cy = h / 2;
   const scale = camera.currentScale;
 
-  // 1. 背景天色 (依據天氣時段)
-  ctx.fillStyle = gameState.weather === 'sunny' ? '#0f1f38' : (gameState.weather === 'sunset' ? '#2e1c2b' : '#070d18');
+  // 1. 極致黑曜石賽博空間底色 (Deep Obsidian Void - 零邊界切斷・永無斷層藍色空白)
+  ctx.fillStyle = '#020617';
   ctx.fillRect(0, 0, w, h);
 
   ctx.save();
@@ -885,69 +936,182 @@ function renderScene() {
   const screenZ = (val) => (val - camera.z) * scale;
 
   // ──────────────────────────────────────────
-  // 第 0 層：雙北全境宏觀地理拓撲、盆地山系、四大河系與六大捷運全線路網
-  // (Full Shuangbei Metropolitan Macro-Topology, Basin Geography & MRT Network)
-  // 覆蓋範圍達 -420m ~ +420m，完美呈現雙北全域地圖樣式！
+  // 第 0 層：雙北全境無限賽博全息經緯矩陣 (Infinite Cyber Coordinate Grid)
+  // 【徹底解決「只有一個區域，外面接下來全都是藍藍色」問題！】
+  // 依據當前攝像機可視世界座標動態無限鋪滿全屏，永無邊界切斷！
   // ──────────────────────────────────────────
 
-  // 0.1 雙北盆地宏觀地基底板 (-420m ~ +420m)
-  ctx.fillStyle = '#0d1726';
-  ctx.fillRect(screenX(-420), screenZ(-420), 840 * scale, 840 * scale);
+  // 計算當前視窗所涵蓋的真實世界座標範圍
+  const viewMargin = 60 / scale;
+  const minWorldX = camera.x - (cx / scale) - viewMargin;
+  const maxWorldX = camera.x + (cx / scale) + viewMargin;
+  const minWorldZ = camera.z - (cy / scale) - viewMargin;
+  const maxWorldZ = camera.z + (cy / scale) + viewMargin;
 
-  // 0.2 雙北周邊自然山系地形與森林綠帶 (Taipei Basin Mountain Silhouette)
-  // (1) 北壁：陽明山系、大屯火山群、七星山 (z: -420 ~ -250, x: -140 ~ 320)
-  ctx.fillStyle = '#06281b';
-  ctx.beginPath();
-  ctx.moveTo(screenX(-150), screenZ(-240));
-  ctx.quadraticCurveTo(screenX(-50), screenZ(-330), screenX(50), screenZ(-310));
-  ctx.quadraticCurveTo(screenX(150), screenZ(-360), screenX(280), screenZ(-300));
-  ctx.lineTo(screenX(420), screenZ(-420));
-  ctx.lineTo(screenX(-420), screenZ(-420));
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#093625';
-  ctx.beginPath();
-  ctx.moveTo(screenX(-100), screenZ(-270));
-  ctx.quadraticCurveTo(screenX(20), screenZ(-350), screenX(160), screenZ(-320));
-  ctx.quadraticCurveTo(screenX(220), screenZ(-340), screenX(300), screenZ(-300));
-  ctx.lineTo(screenX(420), screenZ(-420));
-  ctx.lineTo(screenX(-200), screenZ(-420));
-  ctx.closePath();
-  ctx.fill();
+  // 0.1 動態全像經緯拓撲主網格與次網格 (Dynamic Cyber Grid)
+  const gridStep = scale < 2.0 ? 120 : (scale < 6.0 ? 60 : 30);
+  const subStep = gridStep / 4;
 
-  // (2) 西壁：觀音山、八里林口台地 (z: -380 ~ -80, x: -420 ~ -230)
-  ctx.fillStyle = '#082a1d';
+  const startX = Math.floor(minWorldX / subStep) * subStep;
+  const endX = Math.ceil(maxWorldX / subStep) * subStep;
+  const startZ = Math.floor(minWorldZ / subStep) * subStep;
+  const endZ = Math.ceil(maxWorldZ / subStep) * subStep;
+
+  // 次級賽博格線 (Sub-Grid Lines)
+  ctx.strokeStyle = 'rgba(30, 58, 138, 0.22)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = startX; x <= endX; x += subStep) {
+    if (x % gridStep !== 0) {
+      ctx.moveTo(screenX(x), screenZ(minWorldZ));
+      ctx.lineTo(screenX(x), screenZ(maxWorldZ));
+    }
+  }
+  for (let z = startZ; z <= endZ; z += subStep) {
+    if (z % gridStep !== 0) {
+      ctx.moveTo(screenX(minWorldX), screenZ(z));
+      ctx.lineTo(screenX(maxWorldX), screenZ(z));
+    }
+  }
+  ctx.stroke();
+
+  // 主要賽博全息格線 (Major Cyber Grid Lines)
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let x = startX; x <= endX; x += gridStep) {
+    ctx.moveTo(screenX(x), screenZ(minWorldZ));
+    ctx.lineTo(screenX(x), screenZ(maxWorldZ));
+  }
+  for (let z = startZ; z <= endZ; z += gridStep) {
+    ctx.moveTo(screenX(minWorldX), screenZ(z));
+    ctx.lineTo(screenX(maxWorldX), screenZ(z));
+  }
+  ctx.stroke();
+
+  // 賽博經緯十字準星與科技座標銘印 (Crosshairs & Sci-Fi Coordinate Marks)
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+  ctx.font = '9px monospace';
+  for (let x = startX; x <= endX; x += gridStep) {
+    for (let z = startZ; z <= endZ; z += gridStep) {
+      const sx = screenX(x);
+      const sz = screenZ(z);
+      // 十字標
+      ctx.fillRect(sx - 3, sz - 0.5, 6, 1);
+      ctx.fillRect(sx - 0.5, sz - 3, 1, 6);
+      // 科技經緯刻度 (N 25.04° / E 121.51°)
+      if (scale >= 1.0 && (x % (gridStep * 2) === 0) && (z % (gridStep * 2) === 0)) {
+        const latVal = (25.0478 - z * 0.0009).toFixed(3);
+        const lonVal = (121.5170 + x * 0.0009).toFixed(3);
+        ctx.fillText(`+${lonVal}E, ${latVal}N`, sx + 4, sz - 3);
+      }
+    }
+  }
+
+  // 0.2 全像同心雷達測距光環 (Holographic Tactical Radar Range Rings)
+  const radarRadii = [80, 180, 320, 520, 750, 1100];
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 6]);
+  radarRadii.forEach(r => {
+    ctx.beginPath();
+    ctx.arc(screenX(0), screenZ(10), r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // 動態掃描全息雷達光束 (Animated Holo-Radar Sweep Beam)
+  const radarTime = (Date.now() / 2400) % (Math.PI * 2);
+  const sweepLen = 950 * scale;
+  const grad = ctx.createLinearGradient(
+    screenX(0), screenZ(10),
+    screenX(0) + Math.cos(radarTime) * sweepLen,
+    screenZ(10) + Math.sin(radarTime) * sweepLen
+  );
+  grad.addColorStop(0, 'rgba(0, 240, 255, 0.18)');
+  grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(screenX(0), screenZ(10));
+  ctx.lineTo(screenX(0) + Math.cos(radarTime) * sweepLen, screenZ(10) + Math.sin(radarTime) * sweepLen);
+  ctx.stroke();
+
+  // ──────────────────────────────────────────
+  // 第 0.3 層：雙北全境 29+12 行政特區賽博全息晶片板塊 (All 41 Greater Taipei Sectors)
+  // 【完整涵蓋：臺北市 12 區 ✕ 新北市全境 29 行政區，絕無遺漏！】
+  // ──────────────────────────────────────────
+
+  // 繪製 41 大特區之賽博全像板塊與邊界微流光 (Circuit Cyber Slabs)
+  shuangbeiSectors.forEach(sec => {
+    const sx = screenX(sec.x - sec.w / 2);
+    const sz = screenZ(sec.z - sec.h / 2);
+    const sw = sec.w * scale;
+    const sh = sec.h * scale;
+
+    // 板塊底色 (科技半透明全息電路芯片)
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+    drawSafeRoundRect(ctx, sx, sz, sw, sh, 6);
+    ctx.fill();
+
+    // 板塊霓虹外框 (Neon Border)
+    ctx.strokeStyle = sec.col;
+    ctx.lineWidth = scale < 2.0 ? 1.0 : 1.5;
+    ctx.shadowColor = sec.col;
+    ctx.shadowBlur = scale < 2.0 ? 4 : 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 科技四角折角瞄準器 (Cyber Tactical Corner Brackets)
+    const cornerSize = Math.max(3, scale * 0.4);
+    ctx.fillStyle = sec.col;
+    ctx.fillRect(sx, sz, cornerSize, 1.5);
+    ctx.fillRect(sx, sz, 1.5, cornerSize);
+    ctx.fillRect(sx + sw - cornerSize, sz, cornerSize, 1.5);
+    ctx.fillRect(sx + sw - 1.5, sz, 1.5, cornerSize);
+    ctx.fillRect(sx, sz + sh - 1.5, cornerSize, 1.5);
+    ctx.fillRect(sx, sz + sh - cornerSize, 1.5, cornerSize);
+    ctx.fillRect(sx + sw - cornerSize, sz + sh - 1.5, cornerSize, 1.5);
+    ctx.fillRect(sx + sw - 1.5, sz + sh - cornerSize, 1.5, cornerSize);
+
+    // 特區全像標籤與編號 (Sleek Sci-Fi Badge)
+    if (scale <= 4.0) {
+      const tagW = Math.min(sw * 0.9, 130 * scale * 0.35);
+      const tagH = 18 * scale * 0.35;
+      const tcx = sx + sw / 2;
+      const tcy = sz + sh / 2;
+
+      ctx.fillStyle = 'rgba(3, 7, 18, 0.85)';
+      drawSafeRoundRect(ctx, tcx - tagW / 2, tcy - tagH / 2, tagW, tagH, 3);
+      ctx.fill();
+      ctx.strokeStyle = sec.col;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = sec.col;
+      ctx.font = `bold ${Math.max(8, scale * 0.45)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(sec.name, tcx, tcy + 3.5 * scale * 0.35);
+    }
+  });
+
+  // 0.4 雙北周邊盆地山系自然山稜線 (Holographic Basin Mountain Ridgelines)
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([3, 4]);
+  // 北壁陽明山系
   ctx.beginPath();
   ctx.moveTo(screenX(-240), screenZ(-360));
-  ctx.quadraticCurveTo(screenX(-300), screenZ(-250), screenX(-250), screenZ(-140));
-  ctx.quadraticCurveTo(screenX(-280), screenZ(-80), screenX(-420), screenZ(-60));
-  ctx.lineTo(screenX(-420), screenZ(-420));
-  ctx.closePath();
-  ctx.fill();
-
-  // (3) 東壁：南港山、四獸山(象山)、汐止山系 (z: -60 ~ 240, x: 260 ~ 420)
-  ctx.fillStyle = '#07261a';
+  ctx.quadraticCurveTo(screenX(-50), screenZ(-330), screenX(150), screenZ(-360));
+  ctx.quadraticCurveTo(screenX(280), screenZ(-300), screenX(480), screenZ(-420));
+  ctx.stroke();
+  // 南壁雪山烏來山脈
   ctx.beginPath();
-  ctx.moveTo(screenX(260), screenZ(-60));
-  ctx.quadraticCurveTo(screenX(330), screenZ(60), screenX(270), screenZ(150));
-  ctx.quadraticCurveTo(screenX(320), screenZ(220), screenX(420), screenZ(240));
-  ctx.lineTo(screenX(420), screenZ(-60));
-  ctx.closePath();
-  ctx.fill();
-
-  // (4) 南壁：新店山區、烏來山脈、雪山山脈前緣 (z: 260 ~ 420, x: -200 ~ 420)
-  ctx.fillStyle = '#052116';
-  ctx.beginPath();
-  ctx.moveTo(screenX(-220), screenZ(280));
-  ctx.quadraticCurveTo(screenX(0), screenZ(320), screenX(160), screenZ(290));
-  ctx.quadraticCurveTo(screenX(280), screenZ(340), screenX(420), screenZ(300));
-  ctx.lineTo(screenX(420), screenZ(420));
-  ctx.lineTo(screenX(-420), screenZ(420));
-  ctx.closePath();
-  ctx.fill();
-
-  // 0.3 雙北四大河流全境水系 (Four Major Rivers of Greater Taipei)
-  const macroWave = (Date.now() / 400) % 16;
+  ctx.moveTo(screenX(-320), screenZ(360));
+  ctx.quadraticCurveTo(screenX(0), screenZ(320), screenX(280), screenZ(340));
+  ctx.quadraticCurveTo(screenX(420), screenZ(300), screenX(560), screenZ(320));
+  ctx.stroke();
+  ctx.setLineDash([]);
   ctx.fillStyle = '#0284c7'; // 蔚藍大河
 
   // (1) 淡水河 (Tamsui River Main Stem): 從板橋江子翠向北經關渡至淡水出海口
@@ -1959,38 +2123,35 @@ function renderScene() {
     ctx.stroke();
   }
 
-  // (4) 家樂福 Carrefour (量販 ✕ 超市便利購立面，紅白藍雙環 C 字幾何標)
-  function drawCarrefourStore(x, z, branchName, isFlagship) {
-    const storeW = isFlagship ? 32 : 24;
+  // (4) 萬家福 WanJiaFu (旗艦量販) ✕ 樂家康 LeJiaKang (超市便利購)
+  function drawWanjiafuStore(x, z, branchName, isFlagship) {
+    const storeW = isFlagship ? 34 : 24;
     const storeH = isFlagship ? 24 : 20;
     const bx = screenX(x - storeW / 2);
     const bz = screenZ(z - storeH / 2);
 
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = '#0f172a';
     drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
     ctx.fill();
-    ctx.strokeStyle = '#2563eb';
+    ctx.strokeStyle = isFlagship ? '#ef4444' : '#00f0ff';
     ctx.lineWidth = 2.2;
     ctx.stroke();
 
-    // 家樂福深藍頂條
-    ctx.fillStyle = '#1e40af';
+    // 招牌頂條 (旗艦為深紅光環，便利購為賽博青藍)
+    ctx.fillStyle = isFlagship ? '#991b1b' : '#0369a1';
     ctx.fillRect(bx, bz, storeW * scale, 5 * scale);
 
-    // 經典紅白藍雙弧 C 標誌
+    // 科技光輪標誌 (紅白藍光輪)
     const logoX = bx + 4 * scale;
     const logoY = bz + 2.5 * scale;
-    // 左紅弧
-    ctx.fillStyle = '#dc2626';
+    ctx.fillStyle = '#ef4444';
     ctx.beginPath();
     ctx.arc(logoX - 1.2 * scale, logoY, 1.8 * scale, Math.PI * 0.5, Math.PI * 1.5);
     ctx.fill();
-    // 右藍弧
-    ctx.fillStyle = '#2563eb';
+    ctx.fillStyle = '#00f0ff';
     ctx.beginPath();
     ctx.arc(logoX + 1.2 * scale, logoY, 1.8 * scale, -Math.PI * 0.5, Math.PI * 0.5);
     ctx.fill();
-    // 中央菱形白心
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(logoX, logoY, 1 * scale, 0, Math.PI * 2);
@@ -2000,62 +2161,23 @@ function renderScene() {
     ctx.fillStyle = '#ffffff';
     ctx.font = `bold ${Math.max(9, scale * 0.68)}px sans-serif`;
     ctx.textAlign = 'left';
-    ctx.fillText(isFlagship ? `家樂福旗艦 (${branchName})` : `Carrefour (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
+    ctx.fillText(isFlagship ? `萬家福旗艦 (${branchName})` : `樂家康 (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
 
-    // 挑高量販雙層大玻璃門窗
-    ctx.fillStyle = 'rgba(219, 234, 254, 0.45)';
+    // 挑高全息玻璃帷幕與能量補給站門面
+    ctx.fillStyle = isFlagship ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 240, 255, 0.15)';
     drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, (storeW - 10) * scale, (storeH - 11) * scale, 3);
     ctx.fill();
-    ctx.strokeStyle = '#dc2626';
+    ctx.strokeStyle = isFlagship ? '#f87171' : '#38bdf8';
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // 購物手推車區
-    ctx.fillStyle = '#94a3b8';
+    // 購物補給平台
+    ctx.fillStyle = '#64748b';
     drawSafeRoundRect(ctx, bx + 2 * scale, bz + (storeH - 4.5) * scale, 4 * scale, 3.5 * scale, 1);
     ctx.fill();
   }
 
-  // (5) 全聯福利中心 PX Mart (藍底紅白雙圓蝴蝶標、社區生鮮)
-  function drawPxMartStore(x, z, branchName) {
-    const bx = screenX(x - 12);
-    const bz = screenZ(z - 10);
-    ctx.fillStyle = '#f8fafc';
-    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
-    ctx.fill();
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 全聯深藍底招牌
-    ctx.fillStyle = '#1e3a8a';
-    ctx.fillRect(bx, bz, 24 * scale, 5.2 * scale);
-
-    // 經典雙圓蝴蝶標誌 (紅/白)
-    const logoX = bx + 4 * scale;
-    const logoY = bz + 2.6 * scale;
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.arc(logoX - 1.2 * scale, logoY, 1.4 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(logoX + 1.2 * scale, logoY, 1.4 * scale, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 招牌大字
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(8.8, scale * 0.65)}px sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText(`全聯 PX MART (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
-
-    // 生鮮大落地櫥窗與生鮮綠條
-    ctx.fillStyle = '#15803d';
-    ctx.fillRect(bx + 4 * scale, bz + 9 * scale, 16 * scale, 1.8 * scale);
-    ctx.fillStyle = 'rgba(224, 242, 254, 0.45)';
-    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 11 * scale, 14 * scale, 8 * scale, 2);
-    ctx.fill();
-  }
+  // (5) 傳統生鮮超市已全面轉型為萬家福旗艦量販與樂家康量子補給站 (drawWanjiafuStore)
 
   // (6) 傳統市場與觀光夜市 (Traditional Market / Night Market)
   function drawMarketPlace(x, z, marketName) {
@@ -2136,12 +2258,14 @@ function renderScene() {
     } else if (it.type === 'seven') {
       const bName = it.name.replace('7-Eleven 統一超商 (', '').replace(')', '');
       renderList.push({ z: it.z, draw: () => drawSevenElevenStore(it.x, it.z, bName) });
-    } else if (it.type === 'carrefour') {
-      const bName = it.name.replace('家樂福便利購 (', '').replace('家樂福超市 (', '').replace('家樂福 ', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawCarrefourStore(it.x, it.z, bName, !!it.isFlagship) });
+    } else if (it.type === 'wanjiafu' || it.type === 'carrefour') {
+      const bName = it.name.replace('萬家福便利購 (', '').replace('萬家福超市 (', '').replace('萬家福 ', '')
+                           .replace('樂家康便利購 (', '').replace('樂家康超市 (', '').replace('樂家康 ', '')
+                           .replace('家樂福便利購 (', '').replace('家樂福超市 (', '').replace('家樂福 ', '').replace(')', '');
+      renderList.push({ z: it.z, draw: () => drawWanjiafuStore(it.x, it.z, bName, !!it.isFlagship) });
     } else if (it.type === 'pxmart') {
-      const bName = it.name.replace('全聯福利中心 (', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawPxMartStore(it.x, it.z, bName) });
+      const bName = it.name.replace('樂家康超市 (', '').replace('樂家康便利購 (', '').replace('全聯福利中心 (', '').replace(')', '');
+      renderList.push({ z: it.z, draw: () => drawWanjiafuStore(it.x, it.z, bName, false) });
     } else if (it.type === 'market') {
       const bName = it.name.replace('傳統市場', '').replace('觀光夜市', '').replace('老市集', '');
       renderList.push({ z: it.z, draw: () => drawMarketPlace(it.x, it.z, bName) });
@@ -2341,7 +2465,7 @@ function renderScene() {
       });
     });
 
-    // 主角 (都會調查員)
+    // 主角 (全息巡航者)
     renderList.push({
       z: playerPos.z,
       draw: () => {
@@ -2518,7 +2642,7 @@ function checkProximityAndLocation() {
     if (nearest.id !== lastNearestId) {
       lastNearestId = nearest.id;
       updateActionPills(nearest);
-      if ((nearest.type === 'familymart' || nearest.type === 'seven' || nearest.type === 'coco' || nearest.type === 'carrefour' || nearest.type === 'pxmart' || nearest.type === 'market') && !hasPlayedDoorbell) {
+      if ((nearest.type === 'familymart' || nearest.type === 'seven' || nearest.type === 'coco' || nearest.type === 'carrefour' || nearest.type === 'wanjiafu' || nearest.type === 'market') && !hasPlayedDoorbell) {
         playStoreChime();
         hasPlayedDoorbell = true;
       }
@@ -2551,16 +2675,12 @@ function updateActionPills(item) {
     addActionPill("🍙 買肉鬆御飯糰 ($30)", "🍙", () => buyRiceBall());
     addActionPill("☕ 買 CITY CAFE 拿鐵 ($45)", "☕", () => buyLatte());
     addActionPill("🍵 買茶裏王無糖綠 ($25)", "🍵", () => buyKingTea());
-  } else if (item.type === "carrefour") {
-    addActionPill(`🛒 進入家樂福 (${item.name})`, "E", () => openCarrefourModal(item));
-    addActionPill("🥖 買家庭號能量吐司 ($40)", "🥖", () => buyCarrefourToast());
-    addActionPill("💧 買大瓶量販運動水 ($30)", "💧", () => buyCarrefourWater());
-    addActionPill("🧰 買手提補給箱 ($120)", "🧰", () => buyCarrefourBox());
-  } else if (item.type === "pxmart") {
-    addActionPill(`🧺 進入全聯 (${item.name})`, "E", () => openPxmartModal(item));
-    addActionPill("🍎 買產地直送高纖蘋果 ($35)", "🍎", () => buyPxmartApple());
-    addActionPill("🥛 買濃醇高纖豆漿 ($25)", "🥛", () => buyPxmartSoymilk());
-    addActionPill("🧺 買生鮮活力籃 ($80)", "🧺", () => buyPxmartBasket());
+  } else if (item.type === "wanjiafu" || item.type === "carrefour" || item.type === "pxmart") {
+    const isFlag = !!item.isFlagship;
+    addActionPill(`🛒 進入${isFlag ? '萬家福旗艦量販' : '樂家康超市'} (${item.name})`, "E", () => openWanjiafuModal(item));
+    addActionPill("🍞 買高能複合餐包 ($40)", "🍞", () => buyWanjiafuToast());
+    addActionPill("💧 買離子電解水 ($30)", "💧", () => buyWanjiafuWater());
+    addActionPill("🧰 買全像探測補給箱 ($120)", "🧰", () => buyWanjiafuBox());
   } else if (item.type === "market") {
     addActionPill(`🏮 進入 ${item.name}`, "E", () => openMarketModal(item));
     addActionPill("🍜 買古早味切仔麵 ($45)", "🍜", () => buyMarketFood('noodle', 45));
@@ -2606,8 +2726,7 @@ function triggerDirectInteraction(it) {
   else if (it.type === "coco") openCocoModal(it);
   else if (it.type === "familymart") openStoreModal(it);
   else if (it.type === "seven") openSevenModal(it);
-  else if (it.type === "carrefour") openCarrefourModal(it);
-  else if (it.type === "pxmart") openPxmartModal(it);
+  else if (it.type === "wanjiafu" || it.type === "carrefour" || it.type === "pxmart") openWanjiafuModal(it);
   else if (it.type === "market") openMarketModal(it);
   else if (it.type === "police") openCctvModal();
   else if (it.type === "nightmarket") openNightMarketModal();
@@ -2842,7 +2961,7 @@ function showNavToast(text) {
   setTimeout(() => toast.style.display = "none", 4200);
 }
 
-function showDetectiveDialogue(text, speaker = "都會調查員") {
+function showDetectiveDialogue(text, speaker = "戰術中樞") {
   const box = document.getElementById("detectiveDialogueBox");
   const spk = document.getElementById("diagSpeaker");
   const txt = document.getElementById("diagText");
@@ -2918,34 +3037,28 @@ function openSevenModal(store) {
   }
 }
 
-function openCarrefourModal(store) {
-  const modal = document.getElementById("carrefourModal");
+function openWanjiafuModal(store) {
+  const modal = document.getElementById("wanjiafuModal") || document.getElementById("carrefourModal");
   if (modal) {
     if (store && store.name) {
       const title = modal.querySelector(".modal-title");
-      if (title) title.innerHTML = `<span>🛒</span> ${store.name}`;
-      const greet = document.getElementById("carrefourBranchGreeting");
+      if (title) title.innerHTML = `<span>🏬</span> ${store.name}`;
+      const greet = document.getElementById("wanjiafuBranchGreeting") || document.getElementById("carrefourBranchGreeting");
       if (greet) {
-        greet.innerText = `店長親切招呼：「天天都便宜，就是家樂福！【${store.name}】全雙北物流互聯，提供充足調查能量補給！」`;
+        const isFlag = !!store.isFlagship;
+        greet.innerText = `店長親切招呼：「科技生活，盡在${isFlag ? '萬家福旗艦量販' : '樂家康超市'}！【${store.name}】全雙北量子物流互聯，提供充足探索能量與補給！」`;
       }
     }
     modal.style.display = "flex";
   }
 }
 
+function openCarrefourModal(store) {
+  openWanjiafuModal(store);
+}
+
 function openPxmartModal(store) {
-  const modal = document.getElementById("pxmartModal");
-  if (modal) {
-    if (store && store.name) {
-      const title = modal.querySelector(".modal-title");
-      if (title) title.innerHTML = `<span>🧺</span> ${store.name}`;
-      const greet = document.getElementById("pxmartBranchGreeting");
-      if (greet) {
-        greet.innerText = `廣播響起：「請支援收銀！買進美好生活，【${store.name}】生鮮產地直送！」`;
-      }
-    }
-    modal.style.display = "flex";
-  }
+  openWanjiafuModal(store);
 }
 
 function openMarketModal(market) {
@@ -2972,17 +3085,17 @@ function buyMarketFood(foodType, price) {
     gameState.stamina = Math.min(100, gameState.stamina + 40);
     gameState.mood = Math.min(100, gameState.mood + 25);
     showNavToast("🍜 享用傳統市場古早味切仔麵！體力 +40、心情 +25！");
-    showDetectiveDialogue("「滾燙大骨高湯配上油麵與豆芽紅燒肉，傳統市場的人情味真暖心！」", "都會調查員");
+    showDetectiveDialogue("「滾燙大骨高湯配上油麵與豆芽紅燒肉，在地老味道真暖心！」", "戰術中樞");
   } else if (foodType === 'roll') {
     gameState.stamina = Math.min(100, gameState.stamina + 35);
     gameState.mood = Math.min(100, gameState.mood + 30);
     showNavToast("🌯 享用現包傳香潤餅捲！體力 +35、心情 +30！");
-    showDetectiveDialogue("「滿滿脆甜高麗菜加上香甜花生粉與蛋酥，酥脆爽口！」", "都會調查員");
+    showDetectiveDialogue("「滿滿脆甜高麗菜加上香甜花生粉與蛋酥，酥脆爽口！」", "戰術中樞");
   } else if (foodType === 'fishcake') {
     gameState.stamina = Math.min(100, gameState.stamina + 20);
     gameState.mood = Math.min(100, gameState.mood + 35);
     showNavToast("🍢 享用現炸旗魚黑輪！心情 +35！");
-    showDetectiveDialogue("「金黃現炸旗魚黑輪熱氣騰騰，咬開還有包水煮蛋，太滿足了！」", "都會調查員");
+    showDetectiveDialogue("「金黃現炸旗魚黑輪熱氣騰騰，咬開還有包水煮蛋，太滿足了！」", "戰術中樞");
   }
   updateBars();
   playTone(660, 'sine', 0.15);
@@ -3006,75 +3119,46 @@ function openMapModal() { updateQuestProgress(); document.getElementById("mapMod
 function openSettingsModal() { document.getElementById("settingsModal").style.display = "flex"; }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
-/* ─── 10b. 家樂福與全聯商品購買邏輯 ─── */
-function buyCarrefourToast() {
+/* ─── 10b. 萬家福旗艦量販 ✕ 樂家康超市便利購 商品購買邏輯 ─── */
+function buyWanjiafuToast() {
   if (gameState.money < 40) return alert("生活金不足 $40 囉！");
   gameState.money -= 40;
   gameState.stamina = Math.min(100, gameState.stamina + 45);
   updateBars();
   playTone(659, 'triangle', 0.15);
-  showNavToast("🥖 購買家樂福家庭號能量吐司！體力 +45！");
-  showDetectiveDialogue("「家樂福現做白吐司香軟飽滿，體力瞬間補滿大半！」", "都會調查員");
+  showNavToast("🍞 購買萬家福高能複合能量餐包！體力 +45！");
+  showDetectiveDialogue("「烘焙工坊現做高能能量餐包，香軟飽滿，迅速補滿全域巡航體力！」", "戰術中樞");
+  closeModal('wanjiafuModal');
   closeModal('carrefourModal');
 }
+function buyCarrefourToast() { buyWanjiafuToast(); }
 
-function buyCarrefourWater() {
+function buyWanjiafuWater() {
   if (gameState.money < 30) return alert("生活金不足 $30 囉！");
   gameState.money -= 30;
   gameState.mood = Math.min(100, gameState.mood + 35);
   updateBars();
   playTone(587, 'triangle', 0.15);
-  showNavToast("💧 購買家樂福 1500ml 量販大瓶水！心情 +35！");
-  showDetectiveDialogue("「量販大容量飲用水就是踏實，隨時補充水分！」", "都會調查員");
+  showNavToast("💧 購買萬家福 1500ml 離子電解水！心情 +35！");
+  showDetectiveDialogue("「1500ml 大容量離子水，隨時補充電解質與活力！」", "戰術中樞");
+  closeModal('wanjiafuModal');
   closeModal('carrefourModal');
 }
+function buyCarrefourWater() { buyWanjiafuWater(); }
 
-function buyCarrefourBox() {
+function buyWanjiafuBox() {
   if (gameState.money < 120) return alert("生活金不足 $120 囉！");
   gameState.money -= 120;
   gameState.stamina = Math.min(100, gameState.stamina + 60);
   gameState.mood = Math.min(100, gameState.mood + 50);
   updateBars();
   playTone(784, 'triangle', 0.2);
-  showNavToast("🧰 購買家樂福調查員手提補給箱！體力 +60、心情 +50！");
-  showDetectiveDialogue("「豪華手提量販補給箱！乾糧與電解水一應俱全，調查巡航無後顧之憂！」", "都會調查員");
+  showNavToast("🧰 購買樂家康全像探測補給箱！體力 +60、心情 +50！");
+  showDetectiveDialogue("「全配探測補給箱！高能口糧與應急套件一應俱全，巡航無後顧之憂！」", "戰術中樞");
+  closeModal('wanjiafuModal');
   closeModal('carrefourModal');
 }
-
-function buyPxmartApple() {
-  if (gameState.money < 35) return alert("生活金不足 $35 囉！");
-  gameState.money -= 35;
-  gameState.stamina = Math.min(100, gameState.stamina + 35);
-  updateBars();
-  playTone(659, 'triangle', 0.15);
-  showNavToast("🍎 購買全聯產地直送高纖蘋果！體力 +35！");
-  showDetectiveDialogue("「清脆香甜的產地直送蘋果，一口咬下滿口生津，元氣滿滿！」", "都會調查員");
-  closeModal('pxmartModal');
-}
-
-function buyPxmartSoymilk() {
-  if (gameState.money < 25) return alert("生活金不足 $25 囉！");
-  gameState.money -= 25;
-  gameState.stamina = Math.min(100, gameState.stamina + 25);
-  gameState.mood = Math.min(100, gameState.mood + 20);
-  updateBars();
-  playTone(587, 'triangle', 0.15);
-  showNavToast("🥛 購買全聯濃醇無糖高纖豆漿！體力 +25、心情 +20！");
-  showDetectiveDialogue("「非基改現磨濃醇高纖豆漿，提神醒腦、思路清晰！」", "都會調查員");
-  closeModal('pxmartModal');
-}
-
-function buyPxmartBasket() {
-  if (gameState.money < 80) return alert("生活金不足 $80 囉！");
-  gameState.money -= 80;
-  gameState.stamina = Math.min(100, gameState.stamina + 50);
-  gameState.mood = Math.min(100, gameState.mood + 40);
-  updateBars();
-  playTone(740, 'triangle', 0.2);
-  showNavToast("🧺 購買全聯社區生鮮活力籃！體力 +50、心情 +40！");
-  showDetectiveDialogue("「時令新鮮蔬果綜合籃，維持一整天充沛體能！」", "都會調查員");
-  closeModal('pxmartModal');
-}
+function buyCarrefourBox() { buyWanjiafuBox(); }
 
 /* ─── 10c. 連鎖品牌雷達切換與街區導航 ─── */
 function setBrandRadarFilter(brand) {
@@ -3085,7 +3169,7 @@ function setBrandRadarFilter(brand) {
     familymart: 'filterFmart',
     seven: 'filterSeven',
     carrefour: 'filterCarrefour',
-    pxmart: 'filterPxmart',
+    wanjiafu: 'filterCarrefour',
     coco: 'filterCoco',
     market: 'filterMarket'
   };
@@ -3111,17 +3195,21 @@ function setBrandRadarFilter(brand) {
       text.innerText = "7-Eleven OPENPOINT 數位雷達啟動！全雙北 28 間 24H 門市光纖互聯！";
       showNavToast("🍙 7-Eleven OPENPOINT 數位雷達啟動！");
       playTone(659, 'triangle', 0.15);
-    } else if (brand === 'carrefour') {
+    } else if (brand === 'carrefour' || brand === 'wanjiafu' || brand === 'pxmart') {
       banner.style.display = "flex";
-      icon.innerText = "🛒";
-      text.innerText = "家樂福 Carrefour 全城量販物流網絡已啟動！12 間旗艦大賣場與便利購全城跨區互聯！";
-      showNavToast("🛒 家樂福 Carrefour 全城量販物流雷達啟動！");
+      icon.innerText = "🏬";
+      text.innerText = "萬家福 ✕ 樂家康 全雙北量子物流網絡已啟動！旗艦量販與便利購全城跨區互聯！";
+      showNavToast("🏬 萬家福 ✕ 樂家康 量子物流雷達啟動！");
       playTone(523, 'triangle', 0.15);
-    } else if (brand === 'pxmart') {
+    } else if (brand === 'coco') {
       banner.style.display = "flex";
-      icon.innerText = "🧺";
-      text.innerText = "全聯 PX Mart 社區生鮮互聯網絡啟動！雙北 14 間生鮮超市供應鏈互聯！";
-      showNavToast("🧺 全聯 PX Mart 社區生鮮網絡雷達啟動！");
+      icon.innerText = "🧋";
+      text.innerText = "CoCo 都可 跨門市雲端寄杯網絡啟動！雙北 14 間手搖飲門市雲端寄杯隨處領！";
+      showNavToast("🧋 CoCo 都可 跨店雲端寄杯雷達啟動！");
+      playTone(698, 'triangle', 0.15);
+    } else if (brand === 'market') {
+      banner.style.display = "flex";
+      icon.innerText = "🏮";
       playTone(493, 'triangle', 0.15);
     } else if (brand === 'coco') {
       banner.style.display = "flex";
@@ -3142,10 +3230,10 @@ function setBrandRadarFilter(brand) {
 function jumpToDistrict(distId) {
   document.querySelectorAll(".district-jump-btn").forEach(b => b.classList.remove("highlight"));
   if (distId === 'overview') {
-    camera.x = 0; camera.z = 10; camera.targetScale = 1.35;
+    camera.x = 70; camera.z = -20; camera.targetScale = 0.95;
     const btn = document.getElementById("btnJumpOverview");
     if (btn) btn.classList.add("highlight");
-    showNavToast("🗺️ 已切換為【雙北全圖樣式總覽】！一覽台北市與新北市全境拓撲！");
+    showNavToast("🗺️ 已切換為【雙北全圖樣式總覽】！一覽台北市 12 區與新北市 29 特區全境拓撲！");
   } else if (distId === 'station') {
     camera.x = 0; camera.z = 14; camera.targetScale = 16;
     const btn = document.getElementById("btnJumpStation");
@@ -3190,7 +3278,22 @@ function jumpToDistrict(distId) {
     camera.x = 80; camera.z = 280; camera.targetScale = 13;
     const btn = document.getElementById("btnJumpBitan");
     if (btn) btn.classList.add("highlight");
-    showNavToast("🚣 已跳轉至【新店溪水岸 ✕ 碧潭風景區】！");
+    showNavToast("🚣 已跳轉至【新店溪水岸 ✕ 碧潭水電中樞】！");
+  } else if (distId === 'neihu_park') {
+    camera.x = 270; camera.z = -160; camera.targetScale = 12;
+    const btn = document.getElementById("btnJumpNeihu");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("⚡ 已鎖定定位【內湖科技園區 ✕ 內科高能園區】！");
+  } else if (distId === 'nangang_biotech') {
+    camera.x = 370; camera.z = -60; camera.targetScale = 12;
+    const btn = document.getElementById("btnJumpNangang");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🔬 已鎖定定位【南港生技光谷 ✕ 軟體園區 ✕ 展覽館】！");
+  } else if (distId === 'sanchong') {
+    camera.x = -285; camera.z = 20; camera.targetScale = 12;
+    const btn = document.getElementById("btnJumpSanchong");
+    if (btn) btn.classList.add("highlight");
+    showNavToast("🏭 已鎖定定位【三重新莊創新工坊 ✕ 重新路 ✕ 副都心】！");
   }
   updateMinimapRadar();
   updateGhostDroneHUD();
@@ -3206,17 +3309,17 @@ function toggleGhostMode() {
   if (gameState.isGhostMode) {
     if (btn) btn.classList.add("spectator");
     if (icon) icon.innerText = "👻";
-    if (text) text.innerText = "幽靈天眼 (無角色)";
-    showNavToast("🛰️ 已切換為【天眼幽靈自由巡航模式】！角色與市民已隱藏，自由飛行巡視雙北！");
-    showDetectiveDialogue("「切換至高空天眼巡航！以幽靈視角俯瞰雙北真實街廓與連鎖門市！」", "都會調查員");
+    if (text) text.innerText = "全域巡航 (無角色)";
+    showNavToast("🛰️ 已切換為【天眼全域自由巡航模式】！以全像視角自由巡視雙北全境！");
+    showDetectiveDialogue("「切換至高空全像巡航！俯瞰雙北 29+12 特區戰術拓撲！」", "戰術中樞");
   } else {
     if (btn) btn.classList.remove("spectator");
     if (icon) icon.innerText = "🚶";
-    if (text) text.innerText = "地面角色模式";
+    if (text) text.innerText = "地面視角模式";
     playerPos.x = camera.x;
     playerPos.z = camera.z;
-    showNavToast("🚶 已切換為【地面角色模式】！調查員與市民已現身，可親自漫步街區！");
-    showDetectiveDialogue("「降落回地面！以調查員之姿親自踏查雙北街頭！」", "都會調查員");
+    showNavToast("🚶 已切換為【地面視角模式】！親自漫步雙北街頭！");
+    showDetectiveDialogue("「降落回地面！以第一人稱視角漫步街廓！」", "戰術中樞");
   }
   playTone(gameState.isGhostMode ? 880 : 440, 'sine', 0.1);
 }
@@ -3234,12 +3337,12 @@ function zoomOutCamera() {
 }
 
 function resetCameraCenter() {
-  camera.x = 0;
-  camera.z = 14;
-  camera.targetScale = 15;
+  camera.x = 70;
+  camera.z = -20;
+  camera.targetScale = 0.95;
   playTone(600, 'sine', 0.08);
   updateGhostDroneHUD();
-  showNavToast("🎯 鏡頭已重置置中於【台北車站 忠孝西路】！");
+  showNavToast("🎯 鏡頭已重置置中為【雙北全境科幻全像總覽】！");
 }
 
 function takeScenicPhoto() {

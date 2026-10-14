@@ -35,68 +35,39 @@
     </div>
   </div>
 
-  <!-- 🏪 連鎖品牌雷達連動面板 (Brand Radar Filter Bar) -->
-  <div class="brand-radar-bar" id="brandRadarBar">
-    <button class="radar-filter-btn active" id="filterAll" onclick="setBrandRadarFilter('all')">
-      <span>🌐 全部路網</span>
-    </button>
-    <button class="radar-filter-btn brand-fmart" id="filterFmart" onclick="setBrandRadarFilter('familymart')">
-      <span>🏪 全家 FamilyMart</span>
-    </button>
-    <button class="radar-filter-btn brand-seven" id="filterSeven" onclick="setBrandRadarFilter('seven')">
-      <span>🍙 7-Eleven 統一超商</span>
-    </button>
-    <button class="radar-filter-btn brand-carrefour" id="filterCarrefour" onclick="setBrandRadarFilter('carrefour')">
-      <span>🛒 家樂福 Carrefour</span>
-    </button>
-    <button class="radar-filter-btn brand-pxmart" id="filterPxmart" onclick="setBrandRadarFilter('pxmart')">
-      <span>🧺 全聯 PX Mart</span>
-    </button>
-    <button class="radar-filter-btn brand-coco" id="filterCoco" onclick="setBrandRadarFilter('coco')">
-      <span>🧋 CoCo 都可</span>
-    </button>
-    <button class="radar-filter-btn brand-market" id="filterMarket" onclick="setBrandRadarFilter('market')">
-      <span>🏮 傳統市場與夜市</span>
-    </button>
-  </div>
-
-  <!-- 🧭 雙北行政區快速導航條 (District Quick Jump Bar) -->
+  <!-- 🧭 雙北全息戰術拓撲特區快速定位 (Cyber Holo-Grid Tactical Jump Bar) -->
   <div class="district-jump-bar" id="districtJumpBar">
-    <span style="font-size:11px; color:#38bdf8; font-weight:800; margin-right:4px;">🧭 雙北地圖全景:</span>
-    <button class="district-jump-btn highlight" id="btnJumpOverview" onclick="jumpToDistrict('overview')" style="background:linear-gradient(135deg, #1e40af, #2563eb); border-color:#60a5fa; color:#ffffff; font-weight:900;">🗺️ 雙北全景總覽</button>
-    <button class="district-jump-btn" id="btnJumpStation" onclick="jumpToDistrict('station')">🏛️ 台北車站(忠孝)</button>
-    <button class="district-jump-btn" id="btnJumpXuefu" onclick="jumpToDistrict('banqiao_xuefu')">🏫 板橋學府路一段 (1:1)</button>
-    <button class="district-jump-btn" id="btnJumpXimen" onclick="jumpToDistrict('chongqing_ximen')">🎮 萬華西門町</button>
-    <button class="district-jump-btn" id="btnJumpZhongshan" onclick="jumpToDistrict('zhongshan')">🌳 中山南京商圈</button>
-    <button class="district-jump-btn" id="btnJumpDaan" onclick="jumpToDistrict('daan_park')">🌲 大安森林公園</button>
-    <button class="district-jump-btn" id="btnJumpXinyi" onclick="jumpToDistrict('xinyi_101')">🏙️ 信義101大樓</button>
-    <button class="district-jump-btn" id="btnJumpCircle" onclick="jumpToDistrict('circle')">🏮 大同大稻埕/寧夏</button>
-    <button class="district-jump-btn" id="btnJumpTamsui" onclick="jumpToDistrict('tamsui')">🌊 淡水金色水岸</button>
-    <button class="district-jump-btn" id="btnJumpBitan" onclick="jumpToDistrict('xindian_bitan')">🚣 新店碧潭水岸</button>
-  </div>
-
-  <!-- 📡 品牌連鎖雷達特效橫幅 (Chain Radar Broadcast Banner) -->
-  <div class="chain-broadcast-banner" id="chainBroadcastBanner">
-    <span id="chainBroadcastIcon">🛒</span>
-    <span id="chainBroadcastText">家樂福跨區量販補給網絡啟動</span>
+    <span style="font-size:11px; color:#00f0ff; font-weight:800; margin-right:4px; letter-spacing:1px;">🛰️ 全境全息特區:</span>
+    <button class="district-jump-btn highlight" id="btnJumpOverview" onclick="jumpToDistrict('overview')" style="background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#00f0ff; color:#ffffff; font-weight:900;">🗺️ 雙北全景總覽</button>
+    <button class="district-jump-btn" id="btnJumpStation" onclick="jumpToDistrict('station')">🏛️ 中正核心樞紐</button>
+    <button class="district-jump-btn" id="btnJumpXuefu" onclick="jumpToDistrict('banqiao_xuefu')">🏫 板橋學府量子區 (1:1)</button>
+    <button class="district-jump-btn" id="btnJumpXimen" onclick="jumpToDistrict('chongqing_ximen')">🎮 萬華西門特區</button>
+    <button class="district-jump-btn" id="btnJumpZhongshan" onclick="jumpToDistrict('zhongshan')">🌳 中山金融廊道</button>
+    <button class="district-jump-btn" id="btnJumpDaan" onclick="jumpToDistrict('daan_park')">🌲 大安森林穹頂</button>
+    <button class="district-jump-btn" id="btnJumpXinyi" onclick="jumpToDistrict('xinyi_101')">🏙️ 信義101星港塔</button>
+    <button class="district-jump-btn" id="btnJumpNeihu" onclick="jumpToDistrict('neihu_park')">⚡ 內湖科技園區</button>
+    <button class="district-jump-btn" id="btnJumpNangang" onclick="jumpToDistrict('nangang_biotech')">🔬 南港生技光谷</button>
+    <button class="district-jump-btn" id="btnJumpTamsui" onclick="jumpToDistrict('tamsui')">🌊 淡水數位水能港</button>
+    <button class="district-jump-btn" id="btnJumpBitan" onclick="jumpToDistrict('xindian_bitan')">🚣 新店碧潭水電中樞</button>
+    <button class="district-jump-btn" id="btnJumpSanchong" onclick="jumpToDistrict('sanchong')">🏭 三重新莊創新工坊</button>
   </div>
 
   <!-- 操作提示橫幅 -->
   <div class="fpv-hint" id="fpvHint">
-    <span>🗺️ 雙北全圖樣式總覽：[點擊上方『雙北全景總覽』俯瞰全區] ｜ [滾輪] 縮放全圖 ｜ [滑鼠拖曳/WASD] 自由巡航各大街區 ｜ [Shift] 極速穿梭</span>
+    <span>🌐 雙北全境科幻全像拓撲：[預設全域總覽] ｜ [滾輪] 自由縮放 ｜ [滑鼠拖曳/WASD] 巡航雙北 29+12 特區 ｜ [點擊上方特區] 即時戰術定位</span>
   </div>
 
   <!-- 導航提示氣泡 (Navigation Toast) -->
   <div class="nav-hint-toast" id="navHintToast">
     <span>🧭</span>
-    <span id="navHintText">請點擊上方品牌按鈕或探索街區！</span>
+    <span id="navHintText">請自由滾輪縮放或拖曳巡航雙北全境！</span>
   </div>
 
   <!-- 公車 / 捷運乘車與快轉過場動畫 HUD (Transit Cutscene HUD) -->
   <div class="transit-hud" id="transitHud">
     <div class="transit-card">
-      <div class="transit-badge" id="transitBadge">🚌 307 公車 (忠孝幹線 ➔ 中山商圈)</div>
-      <div class="transit-status" id="transitStatus">車輛行駛中，可悠閒隨車欣賞街景，或點擊按鈕快轉/下車...</div>
+      <div class="transit-badge" id="transitBadge">🛸 307 反重力巡航艦 (忠孝幹線 ➔ 中山金融廊道)</div>
+      <div class="transit-status" id="transitStatus">巡航艦行駛中，可悠閒隨艦欣賞街景，或點擊按鈕快轉/下車...</div>
     </div>
     <div style="display:flex; gap:8px;">
       <button class="fast-forward-btn" id="btnFastForward" onclick="triggerFastForwardTransition()">
@@ -110,46 +81,19 @@
 
   <!-- 頂部 HUD -->
   <div class="hud-top">
-    <!-- 左上角角色狀態卡 (沉浸都會調查員) -->
-    <div class="player-profile-card">
-      <div class="profile-avatar-box">
-        <img src="assets/images/avatar_detective.png" alt="個人頭像">
-      </div>
-      <div class="profile-info">
-        <div class="profile-header">
-          <span class="level-tag">Lv. 5</span>
-          <span class="badge-tag">都會調查員</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">體力</span>
-          <div class="bar-track">
-            <div class="bar-fill stamina" id="barStamina" style="width: 78%;"></div>
-          </div>
-          <span class="bar-val" id="txtStamina">78/100</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">😊 心情</span>
-          <div class="bar-track">
-            <div class="bar-fill mood" id="barMood" style="width: 85%;"></div>
-          </div>
-          <span class="bar-val" id="txtMood">85/100</span>
-        </div>
+    <!-- 左上角賽博全像系統狀態徽章 (取代已廢除之都尉調查員狀態卡) -->
+    <div class="cyber-system-badge">
+      <div class="cyber-pulse-dot"></div>
+      <div class="cyber-badge-text">
+        <span class="cyber-badge-title">NEO-TAIPEI HOLO-GRID // 雙北全息拓撲</span>
+        <span class="cyber-badge-sub">臺北市 12 區 ✕ 新北市 29 行政特區 ｜ 全域光子網絡 100% ONLINE</span>
       </div>
     </div>
 
-    <!-- 全服號外快報廣播欄 -->
+    <!-- 全域戰術拓撲快報欄 -->
     <div class="breaking-news-banner" id="breakingNewsBanner">
-      <span>🚨 全服快訊：</span>
-      <span id="breakingNewsText">歡迎進入雙北 1:1 真實道路虛擬世界！</span>
-    </div>
-
-    <!-- 體力不支中央警報橫幅 (依使用者第53回合指示隱藏，專注地圖樣式) -->
-    <div class="stamina-warning-banner" id="staminaWarningBanner" style="display:none;" onclick="openRestModal()">
-      <div class="warning-icon-box">⚠️</div>
-      <div class="warning-text-box">
-        <div class="warning-title">體力不支</div>
-        <div class="warning-desc">體力耗盡步伐沉重！請找公車候車椅休息或至超商補給。</div>
-      </div>
+      <span>🛰️ 全域連線：</span>
+      <span id="breakingNewsText">雙北 29+12 全息行政特區幾何矩陣已鎖定，無邊界科幻網格運作中！</span>
     </div>
 
     <!-- 右上角 HUD -->
@@ -171,34 +115,6 @@
         <div class="radar-compass-n">N</div>
         <div class="radar-player-dot" id="radarPlayerDot"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- 左側懸浮主線任務卡 (預設隱藏以呈現純淨雙北地圖) -->
-  <div class="quest-floating-card" id="mainQuestCard" style="display:none;">
-    <div class="quest-card-header">
-      <div class="quest-card-header-left">
-        <span>⚠️</span>
-        <span>主線委託</span>
-      </div>
-      <button class="quest-card-close" onclick="toggleMainQuestCard()">✕</button>
-    </div>
-    <div class="quest-card-body" id="mainQuestBody">
-      前往【台北車站(忠孝)】站牌搭乘 307 公車，或走進捷運出入口搭手扶梯進站。
-    </div>
-  </div>
-
-  <!-- 左下角懸浮任務提示卡 (預設隱藏以呈現純淨雙北地圖) -->
-  <div class="hint-floating-card" id="hintQuestCard" style="display:none;">
-    <div class="quest-card-header">
-      <div class="quest-card-header-left">
-        <span>⚠️</span>
-        <span>交通指引</span>
-      </div>
-      <button class="quest-card-close" onclick="toggleHintQuestCard()">✕</button>
-    </div>
-    <div class="quest-card-body" id="hintQuestBody">
-      雙北地圖全面擴大 2 倍，無法直接瞬移！請至路邊站牌等候公車。
     </div>
   </div>
 
@@ -226,16 +142,16 @@
   </div>
 
   <!-- 幽靈天眼巡航 / 地面角色切換鍵 -->
-  <div class="ghost-mode-toggle-btn spectator" id="btnGhostToggle" onclick="toggleGhostMode()" title="切換幽靈天眼 / 角色模式">
+  <div class="ghost-mode-toggle-btn spectator" id="btnGhostToggle" onclick="toggleGhostMode()" title="切換全域巡航 / 角色模式">
     <span id="ghostToggleIcon">👻</span>
-    <span id="ghostToggleText">幽靈天眼 (無角色)</span>
+    <span id="ghostToggleText">全域巡航 (無角色)</span>
   </div>
 
   <!-- 浮動縮放控制鍵 (Zoom In / Out / Reset) -->
   <div class="zoom-controls-floating">
     <div class="zoom-btn" onclick="zoomInCamera()" title="放大街區視角 [滾輪向上]">➕</div>
     <div class="zoom-btn" onclick="zoomOutCamera()" title="縮小雙北全景 [滾輪向下]">➖</div>
-    <div class="zoom-btn" onclick="resetCameraCenter()" title="置中重置視野">🎯</div>
+    <div class="zoom-btn" onclick="resetCameraCenter()" title="置中重置雙北全景">🎯</div>
   </div>
 
   <!-- 劇情對話 / 內心獨白視窗 -->
@@ -244,8 +160,8 @@
       <img src="assets/images/avatar_detective.png" alt="個人頭像">
     </div>
     <div class="diag-content-box">
-      <div class="diag-speaker" id="diagSpeaker">調查員</div>
-      <div class="diag-text" id="diagText">看來忠孝西路車水馬龍，到站牌等公車吧！</div>
+      <div class="diag-speaker" id="diagSpeaker">戰術中樞</div>
+      <div class="diag-text" id="diagText">全像拓撲雷達連線完畢，雙北 29+12 特區數據流暢運作中。</div>
     </div>
     <button class="diag-close" onclick="closeDialogueBox()">✕</button>
   </div>
@@ -255,32 +171,12 @@
     <div class="chat-messages" id="chatMessages">
       <div class="chat-msg-row">
         <span class="author">[系統]</span>
-        <span>歡迎連入真實雙北連線世界！第一人稱視角移動，搭公車或捷運往返各區。</span>
+        <span>歡迎進入雙北全境科幻全像戰術地圖！滾輪縮放全圖，點擊特區鈕快速聚焦。</span>
       </div>
     </div>
     <div class="chat-input-bar">
       <input type="text" class="chat-input" id="chatInput" placeholder="輸入文字在頭頂顯示氣泡..." maxlength="50" onkeydown="if(event.key==='Enter') sendChatMessage()">
       <button class="chat-send-btn" onclick="sendChatMessage()">送出</button>
-    </div>
-  </div>
-
-  <!-- 右下角 Cyberpunk 操作按鈕 (去除背包，專注雙北地圖全景與導航) -->
-  <div class="hud-bottom-right-dock">
-    <div class="dock-btn" onclick="jumpToDistrict('overview')" title="雙北全域總覽">
-      <div class="dock-icon">🗺️</div>
-      <div class="dock-label">全景</div>
-    </div>
-    <div class="dock-btn" onclick="openMapModal()" title="雙北路網與公車路線檢視">
-      <div class="dock-icon">📍</div>
-      <div class="dock-label">路網</div>
-    </div>
-    <div class="dock-btn" onclick="toggleWeather()" title="時段與氣象切換">
-      <div class="dock-icon">☀️</div>
-      <div class="dock-label">天氣</div>
-    </div>
-    <div class="dock-btn" onclick="openSettingsModal()" title="環境與私服器設定">
-      <div class="dock-icon">⚙️</div>
-      <div class="dock-label">設定</div>
     </div>
   </div>
 
@@ -414,71 +310,40 @@
     </div>
   </div>
 
-  <!-- 3c. 家樂福 Carrefour 量販 ✕ 超市便利購 -->
-  <div class="modal-overlay" id="carrefourModal">
+  <!-- 3c. 萬家福旗艦量販 ✕ 樂家康超市便利購 (Neo-Nexus Supply) -->
+  <div class="modal-overlay" id="wanjiafuModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🛒</span> 家樂福 Carrefour (量販 ✕ 超市便利購)</div>
-        <button class="modal-close" onclick="closeModal('carrefourModal')">×</button>
+        <div class="modal-title"><span>🏬</span> 萬家福旗艦量販 ✕ 樂家康超市便利購</div>
+        <button class="modal-close" onclick="closeModal('wanjiafuModal')">×</button>
       </div>
-      <div style="background:#dc262618; border:1px solid #ef4444; padding:12px; border-radius:10px; margin-bottom:14px;">
-        <p style="color:#f87171; font-weight:800; font-size:14px;" id="carrefourBranchGreeting">店長親切招呼：「天天都便宜，就是家樂福！全雙北量販互聯，提供充足調查能量補給！」</p>
+      <div style="background:#0284c718; border:1px solid #38bdf8; padding:12px; border-radius:10px; margin-bottom:14px;">
+        <p style="color:#38bdf8; font-weight:800; font-size:14px;" id="wanjiafuBranchGreeting">店長親切招呼：「科技生活，盡在萬家福！全雙北量子物流網絡互聯，提供充足探索能量與補給！」</p>
       </div>
-      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #3b82f6; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
-        🌐 <strong>【連鎖網絡雷達】</strong>：已對齊現實雙北門市（板橋學府便利購、重慶旗艦店、重慶南店、中山店），享有全城大容量物流互聯！
+      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #00f0ff; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
+        🌐 <strong>【量子物流網絡】</strong>：已對齊現實雙北門市（板橋學府樂家康便利購、萬家福桂林旗艦店、萬家福重慶旗艦店、樂家康中山松江店），享有全城大容量物流互聯！
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#fca5a5; margin-bottom:4px;">🥖 家庭號能量吐司 ($40)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">烘焙坊現做柔軟白吐司，快速填飽肚子！</p>
-          <button class="chat-send-btn" style="background:#dc2626; width:100%; padding:8px;" onclick="buyCarrefourToast()">購買 $40 (+45 體力)</button>
+          <h4 style="color:#fca5a5; margin-bottom:4px;">🍞 萬家福高能複合能量餐包 ($40)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">烘焙工坊現做柔軟能量餐包，快速補充體力！</p>
+          <button class="chat-send-btn" style="background:#2563eb; width:100%; padding:8px;" onclick="buyWanjiafuToast()">購買 $40 (+45 體力)</button>
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#93c5fd; margin-bottom:4px;">💧 大瓶量販運動水 ($30)</h4>
+          <h4 style="color:#93c5fd; margin-bottom:4px;">💧 萬家福 1500ml 離子電解水 ($30)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">1500ml 量販大容量，漫遊全城不怕缺水！</p>
-          <button class="chat-send-btn" style="background:#2563eb; width:100%; padding:8px;" onclick="buyCarrefourWater()">購買 $30 (+35 心情)</button>
+          <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyWanjiafuWater()">購買 $30 (+35 心情)</button>
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#fde047; margin-bottom:4px;">🧰 調查員手提補給箱 ($120)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">量販大補給：乾糧、能量棒與電解水！</p>
-          <button class="chat-send-btn" style="background:#ca8a04; width:100%; padding:8px;" onclick="buyCarrefourBox()">購買 $120 (+60 體力/+50 心情)</button>
+          <h4 style="color:#fde047; margin-bottom:4px;">🧰 樂家康全像探測補給箱 ($120)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">量販大補給：高能口糧、離子能量棒與應急套件！</p>
+          <button class="chat-send-btn" style="background:#ca8a04; width:100%; padding:8px;" onclick="buyWanjiafuBox()">購買 $120 (+60 體力/+50 心情)</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 3d. 全聯福利中心 PX Mart 社區生鮮超市 -->
-  <div class="modal-overlay" id="pxmartModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>🧺</span> 全聯福利中心 PX Mart (社區生鮮)</div>
-        <button class="modal-close" onclick="closeModal('pxmartModal')">×</button>
-      </div>
-      <div style="background:#1e3a8a22; border:1px solid #3b82f6; padding:12px; border-radius:10px; margin-bottom:14px;">
-        <p style="color:#60a5fa; font-weight:800; font-size:14px;" id="pxmartBranchGreeting">廣播響起：「請支援收銀！買進美好生活，全聯生鮮產地直送！」</p>
-      </div>
-      <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #0284c7; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
-        🌐 <strong>【連鎖網絡雷達】</strong>：全雙北門市（板橋學府店、延平店、重慶店、中正武昌店）緊密互聯，生鮮蔬果提供社區級活力支援！
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
-        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#86efac; margin-bottom:4px;">🍎 產地直送高纖蘋果 ($35)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">清脆爽口香甜多汁，迅速補充元氣！</p>
-          <button class="chat-send-btn" style="background:#059669; width:100%; padding:8px;" onclick="buyPxmartApple()">購買 $35 (+35 體力)</button>
-        </div>
-        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#fdba74; margin-bottom:4px;">🥛 濃醇無糖高纖豆漿 ($25)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">非基改黃豆現磨濃醇，解渴恢復專注！</p>
-          <button class="chat-send-btn" style="background:#ea580c; width:100%; padding:8px;" onclick="buyPxmartSoymilk()">購買 $25 (+25 體力/+20 心情)</button>
-        </div>
-        <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#38bdf8; margin-bottom:4px;">🧺 社區生鮮活力籃 ($80)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">時令水果與綜合堅果，調查續航必備！</p>
-          <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyPxmartBasket()">購買 $80 (+50 體力/+40 心情)</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- 全聯等傳統生鮮超市模態框已依委託人指示徹底移除，全域轉型科幻全像拓撲與萬家福/樂家康量子補給 -->
 
   <!-- 3e. 傳統市場與觀光夜市 (Traditional Market & Night Market Modal) -->
   <div class="modal-overlay" id="marketModal">
@@ -688,78 +553,7 @@
     </div>
   </div>
 
-  <!-- 背包模態框已依委託人第 53 回合指示移除，專注雙北地圖全景樣式呈現 -->
-
-  <!-- 10. 任務清單 (Dock [📋 任務]) -->
-  <div class="modal-overlay" id="questsModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>📋</span> 當前委託調查進度</div>
-        <button class="modal-close" onclick="closeModal('questsModal')">×</button>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>1. 忠孝西路搭乘 307 公車</span>
-            <span id="stBus" style="color:#f59e0b;">進行中</span>
-          </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">走到路邊公車站牌等車上車，體驗鳥瞰快轉過場。</p>
-        </div>
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>2. CoCo 手搖飲與全家超商補給</span>
-            <span id="stStore" style="color:#f59e0b;">進行中</span>
-          </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">親自走訪門市購買珍奶或茶葉蛋，維持體力。</p>
-        </div>
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>3. 北投分局調閱 CCTV 追蹤</span>
-            <span id="stCctv" style="color:#f59e0b;">進行中</span>
-          </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">會面警政巡官，調閱 4 分割監視器時空軌跡。</p>
-        </div>
-        <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #1e3a8a;">
-          <div style="display:flex; justify-content:space-between; font-weight:800; color:#38bdf8;">
-            <span>4. 現場筆錄打臉逮捕</span>
-            <span id="stArrest" style="color:#f59e0b;">未完成</span>
-          </div>
-          <p style="font-size:12px; color:#94a3b8; margin-top:4px;">出示 307 公車刷卡紀錄，戳破嫌犯不在場證明！</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 11. 設定與私服器 (Dock [⚙️ 設定]) -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title"><span>⚙️</span> 環境與私服器連線設定</div>
-        <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
-      </div>
-      <div style="font-size:13px; line-height:1.7; color:#cbd5e1;">
-        <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <strong>👀 當前視角模式：</strong> <span style="color:#38bdf8; font-weight:bold;">第一人稱視角 (FPV 主角之眼)</span><br>
-          <strong>⚡ 渲染核心模式：</strong> <span id="renderEngineLabel" style="color:#10b981; font-weight:bold;">偵測中...</span>
-        </div>
-        <div style="background:#0f172a; padding:14px; border-radius:10px; margin-bottom:12px; border:1px solid #1e3a8a;">
-          <h4 style="color:#38bdf8; margin-bottom:8px;">🌐 專屬私服器 (WebSocket) 連線位址</h4>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="wsServerInput" class="chat-input" style="padding:6px 10px;" value="ws://localhost:3000">
-            <button class="chat-send-btn" onclick="reconnectCustomServer()">重新連線</button>
-          </div>
-          <p style="font-size:11.5px; color:#94a3b8; margin-top:6px;">
-            本機啟動請在終端機輸入 <code>npm start</code>！上傳雲端後可填入 Render 提供的 <code>wss://...</code> 網址。
-          </p>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="chat-send-btn" style="background:#0284c7; padding:8px 16px;" onclick="toggleWeather()">☀️ 切換時段 (晴天/黃昏/夜晚)</button>
-          
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- 背包、委託任務與設定模態框已依委託人第 54 回合指示徹底清除，全屏純淨呈現雙北科幻大地圖 -->
   <script src="game.js"></script>
 </body>
 </html>

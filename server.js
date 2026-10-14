@@ -85,8 +85,8 @@ wss.on('connection', (ws, req) => {
 
   const playerState = {
     id: playerId,
-    nickname: `調查員_${playerId.substring(4)}`,
-    badge: '🌟 都會調查員',
+    nickname: `市民_${playerId.substring(4)}`,
+    badge: '🛰️ 雙北巡航官',
     x: 0,
     y: 0,
     z: 0,
