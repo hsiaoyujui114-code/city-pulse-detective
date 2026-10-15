@@ -175,7 +175,7 @@ crew-deck-role/
 
 ## 🚀 九、 給接續 AI Agent 的首要工作 SOP (接手必讀)
 
-0. **先讀 `TECH_IMPLEMENTATION_PLAN.md`**：已決定主畫面用 PixiJS 自繪 PaGamO 等角六角像素風，MapLibre 只當 App 地圖頁；各功能用哪個套件已列好，不要自行換掉。
+0. **先讀 `TECH_IMPLEMENTATION_PLAN.md`**：已決定主畫面用 PixiJS 繪製 2.5D 等角連續自然街廓風（不採用 PaGamO 六角蜂巢切格），MapLibre 只當 App 地圖頁；各功能用哪個套件已列好，不要自行換掉。
 1. **先確認自身理解**：
    - 閱讀完本手冊後，簡短條列專案背景與禁止事項，證明完全吸收。
 2. **嚴守「先不要改動代碼」指令**：
