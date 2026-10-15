@@ -1248,7 +1248,7 @@ function renderScene() {
   ], '#eab308', "環狀線");
 
   // 0.5 雙北全境東西向延伸大動脈 (Macro Arterials Extents)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   // 忠孝東路三段至七段 (往信義、南港延伸, z: 0)
   ctx.fillRect(screenX(220), screenZ(-16), 200 * scale, 32 * scale);
   // 信義路 (信義計畫區軸線, z: 50)
@@ -1377,25 +1377,25 @@ function renderScene() {
 
   // 1. 東西向 9 大主要幹道與街廓 (East-West Major Arterials)
   // (1) 民權西路 / 民權東路 (z: -195, 寬 24m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(-207), 440 * scale, 24 * scale);
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-195.4), 440 * scale, 0.8 * scale);
 
   // (2) 民生西路 / 民生東路 (z: -140, 寬 22m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(-151), 440 * scale, 22 * scale);
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-140.4), 440 * scale, 0.8 * scale);
 
   // (3) 南京西路 / 南京東路 (z: -95, 寬 26m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(-108), 440 * scale, 26 * scale);
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-95.4), 440 * scale, 0.8 * scale);
 
   // (4) 長安西路 / 長安東路 (z: -48, 寬 20m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(-58), 440 * scale, 20 * scale);
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-48.4), 440 * scale, 0.8 * scale);
@@ -1415,7 +1415,7 @@ function renderScene() {
   }
 
   // (5) 忠孝西路一段 / 忠孝東路一段 (z: 0, 寬 36m，台北都會樞紐大動脈)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, 36 * scale);
   // 忠孝西路 中央公車專用道 (深藍柏油，z: -5 ~ 5)
   ctx.fillStyle = '#1e385c';
@@ -1440,15 +1440,15 @@ function renderScene() {
   ctx.fillRect(screenX(-220), screenZ(18), 440 * scale, 18 * scale);
 
   // (6) 許昌街 / 開封街一段 (z: 44, 寬 18m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-130), screenZ(35), 205 * scale, 18 * scale);
 
   // (7) 漢口街一段 / 武昌街一段 (z: 72, 寬 18m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(63), 295 * scale, 18 * scale);
 
   // (8) 衡陽路 / 襄陽路 (z: 98, 寬 20m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(88), 295 * scale, 20 * scale);
 
   // (8.5) 凱達格蘭大道 ✕ 愛國西路 (z: 112, 寬 24m)
@@ -1458,13 +1458,13 @@ function renderScene() {
   ctx.fillRect(screenX(-140), screenZ(111.6), 220 * scale, 0.8 * scale);
 
   // (9) 板橋縣民大道一段 (z: 130, 寬 26m，新板特區綠帶大道)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(117), 220 * scale, 26 * scale);
   ctx.fillStyle = '#15803d'; // 中央安全島綠帶
   ctx.fillRect(screenX(-220), screenZ(128.5), 220 * scale, 3 * scale);
 
   // (10) 板橋學府路一段 (特別由玩家點名指定！z: 168, 寬 26m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(155), 220 * scale, 26 * scale);
   ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 1.2;
@@ -1480,54 +1480,54 @@ function renderScene() {
   ctx.fillRect(screenX(-220), screenZ(181), 220 * scale, 6 * scale);
 
   // (11) 板橋文化路一段 / 府中路 (z: 195, 寬 28m)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-220), screenZ(181), 260 * scale, 28 * scale);
 
   // 2. 南北向 9 大主要幹道與街廓 (North-South Major Arterials)
   // (1) 淡水河畔環河路 / 迪化街一段 (x: -185, 寬 22m, z: -220 ~ 0)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-196), screenZ(-220), 22 * scale, 220 * scale);
 
   // (2) 萬華漢中街 (西門町徒步區) (x: -178, 寬 20m, z: 0 ~ 115)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-188), screenZ(0), 20 * scale, 115 * scale);
 
   // (3) 大同延平北路二段/三段 (x: -145, 寬 22m, z: -220 ~ 0)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-156), screenZ(-220), 22 * scale, 220 * scale);
 
   // (4) 萬華中華路一段 (林蔭大道，寬 32m, z: 0 ~ 115)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-161), screenZ(0), 32 * scale, 115 * scale);
   ctx.fillStyle = '#15803d'; // 中央綠帶
   ctx.fillRect(screenX(-147), screenZ(0), 4 * scale, 115 * scale);
 
   // (5) 大同重慶北路二段/三段 (x: -85, 寬 26m, z: -220 ~ 0)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-98), screenZ(-220), 26 * scale, 220 * scale);
 
   // (6) 中正重慶南路一段 (書店街) (x: -92, 寬 24m, z: 0 ~ 140)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-104), screenZ(0), 24 * scale, 140 * scale);
 
   // (7) 大同寧夏路 (夜市街區) (x: -55, 寬 20m, z: -220 ~ 0)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-65), screenZ(-220), 20 * scale, 220 * scale);
 
   // (8) 站前館前路 (x: -32, 寬 22m, z: 0 ~ 115)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-43), screenZ(0), 22 * scale, 115 * scale);
 
   // (9) 站前南陽街 (x: 15, 寬 18m, z: 20 ~ 115)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(6), screenZ(20), 18 * scale, 95 * scale);
 
   // (10) 站前公園路 (x: 48, 寬 24m, z: 0 ~ 115)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(36), screenZ(0), 24 * scale, 115 * scale);
 
   // (11) 中山北路一段/二段 (樟樹林蔭大道，寬 36m, z: -220 ~ 30)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(60), screenZ(-220), 36 * scale, 250 * scale);
   ctx.fillStyle = '#15803d'; // 中央綠蔭安全島
   ctx.fillRect(screenX(76), screenZ(-220), 4 * scale, 250 * scale);
@@ -1535,19 +1535,19 @@ function renderScene() {
   ctx.fillRect(screenX(96), screenZ(-220), 20 * scale, 250 * scale);
 
   // (12) 林森北路 (條通商圈) (x: 108, 寬 22m, z: -220 ~ 30)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(97), screenZ(-220), 22 * scale, 250 * scale);
 
   // (13) 松江路 (金融商圈) (x: 155, 寬 28m, z: -220 ~ 140)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(141), screenZ(-220), 28 * scale, 360 * scale);
 
   // (14) 復興北路/南路 (文湖線軸線) (x: 185, 寬 28m, z: -220 ~ 140)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(171), screenZ(-220), 28 * scale, 360 * scale);
 
   // (15) 板橋府中路 / 重慶路 (x: -175 ~ -110, z: 120 ~ 220)
-  ctx.fillStyle = '#1c222b';
+  ctx.fillStyle = '#2d3748';
   ctx.fillRect(screenX(-185), screenZ(120), 24 * scale, 100 * scale);
   ctx.fillRect(screenX(-155), screenZ(120), 24 * scale, 100 * scale);
 
@@ -1629,38 +1629,65 @@ function renderScene() {
   ctx.textAlign = 'center';
   ctx.fillText('華江橋 (往文化路)', screenX(-189), screenZ(112));
 
-  // 4. 十字路口精密斑馬線
-  ctx.fillStyle = '#ffffff';
-  // 中山北路 ✕ 忠孝西路
-  for (let z = -16; z <= 16; z += 4.5) {
-    ctx.fillRect(screenX(55), screenZ(z), 5 * scale, 2.2 * scale);
-    ctx.fillRect(screenX(96), screenZ(z), 5 * scale, 2.2 * scale);
-  }
-  // 館前路 ✕ 忠孝西路
-  for (let x = -40; x <= -20; x += 4.5) {
-    ctx.fillRect(screenX(x), screenZ(18), 2.2 * scale, 5 * scale);
-  }
-  // 板橋學府路一段路口斑馬線
-  for (let z = 158; z <= 178; z += 4.5) {
-    ctx.fillRect(screenX(-60), screenZ(z), 5 * scale, 2.2 * scale);
-    ctx.fillRect(screenX(-190), screenZ(z), 5 * scale, 2.2 * scale);
+  // 4. 十字路口精密斑馬線 (綠斑馬線，參考台北狂飆台味特色)
+  function drawGreenZebraCrossing(gx, gz, gw, gh, isVertical=false) {
+    const sx = screenX(gx);
+    const sz = screenZ(gz);
+    ctx.fillStyle = '#15803d'; // 台灣標準交通部綠底
+    ctx.fillRect(sx, sz, gw * scale, gh * scale);
+    ctx.fillStyle = '#ffffff'; // 白色斑馬反光條
+    if (isVertical) {
+      for (let y = 1; y < gh - 2; y += 4.5) {
+        ctx.fillRect(sx + 1 * scale, sz + y * scale, (gw - 2) * scale, 2.2 * scale);
+      }
+    } else {
+      for (let x = 1; x < gw - 2; x += 4.5) {
+        ctx.fillRect(sx + x * scale, sz + 1 * scale, 2.2 * scale, (gh - 2) * scale);
+      }
+    }
   }
 
-  // 5. 瀝青路面科技路名直接繪製 (Road Surface Typography)
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-  ctx.font = `bold ${Math.max(10, scale * 0.8)}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText('【忠孝西路一段 ✕ 公車專用道】', screenX(0), screenZ(-1));
-  ctx.fillText('【板橋學府路一段 (1:1 真實商圈)】', screenX(-110), screenZ(169));
-  ctx.fillText('【縣民大道・新板特區】', screenX(-110), screenZ(131));
-  ctx.fillText('【文化路一段・府中商圈】', screenX(-110), screenZ(196));
-  ctx.fillText('【中山北路一段・樟樹林蔭大道】', screenX(78), screenZ(-30));
-  ctx.fillText('【重慶南路一段・書店街】', screenX(-92), screenZ(50));
-  ctx.fillText('【南京西路商圈】', screenX(10), screenZ(-93));
-  ctx.fillText('【中華路一段・西門町】', screenX(-145), screenZ(40));
-  ctx.fillText('【民生西路・大稻埕與雙連】', screenX(10), screenZ(-138));
-  ctx.fillText('【民權西路・晴光商圈】', screenX(10), screenZ(-193));
-  ctx.fillText('【松江路・金融特區】', screenX(155), screenZ(-40));
+  // 中山北路 ✕ 忠孝西路 綠斑馬線
+  drawGreenZebraCrossing(54, -18, 6, 36, true);
+  drawGreenZebraCrossing(96, -18, 6, 36, true);
+  // 館前路 ✕ 忠孝西路
+  drawGreenZebraCrossing(-43, 17, 24, 6, false);
+  // 重慶南路 ✕ 忠孝西路
+  drawGreenZebraCrossing(-104, 17, 24, 6, false);
+  // 板橋學府路一段路口斑馬線
+  drawGreenZebraCrossing(-62, 154, 6, 28, true);
+  drawGreenZebraCrossing(-192, 154, 6, 28, true);
+
+  // 5. 瀝青路面高對比路名與台灣經典綠底路牌標示 (High-Visibility Taiwan Street Signage)
+  function drawTaiwanRoadSign(text, x, z) {
+    const sx = screenX(x);
+    const sz = screenZ(z);
+    ctx.save();
+    ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
+    const txtWidth = ctx.measureText(text).width + 16;
+    ctx.fillStyle = '#065f46'; // 經典台灣綠底路牌
+    drawSafeRoundRect(ctx, sx - txtWidth / 2, sz - 9 * scale * 0.35, txtWidth, 18 * scale * 0.35, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#a7f3d0';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, sx, sz + 4 * scale * 0.35);
+    ctx.restore();
+  }
+
+  drawTaiwanRoadSign('🛣️ 忠孝西路一段 ✕ 公車專用道', 0, -1);
+  drawTaiwanRoadSign('🛣️ 板橋學府路一段 (1:1 真實商圈)', -110, 169);
+  drawTaiwanRoadSign('🛣️ 縣民大道・新板特區', -110, 131);
+  drawTaiwanRoadSign('🛣️ 文化路一段・府中商圈', -110, 196);
+  drawTaiwanRoadSign('🛣️ 中山北路一段・樟樹林蔭大道', 78, -30);
+  drawTaiwanRoadSign('🛣️ 重慶南路一段・書店街', -92, 50);
+  drawTaiwanRoadSign('🛣️ 南京西路商圈', 10, -93);
+  drawTaiwanRoadSign('🛣️ 中華路一段・西門町徒步區', -145, 40);
+  drawTaiwanRoadSign('🛣️ 民生西路・大稻埕與雙連', 10, -138);
+  drawTaiwanRoadSign('🛣️ 民權西路・晴光商圈', 10, -193);
+  drawTaiwanRoadSign('🛣️ 松江路・金融特區', 155, -40);
 
   // 6. 雙北行政區微縮銘板 (District HUD Badges)
   function drawDistrictBadge(text, x, z, col) {
@@ -3624,3 +3651,4 @@ gameLoop();
 
 initPrivateServerConnection();
 initDemonstrationCasesUI();
+

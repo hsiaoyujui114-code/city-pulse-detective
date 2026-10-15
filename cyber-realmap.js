@@ -107,13 +107,15 @@ const BUS_307_ROUTE = [
 
 // 4. 全域地圖與圖層管理
 let map = null;
-let currentBaseLayerKey = 'dark';
+let currentBaseLayerKey = 'osm';
 let activeBaseLayer = null;
 let baseLayers = {};
+let streetsLayerGroup = null;
 let transitLayerGroup = null;
 let storeMarkerGroups = {};
 let casesLayerGroup = null;
 let sectorsLayerGroup = null;
+let isStreetsVisible = true;
 let isTransitVisible = true;
 let currentStoreFilter = 'all';
 
@@ -126,10 +128,10 @@ function initCyberRealMap() {
     return;
   }
 
-  // 1. 建立地圖實例 (預設聚焦台北車站站前核心)
+  // 1. 建立地圖實例 (預設聚焦台北車站站前核心，直接以 15.2x 街廓特寫展現每條街道與巷弄門牌)
   map = L.map('map', {
-    center: [25.045, 121.517],
-    zoom: 13,
+    center: [25.0465, 121.5170],
+    zoom: 15.2,
     minZoom: 9,
     maxZoom: 19,
     zoomControl: false
@@ -138,32 +140,34 @@ function initCyberRealMap() {
   // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立 1:1 真實網路地圖瓦片服務 (CARTO Dark, OSM Standard, Esri Satellite, CARTO Voyager)
+  // 2. 建立 1:1 真實網路地圖瓦片服務 (OpenStreetMap 預設、CARTO Voyager、CARTO Dark、Esri Satellite)
   baseLayers = {
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxZoom: 20,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }),
     osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }),
-    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
     }),
     voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxZoom: 20,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }),
+    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     })
   };
 
-  activeBaseLayer = baseLayers.dark;
+  // 預設載入 OpenStreetMap Standard (路名、巷弄、門牌、綠地 100% 清晰可見)
+  activeBaseLayer = baseLayers.osm;
   activeBaseLayer.addTo(map);
 
   // 3. 建立各圖層群組
+  streetsLayerGroup = L.layerGroup().addTo(map);
   transitLayerGroup = L.layerGroup().addTo(map);
   casesLayerGroup = L.layerGroup().addTo(map);
   sectorsLayerGroup = L.layerGroup().addTo(map);
@@ -177,13 +181,224 @@ function initCyberRealMap() {
   // 4. 繪製圖層內容
   renderSectorJumpButtons();
   renderCasesTopStrip();
+  addMajorStreetsLayer();
   addMrtAndBusLayers();
   addSectorsLayer();
   addAllStoreMarkers();
   addDemoCasesMarkers();
   setupTelemetryListeners();
 
-  console.log('✅ 1:1 真實雙北網路地圖已全數載入完成，無手繪降級！');
+  console.log('✅ 1:1 真實雙北網路街道全景圖已全數載入完成，街道與巷弄清楚可見！');
+}
+
+// ──────────────────────────────────────────
+// 4.5 雙北核心真實路網與街道高光圖層 (Major Real Streets & Avenues Layer)
+// 包含忠孝西路、中山北路、館前路、重慶南路、板橋學府路等高對比向量標註
+// ──────────────────────────────────────────
+const SHUANGBEI_MAJOR_STREETS = [
+  {
+    name: '忠孝西路一段 / 忠孝東路 (台北都會樞紐大動脈)',
+    shortName: '忠孝西路一段',
+    color: '#0284c7',
+    coreColor: '#38bdf8',
+    width: 8,
+    center: [25.0461, 121.5168],
+    coords: [
+      [25.0475, 121.5032],
+      [25.0463, 121.5140],
+      [25.0461, 121.5168],
+      [25.0458, 121.5220],
+      [25.0442, 121.5332],
+      [25.0418, 121.5440],
+      [25.0412, 121.5580],
+      [25.0408, 121.5680]
+    ]
+  },
+  {
+    name: '板橋學府路一段 (海山生活圈 1:1 真實商圈)',
+    shortName: '板橋學府路一段 (1:1)',
+    color: '#059669',
+    coreColor: '#34d399',
+    width: 8,
+    center: [25.0104, 121.4582],
+    coords: [
+      [25.0080, 121.4550],
+      [25.0104, 121.4582],
+      [25.0125, 121.4610],
+      [25.0145, 121.4640]
+    ]
+  },
+  {
+    name: '中山北路一段~三段 (樟樹林蔭大道)',
+    shortName: '中山北路一段',
+    color: '#0284c7',
+    coreColor: '#67e8f9',
+    width: 7,
+    center: [25.0515, 121.5218],
+    coords: [
+      [25.0460, 121.5222],
+      [25.0515, 121.5218],
+      [25.0582, 121.5215],
+      [25.0620, 121.5218],
+      [25.0710, 121.5222],
+      [25.0930, 121.5240]
+    ]
+  },
+  {
+    name: '館前路 (台北車站站前核心大道)',
+    shortName: '館前路',
+    color: '#e11d48',
+    coreColor: '#fb7185',
+    width: 6,
+    center: [25.0445, 121.5151],
+    coords: [
+      [25.0461, 121.5152],
+      [25.0448, 121.5151],
+      [25.0435, 121.5150],
+      [25.0425, 121.5149]
+    ]
+  },
+  {
+    name: '重慶南路一段 (重慶百年書店街)',
+    shortName: '重慶南路一段',
+    color: '#7c3aed',
+    coreColor: '#c084fc',
+    width: 6,
+    center: [25.0435, 121.5132],
+    coords: [
+      [25.0461, 121.5133],
+      [25.0445, 121.5132],
+      [25.0428, 121.5131],
+      [25.0385, 121.5130],
+      [25.0355, 121.5130]
+    ]
+  },
+  {
+    name: '萬華中華路一段 (西門町徒步林蔭大道)',
+    shortName: '西門町中華路',
+    color: '#d97706',
+    coreColor: '#fbbf24',
+    width: 8,
+    center: [25.0428, 121.5078],
+    coords: [
+      [25.0475, 121.5090],
+      [25.0450, 121.5082],
+      [25.0428, 121.5078],
+      [25.0385, 121.5070],
+      [25.0345, 121.5065]
+    ]
+  },
+  {
+    name: '市民大道一段~三段 (市民高架與平面幹道)',
+    shortName: '市民大道',
+    color: '#475569',
+    coreColor: '#94a3b8',
+    width: 7,
+    center: [25.0490, 121.5170],
+    coords: [
+      [25.0495, 121.5080],
+      [25.0490, 121.5170],
+      [25.0485, 121.5280],
+      [25.0460, 121.5440],
+      [25.0450, 121.5780]
+    ]
+  },
+  {
+    name: '板橋文化路一段 (新板特區捷運核心幹線)',
+    shortName: '板橋文化路一段',
+    color: '#0369a1',
+    coreColor: '#38bdf8',
+    width: 7,
+    center: [25.0182, 121.4632],
+    coords: [
+      [25.0085, 121.4550],
+      [25.0145, 121.4600],
+      [25.0182, 121.4632],
+      [25.0225, 121.4682],
+      [25.0270, 121.4720]
+    ]
+  },
+  {
+    name: '南京西路 / 南京東路 (金融南京商圈)',
+    shortName: '南京東路',
+    color: '#047857',
+    coreColor: '#34d399',
+    width: 7,
+    center: [25.0525, 121.5210],
+    coords: [
+      [25.0535, 121.5110],
+      [25.0528, 121.5208],
+      [25.0522, 121.5332],
+      [25.0520, 121.5440],
+      [25.0505, 121.5780]
+    ]
+  },
+  {
+    name: '新板特區縣民大道一段 (板橋高鐵特等站前大道)',
+    shortName: '新板縣民大道',
+    color: '#ea580c',
+    coreColor: '#fb923c',
+    width: 7,
+    center: [25.0125, 121.4605],
+    coords: [
+      [25.0085, 121.4588],
+      [25.0125, 121.4605],
+      [25.0160, 121.4660],
+      [25.0230, 121.4720]
+    ]
+  }
+];
+
+function addMajorStreetsLayer() {
+  streetsLayerGroup.clearLayers();
+
+  SHUANGBEI_MAJOR_STREETS.forEach(st => {
+    // 外層光暈底線
+    L.polyline(st.coords, {
+      color: st.color,
+      weight: st.width + 3,
+      opacity: 0.45,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(streetsLayerGroup);
+
+    // 核心街道亮線
+    const line = L.polyline(st.coords, {
+      color: st.coreColor,
+      weight: st.width - 2,
+      opacity: 0.95
+    }).addTo(streetsLayerGroup);
+
+    line.bindTooltip(`🛣️ ${st.name}`, { sticky: true, className: 'street-name-tooltip' });
+
+    // 道路中心標註路牌 Marker (台灣經典路牌綠底標籤)
+    if (st.center) {
+      const roadBadge = L.divIcon({
+        html: `<div class="road-badge-marker">🛣️ ${st.shortName}</div>`,
+        className: 'road-badge-wrap',
+        iconAnchor: [35, 10]
+      });
+      L.marker(st.center, { icon: roadBadge, interactive: false }).addTo(streetsLayerGroup);
+    }
+  });
+}
+
+function toggleStreetsLayer() {
+  isStreetsVisible = !isStreetsVisible;
+  const btn = document.getElementById('btnToggleStreets');
+  if (isStreetsVisible) {
+    map.addLayer(streetsLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🛣️ 雙北真實街道高光</span><span style="color:#4ade80;">ON</span>';
+    }
+  } else {
+    map.removeLayer(streetsLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🛣️ 雙北真實街道高光</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
 }
 
 // ──────────────────────────────────────────
