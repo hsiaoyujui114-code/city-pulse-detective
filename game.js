@@ -409,8 +409,160 @@ const bus299Route = [
   { x: -142, z: 4,   stopName: '西門町重慶路口 (西行)', street: '萬華・忠孝西路二段' }
 ];
 
-// 雙北真實路網巡航車隊
+// 656 幹線公車真實路線 (德霖科大 ⇄ 海山商圈 ⇄ 板橋學府路一段 1:1 商圈 ⇄ 府中 ⇄ 萬華西門 ⇄ 台北車站 ⇄ 臺大醫院)
+const bus656Route = [
+  // 1. 土城德霖科大端點總站
+  { x: -160, z: 235, stopName: '德霖科技大學總站', street: '土城・青雲路 ✕ 德霖科大' },
+  { x: -155, z: 215, stopName: '清水國小站', street: '土城・清水路' },
+  // 2. 土城海山商圈
+  { x: -150, z: 195, stopName: '捷運海山站 (裕民路)', street: '土城・裕民路 ✕ 學府路口' },
+  // 3. 板橋學府路一段 (海山生活圈 1:1 核心商圈，樂家康超市門前)
+  { x: -150, z: 168, stopName: '板橋學府路一段 (樂家康超市門前)', street: '板橋・學府路一段 (1:1商圈核心)' },
+  // 4. 新板特區縣民大道
+  { x: -150, z: 130, stopName: '新板特區站 (板橋公車站)', street: '板橋・縣民大道一段' },
+  // 5. 跨新店溪華翠大橋
+  { x: -152, z: 108, street: '新店溪・華翠大橋 (跨市高架段)' },
+  // 6. 萬華西門町
+  { x: -152, z: 75,  street: '萬華・中華路一段林蔭道' },
+  { x: -152, z: 25,  stopName: '捷運西門站 (中華路)', street: '萬華・西門町中華路' },
+  // 7. 忠孝西路中央公車專用道
+  { x: -20,  z: -2,  stopName: '台北車站(忠孝專用道)', street: '中正・忠孝西路中央專用道' },
+  { x: 35,   z: -2,  street: '中正・忠孝西路 (公園路口)' },
+  // 8. 臺大醫院端點站
+  { x: 48,   z: 35,  stopName: '捷運臺大醫院站 (常德街口)', street: '中正・公園路 ✕ 常德街' },
+
+  // ─── 656 返程 (南向與西向車道，靠右行駛接續巡航) ───
+  { x: 54,   z: 35,  stopName: '捷運臺大醫院站 (返程發車)', street: '中正・公園路' },
+  { x: 35,   z: 2,   street: '中正・忠孝西路 (返程)' },
+  { x: -20,  z: 2,   stopName: '台北車站(忠孝專用道西行)', street: '中正・忠孝西路' },
+  { x: -142, z: 25,  stopName: '捷運西門站 (南行)', street: '萬華・中華路一段' },
+  { x: -142, z: 108, street: '新店溪・華翠大橋 (南行往板橋)' },
+  { x: -142, z: 130, stopName: '新板特區站 (返程)', street: '板橋・縣民大道' },
+  { x: -142, z: 168, stopName: '板橋學府路一段 (海山商圈返程)', street: '板橋・學府路一段' },
+  { x: -145, z: 195, stopName: '捷運海山站 (返程)', street: '土城・裕民路' },
+  { x: -152, z: 215, street: '土城・清水路' },
+  { x: -158, z: 235, stopName: '德霖科技大學 (終點調度整備)', street: '土城・德霖科大' }
+];
+
+// 基隆客運 9006 國道客運 (基隆火車站 ⇄ 國道一號 ⇄ 捷運圓山站 ⇄ 台北車站 ⇄ 西門町)
+const bus9006Route = [
+  { x: 185, z: -220, stopName: '基隆火車站 (港西街國道總站)', street: '基隆・港西街總站' },
+  { x: 155, z: -175, street: '國道一號・大業隧道走廊' },
+  { x: 110, z: -140, street: '國道一號・圓山交流道' },
+  { x: 72,  z: -140, stopName: '圓山轉運站 (捷運圓山站)', street: '大同・庫倫街 ✕ 捷運圓山' },
+  { x: 72,  z: -95,  stopName: '捷運民權西路站', street: '大同・承德路 ✕ 民權西路' },
+  { x: 72,  z: -45,  stopName: '中山市場 (長安西路)', street: '中山・中山北路一段' },
+  { x: 0,   z: -25,  stopName: '台北車站 (承德/鄭州路口)', street: '中正・鄭州路 ✕ 台北車站' },
+  { x: -152, z: 25,  stopName: '捷運西門站 (西門端點)', street: '萬華・中華路一段' },
+
+  // 返程 (往基隆)
+  { x: -142, z: 25,  street: '萬華・中華路一段 (北行)' },
+  { x: 15,   z: -25, stopName: '台北車站 (鄭州路北側)', street: '中正・鄭州路' },
+  { x: 84,   z: -45, street: '中山・中山北路一段' },
+  { x: 84,   z: -95, stopName: '捷運民權西路 (返程)', street: '大同・承德路' },
+  { x: 84,   z: -140, stopName: '圓山轉運站 (往基隆發車)', street: '大同・捷運圓山站' },
+  { x: 120,  z: -140, street: '國道一號・圓山交流道東行' },
+  { x: 165,  z: -175, street: '國道一號・基隆路段' },
+  { x: 185,  z: -220, stopName: '基隆火車站 (回場整備)', street: '基隆・港西街' }
+];
+
+// 雙北真實路網巡航車隊 (多車次連續循環發車，次班接續推進)
 const cityBuses = [
+  // 656 車隊 (大都會客運・海山學府路首選)
+  {
+    id: 'bus_656_a',
+    lineName: '656 幹線 (大都會)',
+    ledText: '656 ➔ 臺大醫院',
+    themeColor: '#ea580c', // 大都會活力亮橘
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus656Route,
+    currentWaypointIndex: 0,
+    x: bus656Route[0].x,
+    z: bus656Route[0].z,
+    angle: 0,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus656Route[0].street,
+    nextStopName: bus656Route[3].stopName
+  },
+  {
+    id: 'bus_656_b',
+    lineName: '656 幹線 (大都會次班)',
+    ledText: '656 ➔ 板橋學府路 ➔ 臺大醫院',
+    themeColor: '#f97316',
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus656Route,
+    currentWaypointIndex: 3, // 錯開班距，已在板橋學府路一段前進
+    x: bus656Route[3].x,
+    z: bus656Route[3].z,
+    angle: 0,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus656Route[3].street,
+    nextStopName: bus656Route[6].stopName
+  },
+  {
+    id: 'bus_656_c',
+    lineName: '656 幹線 (返程班次)',
+    ledText: '656 ➔ 捷運海山站 ➔ 德霖科大',
+    themeColor: '#ea580c',
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus656Route,
+    currentWaypointIndex: 11, // 返程段
+    x: bus656Route[11].x,
+    z: bus656Route[11].z,
+    angle: Math.PI,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus656Route[11].street,
+    nextStopName: bus656Route[13].stopName
+  },
+
+  // 基隆客運 9006 跨市國道客運車隊 (基隆開進雙北核心)
+  {
+    id: 'bus_9006_a',
+    lineName: '9006 基隆客運',
+    ledText: '9006 ➔ 基隆直達 ➔ 圓山 ➔ 台北車站',
+    themeColor: '#2563eb', // 基隆客運經典深藍
+    w: 18.5,
+    d: 5.4,
+    speed: 0.32,
+    waypoints: bus9006Route,
+    currentWaypointIndex: 0,
+    x: bus9006Route[0].x,
+    z: bus9006Route[0].z,
+    angle: Math.PI / 2,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus9006Route[0].street,
+    nextStopName: bus9006Route[3].stopName
+  },
+  {
+    id: 'bus_9006_b',
+    lineName: '9006 基隆客運 (返程)',
+    ledText: '9006 ➔ 國道一號 ➔ 基隆火車站',
+    themeColor: '#1d4ed8',
+    w: 18.5,
+    d: 5.4,
+    speed: 0.32,
+    waypoints: bus9006Route,
+    currentWaypointIndex: 8, // 返程段
+    x: bus9006Route[8].x,
+    z: bus9006Route[8].z,
+    angle: -Math.PI / 2,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus9006Route[8].street,
+    nextStopName: bus9006Route[11].stopName
+  },
+
+  // 307 車隊 (雙北公車之王)
   {
     id: 'bus_307_a',
     lineName: '307 幹線',
@@ -448,6 +600,26 @@ const cityBuses = [
     nextStopName: bus307Route[18].stopName
   },
   {
+    id: 'bus_307_c',
+    lineName: '307 幹線 (次班接續)',
+    ledText: '307 ➔ 台北車站 ➔ 南京復興',
+    themeColor: '#10b981',
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus307Route,
+    currentWaypointIndex: 6,
+    x: bus307Route[6].x,
+    z: bus307Route[6].z,
+    angle: 0,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus307Route[6].street,
+    nextStopName: bus307Route[8].stopName
+  },
+
+  // 中山幹線
+  {
     id: 'bus_zhongshan',
     lineName: '中山幹線',
     ledText: '中山幹線 ➔ 師大',
@@ -465,6 +637,8 @@ const cityBuses = [
     currentStreet: busZhongshanRoute[0].street,
     nextStopName: busZhongshanRoute[1].stopName
   },
+
+  // 99 幹線 (學府路專線)
   {
     id: 'bus_99',
     lineName: '99 幹線 (學府路專線)',
@@ -483,6 +657,8 @@ const cityBuses = [
     currentStreet: bus99Route[0].street,
     nextStopName: bus99Route[1].stopName
   },
+
+  // 299 幹線
   {
     id: 'bus_299',
     lineName: '299 幹線',
@@ -544,7 +720,11 @@ function updateBusPhysics(bus) {
     const nextPt = bus.waypoints[bus.currentWaypointIndex];
     if (nextPt.stopName) {
       bus.nextStopName = nextPt.stopName;
-      if (bus.id === 'bus_307_a' || bus.id === 'bus_307_b') {
+      if (bus.id === 'bus_656_a' || bus.id === 'bus_656_b' || bus.id === 'bus_656_c') {
+        bus.ledText = bus.currentWaypointIndex < 11 ? '656 ➔ 臺大醫院' : '656 ➔ 海山 ➔ 德霖科大';
+      } else if (bus.id === 'bus_9006_a' || bus.id === 'bus_9006_b') {
+        bus.ledText = bus.currentWaypointIndex < 8 ? '9006 ➔ 基隆客運 往台北/圓山' : '9006 ➔ 國道一號 往基隆火車站';
+      } else if (bus.id === 'bus_307_a' || bus.id === 'bus_307_b' || bus.id === 'bus_307_c') {
         bus.ledText = bus.currentWaypointIndex < 16 ? '307 ➔ 南京東路' : '307 ➔ 板橋府中';
       } else if (bus.id === 'bus_zhongshan') {
         bus.ledText = bus.currentWaypointIndex < 9 ? '中山幹線 ➔ 師大' : '中山幹線 ➔ 晴光商圈';
@@ -558,6 +738,259 @@ function updateBusPhysics(bus) {
     bus.x += Math.cos(bus.angle) * bus.speed;
     bus.z += Math.sin(bus.angle) * bus.speed;
   }
+}
+
+// ──────────────────────────────────────────
+// 4.6 🚇 台北捷運固定班距動態列車系統 (MRT Scheduled Dynamic Rapid Transit)
+// 包含板南線 (BL) 與淡水信義線 (R) 雙向固定時刻發車、進站停靠與流線型列車渲染
+// ──────────────────────────────────────────
+const mrtBannanTrack = [
+  // 板南線 (東行：頂埔/府中 ➔ 台北車站 ➔ 忠孝復興)
+  { x: -180, z: 12, stopName: '捷運府中站 (BL05)', line: '板南線' },
+  { x: -150, z: 12, stopName: '捷運板橋站 (BL07)', line: '板南線' },
+  { x: -100, z: 12, stopName: '捷運新埔站 (BL08)', line: '板南線' },
+  { x: -50,  z: 12, stopName: '捷運西門站 (BL11)', line: '板南線' },
+  { x: 0,    z: 12, stopName: '捷運台北車站 (BL12)', line: '板南線' },
+  { x: 70,   z: 12, stopName: '捷運善導寺站 (BL13)', line: '板南線' },
+  { x: 120,  z: 12, stopName: '捷運忠孝新生站 (BL14)', line: '板南線' },
+  { x: 185,  z: 12, stopName: '捷運忠孝復興站 (BL15)', line: '板南線' },
+
+  // 板南線 (西行：忠孝復興 ➔ 台北車站 ➔ 府中/頂埔)
+  { x: 185,  z: 18, stopName: '捷運忠孝復興站 (返程)', line: '板南線' },
+  { x: 120,  z: 18, stopName: '捷運忠孝新生站 (西行)', line: '板南線' },
+  { x: 70,   z: 18, stopName: '捷運善導寺站 (西行)', line: '板南線' },
+  { x: 0,    z: 18, stopName: '捷運台北車站 (西行月台)', line: '板南線' },
+  { x: -50,  z: 18, stopName: '捷運西門站 (西行月台)', line: '板南線' },
+  { x: -100, z: 18, stopName: '捷運新埔站 (西行)', line: '板南線' },
+  { x: -150, z: 18, stopName: '捷運板橋站 (西行)', line: '板南線' },
+  { x: -180, z: 18, stopName: '捷運府中站 (終點整備)', line: '板南線' }
+];
+
+const mrtTamsuiTrack = [
+  // 淡水信義線 (南行：圓山 ➔ 台北車站 ➔ 中正紀念堂)
+  { x: 62, z: -180, stopName: '捷運圓山站 (R14)', line: '淡水信義線' },
+  { x: 62, z: -140, stopName: '捷運民權西路站 (R13)', line: '淡水信義線' },
+  { x: 62, z: -95,  stopName: '捷運中山站 (R11)', line: '淡水信義線' },
+  { x: 62, z: -45,  stopName: '台北車站北段走廊', line: '淡水信義線' },
+  { x: 62, z: 15,   stopName: '捷運台北車站 (R10地下月台)', line: '淡水信義線' },
+  { x: 62, z: 45,   stopName: '捷運臺大醫院站 (R09)', line: '淡水信義線' },
+  { x: 62, z: 95,   stopName: '捷運中正紀念堂站 (R08)', line: '淡水信義線' },
+
+  // 淡水信義線 (北行：中正紀念堂 ➔ 台北車站 ➔ 圓山/淡水)
+  { x: 68, z: 95,   stopName: '捷運中正紀念堂 (北行發車)', line: '淡水信義線' },
+  { x: 68, z: 45,   stopName: '捷運臺大醫院站 (北行)', line: '淡水信義線' },
+  { x: 68, z: 15,   stopName: '捷運台北車站 (北行月台)', line: '淡水信義線' },
+  { x: 68, z: -45,  stopName: '中山地下段 (北行)', line: '淡水信義線' },
+  { x: 68, z: -95,  stopName: '捷運中山站 (北行)', line: '淡水信義線' },
+  { x: 68, z: -140, stopName: '捷運民權西路 (北行)', line: '淡水信義線' },
+  { x: 68, z: -180, stopName: '捷運圓山站 (回場整備)', line: '淡水信義線' }
+];
+
+// 雙北捷運固定班距動態列車車隊 (Fixed Headway Fleet)
+const mrtTrains = [
+  // 板南線 (BL)
+  {
+    id: 'mrt_BL_01',
+    lineCode: 'BL',
+    lineName: '板南線 BL-101',
+    ledText: '🚇 板南線 ➔ 南港展覽館',
+    themeColor: '#0070bd',
+    track: mrtBannanTrack,
+    currentWaypointIndex: 0,
+    x: mrtBannanTrack[0].x,
+    z: mrtBannanTrack[0].z,
+    angle: 0,
+    speed: 0.58,
+    isStopped: false,
+    stopTimer: 0,
+    w: 32,
+    d: 6.2,
+    currentStation: mrtBannanTrack[0].stopName
+  },
+  {
+    id: 'mrt_BL_02',
+    lineCode: 'BL',
+    lineName: '板南線 BL-103 (次班接續)',
+    ledText: '🚇 板南線 ➔ 南港展覽館',
+    themeColor: '#0284c7',
+    track: mrtBannanTrack,
+    currentWaypointIndex: 3, // 錯開班距
+    x: mrtBannanTrack[3].x,
+    z: mrtBannanTrack[3].z,
+    angle: 0,
+    speed: 0.58,
+    isStopped: false,
+    stopTimer: 0,
+    w: 32,
+    d: 6.2,
+    currentStation: mrtBannanTrack[3].stopName
+  },
+  {
+    id: 'mrt_BL_03',
+    lineCode: 'BL',
+    lineName: '板南線 BL-102 (返程)',
+    ledText: '🚇 板南線 ➔ 板橋府中 ➔ 頂埔',
+    themeColor: '#0070bd',
+    track: mrtBannanTrack,
+    currentWaypointIndex: 8, // 西行返程
+    x: mrtBannanTrack[8].x,
+    z: mrtBannanTrack[8].z,
+    angle: Math.PI,
+    speed: 0.58,
+    isStopped: false,
+    stopTimer: 0,
+    w: 32,
+    d: 6.2,
+    currentStation: mrtBannanTrack[8].stopName
+  },
+
+  // 淡水信義線 (R)
+  {
+    id: 'mrt_R_01',
+    lineCode: 'R',
+    lineName: '淡水信義線 R-201',
+    ledText: '🚇 淡水信義線 ➔ 象山',
+    themeColor: '#e3002c',
+    track: mrtTamsuiTrack,
+    currentWaypointIndex: 0,
+    x: mrtTamsuiTrack[0].x,
+    z: mrtTamsuiTrack[0].z,
+    angle: Math.PI / 2,
+    speed: 0.60,
+    isStopped: false,
+    stopTimer: 0,
+    w: 32,
+    d: 6.2,
+    currentStation: mrtTamsuiTrack[0].stopName
+  },
+  {
+    id: 'mrt_R_02',
+    lineCode: 'R',
+    lineName: '淡水信義線 R-202 (返程)',
+    ledText: '🚇 淡水信義線 ➔ 圓山 ➔ 淡水',
+    themeColor: '#ef4444',
+    track: mrtTamsuiTrack,
+    currentWaypointIndex: 7, // 北行返程
+    x: mrtTamsuiTrack[7].x,
+    z: mrtTamsuiTrack[7].z,
+    angle: -Math.PI / 2,
+    speed: 0.60,
+    isStopped: false,
+    stopTimer: 0,
+    w: 32,
+    d: 6.2,
+    currentStation: mrtTamsuiTrack[7].stopName
+  }
+];
+
+// 捷運列車連續班距運動物理學
+function updateMrtPhysics(train) {
+  if (train.isStopped) {
+    train.stopTimer--;
+    if (train.stopTimer <= 0) train.isStopped = false;
+    return;
+  }
+
+  const target = train.track[train.currentWaypointIndex];
+  const dx = target.x - train.x;
+  const dz = target.z - train.z;
+  const dist = Math.hypot(dx, dz);
+
+  const targetAngle = Math.atan2(dz, dx);
+  let diff = targetAngle - train.angle;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  train.angle += diff * 0.20;
+
+  if (dist <= train.speed * 1.5) {
+    train.x = target.x;
+    train.z = target.z;
+    if (target.stopName && !target.justStopped) {
+      train.isStopped = true;
+      train.stopTimer = 85; // 停站 1.4 秒模擬月台上下客
+      train.currentStation = target.stopName;
+      target.justStopped = true;
+      setTimeout(() => { target.justStopped = false; }, 8000);
+    }
+    // 依固定班距連續循環推進，前車抵達終點，次班接續運行
+    train.currentWaypointIndex = (train.currentWaypointIndex + 1) % train.track.length;
+    const nextPt = train.track[train.currentWaypointIndex];
+    if (nextPt.stopName) {
+      if (train.lineCode === 'BL') {
+        train.ledText = train.currentWaypointIndex < 8 ? '🚇 板南線 ➔ 南港展覽館' : '🚇 板南線 ➔ 板橋府中 ➔ 頂埔';
+      } else if (train.lineCode === 'R') {
+        train.ledText = train.currentWaypointIndex < 7 ? '🚇 淡水信義線 ➔ 象山' : '🚇 淡水信義線 ➔ 圓山 ➔ 淡水';
+      }
+    }
+  } else {
+    train.x += Math.cos(train.angle) * train.speed;
+    train.z += Math.sin(train.angle) * train.speed;
+  }
+}
+
+// 繪製 2.5D 高科技捷運列車 (Rotated MRT Train)
+function drawRotatedMrtTrain(train) {
+  const cx = screenX(train.x);
+  const cz = screenZ(train.z);
+  const trainW = train.w * scale;
+  const trainD = train.d * scale;
+
+  ctx.save();
+  ctx.translate(cx, cz);
+  ctx.rotate(train.angle);
+
+  // 1. 地面投影陰影與發光軌道輪廓
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  drawSafeRoundRect(ctx, -trainW / 2 + 1.5 * scale, -trainD / 2 + 2.0 * scale, trainW, trainD, 2.5 * scale);
+  ctx.fill();
+
+  // 軌道感應高光底色
+  ctx.fillStyle = train.lineCode === 'BL' ? 'rgba(0,112,189,0.3)' : 'rgba(227,0,44,0.3)';
+  ctx.fillRect(-trainW / 2 - 2 * scale, -trainD / 2 - 1 * scale, trainW + 4 * scale, trainD + 2 * scale);
+
+  // 2. 流線型銀白車身主體
+  ctx.fillStyle = '#f1f5f9';
+  drawSafeRoundRect(ctx, -trainW / 2, -trainD / 2, trainW, trainD, 3.0 * scale);
+  ctx.fill();
+
+  // 3. 經典捷運路線彩色腰線 (板南湛藍 / 淡水信義朱紅)
+  ctx.fillStyle = train.themeColor || '#0070bd';
+  ctx.fillRect(-trainW / 2 + 2 * scale, -trainD / 2 + 1.2 * scale, trainW - 4 * scale, 1.8 * scale);
+  ctx.fillRect(-trainW / 2 + 2 * scale, trainD / 2 - 3.0 * scale, trainW - 4 * scale, 1.8 * scale);
+
+  // 4. 車窗與車門條紋 (模擬 6 節編組捷運車門)
+  ctx.fillStyle = '#0f172a';
+  for (let i = -trainW / 2 + 6 * scale; i < trainW / 2 - 6 * scale; i += 7 * scale) {
+    // 側窗
+    ctx.fillRect(i, -trainD / 2 + 0.6 * scale, 4.5 * scale, 1.2 * scale);
+    ctx.fillRect(i, trainD / 2 - 1.8 * scale, 4.5 * scale, 1.2 * scale);
+  }
+
+  // 5. 車頭前擋風玻璃
+  ctx.fillStyle = '#0284c7';
+  drawSafeRoundRect(ctx, trainW / 2 - 4.2 * scale, -trainD / 2 + 1.0 * scale, 3.8 * scale, trainD - 2.0 * scale, 1.5 * scale);
+  ctx.fill();
+
+  // 6. 車頂中央微波通訊機殼
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(-trainW / 4, -trainD / 4, trainW / 2, trainD / 2);
+
+  // 7. 車頭 LED 路線發光看板
+  ctx.fillStyle = '#0f172a';
+  drawSafeRoundRect(ctx, -trainW / 3, -trainD / 2 - 6 * scale, trainW * 0.66, 5 * scale, 2 * scale);
+  ctx.fill();
+  ctx.strokeStyle = train.themeColor;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = train.isStopped ? '#fbbf24' : '#38bdf8';
+  ctx.font = `bold ${Math.max(8, Math.round(7.5 * scale))}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const displayLabel = train.isStopped ? `🚊 停靠[${train.currentStation}]` : train.ledText;
+  ctx.fillText(displayLabel, 0, -trainD / 2 - 3.5 * scale);
+
+  ctx.restore();
 }
 
 // 雙北街頭行人 NPC (Pedestrians)
@@ -877,9 +1310,10 @@ function updateMinimapRadar() {
   dot.style.top = `${normZ}px`;
 }
 
-/* ─── 7. 公車移動與空拍鳥瞰過場系統 ─── */
+/* ─── 7. 公車與捷運動態路網連續運行系統 ─── */
 function updateBusWorld() {
   cityBuses.forEach(b => updateBusPhysics(b));
+  mrtTrains.forEach(t => updateMrtPhysics(t));
 }
 
 const transitHud = document.getElementById("transitHud");
@@ -2683,6 +3117,15 @@ function renderScene() {
     renderList.push({
       z: bus.z,
       draw: () => drawRotatedBus(bus)
+    });
+  });
+
+  // 雙北捷運固定班距動態列車渲染 (Rotated 2.5D MRT Trains - 視錐剔除)
+  mrtTrains.forEach(train => {
+    if (!isInViewport(train.x, train.z, 40)) return;
+    renderList.push({
+      z: train.z,
+      draw: () => drawRotatedMrtTrain(train)
     });
   });
 

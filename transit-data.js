@@ -440,6 +440,130 @@ const SHUANGBEI_EBUS_KEY_ROUTES = [
     ]
   },
   {
+    id: 'bus_656',
+    name: '656 幹線 (德霖科大 ⇄ 海山 ⇄ 板橋 ⇄ 臺大醫院)',
+    category: '大都會主力 / 海山學府路首選',
+    operator: '大都會客運',
+    color: '#f97316',
+    fare: '二段票 ($30)',
+    interval: '尖峰 4-6分 / 離峰 8-12分 (連續發車)',
+    headsign: '德霖科大 ⇄ 捷運海山站 ⇄ 府中 ⇄ 台北車站 ⇄ 臺大醫院',
+    officialUrl: 'https://ebus.gov.taipei/ebus?rid=0100065600',
+    stops: [
+      { name: '德霖科技大學', lat: 24.978, lon: 121.458, eta: '即將發車' },
+      { name: '清水國小(土城)', lat: 24.981, lon: 121.455, eta: '2分鐘' },
+      { name: '捷運海山站(裕民路)', lat: 24.985, lon: 121.449, eta: '4分鐘' },
+      { name: '板橋學府路一段 (海山商圈)', lat: 25.010, lon: 121.458, eta: '7分鐘' },
+      { name: '捷運府中站', lat: 25.008, lon: 121.455, eta: '10分鐘' },
+      { name: '板橋公車站(新府路)', lat: 25.013, lon: 121.463, eta: '13分鐘' },
+      { name: '捷運龍山寺站(萬華)', lat: 25.035, lon: 121.499, eta: '18分鐘' },
+      { name: '西門町中華路北站', lat: 25.042, lon: 121.508, eta: '21分鐘' },
+      { name: '台北車站(忠孝專用道)', lat: 25.046, lon: 121.517, eta: '24分鐘' },
+      { name: '捷運臺大醫院站(終點)', lat: 25.043, lon: 121.516, eta: '27分鐘' }
+    ],
+    path: [
+      [24.978, 121.458],
+      [24.981, 121.455],
+      [24.985, 121.449],
+      [25.002, 121.453],
+      [25.008, 121.455],
+      [25.010, 121.458],
+      [25.013, 121.463],
+      [25.023, 121.472],
+      [25.035, 121.499],
+      [25.042, 121.508],
+      [25.046, 121.517],
+      [25.043, 121.516]
+    ]
+  },
+  {
+    id: 'bus_9006',
+    name: '9006 國道客運 (基隆 ⇄ 圓山 ⇄ 捷運士林站)',
+    category: '基隆跨市直達雙北幹線',
+    operator: '基隆客運 / 光華巴士',
+    color: '#2563eb',
+    fare: '跨市計程收費 ($50-$70)',
+    interval: '尖峰 8-12分 / 離峰 15-20分 (連續循環發車)',
+    headsign: '基隆火車站 ⇄ 國道一號 ⇄ 捷運圓山站 ⇄ 士林官邸',
+    officialUrl: 'https://ebus.gov.taipei/ebus?rid=0400900600',
+    stops: [
+      { name: '基隆火車站 (港西街總站)', lat: 25.132, lon: 121.740, eta: '即將發車' },
+      { name: '八堵交流道口', lat: 25.105, lon: 121.725, eta: '5分鐘' },
+      { name: '汐止大同路 (基隆客運站)', lat: 25.068, lon: 121.662, eta: '12分鐘' },
+      { name: '內湖成功交流道', lat: 25.065, lon: 121.585, eta: '18分鐘' },
+      { name: '圓山轉運站 (捷運圓山站)', lat: 25.071, lon: 121.520, eta: '25分鐘' },
+      { name: '劍潭站 (士林夜市商圈)', lat: 25.084, lon: 121.524, eta: '28分鐘' },
+      { name: '捷運士林站 (中正路)', lat: 25.093, lon: 121.526, eta: '32分鐘' }
+    ],
+    path: [
+      [25.132, 121.740],
+      [25.118, 121.730],
+      [25.105, 121.725],
+      [25.077, 121.677],
+      [25.068, 121.662],
+      [25.065, 121.585],
+      [25.068, 121.530],
+      [25.071, 121.520],
+      [25.084, 121.524],
+      [25.093, 121.526]
+    ]
+  },
+  {
+    id: 'bus_2088',
+    name: '2088 快捷公車 (基隆八斗子/女中 ⇄ 市府轉運站)',
+    category: '基隆跨市直達信義計畫區快捷',
+    operator: '大都會客運',
+    color: '#06b6d4',
+    fare: '跨市計程收費 ($55-$65)',
+    interval: '尖峰 5-8分 / 離峰 10-15分 (接續出發)',
+    headsign: '基隆八斗子 ⇄ 基隆女中 ⇄ 國道一號 ⇄ 市府轉運站',
+    officialUrl: 'https://ebus.gov.taipei/ebus?rid=0400208800',
+    stops: [
+      { name: '基隆女中站', lat: 25.127, lon: 121.758, eta: '即將發車' },
+      { name: '電力公司 (仁一路)', lat: 25.130, lon: 121.746, eta: '3分鐘' },
+      { name: '國道一號大業隧道', lat: 25.105, lon: 121.745, eta: '8分鐘' },
+      { name: '潭美公園 (內湖行善路)', lat: 25.058, lon: 121.579, eta: '20分鐘' },
+      { name: '市府轉運站 (捷運市政府站)', lat: 25.040, lon: 121.565, eta: '26分鐘' }
+    ],
+    path: [
+      [25.127, 121.758],
+      [25.130, 121.746],
+      [25.105, 121.745],
+      [25.075, 121.660],
+      [25.058, 121.579],
+      [25.048, 121.568],
+      [25.040, 121.565]
+    ]
+  },
+  {
+    id: 'bus_1802',
+    name: '1802 國道客運 (基隆 ⇄ 南京東路 ⇄ 台北車站 ⇄ 三重)',
+    category: '基隆跨市直達新北三重國道線',
+    operator: '國光客運',
+    color: '#8b5cf6',
+    fare: '跨市計程收費 ($60-$75)',
+    interval: '固定班距 15-20分',
+    headsign: '基隆火車站 ⇄ 汐止 ⇄ 南京復興 ⇄ 台北車站 ⇄ 三重',
+    officialUrl: 'https://ebus.gov.taipei/ebus?rid=0400180200',
+    stops: [
+      { name: '基隆火車站(國光客運總站)', lat: 25.132, lon: 121.740, eta: '即將發車' },
+      { name: '汐止車站(大同路)', lat: 25.068, lon: 121.662, eta: '10分鐘' },
+      { name: '捷運南京復興站', lat: 25.052, lon: 121.544, eta: '22分鐘' },
+      { name: '台北車站(鄭州路/北門)', lat: 25.049, lon: 121.512, eta: '28分鐘' },
+      { name: '捷運菜寮站(三重)', lat: 25.060, lon: 121.492, eta: '34分鐘' },
+      { name: '三重綜合運動場', lat: 25.062, lon: 121.488, eta: '38分鐘' }
+    ],
+    path: [
+      [25.132, 121.740],
+      [25.068, 121.662],
+      [25.052, 121.578],
+      [25.052, 121.544],
+      [25.049, 121.512],
+      [25.060, 121.492],
+      [25.062, 121.488]
+    ]
+  },
+  {
     id: 'bus_chengde',
     name: '承德幹線 (士林 ⇄ 台北車站)',
     category: '幹線公車',
@@ -462,6 +586,72 @@ const SHUANGBEI_EBUS_KEY_ROUTES = [
       [25.061, 121.520],
       [25.048, 121.517]
     ]
+  }
+];
+
+// ──────────────────────────────────────────
+// 5. 🚇 台北捷運固定班距動態列車調度規格 (MRT Fixed Headway Dispatch Specs)
+// ──────────────────────────────────────────
+const SHUANGBEI_MRT_SCHEDULE_SPEC = [
+  {
+    lineCode: 'BL',
+    lineName: '板南線 (藍線)',
+    color: '#0070bd',
+    glowColor: '#38bdf8',
+    headwaySeconds: 24, // 固定班距 (遊戲時標秒數)
+    terminalA: '頂埔',
+    terminalB: '南港展覽館',
+    fleetCount: 4, // 雙向同時在軌運轉列車數
+    speedKmh: 65,
+    dwellTimeSec: 2.5 // 各站停靠時間
+  },
+  {
+    lineCode: 'R',
+    lineName: '淡水信義線 (紅線)',
+    color: '#e3002c',
+    glowColor: '#f87171',
+    headwaySeconds: 26,
+    terminalA: '淡水',
+    terminalB: '象山',
+    fleetCount: 4,
+    speedKmh: 68,
+    dwellTimeSec: 2.5
+  },
+  {
+    lineCode: 'G',
+    lineName: '松山新店線 (綠線)',
+    color: '#008659',
+    glowColor: '#34d399',
+    headwaySeconds: 28,
+    terminalA: '新店',
+    terminalB: '松山',
+    fleetCount: 3,
+    speedKmh: 65,
+    dwellTimeSec: 2.5
+  },
+  {
+    lineCode: 'O',
+    lineName: '中和新蘆線 (橘線)',
+    color: '#f39800',
+    glowColor: '#fbbf24',
+    headwaySeconds: 28,
+    terminalA: '南勢角',
+    terminalB: '迴龍',
+    fleetCount: 3,
+    speedKmh: 65,
+    dwellTimeSec: 2.5
+  },
+  {
+    lineCode: 'Y',
+    lineName: '環狀線 (黃線)',
+    color: '#ffd100',
+    glowColor: '#fef08a',
+    headwaySeconds: 30,
+    terminalA: '大坪林',
+    terminalB: '新北產業園區',
+    fleetCount: 2,
+    speedKmh: 55,
+    dwellTimeSec: 3.0
   }
 ];
 
@@ -492,6 +682,7 @@ if (typeof module !== 'undefined' && module.exports) {
     SHUANGBEI_TRA_NETWORK,
     SHUANGBEI_MRT_NETWORK,
     SHUANGBEI_EBUS_KEY_ROUTES,
+    SHUANGBEI_MRT_SCHEDULE_SPEC,
     searchEBusDirectory
   };
 }

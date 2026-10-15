@@ -133,9 +133,17 @@
         <span>🚇 台北捷運 (9大路線)</span>
         <span style="color:#00f0ff;">ON</span>
       </button>
+      <button class="tactical-tool-btn active" id="btnToggleMrtTrains" onclick="toggleMrtTrainsLayer()">
+        <span>🚄 捷運固定班次列車</span>
+        <span style="color:#38bdf8;">ACTIVE</span>
+      </button>
       <button class="tactical-tool-btn active" id="btnToggleBus" onclick="toggleBusLayer()">
         <span>🚌 大臺北公車 (eBus)</span>
         <span style="color:#4ade80;">ON</span>
+      </button>
+      <button class="tactical-tool-btn active" id="btnToggleBusFleet" onclick="toggleBusFleetLayer()">
+        <span>🚍 公車連續巡航車隊</span>
+        <span style="color:#f59e0b;">DISPATCH</span>
       </button>
       <button class="tactical-tool-btn" id="btnOpenEBusNavigator" onclick="toggleEBusNavigator()">
         <span>🔍 搜尋 1037 條公車</span>
@@ -171,8 +179,16 @@
         <span>🚇 台北捷運 9 大路線 (板南/紅/綠/橘/文湖/環狀/機捷/輕軌)</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#0284c7; border:1px solid #fff;"></span>
+        <span>🚄 捷運固定班距動態巡航列車 (BL/R/G/O/Y 雙向固定班次)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:3px; background:#10b981; box-shadow:0 0 4px #10b981;"></span>
         <span>🚌 大臺北公車 (ebus.gov.taipei 1037條官方路線)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#f97316; border:1px solid #fff;"></span>
+        <span>🚍 連續派發動態公車車隊 (656、307、9006基隆客運、2088等)</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444; border:1px solid #fff;"></span>
@@ -189,23 +205,25 @@
   <aside class="ebus-navigator-panel" id="ebusNavigatorPanel" style="display:none;">
     <div class="ebus-panel-header">
       <div class="ebus-panel-title">
-        <span>🚌 大臺北公車即時檢索 (1037線)</span>
+        <span>🚌 大臺北公車即時檢索 (1037線 ✕ 基隆跨市)</span>
       </div>
       <button onclick="toggleEBusNavigator()" style="background:none; border:none; color:#94a3b8; font-size:14px; cursor:pointer;">✕</button>
     </div>
     <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">
-      依據 <a href="https://ebus.gov.taipei/EBus2/RouteList2" target="_blank" style="color:#34d399; text-decoration:underline;">ebus.gov.taipei</a> 官方目錄整合
+      依據 <a href="https://ebus.gov.taipei/EBus2/RouteList2" target="_blank" style="color:#34d399; text-decoration:underline;">ebus.gov.taipei</a> 官方目錄整合 (雙北全線與基隆開進雙北公車)
     </div>
     <div class="ebus-search-input-wrap">
-      <input type="text" class="ebus-search-input" id="ebusSearchInput" placeholder="輸入路線 (如 307, 299, 99, 965, 承德...)" oninput="handleEBusSearch(this.value)">
+      <input type="text" class="ebus-search-input" id="ebusSearchInput" placeholder="輸入路線 (如 656, 307, 基隆, 9006, 2088, 99...)" oninput="handleEBusSearch(this.value)">
     </div>
     <div class="ebus-quick-chips">
-      <button class="ebus-chip-btn active" onclick="quickSelectEBus('bus_307')">307幹線</button>
-      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_299')">299幹線</button>
-      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_265')">265幹線</button>
+      <button class="ebus-chip-btn active" onclick="quickSelectEBus('bus_656')">656海山</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_307')">307幹線</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_9006')">9006基隆</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_2088')">2088快捷</button>
       <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_99')">99學府路</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_299')">299幹線</button>
       <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_965')">965九份</button>
-      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_chengde')">承德幹線</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_1802')">1802國光</button>
     </div>
     <div class="ebus-results-list" id="ebusResultsList">
       <!-- 由 JS 動態注入 -->
