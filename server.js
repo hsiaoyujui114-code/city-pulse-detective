@@ -60,23 +60,25 @@ const server = http.createServer((req, res) => {
     try {
       const sharedCode = fs.readFileSync(path.join(PUBLIC_DIR, 'shared-data.js'), 'utf-8');
       const vm = require('vm');
-      const sandbox = {};
+      const sandbox = { module: { exports: {} } };
+      sandbox.window = sandbox;
       vm.createContext(sandbox);
       vm.runInContext(sharedCode, sandbox);
+      const data = sandbox.module.exports || sandbox.TaipeiSharedData || {};
 
       if (reqPath === '/api/stores') {
         res.writeHead(200);
-        res.end(JSON.stringify(sandbox.REAL_WORLD_STORES || []));
+        res.end(JSON.stringify(data.REAL_WORLD_STORES || data.stores || []));
         return;
       }
       if (reqPath === '/api/sectors') {
         res.writeHead(200);
-        res.end(JSON.stringify(sandbox.SHUANGBEI_41_SECTORS || []));
+        res.end(JSON.stringify(data.SHUANGBEI_41_SECTORS || data.sectors || []));
         return;
       }
       if (reqPath === '/api/cases') {
         res.writeHead(200);
-        res.end(JSON.stringify(sandbox.DEMO_10_CASES || []));
+        res.end(JSON.stringify(data.DEMO_10_CASES || data.cases || []));
         return;
       }
     } catch (apiErr) {
