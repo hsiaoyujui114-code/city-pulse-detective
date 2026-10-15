@@ -138,6 +138,8 @@ function initCyberRealMap() {
   initMrtTrainsContinuousDispatch(); // 核心：捷運固定班距動態列車調度引擎 (BL/R/G/O/Y 雙向固定班次)
   addSectorsLayer();
   addAllStoreMarkers();
+  map.on('zoomend', updateCarrefourZoomVisibility);
+  updateCarrefourZoomVisibility();
   addDemoCasesMarkers();
   initPlayerAvatarMarker(); // 核心：微觀主角巡航標記與特寫跟隨
   setupTelemetryListeners();
@@ -940,25 +942,42 @@ function addMrtLayer() {
 
     poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
 
-    // 繪製端點站與主要轉乘站 Marker
+    // 繪製高畫質捷運站點標籤 Marker
     line.stations.forEach((st, idx) => {
-      // 僅標記關鍵樞紐與端點站，避免密集遮蔽
+      // 關鍵樞紐站與端點站
       const isHub = (idx === 0 || idx === line.stations.length - 1 || 
                      ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區'].includes(st.name));
       if (!isHub) return;
 
+      const metroSvg = `<svg class="metro-official-logo" viewBox="-50 -50 100 100" width="16" height="16">
+        <path d="M -26,10 C -28,-14 -12,-36 14,-36 C 26,-36 36,-30 42,-20 L 46,-30 L 46,-6 L 22,-10 L 32,-17 C 27,-23 21,-27 14,-27 C -6,-27 -18,-11 -17,10 Z" fill="#0070bc" />
+        <path d="M 26,-10 C 28,14 12,36 -14,36 C -26,36 -36,30 -42,20 L -46,30 L -46,6 L -22,10 L -32,17 C -27,23 -21,27 -14,27 C 6,27 18,11 17,-10 Z" fill="#00a650" />
+      </svg>`;
+
+      const lineCode = line.lineCode || (line.name.includes('板南') ? 'BL' : (line.name.includes('淡水') ? 'R' : (line.name.includes('松山') ? 'G' : (line.name.includes('中和') ? 'O' : (line.name.includes('文湖') ? 'BR' : 'Y')))));
+
       const icon = L.divIcon({
-        html: `<div class="transit-badge-pin pin-mrt" style="border-color:${line.color};">🚇 ${st.name}</div>`,
+        html: `
+          <div class="pin-mrt-vector" style="border-color:${line.color};">
+            <span class="mrt-logo-box">${metroSvg}</span>
+            <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
+            <span class="mrt-station-title">${st.name}</span>
+          </div>
+        `,
         className: 'transit-pin-wrap',
-        iconAnchor: [30, 10]
+        iconAnchor: [48, 14]
       });
 
       const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
       marker.bindPopup(`
-        <div style="font-family:sans-serif; color:#f8fafc;">
-          <div style="font-size:12px; font-weight:900; color:${line.glowColor};">🚇 捷運 ${st.name}站</div>
-          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬：${line.name}</div>
-          <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">雙北捷運核心轉運樞紐，各線互通直達。</div>
+        <div style="font-family:sans-serif; color:#f8fafc; min-width:190px;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${line.color};"></span>
+            <strong style="font-size:13px; color:#ffffff;">捷運 ${st.name} 站</strong>
+          </div>
+          <div style="font-size:11px; color:#38bdf8; font-weight:700;">官方標誌：科技藍 (#0070bc) ✕ 生機綠 (#00a650)</div>
+          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬路線：${line.name} [代表色 ${lineCode}：${line.color}]</div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">雙北都會捷運高運量/中運量主幹道，全線固定班距發車。</div>
         </div>
       `);
     });
@@ -1544,58 +1563,70 @@ function addAllStoreMarkers() {
 
 // 根據品牌返回專屬 Pin HTML
 function getStoreIconHtml(brand, store) {
-  let pinClass = 'pin-wanjiafu';
-  let badgeGlyph = '🏪';
+  let pinClass = 'pin-carrefour';
+  let badgeContent = '';
+
+  // 🛒 正統家樂福官方向量圖標 (Carrefour Dual-Color Diamond with Negative White 'C')
+  const carrefourSvg = `
+    <svg viewBox="0 0 61 40" width="22" height="15" style="display:block; overflow:visible;">
+      <path d="M18.0334,1.6 C18.142,1.49 18.244,1.45 18.332,1.45 C18.489,1.45 18.6,1.59 18.595,1.76 C18.59,1.86 18.546,1.97 18.449,2.06 C14.535,6.83 11.689,12.39 11.689,20.12 C11.689,27.84 14.535,33.3 18.449,38.06 C18.546,38.16 18.59,38.27 18.595,38.37 C18.6,38.53 18.489,38.67 18.332,38.67 C18.244,38.67 18.142,38.63 18.033,38.52 L1.363,22.73 C0.531,22.04 0,21.22 0,20.06 C0,18.9 0.531,18.09 1.363,17.39 L18.033,1.6 Z" fill="#C20016"/>
+      <path d="M9.084,0.14 C2.557,0.14 0.006,9.2 0.006,20 C0.006,30.8 2.557,39.74 9.084,39.74 C13.001,39.74 16.339,37.49 16.351,35.64 C16.352,35.24 16.194,34.85 15.847,34.51 C13.992,32.76 13.265,31 13.258,29.45 C13.248,26.5 15.868,24.29 18.282,24.29 C21.603,24.29 23.562,26.85 23.562,30.16 C23.562,33.29 22.195,35.91 20.712,38 C20.654,38.08 20.628,38.18 20.628,38.26 C20.63,38.43 20.727,38.56 20.875,38.56 C20.965,38.56 21.071,38.51 21.185,38.4 L37.86,22.61 C38.693,21.92 39.224,21.1 39.224,19.94 C39.224,18.78 38.693,17.97 37.86,17.27 L21.185,1.48 C21.071,1.37 20.965,1.32 20.875,1.32 C20.726,1.32 20.63,1.46 20.628,1.62 C20.628,1.7 20.654,1.8 20.712,1.89 C22.195,3.97 23.562,6.59 23.562,9.72 C23.562,13.03 21.603,15.59 18.282,15.59 C15.868,15.59 13.248,13.39 13.258,10.43 C13.265,8.88 13.992,7.12 15.847,5.37 C16.194,5.03 16.352,4.64 16.351,4.24 C16.339,2.39 13.001,0.14 9.084,0.14 Z" transform="translate(21.766520, 0.121053)" fill="#254F9B"/>
+    </svg>`;
 
   switch (brand) {
     case 'wanjiafu':
-      pinClass = 'pin-wanjiafu';
-      badgeGlyph = '萬';
-      break;
+    case 'carrefour':
     case 'lejiakang':
-      pinClass = 'pin-lejiakang';
-      badgeGlyph = '樂';
+      pinClass = 'pin-carrefour';
+      badgeContent = carrefourSvg;
       break;
     case 'seven':
       pinClass = 'pin-seven';
-      badgeGlyph = '7';
+      badgeContent = '7';
       break;
     case 'familymart':
       pinClass = 'pin-familymart';
-      badgeGlyph = '全';
+      badgeContent = '全';
       break;
     case 'coco':
       pinClass = 'pin-coco';
-      badgeGlyph = '🧋';
+      badgeContent = '🧋';
       break;
     case 'market':
       pinClass = 'pin-market';
-      badgeGlyph = '市';
+      badgeContent = '市';
       break;
     case 'transport':
       pinClass = 'pin-transport';
-      badgeGlyph = store.name.includes('公車') ? '🚏' : '🚇';
+      badgeContent = store.name.includes('公車') ? '🚏' : '🚇';
       break;
     case 'landmark':
       pinClass = 'pin-landmark';
-      badgeGlyph = '🏛️';
+      badgeContent = '🏛️';
       break;
     default:
-      pinClass = 'pin-lejiakang';
-      badgeGlyph = '📍';
+      pinClass = 'pin-carrefour';
+      badgeContent = carrefourSvg;
   }
 
-  return `<div class="store-holo-pin ${pinClass}" title="${store.name}">${badgeGlyph}</div>`;
+  return `<div class="store-holo-pin ${pinClass}" title="${store.name}">${badgeContent}</div>`;
 }
 
 // 建立門市詳細彈窗內容
 function buildStorePopupContent(store) {
-  let brandPillClass = 'type-lejiakang';
-  let brandLabel = '樂家康生鮮';
+  let brandPillClass = 'type-wanjiafu';
+  let brandLabel = '家樂福量販';
 
   switch (store.brand) {
-    case 'wanjiafu': brandPillClass = 'type-wanjiafu'; brandLabel = '萬家福旗艦'; break;
-    case 'lejiakang': brandPillClass = 'type-lejiakang'; brandLabel = '樂家康生鮮'; break;
+    case 'wanjiafu':
+    case 'carrefour':
+      brandPillClass = 'type-wanjiafu';
+      brandLabel = '家樂福量販旗艦';
+      break;
+    case 'lejiakang':
+      brandPillClass = 'type-lejiakang';
+      brandLabel = '家樂福便利購超市';
+      break;
     case 'seven': brandPillClass = 'type-cvs'; brandLabel = '7-Eleven'; break;
     case 'familymart': brandPillClass = 'type-cvs'; brandLabel = '全家 FamilyMart'; break;
     case 'coco': brandPillClass = 'type-cvs'; brandLabel = 'CoCo 手搖飲'; break;
@@ -1678,11 +1709,12 @@ function filterStoreMarkers(brandKey, btnElement) {
   let visibleCount = 0;
 
   if (brandKey === 'all') {
-    // 顯示所有門市與案件
+    // 顯示所有門市與案件 (家樂福受 LOD 縮放過濾保護：zoom >= 14.5 才顯示小標示)
     Object.keys(storeMarkerGroups).forEach(k => {
       map.addLayer(storeMarkerGroups[k]);
     });
     map.addLayer(casesLayerGroup);
+    updateCarrefourZoomVisibility();
     visibleCount = STORES_DATA.length;
   } else if (brandKey === 'cases') {
     // 僅顯示案件
@@ -1691,6 +1723,18 @@ function filterStoreMarkers(brandKey, btnElement) {
     });
     map.addLayer(casesLayerGroup);
     visibleCount = CASES_DATA.length;
+  } else if (brandKey === 'wanjiafu' || brandKey === 'carrefour') {
+    // 🛒 家樂福專屬品牌：量販旗艦與便利購超市，並平滑巡航至桂林旗艦店 (zoom 15.5 呈現精緻小標示)
+    Object.keys(storeMarkerGroups).forEach(k => {
+      if (k === 'wanjiafu' || k === 'lejiakang' || k === 'carrefour') {
+        map.addLayer(storeMarkerGroups[k]);
+      } else {
+        map.removeLayer(storeMarkerGroups[k]);
+      }
+    });
+    map.removeLayer(casesLayerGroup);
+    map.flyTo([25.0381, 121.5064], 15.5, { duration: 1.2 });
+    visibleCount = STORES_DATA.filter(s => s.brand === 'wanjiafu' || s.brand === 'lejiakang' || s.brand === 'carrefour').length;
   } else if (['thsr', 'tra', 'mrt', 'ebus', 'transport'].includes(brandKey)) {
     // 大眾運輸快捷過濾
     if (brandKey === 'thsr') {
@@ -1732,6 +1776,28 @@ function filterStoreMarkers(brandKey, btnElement) {
 
   const countEl = document.getElementById('hudStoreCount');
   if (countEl) countEl.innerText = `${visibleCount} 處`;
+}
+
+// ──────────────────────────────────────────
+// 9.1 家樂福層級細節 (LOD) 控制器：縮小時不顯示，放大至 >= 14.5 才顯示小小的家樂福標示
+// ──────────────────────────────────────────
+function updateCarrefourZoomVisibility() {
+  const currentZoom = map.getZoom();
+  const showCarrefour = currentZoom >= 14.5;
+
+  ['wanjiafu', 'lejiakang', 'carrefour'].forEach(b => {
+    const group = storeMarkerGroups[b];
+    if (!group) return;
+    if (currentStoreFilter === 'all') {
+      if (showCarrefour) {
+        if (!map.hasLayer(group)) map.addLayer(group);
+      } else {
+        if (map.hasLayer(group)) map.removeLayer(group);
+      }
+    } else if (currentStoreFilter === 'wanjiafu' || currentStoreFilter === 'carrefour') {
+      if (!map.hasLayer(group)) map.addLayer(group);
+    }
+  });
 }
 
 // ──────────────────────────────────────────

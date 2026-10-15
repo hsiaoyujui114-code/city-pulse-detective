@@ -231,7 +231,7 @@ const interactables = [
   {"id": "seven_gq", "x": -20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前館前店)", "address": "中正區館前路 59 號", "label": "進入 7-Eleven (站前館前店)"},
   {"id": "coco_ny", "x": 20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (台北站前店)", "address": "中正區南陽街 13 號", "label": "購買 CoCo 手搖飲 (站前店)"},
   {"id": "seven_gy", "x": 60, "z": 35, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前公園店)", "address": "中正區公園路 20 號", "label": "進入 7-Eleven (站前公園店)"},
-  {"id": "wanjiafu_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入樂家康超市 (站前開封店)"},
+  {"id": "wanjiafu_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入家樂福便利購 (站前開封店)"},
   {"id": "coco_cq", "x": -95, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (重慶書店街店)", "address": "中正區重慶南路一段 55 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
   {"id": "market_cz", "x": -95, "z": 55, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "城中市場老市集", "address": "中正區武昌街一段 22 巷 (省城隍廟口)", "label": "進入 城中市場老市集 (老台北在地情報與小吃)"},
   {"id": "seven_hy", "x": -95, "z": 95, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正衡陽店)", "address": "中正區衡陽路 51 號", "label": "進入 7-Eleven (中正衡陽店)"},
@@ -240,37 +240,37 @@ const interactables = [
   {"id": "fmart_wc", "x": -205, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門武昌店)", "address": "萬華區武昌街二段 37 號", "label": "進入全家 (西門武昌店)"},
   {"id": "coco_xm", "x": -175, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (西門町店)", "address": "萬華區武昌街二段 4 號", "label": "購買 CoCo 手搖飲 (西門町店)"},
   {"id": "market_xm", "x": -135, "z": 52, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "西門市場 ✕ 紅樓文創市集", "address": "萬華區成都路 10 號", "label": "進入 西門市場/紅樓文創市集 (潮流古著與點心)"},
-  {"id": "wanjiafu_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入樂家康超市 (萬華長沙店)"},
-  {"id": "wanjiafu_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入萬家福桂林旗艦店 (24H量販店)"},
+  {"id": "wanjiafu_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入家樂福便利購 (萬華長沙店)"},
+  {"id": "wanjiafu_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "家樂福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入家樂福桂林旗艦店 (24H量販店)"},
   {"id": "fmart_circle", "x": -95, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (建成圓環店)", "address": "大同區重慶北路二段 12 號", "label": "進入全家 (建成圓環店)"},
   {"id": "market_nx", "x": -55, "z": -95, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "建成圓環 ✕ 寧夏觀光夜市", "address": "大同區寧夏路民生西路口", "label": "進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)"},
   {"id": "seven_circle", "x": -55, "z": -145, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (寧夏夜市店)", "address": "大同區民生西路 188 號", "label": "進入 7-Eleven (寧夏夜市店)"},
-  {"id": "wanjiafu_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入萬家福重慶旗艦店 (大賣場)"},
-  {"id": "wanjiafu_cq_store", "x": -95, "z": -175, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (重慶北店)", "address": "大同區重慶北路三段 154 號", "label": "進入樂家康便利購 (重慶北店)"},
+  {"id": "wanjiafu_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "家樂福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入家樂福重慶旗艦店 (大賣場)"},
+  {"id": "wanjiafu_cq_store", "x": -95, "z": -175, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (重慶北店)", "address": "大同區重慶北路三段 154 號", "label": "進入家樂福便利購 (重慶北店)"},
   {"id": "coco_yp", "x": -145, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (延平北路店)", "address": "大同區延平北路二段 80 號", "label": "購買 CoCo 手搖飲 (延平店)"},
-  {"id": "wanjiafu_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入樂家康便利購 (大稻埕民生店)"},
+  {"id": "wanjiafu_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入家樂福便利購 (大稻埕民生店)"},
   {"id": "market_yl", "x": -185, "z": -60, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大稻埕永樂市場", "address": "大同區迪化街一段 21 號", "label": "進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)"},
   {"id": "seven_dh", "x": -185, "z": -125, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化店)", "address": "大同區迪化街一段 54 號", "label": "進入 7-Eleven (大稻埕迪化店)"},
   {"id": "market_lz", "x": -145, "z": -185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大同蘭州傳統市場", "address": "大同區昌吉街 55 號", "label": "進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)"},
   {"id": "market_zs", "x": 35, "z": -45, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "中山傳統市場", "address": "中山區長安西路 3 號 (中山北路口)", "label": "進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)"},
   {"id": "fmart_zs", "x": 125, "z": -20, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山北路店)", "address": "中山區中山北路一段 105 號", "label": "進入全家 (中山北路店)"},
   {"id": "seven_ls", "x": 125, "z": -60, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (林森條通店)", "address": "中山區林森北路 119 號", "label": "進入 7-Eleven (林森條通店)"},
-  {"id": "wanjiafu_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入樂家康超市 (中山南京店)"},
+  {"id": "wanjiafu_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入家樂福便利購 (中山南京店)"},
   {"id": "coco_zs", "x": 115, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山北路門市)", "address": "中山區中山北路一段 92 號", "label": "購買 CoCo 手搖飲 (中山門市)"},
   {"id": "market_sl", "x": 45, "z": -145, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "雙連傳統市場", "address": "大同區民生西路 198 號 (文昌宮旁)", "label": "進入 雙連傳統市場 (品嚐文昌宮古早味美食)"},
   {"id": "fmart_sl", "x": 105, "z": -150, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山雙連店)", "address": "中山區民生西路 66 號", "label": "進入全家 (中山雙連店)"},
   {"id": "market_qg", "x": 85, "z": -195, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "晴光傳統商圈市場", "address": "中山區雙城街 12 巷 (晴光商圈)", "label": "進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)"},
   {"id": "seven_mq", "x": 35, "z": -195, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山民權店)", "address": "中山區中山北路二段 92 號", "label": "進入 7-Eleven (中山民權店)"},
-  {"id": "wanjiafu_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入樂家康超市 (中山吉林店)"},
+  {"id": "wanjiafu_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入家樂福便利購 (中山吉林店)"},
   {"id": "fmart_sj", "x": 165, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (松江南京店)", "address": "中山區松江路 102 號", "label": "進入全家 (松江南京店)"},
   {"id": "coco_sj", "x": 165, "z": -155, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (松江南京店)", "address": "中山區松江路 120 號", "label": "購買 CoCo 手搖飲 (松江店)"},
   {"id": "seven_fx", "x": 205, "z": -55, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (復興長安店)", "address": "中山區復興北路 88 號", "label": "進入 7-Eleven (復興長安店)"},
-  {"id": "wanjiafu_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入樂家康超市 (中山松江店)"},
+  {"id": "wanjiafu_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入家樂福便利購 (中山松江店)"},
   {"id": "fmart_fx", "x": 205, "z": -175, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (復興南京店)", "address": "中山區復興北路 45 號", "label": "進入全家 (復興南京店)"},
   {"id": "seven_ms", "x": 80, "z": 75, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正紀念堂店)", "address": "中正區中山南路 21 號", "label": "進入 7-Eleven (中正紀念堂店)"},
-  {"id": "wanjiafu_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入樂家康便利購 (古亭和平店)"},
+  {"id": "wanjiafu_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入家樂福便利購 (古亭和平店)"},
   {"id": "seven_rf", "x": 55, "z": 185, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (羅斯福師大店)", "address": "中正區羅斯福路二段 88 號", "label": "進入 7-Eleven (羅斯福師大店)"},
-  {"id": "wanjiafu_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入樂家康便利購 (師大店)"},
+  {"id": "wanjiafu_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入家樂福便利購 (師大店)"},
   {"id": "market_sd", "x": 105, "z": 185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "師大夜市 ✕ 龍泉傳統市場", "address": "大安區師大路 49 巷", "label": "進入 師大夜市/龍泉市場 (生煎包 / 鹽水雞 / 滷味)"},
   {"id": "fmart_da", "x": 155, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (大安信義店)", "address": "大安區信義路三段 102 號", "label": "進入全家 (大安信義店)"},
   {"id": "coco_da", "x": 155, "z": 125, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (大安復興店)", "address": "大安區復興南路一段 150 號", "label": "購買 CoCo 手搖飲 (大安店)"},
@@ -280,18 +280,18 @@ const interactables = [
   {"id": "market_ny", "x": -205, "z": 168, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋湳雅觀光夜市", "address": "板橋區南雅東路 87 號", "label": "進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)"},
   {"id": "seven_xf", "x": -95, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (學城門市)", "address": "新北海山生活圈 學府路一段 118 號", "label": "進入 7-Eleven (學城門市)"},
   {"id": "coco_xf", "x": -40, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋重慶店)", "address": "板橋生活圈 重慶路 179 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
-  {"id": "wanjiafu_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入樂家康便利購 (廣明店)"},
+  {"id": "wanjiafu_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入家樂福便利購 (廣明店)"},
   {"id": "market_hs", "x": -185, "z": 210, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋黃石傳統市場", "address": "板橋區宮口街 37 號 (府中商圈)", "label": "進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)"},
   {"id": "fmart_fz", "x": -100, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋府中店)", "address": "板橋區府中路 35 號", "label": "進入全家 (板橋府中店)"},
-  {"id": "wanjiafu_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入樂家康超市 (板橋文化店)"},
+  {"id": "wanjiafu_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入家樂福便利購 (板橋文化店)"},
   {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"},
   {"id": "seven_ag", "x": 55, "z": 110, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正愛國店)", "address": "中正區愛國西路 9 號", "label": "進入 7-Eleven (中正愛國店)"},
   {"id": "fmart_cd", "x": -185, "z": 45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門成都店)", "address": "萬華區成都路 23 號", "label": "進入全家 (西門成都店)"},
   {"id": "coco_fz", "x": -140, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋府中店)", "address": "板橋區中山路一段 50 號", "label": "購買 CoCo 手搖飲 (府中店)"},
-  {"id": "wanjiafu_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康便利購 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入樂家康便利購 (板橋新埔店)"},
+  {"id": "wanjiafu_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入家樂福便利購 (板橋新埔店)"},
   {"id": "seven_dh_2", "x": -185, "z": -80, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化二店)", "address": "大同區迪化街一段 82 號", "label": "進入 7-Eleven (迪化二店)"},
   {"id": "fmart_sd_lq", "x": 105, "z": 155, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (師大龍泉店)", "address": "大安區師大路 59 號", "label": "進入全家 (師大龍泉店)"},
-  {"id": "wanjiafu_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康超市 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入樂家康超市 (重慶北店)"},
+  {"id": "wanjiafu_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入家樂福便利購 (重慶北店)"},
   {"id": "landmark_jf_gate", "x": 60, "z": 108, "w": 18, "d": 18, "r": 9.0, "type": "landmark", "name": "國定古蹟 景福門 (東門圓環)", "address": "中正區中山南路 ✕ 凱達格蘭大道口", "label": "瞻仰 景福門古蹟 (台北府城東門)"},
   {"id": "landmark_museum", "x": -67.5, "z": 66, "w": 24, "d": 16, "r": 9.0, "type": "landmark", "name": "國立臺灣博物館", "address": "中正區襄陽路 2 號 (二二八公園北側)", "label": "參觀 國立臺灣博物館 (希臘多立克式宮殿與百年銅頂)"},
   {"id": "landmark_lin_garden", "x": -195, "z": 210, "w": 24, "d": 20, "r": 9.0, "type": "landmark", "name": "國定古蹟 林本源園邸 (林家花園)", "address": "板橋區西門街 9 號 (府中生活圈)", "label": "漫遊 林家花園 (百年江南庭園與來青閣)"}
@@ -3142,7 +3142,112 @@ function renderScene() {
     ctx.stroke();
   }
 
-  // (4) 萬家福 WanJiaFu (旗艦量販) ✕ 樂家康 LeJiaKang (超市便利購)
+  // 🛒 全球正統家樂福官方向量標誌 (Carrefour Dual-Color Diamond ✕ Negative White 'C')
+  let carrefourRedPath2D = null;
+  let carrefourBluePath2D = null;
+  if (typeof Path2D !== 'undefined') {
+    try {
+      carrefourRedPath2D = new Path2D("M18.0334273,1.59976316 C18.1419912,1.4945 18.2441057,1.45213158 18.331978,1.45213158 C18.4894493,1.45213158 18.600163,1.5895 18.5950573,1.75713158 C18.5902203,1.85660526 18.5464185,1.96581579 18.4486035,2.06160526 C14.5351982,6.82607895 11.6891586,12.3942368 11.6891586,20.1192368 C11.6891586,27.8376579 14.5351982,33.2989737 18.4486035,38.0610789 C18.5464185,38.1571316 18.5902203,38.2681842 18.5950573,38.3658158 C18.600163,38.5313421 18.4894493,38.6710789 18.331978,38.6710789 C18.2441057,38.6710789 18.1419912,38.6284474 18.0334273,38.5226579 L1.36296035,22.7345 C0.530995595,22.0363421 0,21.2218684 0,20.0629211 C0,18.8989737 0.530995595,18.0866053 1.36296035,17.3939737 L18.0334273,1.59976316");
+      carrefourBluePath2D = new Path2D("M9.08448546,0.141973684 C2.55721674,0.141973684 0.0056969163,9.20092105 0.0056969163,19.9982895 C0.0056969163,30.7982895 2.55721674,39.7367105 9.08448546,39.7367105 C13.0008467,39.7367105 16.3394546,37.4901316 16.3510097,35.6440789 C16.3518159,35.2406579 16.1935383,34.8530263 15.8468863,34.5148684 C13.9916264,32.7585526 13.2650009,31.0022368 13.2580141,29.4540789 C13.2475339,26.4967105 15.8681154,24.2927632 18.2823181,24.2927632 C21.603459,24.2927632 23.5616396,26.8496053 23.5616396,30.1588158 C23.5616396,33.2935526 22.1946485,35.9077632 20.7118379,37.9975 C20.6543313,38.0848684 20.6282652,38.1780263 20.6282652,38.2622368 C20.6301463,38.4272368 20.7271551,38.5614474 20.8749524,38.5614474 C20.9652432,38.5614474 21.0705824,38.5146053 21.1847894,38.4014474 L37.8600934,22.6132895 C38.6925956,21.9153947 39.2241286,21.1009211 39.2241286,19.9419737 C39.2241286,18.7780263 38.6925956,17.9653947 37.8600934,17.2727632 L21.1847894,1.47881579 C21.0705824,1.36697368 20.9652432,1.32013158 20.8749524,1.32013158 C20.7260802,1.32013158 20.6301463,1.45539474 20.6282652,1.61986842 C20.6282652,1.70460526 20.6543313,1.79855263 20.7118379,1.88618421 C22.1946485,3.97328947 23.5616396,6.59065789 23.5616396,9.72302632 C23.5616396,13.0298684 21.603459,15.5893421 18.2823181,15.5893421 C15.8681154,15.5893421 13.2475339,13.3869737 13.2580141,10.4285526 C13.2650009,8.87907895 13.9916264,7.12302632 15.8468863,5.36855263 C16.1935383,5.02697368 16.3518159,4.64223684 16.3510097,4.23881579 C16.3394546,2.39013158 13.0008467,0.141973684 9.08448546,0.141973684");
+    } catch (e) {
+      console.warn("Path2D initialization exception:", e);
+    }
+  }
+
+  function drawCarrefourLogo(ctx, cx, cy, targetWidth, targetHeight) {
+    const w = targetWidth || 22;
+    const h = targetHeight || (w * 40 / 61);
+    ctx.save();
+    ctx.translate(cx - w / 2, cy - h / 2);
+
+    // 圓角白底背板（確保紅藍標誌在任何深色背景皆能完美凸顯負空間白 C）
+    ctx.fillStyle = '#ffffff';
+    drawSafeRoundRect(ctx, -2, -2, w + 4, h + 4, 3);
+    ctx.fill();
+
+    const scaleRatio = w / 61;
+    ctx.scale(scaleRatio, scaleRatio);
+
+    if (carrefourRedPath2D && carrefourBluePath2D) {
+      // 官方 Path2D 高精向量繪製
+      ctx.fillStyle = '#C20016'; // 家樂福專屬正紅
+      ctx.fill(carrefourRedPath2D);
+
+      ctx.save();
+      ctx.translate(21.766520, 0.121053);
+      ctx.fillStyle = '#254F9B'; // 家樂福專屬深藍
+      ctx.fill(carrefourBluePath2D);
+      ctx.restore();
+    } else {
+      // 幾何貝茲曲線平滑備援模式
+      ctx.fillStyle = '#C20016';
+      ctx.beginPath();
+      ctx.moveTo(18, 1.6);
+      ctx.bezierCurveTo(11.7, 12.4, 11.7, 27.8, 18.4, 38.1);
+      ctx.lineTo(1.4, 22.7);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#254F9B';
+      ctx.beginPath();
+      ctx.moveTo(31, 0.2);
+      ctx.bezierCurveTo(55, 0.2, 61, 20, 31, 39.7);
+      ctx.lineTo(60, 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // 🚇 台北捷運官方雙色流線標誌 (Taipei Metro Official Dual-Color Logo)
+  // 由科技藍 (#0070bc) 與生機綠 (#00a650) 雙向互繞飛鳥箭頭組成
+  function drawTaipeiMetroLogo(ctx, cx, cy, radius) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const s = radius / 36;
+    ctx.scale(s, s);
+
+    // 圓形純白底托
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 上弧箭頭：科技藍 (#0070bc)
+    ctx.fillStyle = '#0070bc';
+    ctx.beginPath();
+    ctx.moveTo(-26, 10);
+    ctx.bezierCurveTo(-28, -14, -12, -36, 14, -36);
+    ctx.bezierCurveTo(26, -36, 36, -30, 42, -20);
+    ctx.lineTo(46, -30);
+    ctx.lineTo(46, -6);
+    ctx.lineTo(22, -10);
+    ctx.lineTo(32, -17);
+    ctx.bezierCurveTo(27, -23, 21, -27, 14, -27);
+    ctx.bezierCurveTo(-6, -27, -18, -11, -17, 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // 下弧箭頭：生機綠 (#00a650)
+    ctx.fillStyle = '#00a650';
+    ctx.beginPath();
+    ctx.moveTo(26, -10);
+    ctx.bezierCurveTo(28, 14, 12, 36, -14, 36);
+    ctx.bezierCurveTo(-26, 36, -36, 30, -42, 20);
+    ctx.lineTo(-46, 30);
+    ctx.lineTo(-46, 6);
+    ctx.lineTo(-22, 10);
+    ctx.lineTo(-32, 17);
+    ctx.bezierCurveTo(-27, 23, -21, 27, -14, 27);
+    ctx.bezierCurveTo(6, 27, 18, 11, 17, -10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // (4) 🛒 家樂福 Carrefour (旗艦量販 ✕ 便利購超市)
   function drawWanjiafuStore(x, z, branchName, isFlagship) {
     const storeW = isFlagship ? 34 : 24;
     const storeH = isFlagship ? 24 : 20;
@@ -3152,43 +3257,31 @@ function renderScene() {
     ctx.fillStyle = '#0f172a';
     drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
     ctx.fill();
-    ctx.strokeStyle = isFlagship ? '#ef4444' : '#00f0ff';
+    ctx.strokeStyle = isFlagship ? '#254F9B' : '#0284c7';
     ctx.lineWidth = 2.2;
     ctx.stroke();
 
-    // 招牌頂條 (旗艦為深紅光環，便利購為賽博青藍)
-    ctx.fillStyle = isFlagship ? '#991b1b' : '#0369a1';
+    // 招牌頂條 (家樂福深藍底色)
+    ctx.fillStyle = isFlagship ? '#1e3a8a' : '#0369a1';
     ctx.fillRect(bx, bz, storeW * scale, 5 * scale);
 
-    // 科技光輪標誌 (紅白藍光輪)
-    const logoX = bx + 4 * scale;
-    const logoY = bz + 2.5 * scale;
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.arc(logoX - 1.2 * scale, logoY, 1.8 * scale, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.fill();
-    ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.arc(logoX + 1.2 * scale, logoY, 1.8 * scale, -Math.PI * 0.5, Math.PI * 0.5);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(logoX, logoY, 1 * scale, 0, Math.PI * 2);
-    ctx.fill();
+    // 門面正統家樂福紅白藍雙箭頭白 C 標誌
+    const logoSize = Math.max(12, scale * 1.8);
+    drawCarrefourLogo(ctx, bx + 5 * scale, bz + 2.5 * scale, logoSize, logoSize * 40 / 61);
 
     // 招牌名稱
     if (scale >= 2.2) {
       ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${Math.max(9, scale * 0.68)}px sans-serif`;
       ctx.textAlign = 'left';
-      ctx.fillText(isFlagship ? `萬家福旗艦 (${branchName})` : `樂家康 (${branchName})`, bx + 7.5 * scale, bz + 3.6 * scale);
+      ctx.fillText(isFlagship ? `家樂福旗艦 (${branchName})` : `家樂福便利購 (${branchName})`, bx + 9.5 * scale, bz + 3.6 * scale);
     }
 
     // 挑高全息玻璃帷幕與能量補給站門面
-    ctx.fillStyle = isFlagship ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 240, 255, 0.15)';
+    ctx.fillStyle = isFlagship ? 'rgba(37, 79, 155, 0.22)' : 'rgba(2, 132, 199, 0.18)';
     drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, (storeW - 10) * scale, (storeH - 11) * scale, 3);
     ctx.fill();
-    ctx.strokeStyle = isFlagship ? '#f87171' : '#38bdf8';
+    ctx.strokeStyle = isFlagship ? '#60a5fa' : '#38bdf8';
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
@@ -3196,9 +3289,375 @@ function renderScene() {
     ctx.fillStyle = '#64748b';
     drawSafeRoundRect(ctx, bx + 2 * scale, bz + (storeH - 4.5) * scale, 4 * scale, 3.5 * scale, 1);
     ctx.fill();
+
+    // 🌟 委託人指示重要鐵令：
+    // 「如果這邊有什麼家樂福的標示，縮小的時候不要看到，要放大到一定的大小，上面才顯示一個小小的家樂福標示。我不要一個圈圈下面寫「家」，我要一個家樂福的標示。」
+    // 縮小 (scale < 4.8) 時不繪製頂部浮動標示；放大到一定大小 (scale >= 4.8) 時，在建築上方繪製一個小巧精緻的家樂福標示
+    if (scale >= 4.8) {
+      const badgeW = Math.min(136, Math.max(96, scale * 5.8));
+      const badgeH = Math.min(30, Math.max(22, scale * 1.4));
+      const badgeX = bx + (storeW * scale - badgeW) / 2;
+      const badgeY = bz - badgeH - 6;
+
+      ctx.save();
+      // 深色半透明玻璃藥丸底板
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      drawSafeRoundRect(ctx, badgeX, badgeY, badgeW, badgeH, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#254F9B';
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = 'rgba(37, 79, 155, 0.6)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+
+      // 小巧家樂福正統向量標示
+      const iconW = Math.min(22, badgeH * 0.72);
+      const iconH = iconW * 40 / 61;
+      drawCarrefourLogo(ctx, badgeX + 16, badgeY + badgeH / 2, iconW, iconH);
+
+      // 品牌名稱文字 (純淨白字，標註「家樂福 Carrefour」)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(9, Math.min(12, badgeH * 0.44))}px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const titleText = badgeW > 110 ? `家樂福 ${branchName}` : `家樂福 Carrefour`;
+      ctx.fillText(titleText, badgeX + 30, badgeY + badgeH / 2);
+      ctx.restore();
+    }
   }
 
-  // (5) 傳統生鮮超市已全面轉型為萬家福旗艦量販與樂家康量子補給站 (drawWanjiafuStore)
+  // (4.1) 🚇 台北捷運立體高畫質出入口 (Taipei Metro Isometric Entrance)
+  function drawMrtEscalatorEntrance(it) {
+    const ew = it.w || 14;
+    const ed = it.d || 10;
+    const bx = screenX(it.x - ew / 2);
+    const bz = screenZ(it.z - ed / 2);
+    const bw = ew * scale;
+    const bh = ed * scale;
+
+    // 1. 地面花崗岩平台基座
+    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = Math.min(20, scale * 1.5);
+    ctx.shadowOffsetY = Math.min(8, scale * 0.8);
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, bx, bz, bw, bh, Math.min(8, scale * 0.4));
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = Math.max(1, scale * 0.08);
+    ctx.stroke();
+
+    // 2. 出入口前方黃色圓點導盲警示磚 (Tactile Warning Paving)
+    if (scale >= 2.0) {
+      const tileH = Math.min(bh * 0.2, scale * 1.6);
+      const tileY = bz + bh - tileH;
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(bx + bw * 0.1, tileY, bw * 0.8, tileH);
+      if (scale >= 8.0) {
+        ctx.fillStyle = '#ca8a04';
+        const dotStep = Math.max(3, scale * 0.35);
+        const dotR = Math.max(0.8, scale * 0.08);
+        for (let dotX = bx + bw * 0.12; dotX < bx + bw * 0.88; dotX += dotStep) {
+          for (let dotY = tileY + dotStep / 2; dotY < tileY + tileH; dotY += dotStep) {
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    }
+
+    // 3. 地下穿堂通道井開口
+    const pitX = bx + bw * 0.08;
+    const pitY = bz + bh * 0.18;
+    const pitW = bw * 0.84;
+    const pitH = bh * 0.62;
+    ctx.fillStyle = '#020617';
+    drawSafeRoundRect(ctx, pitX, pitY, pitW, pitH, Math.min(4, scale * 0.2));
+    ctx.fill();
+
+    // 4. 雙向自動電扶梯 (Dual Animated Escalators - 左下行、右上行)
+    const escW = pitW * 0.42;
+    const escGap = pitW * 0.06;
+    const escX1 = pitX + pitW * 0.05;
+    const escX2 = escX1 + escW + escGap;
+    const escY = pitY + pitH * 0.08;
+    const escH = pitH * 0.84;
+    const escTime = Date.now() * 0.003;
+
+    function drawSingleEscalator(ex, ey, ew, eh, isUpward) {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(ex, ey, ew, eh);
+
+      const stepCount = Math.max(4, Math.floor(eh / Math.max(3, scale * 0.35)));
+      const stepH = eh / stepCount;
+      const offset = (isUpward ? (escTime % 1) : (1 - (escTime % 1))) * stepH;
+
+      for (let s = -1; s <= stepCount; s++) {
+        const curY = ey + s * stepH + offset;
+        if (curY >= ey && curY + stepH * 0.7 <= ey + eh) {
+          ctx.fillStyle = (Math.floor(s + escTime) % 2 === 0) ? '#475569' : '#334155';
+          ctx.fillRect(ex + ew * 0.1, curY, ew * 0.8, stepH * 0.7);
+
+          // 踏階黃色安全邊緣線 (Taipei Metro Yellow Warning Edge)
+          ctx.fillStyle = '#facc15';
+          ctx.fillRect(ex + ew * 0.1, curY, ew * 0.8, Math.max(0.6, scale * 0.05));
+          ctx.fillRect(ex + ew * 0.1, curY, Math.max(0.6, scale * 0.05), stepH * 0.7);
+          ctx.fillRect(ex + ew * 0.9 - Math.max(0.6, scale * 0.05), curY, Math.max(0.6, scale * 0.05), stepH * 0.7);
+        }
+      }
+
+      // 左右兩側強化玻璃欄板
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.fillRect(ex, ey, ew * 0.08, eh);
+      ctx.fillRect(ex + ew * 0.92, ey, ew * 0.08, eh);
+
+      // 黑色橡膠扶手帶
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(ex, ey, ew * 0.08, eh);
+      ctx.fillRect(ex + ew * 0.92, ey, ew * 0.08, eh);
+
+      // 運行方向 LED 指示燈號
+      if (scale >= 3.5) {
+        const ledR = Math.max(1, scale * 0.1);
+        ctx.fillStyle = isUpward ? '#22c55e' : '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(ex + ew / 2, isUpward ? (ey + eh - ledR * 2) : (ey + ledR * 2), ledR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    drawSingleEscalator(escX1, escY, escW, escH, false);
+    drawSingleEscalator(escX2, escY, escW, escH, true);
+
+    // 5. 波浪採光天棚玻璃遮雨棚 (Glass Canopy & Steel Truss)
+    ctx.save();
+    const canopyX = bx - bw * 0.06;
+    const canopyY = bz - bh * 0.22;
+    const canopyW = bw * 1.12;
+    const canopyH = bh * 0.85;
+
+    const grad = ctx.createLinearGradient(canopyX, canopyY, canopyX + canopyW, canopyY + canopyH);
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0.42)');
+    grad.addColorStop(0.5, 'rgba(14, 165, 233, 0.25)');
+    grad.addColorStop(1, 'rgba(3, 105, 161, 0.55)');
+    ctx.fillStyle = grad;
+    drawSafeRoundRect(ctx, canopyX, canopyY, canopyW, canopyH, Math.min(8, scale * 0.45));
+    ctx.fill();
+
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = Math.max(1, scale * 0.09);
+    ctx.stroke();
+
+    if (scale >= 3.0) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = Math.max(0.8, scale * 0.06);
+      const ribCount = 4;
+      for (let r = 1; r < ribCount; r++) {
+        const rx = canopyX + (canopyW / ribCount) * r;
+        ctx.beginPath();
+        ctx.moveTo(rx, canopyY);
+        ctx.lineTo(rx, canopyY + canopyH);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // 6. 經典台北捷運出入口立柱 (Taipei Metro Entrance Pylon)
+    let lines = [{ code: 'BL', name: '板南線', color: '#0070bd' }];
+    let exitName = it.name;
+    if (it.id.includes('m6') || it.name.includes('M6') || it.name.includes('台北車站')) {
+      lines = [
+        { code: 'BL', name: '板南線', color: '#0070bd' },
+        { code: 'R', name: '淡水信義線', color: '#e3002c' }
+      ];
+      exitName = '台北車站 出口 M6';
+    } else if (it.id.includes('zs') || it.name.includes('中山')) {
+      lines = [
+        { code: 'R', name: '淡水信義線', color: '#e3002c' },
+        { code: 'G', name: '松山新店線', color: '#008659' }
+      ];
+      exitName = '捷運中山站';
+    } else if (it.id.includes('fz') || it.name.includes('府中')) {
+      lines = [{ code: 'BL', name: '板南線', color: '#0070bd' }];
+      exitName = '捷運府中站 出口 1';
+    }
+
+    const pylonW = Math.min(bw * 0.42, Math.max(50, scale * 3.8));
+    const pylonH = Math.min(bh * 0.72, Math.max(38, scale * 2.8));
+    const pylonX = bx + bw + 4;
+    const pylonY = bz + bh * 0.12;
+
+    ctx.save();
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, pylonX, pylonY, pylonW, pylonH, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 柱頂高畫質台北捷運藍綠官方 Logo
+    const logoR = Math.min(10, Math.max(5, pylonH * 0.18));
+    const logoCx = pylonX + pylonW * 0.22;
+    const logoCy = pylonY + pylonH * 0.32;
+    drawTaipeiMetroLogo(ctx, logoCx, logoCy, logoR);
+
+    // 路線專屬色標膠囊 (Line Badges)
+    const badgeStartX = pylonX + pylonW * 0.44;
+    lines.forEach((l, idx) => {
+      const lx = badgeStartX + idx * (pylonW * 0.27);
+      const ly = pylonY + pylonH * 0.18;
+      const lw = pylonW * 0.24;
+      const lh = pylonH * 0.28;
+      ctx.fillStyle = l.color;
+      drawSafeRoundRect(ctx, lx, ly, lw, lh, 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.max(7, lh * 0.65)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(l.code, lx + lw / 2, ly + lh / 2);
+    });
+
+    // 站名文字標示
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(8, pylonH * 0.24)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(exitName, pylonX + pylonW / 2, pylonY + pylonH * 0.72);
+    ctx.restore();
+  }
+
+  // (4.2) 🏛️ 台北車站旗艦大樓 (Taipei Main Station Grand Terminal Building)
+  function drawStationBuilding(it) {
+    const bw = it.w * scale;
+    const bh = it.d * scale;
+    const bx = screenX(it.x - it.w / 2);
+    const bz = screenZ(it.z - it.d / 2);
+
+    // 1. 底層站體主結構 (Main Terminal Building Structure)
+    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+    ctx.shadowBlur = Math.min(30, scale * 2.2);
+    ctx.shadowOffsetY = Math.min(12, scale * 1.2);
+    ctx.fillStyle = '#1e293b';
+    drawSafeRoundRect(ctx, bx, bz, bw, bh, Math.min(10, scale * 0.5));
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = Math.max(1.5, scale * 0.1);
+    ctx.stroke();
+
+    // 2. 挑高石材長廊與落地採光玻璃帷幕 (Glass Atrium & Column Arcade)
+    const atriumX = bx + bw * 0.08;
+    const atriumY = bz + bh * 0.28;
+    const atriumW = bw * 0.84;
+    const atriumH = bh * 0.64;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    drawSafeRoundRect(ctx, atriumX, atriumY, atriumW, atriumH, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (scale >= 2.0) {
+      const colCount = 8;
+      const colStep = atriumW / colCount;
+      ctx.fillStyle = '#94a3b8';
+      for (let c = 1; c < colCount; c++) {
+        ctx.fillRect(atriumX + c * colStep - Math.max(1, scale * 0.08), atriumY, Math.max(2, scale * 0.16), atriumH);
+      }
+    }
+
+    // 3. 巨型四面廡殿頂古銅褐琉璃瓦屋脊 (Palatial Hip Roof)
+    const roofX = bx - 4 * scale;
+    const roofY = bz - 6 * scale;
+    const roofW = bw + 8 * scale;
+    const roofH = Math.min(bh * 0.45, 18 * scale);
+
+    ctx.fillStyle = '#7c2d12';
+    drawSafeRoundRect(ctx, roofX, roofY, roofW, roofH, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = Math.max(1.2, scale * 0.08);
+    ctx.stroke();
+
+    if (scale >= 2.5) {
+      ctx.strokeStyle = '#9a3412';
+      ctx.lineWidth = 1;
+      const tileSteps = Math.floor(roofW / Math.max(6, scale * 0.6));
+      for (let t = 1; t < tileSteps; t++) {
+        const tx = roofX + t * (roofW / tileSteps);
+        ctx.beginPath();
+        ctx.moveTo(tx, roofY);
+        ctx.lineTo(tx, roofY + roofH);
+        ctx.stroke();
+      }
+    }
+
+    // 4. 頂部巨型三鐵共構高解析度發光站名看板 (Grand Signboard)
+    const signW = Math.min(bw * 0.88, Math.max(140, scale * 8.5));
+    const signH = Math.min(bh * 0.32, Math.max(28, scale * 2.2));
+    const signX = bx + (bw - signW) / 2;
+    const signY = bz + (bh - signH) / 2;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+    drawSafeRoundRect(ctx, signX, signY, signW, signH, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.8;
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+
+    // (4a) 台北捷運官方藍綠雙色標誌
+    const mrtLogoR = Math.min(10, Math.max(5, signH * 0.28));
+    drawTaipeiMetroLogo(ctx, signX + 16, signY + signH / 2, mrtLogoR);
+
+    // (4b) 路線代表色膠囊 [BL 板南線 藍] ✕ [R 淡水信義線 紅]
+    const badgeY = signY + (signH - 12) / 2;
+    // BL
+    ctx.fillStyle = '#0070bd';
+    drawSafeRoundRect(ctx, signX + 32, badgeY, 18, 12, 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BL', signX + 41, badgeY + 6);
+
+    // R
+    ctx.fillStyle = '#e3002c';
+    drawSafeRoundRect(ctx, signX + 53, badgeY, 16, 12, 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('R', signX + 61, badgeY + 6);
+
+    // (4c) 臺灣鐵路與高鐵標籤
+    ctx.fillStyle = '#0284c7';
+    drawSafeRoundRect(ctx, signX + 72, badgeY, 22, 12, 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('TRA', signX + 83, badgeY + 6);
+
+    ctx.fillStyle = '#ea580c';
+    drawSafeRoundRect(ctx, signX + 97, badgeY, 26, 12, 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('THSR', signX + 110, badgeY + 6);
+
+    // (4d) 站名大字「臺北車站 TAIPEI MAIN STATION」
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(10, Math.min(18, signH * 0.42))}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText('臺北車站 TAIPEI MAIN STATION', signX + 128, signY + signH / 2 + 1);
+    ctx.restore();
+  }
 
   // (6) 傳統市場與觀光夜市 (Traditional Market / Night Market)
   function drawMarketPlace(x, z, marketName) {
@@ -3294,39 +3753,12 @@ function renderScene() {
     } else if (it.type === 'station') {
       renderList.push({
         z: it.z,
-        draw: () => {
-          const bx = screenX(it.x - it.w / 2);
-          const bz = screenZ(it.z - it.d / 2);
-          ctx.fillStyle = '#334155';
-          drawSafeRoundRect(ctx, bx, bz, it.w * scale, it.d * scale, 8);
-          ctx.fill();
-          // 傳統廡殿頂造型
-          ctx.fillStyle = '#7c2d12';
-          drawSafeRoundRect(ctx, bx - 4 * scale, bz - 6 * scale, (it.w + 8) * scale, 14 * scale, 6);
-          ctx.fill();
-          ctx.fillStyle = '#38bdf8';
-          ctx.font = `bold ${Math.max(13, scale * 1.05)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.fillText('🚇 台北車站 TAIPEI MAIN STATION', bx + (it.w / 2) * scale, bz + 18 * scale);
-        }
+        draw: () => drawStationBuilding(it)
       });
     } else if (it.type === 'mrt_escalator') {
       renderList.push({
         z: it.z,
-        draw: () => {
-          const bx = screenX(it.x - 6);
-          const bz = screenZ(it.z - 5);
-          ctx.fillStyle = '#0284c7';
-          drawSafeRoundRect(ctx, bx, bz, 12 * scale, 10 * scale, 4);
-          ctx.fill();
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = `bold ${Math.max(9, scale * 0.6)}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.fillText(`Ⓜ️ ${it.name.split(' ')[0]}`, bx + 6 * scale, bz + 6 * scale);
-        }
+        draw: () => drawMrtEscalatorEntrance(it)
       });
     } else if (it.type === 'bus_stop') {
       renderList.push({
