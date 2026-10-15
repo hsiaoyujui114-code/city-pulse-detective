@@ -38,6 +38,58 @@ const server = http.createServer((req, res) => {
   if (reqPath === '/') reqPath = '/index.html';
   if (reqPath === '/map' || reqPath === '/realmap' || reqPath === '/cyber-map') reqPath = '/cyber-realmap.html';
 
+  // REST API 路由支援 (落實委託人指示：真實網路地圖圖資與伺服器雙軌同步)
+  if (reqPath.startsWith('/api/')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+    if (reqPath === '/api/info') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        project: 'Taipei Metro Detective RPG / City Pulse Detective',
+        version: '1.0.0',
+        onlinePlayers: players ? players.size : 0,
+        storesCount: 65,
+        sectorsCount: 41,
+        casesCount: 10,
+        mapEngine: 'Leaflet 1.9.4 Real Slippy Map (CARTO/OSM/Esri)'
+      }));
+      return;
+    }
+
+    try {
+      const sharedCode = fs.readFileSync(path.join(PUBLIC_DIR, 'shared-data.js'), 'utf-8');
+      const vm = require('vm');
+      const sandbox = {};
+      vm.createContext(sandbox);
+      vm.runInContext(sharedCode, sandbox);
+
+      if (reqPath === '/api/stores') {
+        res.writeHead(200);
+        res.end(JSON.stringify(sandbox.REAL_WORLD_STORES || []));
+        return;
+      }
+      if (reqPath === '/api/sectors') {
+        res.writeHead(200);
+        res.end(JSON.stringify(sandbox.SHUANGBEI_41_SECTORS || []));
+        return;
+      }
+      if (reqPath === '/api/cases') {
+        res.writeHead(200);
+        res.end(JSON.stringify(sandbox.DEMO_10_CASES || []));
+        return;
+      }
+    } catch (apiErr) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: apiErr.message }));
+      return;
+    }
+
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: 'Endpoint not found' }));
+    return;
+  }
+
   const filePath = path.join(PUBLIC_DIR, reqPath);
 
   // 安全檢查：防止路徑跳躍

@@ -1,21 +1,21 @@
 /**
  * ============================================================================
  * NEO-TAIPEI 1:1 REAL HOLO-MAP (雙北 1:1 真實全息科技地圖 - 附檔引擎)
- * 核心引擎：MapLibre GL JS ✕ 雙北 41 行政特區 ✕ 10 大示範案件 ✕ 雙軌 SSOT
- * 具備：WebGL 硬體加速 + 2D Canvas 全息自動降級備援 (100% 絕不黑屏)
+ * 核心引擎：Leaflet 1.9.4 ✕ 1:1 真實網路地圖 (CARTO / OSM / 衛星) ✕ SSOT 雙軌
+ * 整合：雙北 41 行政特區 ✕ 65+ 實體門市純真座標 ✕ 10 大示範案件 ✕ 捷運公車
+ * 堅持：100% 拒絕手繪品與假畫布，純粹真實雙北網路拓撲，完全零黑屏
  * ============================================================================
  */
 
-// 取得單一資料源 (SSOT)
+// 1. 取得單一資料源 (SSOT)
 const SECTORS_DATA = (typeof SHUANGBEI_41_SECTORS !== 'undefined') ? SHUANGBEI_41_SECTORS : [];
 const STORES_DATA = (typeof REAL_WORLD_STORES !== 'undefined') ? REAL_WORLD_STORES : [];
 const CASES_DATA = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
 
-// 3. 台北捷運主要路線經緯度 (Taipei Metro Glowing Vector Lines)
+// 2. 台北捷運主要路線真實座標 (Taipei Metro Glowing Vector Lines)
 const MRT_GEOJSON_LINES = {
   type: 'FeatureCollection',
   features: [
-    // 板南線 (藍線)
     {
       type: 'Feature',
       properties: { name: '板南線 (藍線)', color: '#0070bd' },
@@ -41,7 +41,6 @@ const MRT_GEOJSON_LINES = {
         ]
       }
     },
-    // 淡水信義線 (紅線)
     {
       type: 'Feature',
       properties: { name: '淡水信義線 (紅線)', color: '#e3002c' },
@@ -64,7 +63,6 @@ const MRT_GEOJSON_LINES = {
         ]
       }
     },
-    // 松山新店線 (綠線)
     {
       type: 'Feature',
       properties: { name: '松山新店線 (綠線)', color: '#008659' },
@@ -91,7 +89,7 @@ const MRT_GEOJSON_LINES = {
   ]
 };
 
-// 4. 雙北 307 幹線公車真實 GPS 經緯度路徑
+// 3. 雙北 307 幹線公車真實 GPS 經緯度路徑
 const BUS_307_ROUTE = [
   [121.457, 25.008], // 板橋府中站
   [121.458, 25.010], // 學府路一段真實商圈
@@ -107,296 +105,446 @@ const BUS_307_ROUTE = [
   [121.544, 25.052]  // 南京復興 (折返)
 ];
 
-// 全域狀態
-let mapInstance = null;
-let is3DMode = true;
-let isRadarScanning = false;
-let activePopup = null;
-let isUsingFallbackCanvas = false;
-
-// 檢查瀏覽器 WebGL 支援度
-function isWebGLAvailable() {
-  try {
-    const canvas = document.createElement('canvas');
-    return !!(window.WebGLRenderingContext && 
-      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-  } catch (e) {
-    return false;
-  }
-}
+// 4. 全域地圖與圖層管理
+let map = null;
+let currentBaseLayerKey = 'dark';
+let activeBaseLayer = null;
+let baseLayers = {};
+let transitLayerGroup = null;
+let storeMarkerGroups = {};
+let casesLayerGroup = null;
+let sectorsLayerGroup = null;
+let isTransitVisible = true;
+let currentStoreFilter = 'all';
 
 // 初始化地圖主函式
 function initCyberRealMap() {
-  console.log('🚀 啟動 NEO-TAIPEI 1:1 真實全息科技地圖 (附檔引擎)...');
+  console.log('🚀 啟動 NEO-TAIPEI 1:1 真實網路地圖 (純實體 Leaflet GIS 引擎)...');
 
-  renderSectorJumpButtons();
-  renderCasesTopStrip();
-
-  // 若不支援 WebGL 或 MapLibre 未載入，無縫切換為高科技 2D Canvas 全息畫布
-  if (!isWebGLAvailable() || typeof maplibregl === 'undefined') {
-    console.warn('⚠️ 偵測到環境不支援 WebGL 或腳本受限，無縫啟動高科技全息 2D Canvas 降級畫布！');
-    initFallbackCanvasMap();
+  if (typeof L === 'undefined') {
+    console.error('❌ Leaflet 腳本尚未載入，請確認網路連線或 vendor 本地路徑。');
     return;
   }
 
-  try {
-    // 建立 MapLibre 地圖實例
-    mapInstance = new maplibregl.Map({
-      container: 'map',
-      style: {
-        version: 8,
-        sources: {
-          'carto-dark': {
-            type: 'raster',
-            tiles: [
-              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap, © CARTO'
-          }
-        },
-        layers: [
-          {
-            id: 'carto-dark-layer',
-            type: 'raster',
-            source: 'carto-dark',
-            minzoom: 0,
-            maxzoom: 20
-          }
-        ]
-      },
-      center: [121.517, 25.045], // 站前核心
-      zoom: 12.5,
-      pitch: 45,
-      bearing: -12,
-      maxBounds: [[121.10, 24.50], [122.20, 25.50]]
-    });
-
-    let mapLoaded = false;
-    const fallbackTimer = setTimeout(() => {
-      if (!mapLoaded && !isUsingFallbackCanvas) {
-        console.warn('⚡ MapLibre 載入逾時或 WebGL 渲染受限，自動啟動 2D Canvas 全息備援畫布！');
-        initFallbackCanvasMap();
-      }
-    }, 800);
-
-    mapInstance.on('load', () => {
-      mapLoaded = true;
-      clearTimeout(fallbackTimer);
-      console.log('✅ MapLibre 畫布載入完成，實裝雙北全息向量圖層...');
-      addMrtLayers();
-      addBus307Layer();
-      addSectorsLayer();
-      addStoreMarkers();
-      addDemoCasesMarkers();
-      setupTelemetryListeners();
-    });
-
-    mapInstance.on('error', (err) => {
-      console.error('MapLibre runtime error, switching to fallback canvas:', err);
-      if (!isUsingFallbackCanvas) initFallbackCanvasMap();
-    });
-
-  } catch (err) {
-    console.error('MapLibre init failed:', err);
-    initFallbackCanvasMap();
-  }
-}
-
-// 實裝台北捷運光纖向量圖層
-function addMrtLayers() {
-  if (!mapInstance) return;
-  mapInstance.addSource('mrt-lines', {
-    type: 'geojson',
-    data: MRT_GEOJSON_LINES
+  // 1. 建立地圖實例 (預設聚焦台北車站站前核心)
+  map = L.map('map', {
+    center: [25.045, 121.517],
+    zoom: 13,
+    minZoom: 9,
+    maxZoom: 19,
+    zoomControl: false
   });
 
-  mapInstance.addLayer({
-    id: 'mrt-glow',
-    type: 'line',
-    source: 'mrt-lines',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': ['get', 'color'],
-      'line-width': 6,
-      'line-opacity': 0.6,
-      'line-blur': 3
-    }
-  });
+  // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  mapInstance.addLayer({
-    id: 'mrt-core',
-    type: 'line',
-    source: 'mrt-lines',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': 2.5,
-      'line-opacity': 0.95
-    }
-  });
-}
-
-// 實裝 307 幹線公車動態路網
-function addBus307Layer() {
-  if (!mapInstance) return;
-  mapInstance.addSource('bus-307', {
-    type: 'geojson',
-    data: {
-      type: 'Feature',
-      properties: { name: '307 幹線公車真實路網' },
-      geometry: { type: 'LineString', coordinates: BUS_307_ROUTE }
-    }
-  });
-
-  mapInstance.addLayer({
-    id: 'bus-307-glow',
-    type: 'line',
-    source: 'bus-307',
-    paint: {
-      'line-color': '#00f0ff',
-      'line-width': 5,
-      'line-opacity': 0.75,
-      'line-dasharray': [2, 2]
-    }
-  });
-}
-
-// 實裝雙北 41 行政特區圖層
-function addSectorsLayer() {
-  if (!mapInstance) return;
-  const sectorsGeoJSON = {
-    type: 'FeatureCollection',
-    features: SECTORS_DATA.map(s => ({
-      type: 'Feature',
-      properties: {
-        id: s.id,
-        name: s.name,
-        code: s.code,
-        tier: s.tier,
-        desc: s.desc
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [s.lon, s.lat]
-      }
-    }))
+  // 2. 建立 1:1 真實網路地圖瓦片服務 (CARTO Dark, OSM Standard, Esri Satellite, CARTO Voyager)
+  baseLayers = {
+    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }),
+    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    }),
+    voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    })
   };
 
-  mapInstance.addSource('sectors-source', {
-    type: 'geojson',
-    data: sectorsGeoJSON
+  activeBaseLayer = baseLayers.dark;
+  activeBaseLayer.addTo(map);
+
+  // 3. 建立各圖層群組
+  transitLayerGroup = L.layerGroup().addTo(map);
+  casesLayerGroup = L.layerGroup().addTo(map);
+  sectorsLayerGroup = L.layerGroup().addTo(map);
+
+  // 初始化門市圖層群組 (依品牌分類)
+  const brands = ['wanjiafu', 'lejiakang', 'seven', 'familymart', 'coco', 'market', 'transport', 'landmark'];
+  brands.forEach(b => {
+    storeMarkerGroups[b] = L.layerGroup().addTo(map);
   });
 
-  mapInstance.addLayer({
-    id: 'sectors-circle',
-    type: 'circle',
-    source: 'sectors-source',
-    paint: {
-      'circle-radius': 9,
-      'circle-color': '#0284c7',
-      'circle-stroke-width': 2.5,
-      'circle-stroke-color': '#00f0ff',
-      'circle-opacity': 0.8
-    }
-  });
+  // 4. 繪製圖層內容
+  renderSectorJumpButtons();
+  renderCasesTopStrip();
+  addMrtAndBusLayers();
+  addSectorsLayer();
+  addAllStoreMarkers();
+  addDemoCasesMarkers();
+  setupTelemetryListeners();
+
+  console.log('✅ 1:1 真實雙北網路地圖已全數載入完成，無手繪降級！');
 }
 
-// 實裝真實門市標記 (萬家福、樂家康、便利超商)
-function addStoreMarkers() {
-  if (!mapInstance) return;
-  STORES_DATA.forEach(store => {
-    const el = document.createElement('div');
-    el.className = 'custom-holo-marker';
-    el.style.width = '24px';
-    el.style.height = '24px';
-    el.style.borderRadius = '50%';
-    el.style.cursor = 'pointer';
-    el.style.display = 'flex';
-    el.style.alignItems = 'center';
-    el.style.justifyContent = 'center';
-    el.style.fontSize = '12px';
-    el.style.boxShadow = '0 0 10px rgba(0, 240, 255, 0.6)';
+// ──────────────────────────────────────────
+// 5. 繪製捷運與 307 公車發光真實向量軌道
+// ──────────────────────────────────────────
+function addMrtAndBusLayers() {
+  transitLayerGroup.clearLayers();
 
-    if (store.brand === 'wanjiafu') {
-      el.style.background = 'linear-gradient(135deg, #ef4444, #3b82f6)';
-      el.style.border = '2px solid #ffffff';
-      el.innerText = '萬';
-      el.title = store.name;
-    } else if (store.brand === 'lejiakang') {
-      el.style.background = 'linear-gradient(135deg, #0284c7, #00f0ff)';
-      el.style.border = '2px solid #38bdf8';
-      el.innerText = '康';
-      el.title = store.name;
-    } else if (store.brand === 'cvs_711') {
-      el.style.background = '#ea580c';
-      el.style.border = '1px solid #ffffff';
-      el.innerText = '7';
-    } else if (store.brand === 'cvs_fm') {
-      el.style.background = '#10b981';
-      el.style.border = '1px solid #ffffff';
-      el.innerText = '全';
-    } else {
-      el.style.background = '#f59e0b';
-      el.style.border = '1px solid #ffffff';
-      el.innerText = '茶';
-    }
+  // (1) 台北捷運發光路網
+  MRT_GEOJSON_LINES.features.forEach(f => {
+    const latLngs = f.geometry.coordinates.map(pt => [pt[1], pt[0]]);
+    
+    // 外層光暈底線
+    L.polyline(latLngs, {
+      color: f.properties.color,
+      weight: 8,
+      opacity: 0.35,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(transitLayerGroup);
 
-    el.addEventListener('click', () => {
-      const typeBadgeClass = store.brand === 'wanjiafu' ? 'type-wanjiafu' :
-                             (store.brand === 'lejiakang' ? 'type-lejiakang' : 'type-cvs');
-      const brandLabel = store.brand === 'wanjiafu' ? '萬家福旗艦量販' :
-                         (store.brand === 'lejiakang' ? '樂家康便利購' : '連鎖超商');
+    // 核心亮線
+    const line = L.polyline(latLngs, {
+      color: f.properties.color,
+      weight: 3.5,
+      opacity: 0.95
+    }).addTo(transitLayerGroup);
 
-      const popupHtml = `
-        <div class="store-popup-header">
-          <span>🏪 ${store.name}</span>
-          <span class="store-popup-type ${typeBadgeClass}">${brandLabel}</span>
-        </div>
-        <div class="store-popup-address">📍 地址：${store.addr}</div>
-        <div class="store-popup-address">🛰️ 經緯：E ${store.lon.toFixed(4)}°, N ${store.lat.toFixed(4)}°</div>
-        <div class="store-popup-supplies">
-          <strong>📦 科技物資補給：</strong><br>
-          <span class="supply-tag">${store.supply}</span>
-        </div>
-      `;
+    line.bindTooltip(`🚇 ${f.properties.name}`, { sticky: true });
+  });
 
-      if (activePopup) activePopup.remove();
-      activePopup = new maplibregl.Popup({ offset: 15 })
-        .setLngLat([store.lon, store.lat])
-        .setHTML(popupHtml)
-        .addTo(mapInstance);
+  // (2) 307 幹線公車真實 GPS 巡航路徑
+  const busLatLngs = BUS_307_ROUTE.map(pt => [pt[1], pt[0]]);
+  
+  // 外層金色光暈
+  L.polyline(busLatLngs, {
+    color: '#f59e0b',
+    weight: 7,
+    opacity: 0.4,
+    dashArray: '10, 8'
+  }).addTo(transitLayerGroup);
+
+  // 核心發光線
+  const busLine = L.polyline(busLatLngs, {
+    color: '#fbbf24',
+    weight: 3.5,
+    opacity: 1.0
+  }).addTo(transitLayerGroup);
+
+  busLine.bindTooltip('🚌 307 幹線公車真實路徑 (板橋府中 ➔ 學府商圈 ➔ 台北車站 ➔ 中山松江南京)', { sticky: true });
+}
+
+// ──────────────────────────────────────────
+// 6. 繪製雙北 41 行政特區輪廓與錨點
+// ──────────────────────────────────────────
+function addSectorsLayer() {
+  sectorsLayerGroup.clearLayers();
+
+  SECTORS_DATA.forEach(s => {
+    // 圓形全息標記
+    const circle = L.circleMarker([s.lat, s.lon], {
+      radius: 6,
+      color: s.col || '#00f0ff',
+      weight: 1.5,
+      fillColor: s.col || '#00f0ff',
+      fillOpacity: 0.25
+    }).addTo(sectorsLayerGroup);
+
+    circle.bindTooltip(`<b>${s.code}｜${s.name}</b><br><span style="font-size:10px; color:#cbd5e1;">${s.desc}</span>`, {
+      direction: 'top',
+      offset: [0, -8]
     });
 
-    new maplibregl.Marker({ element: el })
-      .setLngLat([store.lon, store.lat])
-      .addTo(mapInstance);
+    circle.on('click', () => {
+      map.flyTo([s.lat, s.lon], 15, { duration: 1.2 });
+    });
   });
 }
 
-// 實裝 10 大生活科學探究示範案件警戒標記 (🚨 Crime Beacons)
-function addDemoCasesMarkers() {
-  if (!mapInstance) return;
-  CASES_DATA.forEach(c => {
-    const el = document.createElement('div');
-    el.className = 'crime-beacon-marker';
-    el.title = `${c.id}: ${c.title}`;
-    el.innerHTML = `🚨<div class="crime-beacon-label">${c.id}</div>`;
+// ──────────────────────────────────────────
+// 7. 繪製 65+ 實體門市真實座標標記 (100% 依資料庫標示)
+// ──────────────────────────────────────────
+function addAllStoreMarkers() {
+  let totalCount = 0;
 
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
+  STORES_DATA.forEach(store => {
+    const brand = store.brand || 'other';
+    const group = storeMarkerGroups[brand] || storeMarkerGroups['landmark'];
+    if (!group) return;
+
+    // 建立專屬品牌 Icon
+    const iconHtml = getStoreIconHtml(brand, store);
+    const customIcon = L.divIcon({
+      html: iconHtml,
+      className: 'store-div-icon',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18]
+    });
+
+    const marker = L.marker([store.lat, store.lon], { icon: customIcon });
+
+    // 構建精美互動彈窗卡片
+    const popupHtml = buildStorePopupContent(store);
+    marker.bindPopup(popupHtml, { maxWidth: 320 });
+
+    marker.addTo(group);
+    totalCount++;
+  });
+
+  const countEl = document.getElementById('hudStoreCount');
+  if (countEl) countEl.innerText = `${totalCount} 處`;
+  console.log(`✅ 已完成繪製全雙北 ${totalCount} 間真實實體門市！`);
+}
+
+// 根據品牌返回專屬 Pin HTML
+function getStoreIconHtml(brand, store) {
+  let pinClass = 'pin-wanjiafu';
+  let badgeGlyph = '🏪';
+
+  switch (brand) {
+    case 'wanjiafu':
+      pinClass = 'pin-wanjiafu';
+      badgeGlyph = '萬';
+      break;
+    case 'lejiakang':
+      pinClass = 'pin-lejiakang';
+      badgeGlyph = '樂';
+      break;
+    case 'seven':
+      pinClass = 'pin-seven';
+      badgeGlyph = '7';
+      break;
+    case 'familymart':
+      pinClass = 'pin-familymart';
+      badgeGlyph = '全';
+      break;
+    case 'coco':
+      pinClass = 'pin-coco';
+      badgeGlyph = '🧋';
+      break;
+    case 'market':
+      pinClass = 'pin-market';
+      badgeGlyph = '市';
+      break;
+    case 'transport':
+      pinClass = 'pin-transport';
+      badgeGlyph = store.name.includes('公車') ? '🚏' : '🚇';
+      break;
+    case 'landmark':
+      pinClass = 'pin-landmark';
+      badgeGlyph = '🏛️';
+      break;
+    default:
+      pinClass = 'pin-lejiakang';
+      badgeGlyph = '📍';
+  }
+
+  return `<div class="store-holo-pin ${pinClass}" title="${store.name}">${badgeGlyph}</div>`;
+}
+
+// 建立門市詳細彈窗內容
+function buildStorePopupContent(store) {
+  let brandPillClass = 'type-lejiakang';
+  let brandLabel = '樂家康生鮮';
+
+  switch (store.brand) {
+    case 'wanjiafu': brandPillClass = 'type-wanjiafu'; brandLabel = '萬家福旗艦'; break;
+    case 'lejiakang': brandPillClass = 'type-lejiakang'; brandLabel = '樂家康生鮮'; break;
+    case 'seven': brandPillClass = 'type-cvs'; brandLabel = '7-Eleven'; break;
+    case 'familymart': brandPillClass = 'type-cvs'; brandLabel = '全家 FamilyMart'; break;
+    case 'coco': brandPillClass = 'type-cvs'; brandLabel = 'CoCo 手搖飲'; break;
+    case 'market': brandPillClass = 'type-wanjiafu'; brandLabel = '傳統市集/夜市'; break;
+    case 'transport': brandPillClass = 'type-lejiakang'; brandLabel = '大眾公共運輸'; break;
+    case 'landmark': brandPillClass = 'type-cvs'; brandLabel = '文化歷史地標'; break;
+  }
+
+  // 格式化物資標籤
+  const supplies = store.supply ? store.supply.split('、').map(s => `<span class="supply-tag">${s.trim()}</span>`).join('') : '<span class="supply-tag">常規都市調查補給</span>';
+
+  return `
+    <div class="store-popup-card">
+      <div class="store-popup-header">
+        <span class="store-brand-pill ${brandPillClass}">${brandLabel}</span>
+        <strong style="color:#ffffff; font-size:13px;">${store.name}</strong>
+      </div>
+      <div class="store-popup-address">📍 ${store.addr || '雙北真實都會街廓'}</div>
+      <div class="store-coords-bar">
+        <span>經度: ${store.lon.toFixed(4)}°E</span>
+        <span>緯度: ${store.lat.toFixed(4)}°N</span>
+      </div>
+      <div class="store-popup-supplies">
+        <div style="color:#38bdf8; font-weight:800; margin-bottom:4px; font-size:10px;">📦 即時物資與調查教具庫存：</div>
+        <div>${supplies}</div>
+      </div>
+      <div style="margin-top:8px; display:flex; justify-content:flex-end;">
+        <button onclick="setAsInvestigationTarget(${store.lat}, ${store.lon}, '${store.name}')" style="background:linear-gradient(135deg, #0284c7, #00f0ff); border:none; color:#030712; font-weight:800; font-size:10px; padding:4px 10px; border-radius:4px; cursor:pointer;">🎯 設為巡航目標</button>
+      </div>
+    </div>
+  `;
+}
+
+function setAsInvestigationTarget(lat, lon, name) {
+  map.flyTo([lat, lon], 16.5, { duration: 1.2 });
+  console.log(`🎯 已設定調查目標：${name} (${lat}, ${lon})`);
+}
+
+// ──────────────────────────────────────────
+// 8. 繪製 10 大生活科學探究示範案件發光雷達標記
+// ──────────────────────────────────────────
+function addDemoCasesMarkers() {
+  casesLayerGroup.clearLayers();
+
+  CASES_DATA.forEach(c => {
+    const beaconIcon = L.divIcon({
+      html: `
+        <div class="crime-beacon-marker" title="${c.id}: ${c.title}">
+          🚨
+          <div class="crime-beacon-label">${c.id}</div>
+        </div>
+      `,
+      className: 'crime-beacon-wrap',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -20]
+    });
+
+    const marker = L.marker([c.lat, c.lon], { icon: beaconIcon });
+    marker.on('click', () => {
       openCaseBriefModal(c.id);
     });
 
-    new maplibregl.Marker({ element: el })
-      .setLngLat([c.lon, c.lat])
-      .addTo(mapInstance);
+    marker.addTo(casesLayerGroup);
   });
 }
 
-// 頂部 10 大示範案件快速跳轉欄產生器
+// ──────────────────────────────────────────
+// 9. 門市品牌篩選器 (落實委託人指示)
+// ──────────────────────────────────────────
+function filterStoreMarkers(brandKey, btnElement) {
+  currentStoreFilter = brandKey;
+
+  // 更新按鈕樣式
+  document.querySelectorAll('#storeFilterStrip .filter-chip-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  if (btnElement) btnElement.classList.add('active');
+
+  let visibleCount = 0;
+
+  if (brandKey === 'all') {
+    // 顯示所有門市與案件
+    Object.keys(storeMarkerGroups).forEach(k => {
+      map.addLayer(storeMarkerGroups[k]);
+    });
+    map.addLayer(casesLayerGroup);
+    visibleCount = STORES_DATA.length;
+  } else if (brandKey === 'cases') {
+    // 僅顯示案件
+    Object.keys(storeMarkerGroups).forEach(k => {
+      map.removeLayer(storeMarkerGroups[k]);
+    });
+    map.addLayer(casesLayerGroup);
+    visibleCount = CASES_DATA.length;
+  } else {
+    // 顯示指定品牌
+    Object.keys(storeMarkerGroups).forEach(k => {
+      if (k === brandKey) {
+        map.addLayer(storeMarkerGroups[k]);
+      } else {
+        map.removeLayer(storeMarkerGroups[k]);
+      }
+    });
+    map.removeLayer(casesLayerGroup);
+    visibleCount = STORES_DATA.filter(s => s.brand === brandKey).length;
+  }
+
+  const countEl = document.getElementById('hudStoreCount');
+  if (countEl) countEl.innerText = `${visibleCount} 處`;
+}
+
+// ──────────────────────────────────────────
+// 10. 切換 1:1 真實網路底圖 (CARTO / OSM / 衛星)
+// ──────────────────────────────────────────
+function switchBaseLayer(layerKey) {
+  if (!baseLayers[layerKey] || layerKey === currentBaseLayerKey) return;
+
+  map.removeLayer(activeBaseLayer);
+  activeBaseLayer = baseLayers[layerKey];
+  activeBaseLayer.addTo(map);
+  currentBaseLayerKey = layerKey;
+
+  const names = {
+    dark: 'CARTO Dark',
+    osm: 'OpenStreetMap',
+    satellite: 'Esri Satellite',
+    voyager: 'CARTO Voyager'
+  };
+  const hudSource = document.getElementById('hudSource');
+  if (hudSource) hudSource.innerText = names[layerKey] || layerKey;
+}
+
+// 切換捷運與 307 公車路網
+function toggleTransitLayer() {
+  isTransitVisible = !isTransitVisible;
+  const btn = document.getElementById('btnToggleTransit');
+  if (isTransitVisible) {
+    map.addLayer(transitLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚇 捷運與 307 公車</span><span style="color:#4ade80;">ON</span>';
+    }
+  } else {
+    map.removeLayer(transitLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🚇 捷運與 307 公車</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+// 雙北全景居中
+function resetShuangbeiBounds() {
+  map.flyTo([25.045, 121.517], 12.2, { duration: 1.5 });
+}
+
+// ──────────────────────────────────────────
+// 11. 頂部特區跳轉標籤
+// ──────────────────────────────────────────
+function renderSectorJumpButtons() {
+  const container = document.getElementById('jumpScrollWrap');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const overviewBtn = document.createElement('button');
+  overviewBtn.className = 'jump-chip active';
+  overviewBtn.innerHTML = '🗺️ 雙北全景總覽';
+  overviewBtn.onclick = () => {
+    document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
+    overviewBtn.classList.add('active');
+    map.flyTo([25.045, 121.517], 11.8, { duration: 1.5 });
+  };
+  container.appendChild(overviewBtn);
+
+  SECTORS_DATA.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'jump-chip';
+    btn.innerText = s.name.split('・')[0];
+    btn.title = `${s.name} - ${s.desc}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      map.flyTo([s.lat, s.lon], 14.8, { duration: 1.4 });
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ──────────────────────────────────────────
+// 12. 頂部 10 大示範案件快速跳轉欄產生器
+// ──────────────────────────────────────────
 function renderCasesTopStrip() {
   const wrap = document.getElementById('casesChipsWrap');
   if (!wrap) return;
@@ -410,27 +558,16 @@ function renderCasesTopStrip() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.case-chip-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      if (mapInstance && !isUsingFallbackCanvas) {
-        mapInstance.flyTo({
-          center: [c.lon, c.lat],
-          zoom: 15.5,
-          pitch: 50,
-          bearing: -15,
-          duration: 1600
-        });
-      } else if (fallbackState) {
-        fallbackState.targetLon = c.lon;
-        fallbackState.targetLat = c.lat;
-        fallbackState.targetZoom = 15.0;
-      }
+      map.flyTo([c.lat, c.lon], 15.5, { duration: 1.4 });
       openCaseBriefModal(c.id);
     });
     wrap.appendChild(btn);
   });
 }
 
-// 打開案件戰術詳情彈窗
+// ──────────────────────────────────────────
+// 13. 打開案件戰術詳情彈窗 (包含校園無毒替代安全教具)
+// ──────────────────────────────────────────
 function openCaseBriefModal(caseId) {
   const c = CASES_DATA.find(item => item.id === caseId);
   if (!c) return;
@@ -480,40 +617,38 @@ function openCaseBriefModal(caseId) {
         </div>
       </div>
 
-      <!-- 校園安全無害替代教具 (消除評審疑慮) -->
-      <div class="safe-kit-box">
-        <div class="safe-kit-title">🛡️ 評審亮點：校園教學安全無毒替代教具</div>
-        <div style="font-size:12px; color:#a7f3d0; line-height:1.5;">${c.safeClassroomKit}</div>
+      <!-- 校園無毒安全教具提示 -->
+      <div class="case-safety-box" style="background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:6px; padding:10px 12px;">
+        <div style="color:#34d399; font-weight:900; font-size:12px; margin-bottom:4px;">🛡️ 評審顧問安全規範（杜絕校園毒物）：</div>
+        <div style="font-size:11px; color:#a7f3d0; line-height:1.5;">${c.safeClassroomKit}</div>
       </div>
 
       <div class="case-section-box">
-        <div class="case-section-title">🔍 案件前情提要</div>
-        <p style="font-size:12.5px; color:#e2e8f0;">${c.brief}</p>
+        <div class="case-section-title">🔍 案件情境簡述</div>
+        <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">${c.brief}</div>
       </div>
 
       <div class="case-section-box">
-        <div class="case-section-title">👥 涉案嫌疑人調查網</div>
+        <div class="case-section-title">👥 關係人與初步證言</div>
         ${suspectsHtml}
       </div>
 
       <div class="case-section-box">
-        <div class="case-section-title">🔬 實地自然探究三步驟</div>
-        <ol style="padding-left:18px; font-size:12.5px;">${stepsHtml}</ol>
+        <div class="case-section-title">🔬 科學探究與實證檢驗流程</div>
+        <ol style="padding-left:18px; font-size:12px; line-height:1.6;">
+          ${stepsHtml}
+        </ol>
       </div>
 
-      <div class="case-section-box" style="border-left:4px solid #00f0ff; background:rgba(0,240,255,0.06);">
-        <div class="case-section-title" style="color:#00f0ff;">⚖️ 破案科學邏輯打臉依據</div>
-        <p style="font-size:12.5px; color:#cbd5e1;">${c.conclusion}</p>
+      <div class="case-section-box" style="border-left:3px solid #38bdf8;">
+        <div class="case-section-title">💡 科學探究核心原理</div>
+        <div style="font-size:12px; color:#93c5fd; line-height:1.5;">${c.scienceConcept}</div>
       </div>
     </div>
 
     <div class="case-card-footer">
-      <button class="btn-fly-to-scene" onclick="flyToCaseCoordinates(${c.lon}, ${c.lat})">
-        🎯 鎖定現場 3D 俯視
-      </button>
-      <button class="btn-fly-to-scene" style="background:#334155; color:#f8fafc;" onclick="closeCaseModal()">
-        關閉視窗
-      </button>
+      <button class="case-card-close-btn" onclick="closeCaseModal()" style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉簡報</button>
+      <button class="btn-fly-to-scene" onclick="flyToCaseLocation(${c.lat}, ${c.lon})">🚀 俯衝案發現場門牌</button>
     </div>
   `;
 
@@ -525,143 +660,68 @@ function closeCaseModal() {
   if (modal) modal.style.display = 'none';
 }
 
-function flyToCaseCoordinates(lon, lat) {
+function flyToCaseLocation(lat, lon) {
   closeCaseModal();
-  if (mapInstance && !isUsingFallbackCanvas) {
-    mapInstance.flyTo({
-      center: [lon, lat],
-      zoom: 16.0,
-      pitch: 55,
-      bearing: -20,
-      duration: 1800
-    });
-  } else if (fallbackState) {
-    fallbackState.targetLon = lon;
-    fallbackState.targetLat = lat;
-    fallbackState.targetZoom = 15.0;
-  }
+  map.flyTo([lat, lon], 16.5, { duration: 1.4 });
 }
 
-// 遙測 HUD 監聽器
+// ──────────────────────────────────────────
+// 14. 遙測 HUD 監聽與最近特區偵測
+// ──────────────────────────────────────────
 function setupTelemetryListeners() {
-  mapInstance.on('move', () => {
-    const center = mapInstance.getCenter();
-    const zoom = mapInstance.getZoom();
-    const pitch = mapInstance.getPitch();
-    const bearing = mapInstance.getBearing();
+  map.on('move', () => {
+    const center = map.getCenter();
+    const zoom = map.getZoom();
 
-    document.getElementById('hudLon').innerText = center.lng.toFixed(5) + '°';
-    document.getElementById('hudLat').innerText = center.lat.toFixed(5) + '°';
-    document.getElementById('hudZoom').innerText = zoom.toFixed(1) + 'x';
-    document.getElementById('hudPitch').innerText = Math.round(pitch) + '°';
-    document.getElementById('hudBearing').innerText = Math.round((bearing + 360) % 360) + '°';
+    const hudLon = document.getElementById('hudLon');
+    const hudLat = document.getElementById('hudLat');
+    const hudZoom = document.getElementById('hudZoom');
+
+    if (hudLon) hudLon.innerText = center.lng.toFixed(5) + '°';
+    if (hudLat) hudLat.innerText = center.lat.toFixed(5) + '°';
+    if (hudZoom) hudZoom.innerText = zoom.toFixed(1) + 'x';
 
     detectNearestSector(center.lng, center.lat);
   });
-
-  mapInstance.on('mousemove', (e) => {
-    document.getElementById('hudLon').innerText = e.lngLat.lng.toFixed(5) + '°';
-    document.getElementById('hudLat').innerText = e.lngLat.lat.toFixed(5) + '°';
-    detectNearestSector(e.lngLat.lng, e.lngLat.lat);
-  });
 }
 
-// 判定最鄰近的特區
 function detectNearestSector(lon, lat) {
-  let nearest = null;
-  let minD = 999999;
+  let closest = null;
+  let minDist = Infinity;
 
   SECTORS_DATA.forEach(s => {
     const d = Math.hypot(s.lon - lon, s.lat - lat);
-    if (d < minD) {
-      minD = d;
-      nearest = s;
+    if (d < minDist) {
+      minDist = d;
+      closest = s;
     }
   });
 
-  if (nearest) {
+  if (closest) {
     const titleEl = document.getElementById('currentSectorTitle');
     const subEl = document.getElementById('currentSectorSub');
-    if (titleEl) titleEl.innerText = `${nearest.code}｜${nearest.name}`;
-    if (subEl) subEl.innerText = nearest.desc;
-  }
-}
-
-// 動態生成特區跳轉標籤
-function renderSectorJumpButtons() {
-  const container = document.getElementById('jumpScrollWrap');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const overviewBtn = document.createElement('button');
-  overviewBtn.className = 'jump-chip active';
-  overviewBtn.innerHTML = '🗺️ 雙北全景總覽';
-  overviewBtn.onclick = () => {
-    document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
-    overviewBtn.classList.add('active');
-    if (mapInstance && !isUsingFallbackCanvas) {
-      mapInstance.flyTo({ center: [121.535, 25.045], zoom: 11.2, pitch: 35, bearing: -12, duration: 1800 });
-    } else if (fallbackState) {
-      fallbackState.targetLon = 121.535;
-      fallbackState.targetLat = 25.045;
-      fallbackState.targetZoom = 11.2;
-    }
-  };
-  container.appendChild(overviewBtn);
-
-  SECTORS_DATA.forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'jump-chip';
-    btn.innerText = s.name.split('・')[0];
-    btn.title = `${s.name} - ${s.desc}`;
-    btn.onclick = () => {
-      document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (mapInstance && !isUsingFallbackCanvas) {
-        mapInstance.flyTo({ center: [s.lon, s.lat], zoom: 14.8, pitch: 48, bearing: -10, duration: 1600 });
-      } else if (fallbackState) {
-        fallbackState.targetLon = s.lon;
-        fallbackState.targetLat = s.lat;
-        fallbackState.targetZoom = 14.8;
-      }
-    };
-    container.appendChild(btn);
-  });
-}
-
-// 切換 3D 視角與頂視角
-function toggle3DMode() {
-  is3DMode = !is3DMode;
-  const btn = document.getElementById('btnToggle3D');
-  if (mapInstance && !isUsingFallbackCanvas) {
-    mapInstance.easeTo({
-      pitch: is3DMode ? 50 : 0,
-      bearing: is3DMode ? -15 : 0,
-      duration: 1200
-    });
-  }
-  if (btn) {
-    btn.className = `tactical-tool-btn ${is3DMode ? 'active' : ''}`;
-    btn.innerHTML = `<span>🏙️ 3D 傾斜視角</span><span style="color:${is3DMode ? '#4ade80' : '#94a3b8'};">${is3DMode ? 'ON' : 'OFF'}</span>`;
+    if (titleEl) titleEl.innerText = `${closest.code}｜${closest.name}`;
+    if (subEl) subEl.innerText = closest.desc;
   }
 }
 
 // 觸發全息雷達波紋
 function triggerRadarScan() {
   const wave = document.getElementById('radarScanWave');
-  if (!wave) return;
-  isRadarScanning = !isRadarScanning;
   const btn = document.getElementById('btnRadarScan');
+  if (!wave) return;
 
-  if (isRadarScanning) {
-    wave.classList.add('active');
-    if (btn) {
+  const isActive = wave.classList.toggle('active');
+  if (btn) {
+    if (isActive) {
       btn.classList.add('active');
       btn.innerHTML = '<span>📡 全息雷達掃描</span><span style="color:#4ade80;">SCANNING</span>';
-    }
-  } else {
-    wave.classList.remove('active');
-    if (btn) {
+      setTimeout(() => {
+        wave.classList.remove('active');
+        btn.classList.remove('active');
+        btn.innerHTML = '<span>📡 全息雷達掃描</span><span style="color:#94a3b8;">STANDBY</span>';
+      }, 4000);
+    } else {
       btn.classList.remove('active');
       btn.innerHTML = '<span>📡 全息雷達掃描</span><span style="color:#94a3b8;">STANDBY</span>';
     }
@@ -669,252 +729,8 @@ function triggerRadarScan() {
 }
 
 // ──────────────────────────────────────────
-// 5. 2D Canvas 全息自動降級備援引擎 (100% 杜絕黑屏問題)
-// 當環境無 WebGL 支援時，自動以高性能 2D Canvas 繪製全息拓撲
+// 15. 頁面加載自動啟動
 // ──────────────────────────────────────────
-let fallbackState = null;
-
-function initFallbackCanvasMap() {
-  isUsingFallbackCanvas = true;
-  const container = document.getElementById('map');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const canvas = document.createElement('canvas');
-  canvas.id = 'fallback-canvas';
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  container.appendChild(canvas);
-
-  const ctx = canvas.getContext('2d');
-
-  fallbackState = {
-    lon: 121.525,
-    lat: 25.045,
-    targetLon: 121.525,
-    targetLat: 25.045,
-    zoom: 12.2,
-    targetZoom: 12.2,
-    isDragging: false,
-    dragStartMouseX: 0,
-    dragStartMouseY: 0,
-    dragStartLon: 121.525,
-    dragStartLat: 25.045
-  };
-
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
-
-  canvas.addEventListener('mousedown', (e) => {
-    fallbackState.isDragging = true;
-    fallbackState.dragStartMouseX = e.clientX;
-    fallbackState.dragStartMouseY = e.clientY;
-    fallbackState.dragStartLon = fallbackState.lon;
-    fallbackState.dragStartLat = fallbackState.lat;
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (fallbackState.isDragging) {
-      const dx = e.clientX - fallbackState.dragStartMouseX;
-      const dy = e.clientY - fallbackState.dragStartMouseY;
-      const degPerPx = 0.00035 / (fallbackState.zoom / 12);
-      fallbackState.targetLon = fallbackState.dragStartLon - dx * degPerPx;
-      fallbackState.targetLat = fallbackState.dragStartLat + dy * degPerPx;
-    }
-    // 更新 HUD
-    const centerLon = fallbackState.lon;
-    const centerLat = fallbackState.lat;
-    const hudLon = document.getElementById('hudLon');
-    const hudLat = document.getElementById('hudLat');
-    const hudZoom = document.getElementById('hudZoom');
-    if (hudLon) hudLon.innerText = centerLon.toFixed(5) + '°';
-    if (hudLat) hudLat.innerText = centerLat.toFixed(5) + '°';
-    if (hudZoom) hudZoom.innerText = fallbackState.zoom.toFixed(1) + 'x';
-    detectNearestSector(centerLon, centerLat);
-  });
-
-  window.addEventListener('mouseup', () => {
-    fallbackState.isDragging = false;
-  });
-
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.4 : -0.4;
-    fallbackState.targetZoom = Math.max(9.5, Math.min(18.0, fallbackState.targetZoom + delta));
-  }, { passive: false });
-
-  // 點擊事件：案件與門市
-  canvas.addEventListener('click', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const cw = canvas.width;
-    const ch = canvas.height;
-    const pxPerDeg = 2400 * (fallbackState.zoom / 12);
-
-    // 檢查案件點擊
-    for (const c of CASES_DATA) {
-      const sx = cw / 2 + (c.lon - fallbackState.lon) * pxPerDeg * 1.1;
-      const sy = ch / 2 - (c.lat - fallbackState.lat) * pxPerDeg;
-      if (Math.hypot(mx - sx, my - sy) < 18) {
-        openCaseBriefModal(c.id);
-        return;
-      }
-    }
-  });
-
-  // 動態渲染迴圈
-  function renderFallback() {
-    fallbackState.lon += (fallbackState.targetLon - fallbackState.lon) * 0.12;
-    fallbackState.lat += (fallbackState.targetLat - fallbackState.lat) * 0.12;
-    fallbackState.zoom += (fallbackState.targetZoom - fallbackState.zoom) * 0.12;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
-    const pxPerDeg = 2400 * (fallbackState.zoom / 12);
-
-    const toScreenX = (lon) => cx + (lon - fallbackState.lon) * pxPerDeg * 1.1;
-    const toScreenY = (lat) => cy - (lat - fallbackState.lat) * pxPerDeg;
-
-    // 1. 深邃星空賽博漸層底色 (絕不黑屏)
-    const bgGrad = ctx.createRadialGradient(cx, cy, 50, cx, cy, Math.max(w, h));
-    bgGrad.addColorStop(0, '#0c1a3b');
-    bgGrad.addColorStop(0.7, '#070e24');
-    bgGrad.addColorStop(1, '#030714');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // 2. 全息賽博動態網格
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    const gridSpacing = 40 * (fallbackState.zoom / 12);
-    for (let x = (cx % gridSpacing); x < w; x += gridSpacing) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-    }
-    for (let y = (cy % gridSpacing); y < h; y += gridSpacing) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-    }
-    ctx.stroke();
-
-    // 3. 雙北淡水河水系 (Tamsui & Keelung River)
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = Math.max(5, fallbackState.zoom * 1.5);
-    ctx.beginPath();
-    ctx.moveTo(toScreenX(121.439), toScreenY(25.175)); // 淡水出海口
-    ctx.quadraticCurveTo(toScreenX(121.469), toScreenY(25.137), toScreenX(121.505), toScreenY(25.070));
-    ctx.quadraticCurveTo(toScreenX(121.498), toScreenY(25.035), toScreenX(121.458), toScreenY(25.010)); // 板橋大漢溪
-    ctx.stroke();
-
-    // 基隆河分支
-    ctx.beginPath();
-    ctx.moveTo(toScreenX(121.505), toScreenY(25.070));
-    ctx.quadraticCurveTo(toScreenX(121.558), toScreenY(25.075), toScreenX(121.655), toScreenY(25.064));
-    ctx.stroke();
-
-    // 4. 捷運發光路網
-    MRT_GEOJSON_LINES.features.forEach(f => {
-      const coords = f.geometry.coordinates;
-      ctx.strokeStyle = f.properties.color;
-      ctx.lineWidth = Math.max(3, fallbackState.zoom * 0.4);
-      ctx.beginPath();
-      coords.forEach((pt, i) => {
-        const sx = toScreenX(pt[0]);
-        const sy = toScreenY(pt[1]);
-        if (i === 0) ctx.moveTo(sx, sy);
-        else ctx.lineTo(sx, sy);
-      });
-      ctx.stroke();
-    });
-
-    // 5. 雙北 41 行政特區銘牌與範圍
-    SECTORS_DATA.forEach(s => {
-      const sx = toScreenX(s.lon);
-      const sy = toScreenY(s.lat);
-
-      // 特區霓虹節點
-      ctx.fillStyle = s.col;
-      ctx.beginPath();
-      ctx.arc(sx, sy, Math.max(5, fallbackState.zoom * 0.6), 0, Math.PI * 2);
-      ctx.fill();
-
-      // 特區文字銘牌
-      ctx.fillStyle = 'rgba(7, 13, 36, 0.85)';
-      ctx.strokeStyle = s.col;
-      ctx.lineWidth = 1;
-      const tagW = 100;
-      const tagH = 20;
-      ctx.fillRect(sx - tagW / 2, sy - 24, tagW, tagH);
-      ctx.strokeRect(sx - tagW / 2, sy - 24, tagW, tagH);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(s.name.split('・')[0], sx, sy - 10);
-    });
-
-    // 6. 萬家福與樂家康門市
-    STORES_DATA.forEach(st => {
-      const sx = toScreenX(st.lon);
-      const sy = toScreenY(st.lat);
-
-      ctx.fillStyle = st.brand === 'wanjiafu' ? '#ef4444' : '#0284c7';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
-
-    // 7. 🚨 10 大示範案件警報點
-    CASES_DATA.forEach(c => {
-      const sx = toScreenX(c.lon);
-      const sy = toScreenY(c.lat);
-      const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
-
-      // 發光光環
-      ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, 10 + pulse * 8, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // 警報圓點
-      ctx.fillStyle = '#f43f5e';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // 警報標籤
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-      ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 1;
-      ctx.fillRect(sx - 35, sy + 12, 70, 16);
-      ctx.strokeRect(sx - 35, sy + 12, 70, 16);
-
-      ctx.fillStyle = '#fecdd3';
-      ctx.font = 'bold 9px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(c.id, sx, sy + 23);
-    });
-
-    requestAnimationFrame(renderFallback);
-  }
-
-  requestAnimationFrame(renderFallback);
-}
-
-// 頁面載入完成時執行
 window.addEventListener('DOMContentLoaded', () => {
   initCyberRealMap();
 });
