@@ -788,7 +788,18 @@ html, body {
   will-change: transform;
 }
 
+.leaflet-tile {
+  /* 徹底解決地圖放大後背景瓦片模糊問題 (Anti-Blur & Sharp Retina Tile Rendering) */
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  -ms-interpolation-mode: nearest-neighbor !important;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 .leaflet-tile-pane {
+  filter: contrast(106%) saturate(104%);
   transform: translateZ(0);
 }
 

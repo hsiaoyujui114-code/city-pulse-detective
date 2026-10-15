@@ -145,18 +145,23 @@ let cameraLockToPlayer = true; // 視角嚴密鎖定於主角正上方，移動�
 // 奔跑腳底塵土/氣流粒子系統
 const sprintParticles = [];
 
-/* ─── 3. 2D/2.5D Canvas 現代動漫引擎容器初始化 ─── */
+/* ─── 3. 2D/2.5D Canvas 現代動漫引擎容器初始化 (Retina HiDPI 超高畫質支援) ─── */
 const container = document.getElementById("webgl-container");
 container.innerHTML = '';
 const canvas = document.createElement('canvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+canvas.width = Math.round(window.innerWidth * dpr);
+canvas.height = Math.round(window.innerHeight * dpr);
+canvas.style.width = window.innerWidth + 'px';
+canvas.style.height = window.innerHeight + 'px';
 container.appendChild(canvas);
 const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = 'high';
 
 const engineLbl = document.getElementById("renderEngineLabel");
 if (engineLbl) {
-  engineLbl.innerText = '現代 2D ✕ 2.5D 高空俯瞰創新科技冒險引擎 (高幀率・零白屏)';
+  engineLbl.innerText = '現代 2D ✕ 2.5D 高空俯瞰創新科技冒險引擎 (Retina HiDPI 高解析度・零模糊)';
 }
 
 // ──────────────────────────────────────────
@@ -1324,8 +1329,8 @@ canvas.addEventListener("wheel", e => {
 canvas.addEventListener("click", e => {
   if (Math.hypot(e.clientX - dragStartX, e.clientY - dragStartY) > 6) return; // 拖曳中忽略點擊
   const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left - canvas.width / 2;
-  const clickY = e.clientY - rect.top - canvas.height / 2;
+  const clickX = e.clientX - rect.left - rect.width / 2;
+  const clickY = e.clientY - rect.top - rect.height / 2;
   const worldX = camera.x + clickX / camera.currentScale;
   const worldZ = camera.z + clickY / camera.currentScale;
 
@@ -1670,10 +1675,28 @@ function disembarkTransit() {
   }
 }
 
-/* ─── 8. 現代 2D/2.5D 動漫都會冒險渲染核心 (Y-Sorting 深度分層) ─── */
+/* ─── 8. 現代 2D/2.5D 動漫都會冒險渲染核心 (Retina HiDPI ✕ Y-Sorting 深度分層) ─── */
 function renderScene() {
-  const w = canvas.width;
-  const h = canvas.height;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const cssW = window.innerWidth;
+  const cssH = window.innerHeight;
+  const targetW = Math.round(cssW * dpr);
+  const targetH = Math.round(cssH * dpr);
+
+  // 動態檢測畫布物理像素，確保 100% 吻合螢幕像素密度 (Retina 4K/5K 零模糊)
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+  }
+
+  // 啟用 Retina DPR 座標縮放
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const w = cssW;
+  const h = cssH;
   const cx = w / 2;
   const cy = h / 2;
   const scale = camera.currentScale;
@@ -2278,38 +2301,147 @@ function renderScene() {
 
   // ──────────────────────────────────────────
   // 第一層：地表鋪面與 1:1 真實雙北街廓拓撲 (Ground Roads & Contiguous Metropolis Topology)
-  // 全區涵蓋 -220m ~ +220m，忠實呈現雙北各大行政區真實道路經緯
+  // 【超高畫質向量渲染重構：徹底解決「整張地圖放大之後背景變模糊」！】
+  // 1. 全域 Retina HiDPI Canvas：高達 2.0x~2.5x 物理像素密度，消除畫布雙線性模糊！
+  // 2. 街廓微觀石材地坪網格：scale >= 4.0 時鋪滿真實都會石材鋪面，消除空洞模糊漸層！
+  // 3. 高解析度道路鋪面與標線：車道白實線、車道分道虛線、路緣石立體高光、人行道透水地磚、水溝蓋格柵、黃色導盲磚！
   // ──────────────────────────────────────────
+
+  // 0.8 雙北核心城區微觀地坪石材網格 (Urban Plaza & Block Base Paving - scale >= 4.0 時自動呈現，微觀特寫清晰無比)
+  if (scale >= 4.0) {
+    const tilePitch = scale >= 25.0 ? 1.0 : (scale >= 10.0 ? 2.5 : 5.0); // 隨縮放精細遞進之 1m~5m 模組化石板
+    const baseMinX = Math.max(-240, minWorldX - 10);
+    const baseMaxX = Math.min(240, maxWorldX + 10);
+    const baseMinZ = Math.max(-240, minWorldZ - 10);
+    const baseMaxZ = Math.min(240, maxWorldZ + 10);
+
+    if (baseMinX < baseMaxX && baseMinZ < baseMaxZ) {
+      // 核心基底深灰藍石材地坪 (告別模糊純黑或空洞漸層)
+      ctx.fillStyle = '#0b1324';
+      ctx.fillRect(screenX(baseMinX), screenZ(baseMinZ), (baseMaxX - baseMinX) * scale, (baseMaxZ - baseMinZ) * scale);
+
+      // 石板接縫向量線 (純向量繪製，永遠保持 1px 極致銳利，絕不模糊！)
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.75)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const sBaseX = Math.floor(baseMinX / tilePitch) * tilePitch;
+      for (let bx = sBaseX; bx <= baseMaxX; bx += tilePitch) {
+        ctx.moveTo(screenX(bx), screenZ(baseMinZ));
+        ctx.lineTo(screenX(bx), screenZ(baseMaxZ));
+      }
+      const sBaseZ = Math.floor(baseMinZ / tilePitch) * tilePitch;
+      for (let bz = sBaseZ; bz <= baseMaxZ; bz += tilePitch) {
+        ctx.moveTo(screenX(baseMinX), screenZ(bz));
+        ctx.lineTo(screenX(baseMaxX), screenZ(bz));
+      }
+      ctx.stroke();
+
+      // 在超特寫 scale >= 16.0 時繪製石材交錯十字接縫高光點，營造精緻人行徒步區地磚質感
+      if (scale >= 16.0 && (baseMaxX - baseMinX) <= 100 && (baseMaxZ - baseMinZ) <= 100) {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+        for (let bx = sBaseX; bx <= baseMaxX; bx += tilePitch * 2) {
+          for (let bz = sBaseZ; bz <= baseMaxZ; bz += tilePitch * 2) {
+            ctx.fillRect(screenX(bx) - 1, screenZ(bz) - 1, 2, 2);
+          }
+        }
+      }
+    }
+  }
+
+  // 高解析度人孔蓋繪製輔助函式 (Manhole Cover Vector)
+  function drawManholeCover(mx, mz) {
+    if (!isInViewport(mx, mz, 5)) return;
+    const sx = screenX(mx);
+    const sz = screenZ(mz);
+    const mr = Math.max(2.5, scale * 0.45);
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(sx, sz, mr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = Math.max(1, scale * 0.05);
+    ctx.stroke();
+    // 鑄鐵防滑十字花紋
+    ctx.beginPath();
+    ctx.moveTo(sx - mr * 0.6, sz);
+    ctx.lineTo(sx + mr * 0.6, sz);
+    ctx.moveTo(sx, sz - mr * 0.6);
+    ctx.lineTo(sx, sz + mr * 0.6);
+    ctx.stroke();
+  }
+
+  // 高解析度車道導向箭頭繪製輔助函式 (Lane Arrow Vector)
+  function drawRoadLaneArrow(ax, az, dir = 'straight') {
+    if (scale < 12.0) return;
+    if (!isInViewport(ax, az, 6)) return;
+    const sx = screenX(ax);
+    const sz = screenZ(az);
+    const aLen = Math.max(3, scale * 0.5);
+    const aW = Math.max(1.8, scale * 0.22);
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    if (dir === 'straight') {
+      ctx.moveTo(sx, sz - aLen);
+      ctx.lineTo(sx + aW, sz - aLen * 0.35);
+      ctx.lineTo(sx + aW * 0.35, sz - aLen * 0.35);
+      ctx.lineTo(sx + aW * 0.35, sz + aLen);
+      ctx.lineTo(sx - aW * 0.35, sz + aLen);
+      ctx.lineTo(sx - aW * 0.35, sz - aLen * 0.35);
+      ctx.lineTo(sx - aW, sz - aLen * 0.35);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
 
   // 1. 東西向 9 大主要幹道與街廓 (East-West Major Arterials)
   // (1) 民權西路 / 民權東路 (z: -195, 寬 24m)
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#1e2530';
   ctx.fillRect(screenX(-220), screenZ(-207), 440 * scale, 24 * scale);
+  // 車道外側白實線
+  if (scale >= 5.0) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(screenX(-220), screenZ(-207), 440 * scale, Math.max(1, scale * 0.1));
+    ctx.fillRect(screenX(-220), screenZ(-183 - Math.max(0.1, 1 / scale)), 440 * scale, Math.max(1, scale * 0.1));
+  }
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-195.4), 440 * scale, 0.8 * scale);
 
   // (2) 民生西路 / 民生東路 (z: -140, 寬 22m)
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#1e2530';
   ctx.fillRect(screenX(-220), screenZ(-151), 440 * scale, 22 * scale);
+  if (scale >= 5.0) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(screenX(-220), screenZ(-151), 440 * scale, Math.max(1, scale * 0.1));
+    ctx.fillRect(screenX(-220), screenZ(-129 - Math.max(0.1, 1 / scale)), 440 * scale, Math.max(1, scale * 0.1));
+  }
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-140.4), 440 * scale, 0.8 * scale);
 
   // (3) 南京西路 / 南京東路 (z: -95, 寬 26m)
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#1e2530';
   ctx.fillRect(screenX(-220), screenZ(-108), 440 * scale, 26 * scale);
+  if (scale >= 5.0) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(screenX(-220), screenZ(-108), 440 * scale, Math.max(1, scale * 0.1));
+    ctx.fillRect(screenX(-220), screenZ(-82 - Math.max(0.1, 1 / scale)), 440 * scale, Math.max(1, scale * 0.1));
+  }
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-95.4), 440 * scale, 0.8 * scale);
 
   // (4) 長安西路 / 長安東路 (z: -48, 寬 20m)
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#1e2530';
   ctx.fillRect(screenX(-220), screenZ(-58), 440 * scale, 20 * scale);
+  if (scale >= 5.0) {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(screenX(-220), screenZ(-58), 440 * scale, Math.max(1, scale * 0.1));
+    ctx.fillRect(screenX(-220), screenZ(-38 - Math.max(0.1, 1 / scale)), 440 * scale, Math.max(1, scale * 0.1));
+  }
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-48.4), 440 * scale, 0.8 * scale);
 
   // (4.5) 市民大道一段 (市民高架橋 ✕ 台北車站北側大道, z: -26, 寬 22m)
-  ctx.fillStyle = '#151921';
+  ctx.fillStyle = '#111827';
   ctx.fillRect(screenX(-220), screenZ(-37), 440 * scale, 22 * scale);
-  // 市民大道中央雙黃線
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-26.4), 440 * scale, 0.8 * scale);
   // 市民高架水泥高架橋墩 (Elevated Expressway Piers)
@@ -2321,15 +2453,16 @@ function renderScene() {
   }
 
   // (5) 忠孝西路一段 / 忠孝東路一段 (z: 0, 寬 36m，台北都會樞紐大動脈)
-  ctx.fillStyle = '#2d3748';
+  ctx.fillStyle = '#1e2530';
   ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, 36 * scale);
+
   // 忠孝西路 中央公車專用道 (深藍柏油，z: -5 ~ 5)
-  ctx.fillStyle = '#1e385c';
+  ctx.fillStyle = '#1e3a5f';
   ctx.fillRect(screenX(-220), screenZ(-5), 440 * scale, 10 * scale);
   // 公車專用道白色虛線分道線
   ctx.strokeStyle = '#f8fafc';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([8, 8]);
+  ctx.lineWidth = Math.max(1.2, scale * 0.1);
+  ctx.setLineDash([Math.max(4, scale * 1.2), Math.max(4, scale * 1.2)]);
   ctx.beginPath();
   ctx.moveTo(screenX(-220), screenZ(-5));
   ctx.lineTo(screenX(220), screenZ(-5));
@@ -2337,13 +2470,76 @@ function renderScene() {
   ctx.lineTo(screenX(220), screenZ(5));
   ctx.stroke();
   ctx.setLineDash([]);
+
+  // 車道外側白實線
+  if (scale >= 4.5) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, Math.max(1, scale * 0.12));
+    ctx.fillRect(screenX(-220), screenZ(18 - Math.max(0.12, 1.2 / scale)), 440 * scale, Math.max(1, scale * 0.12));
+
+    // 一般車道分道虛線 (z = -11.5 與 z = 11.5)
+    ctx.strokeStyle = 'rgba(241, 245, 249, 0.7)';
+    ctx.lineWidth = Math.max(1, scale * 0.08);
+    ctx.setLineDash([Math.max(3, scale * 0.8), Math.max(4, scale * 1.0)]);
+    ctx.beginPath();
+    ctx.moveTo(screenX(-220), screenZ(-11.5));
+    ctx.lineTo(screenX(220), screenZ(-11.5));
+    ctx.moveTo(screenX(-220), screenZ(11.5));
+    ctx.lineTo(screenX(220), screenZ(11.5));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   // 雙黃線 (z: 0)
   ctx.fillStyle = '#f59e0b';
   ctx.fillRect(screenX(-220), screenZ(-0.4), 440 * scale, 0.8 * scale);
-  // 忠孝西路 南北兩側人行道石板地磚
-  ctx.fillStyle = '#475569';
+
+  // 忠孝西路 南北兩側人行道石板地磚與立體路緣石
+  ctx.fillStyle = '#334155';
   ctx.fillRect(screenX(-220), screenZ(-36), 440 * scale, 18 * scale);
   ctx.fillRect(screenX(-220), screenZ(18), 440 * scale, 18 * scale);
+
+  // 人行道微觀地磚與路緣石立體高光 (scale >= 6.0 時呈現)
+  if (scale >= 6.0) {
+    // 北側路緣石立體高光與水溝陰影 (z: -18)
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(screenX(-220), screenZ(-18.6), 440 * scale, 0.6 * scale);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(screenX(-220), screenZ(-18), 440 * scale, 0.3 * scale);
+
+    // 南側路緣石立體高光與水溝陰影 (z: 18)
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(screenX(-220), screenZ(18), 440 * scale, 0.6 * scale);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(screenX(-220), screenZ(18.6), 440 * scale, 0.3 * scale);
+
+    // 人行道黃色導盲磚引導帶 (Tactile Warning Strip)
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(screenX(-220), screenZ(-23), 440 * scale, 0.6 * scale);
+    ctx.fillRect(screenX(-220), screenZ(23), 440 * scale, 0.6 * scale);
+
+    // 人行道石板橫向接縫線
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let jx = -220; jx <= 220; jx += 4) {
+      ctx.moveTo(screenX(jx), screenZ(-36));
+      ctx.lineTo(screenX(jx), screenZ(-18.6));
+      ctx.moveTo(screenX(jx), screenZ(18.6));
+      ctx.lineTo(screenX(jx), screenZ(36));
+    }
+    ctx.stroke();
+  }
+
+  // 高解析度地面標線與鑄鐵人孔蓋 (scale >= 14.0)
+  if (scale >= 14.0) {
+    for (let ax = -180; ax <= 180; ax += 30) {
+      drawRoadLaneArrow(ax, -14.5, 'straight');
+      drawRoadLaneArrow(ax, 14.5, 'straight');
+      drawManholeCover(ax + 15, -13);
+      drawManholeCover(ax + 15, 13);
+    }
+  }
 
   // (6) 許昌街 / 開封街一段 (z: 44, 寬 18m)
   ctx.fillStyle = '#2d3748';
@@ -4431,7 +4627,8 @@ function renderScene() {
     }
   });
 
-  ctx.restore();
+  ctx.restore(); // 恢復 translate(cx, cy)
+  ctx.restore(); // 恢復 Retina scale(dpr, dpr)
 }
 
 /* ─── 9. 地點偵測與互動判定 ─── */
@@ -5486,8 +5683,11 @@ function reconnectCustomServer() {
 
 /* ─── 13. 視窗適應與 60FPS 現代遊戲循環 ─── */
 window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = Math.round(window.innerWidth * dpr);
+  canvas.height = Math.round(window.innerHeight * dpr);
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
 });
 
 function gameLoop() {

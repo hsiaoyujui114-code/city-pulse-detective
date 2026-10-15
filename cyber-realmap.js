@@ -21,7 +21,7 @@ const EBUS_KEY_ROUTES = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHU
 
 // 3. 全域地圖與圖層管理
 let map = null;
-let currentBaseLayerKey = 'osm';
+let currentBaseLayerKey = 'voyager';
 let activeBaseLayer = null;
 let baseLayers = {};
 let streetsLayerGroup = null;
@@ -61,48 +61,58 @@ function initCyberRealMap() {
   // 1. 建立地圖實例 (預設聚焦台北車站站前核心，支援 22x 超微觀特寫展現每條街道與巷弄門牌)
   map = L.map('map', {
     center: [25.0465, 121.5170],
-    zoom: 15.2,
+    zoom: 15.0,
     minZoom: 9,
     maxZoom: 22, // 提升至 22 級極限微觀特寫
     zoomControl: false,
     preferCanvas: true, // 核心效能突破：開啟硬體加速 Canvas 渲染向量圖層，徹底解決 SVG DOM 移動卡頓
     wheelPxPerZoomLevel: 100, // 平滑滾輪縮放
     wheelDebounceTime: 40,
-    zoomSnap: 0.1, // 支援平滑連續縮放
+    zoomSnap: 0.5, // 0.5 整數/半整數吸附，徹底消除奇異浮點縮放導致的瓦片雙線性模糊！
     zoomDelta: 0.5
   });
 
   // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立 1:1 真實網路地圖瓦片服務 (OpenStreetMap 預設、CARTO Voyager、CARTO Dark、Esri Satellite - 支援 maxZoom 22 平滑插值放大)
+  // 2. 建立 1:1 真實網路地圖瓦片服務 (CARTO Voyager HD 預設、臺灣通用電子地圖 NLSC、OpenStreetMap HD、CARTO Dark HD、Esri Satellite - 支援 maxZoom 22 與 @2x Retina 超清晰)
   baseLayers = {
-    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
-    }),
     voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxNativeZoom: 20,
       maxZoom: 22,
+      detectRetina: true,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }),
+    nlsc: L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+      maxNativeZoom: 20,
+      maxZoom: 22,
+      detectRetina: true,
+      attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
+    }),
+    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      detectRetina: true,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
     }),
     dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxNativeZoom: 20,
       maxZoom: 22,
+      detectRetina: true,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }),
     satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
+      detectRetina: true,
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     })
   };
 
-  // 預設載入 OpenStreetMap Standard (路名、巷弄、門牌、綠地 100% 清晰可見)
-  activeBaseLayer = baseLayers.osm;
+  // 預設載入 CARTO Voyager HD (512x512 @2x Retina 超清晰，放大至 22x 極限特寫不模糊)
+  activeBaseLayer = baseLayers.voyager;
   activeBaseLayer.addTo(map);
 
   // 3. 建立各圖層群組
@@ -1812,10 +1822,11 @@ function switchBaseLayer(layerKey) {
   currentBaseLayerKey = layerKey;
 
   const names = {
-    dark: 'CARTO Dark',
-    osm: 'OpenStreetMap',
-    satellite: 'Esri Satellite',
-    voyager: 'CARTO Voyager'
+    voyager: 'CARTO Voyager HD (512px @2x)',
+    nlsc: '臺灣通用電子地圖 (NLSC 20級原生)',
+    osm: 'OpenStreetMap (Retina HD)',
+    dark: 'CARTO Dark HD',
+    satellite: 'Esri Satellite HD'
   };
   const hudSource = document.getElementById('hudSource');
   if (hudSource) hudSource.innerText = names[layerKey] || layerKey;
