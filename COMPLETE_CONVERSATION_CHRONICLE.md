@@ -2844,6 +2844,38 @@ flowchart TD
 - `PROJECT_PROPOSAL.md`、`PROPOSAL.md`、`proposal.html` 全面收錄第 80 項核心指示：「雙北大眾運輸四軌全景圖資實裝（高鐵 ✕ 臺鐵 ✕ 捷運 9 線 ✕ ebus.gov.taipei 1037 線公車與學府路專線）」。
 - 全案落實狀態更新為 **`80 項核心指示 ✕ 100% 驗證收錄`**！
 
+---
+
+## 💬 第 64 回合 (2026-10-15)：伺服器的副檔是什麼啊？可以給我伺服器副檔的連結嗎？
+
+- **對話時間**：`2026-10-15T16:55:38+08:00`
+- **委託人原始指令 (User Request)**：
+
+```text
+伺服器的副檔是什麼啊？可以給我伺服器副檔的連結嗎？
+```
+
+- **問題精準定位與雙重維度解答**：
+  * **維度一：伺服器上運行的「附檔 / 副檔」網頁（1:1 真實全息科技地圖）**：
+    - 檔案名稱：`cyber-realmap.html`（搭配 `cyber-realmap.js`、`cyber-realmap.css`、`transit-data.js`、`ebus-directory.js`）。
+    - 本機伺服器直通網址：`http://localhost:3000/cyber-realmap.html`（伺服器亦支援短網址路由：`http://localhost:3000/realmap`、`http://localhost:3000/map`、`http://localhost:3000/cyber-map`）。
+    - GitHub 遠端原始碼檔案連結：`https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg/blob/main/cyber-realmap.html`。
+    - GitHub Pages 免安裝線上版：`https://hsiaoyujui114-code.github.io/taipei-metro-detective-rpg/cyber-realmap.html`。
+  * **維度二：伺服器主程式本體的「檔案名稱與副檔名 (File Extension)」**：
+    - 檔案名稱：`server.js`。
+    - 副檔名：**`.js`**（JavaScript 檔案，由 Node.js 執行運行）。
+    - GitHub 遠端伺服器檔案連結：`https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg/blob/main/server.js`。
+  * **維度三：伺服器附檔提供的 RESTful API 數據接口**：
+    - 系統資訊接口：`http://localhost:3000/api/info`
+    - 65+ 間門市數據：`http://localhost:3000/api/stores`
+    - 雙北 41 行政特區：`http://localhost:3000/api/sectors`
+    - 10 大首發示範案件：`http://localhost:3000/api/cases`
+
+### 🌟 本次核心實作與重大交付成果
+1. **清晰釐清副檔名與附檔網頁概念**：向委託人清楚解釋「副檔名 (.js)」與「1:1 科技地圖附檔 (cyber-realmap.html)」之差別，並提供所有直接點擊連結。
+2. **驗證伺服器 REST API 與靜態路由**：確認 Node.js 本機伺服器針對附檔與 API 路由皆正常提供 HTTP 200 回應。
+3. **企劃書升級至第 81 項核心指示**：`PROJECT_PROPOSAL.md`、`PROPOSAL.md`、`proposal.html` 全面收錄第 81 項需求，三大倉庫同步推送維護。
+
 
 
 
