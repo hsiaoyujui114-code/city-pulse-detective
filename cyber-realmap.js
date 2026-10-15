@@ -12,112 +12,36 @@ const SECTORS_DATA = (typeof SHUANGBEI_41_SECTORS !== 'undefined') ? SHUANGBEI_4
 const STORES_DATA = (typeof REAL_WORLD_STORES !== 'undefined') ? REAL_WORLD_STORES : [];
 const CASES_DATA = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
 
-// 2. 台北捷運主要路線真實座標 (Taipei Metro Glowing Vector Lines)
-const MRT_GEOJSON_LINES = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: { name: '板南線 (藍線)', color: '#0070bd' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [121.617, 25.056], // 南港展覽館
-          [121.606, 25.053], // 南港
-          [121.587, 25.047], // 昆陽
-          [121.578, 25.042], // 後山埤
-          [121.568, 25.040], // 市政府
-          [121.558, 25.041], // 國父紀念館
-          [121.544, 25.042], // 忠孝復興
-          [121.527, 25.043], // 善導寺
-          [121.517, 25.046], // 台北車站
-          [121.508, 25.042], // 西門
-          [121.499, 25.035], // 龍山寺
-          [121.472, 25.027], // 江子翠
-          [121.464, 25.021], // 新埔
-          [121.459, 25.013], // 板橋
-          [121.455, 25.008], // 府中
-          [121.444, 24.972]  // 頂埔
-        ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: { name: '淡水信義線 (紅線)', color: '#e3002c' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [121.445, 25.168], // 淡水
-          [121.469, 25.137], // 關渡
-          [121.498, 25.132], // 北投
-          [121.524, 25.093], // 士林
-          [121.522, 25.071], // 圓山
-          [121.521, 25.061], // 民權西路
-          [121.521, 25.053], // 中山
-          [121.517, 25.046], // 台北車站
-          [121.518, 25.033], // 中正紀念堂
-          [121.533, 25.033], // 東門
-          [121.543, 25.033], // 大安
-          [121.567, 25.033], // 台北101/世貿
-          [121.571, 25.033]  // 象山
-        ]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: { name: '松山新店線 (綠線)', color: '#008659' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [121.578, 25.050], // 松山
-          [121.558, 25.052], // 南京三民
-          [121.544, 25.052], // 南京復興
-          [121.533, 25.052], // 松江南京
-          [121.521, 25.053], // 中山
-          [121.511, 25.051], // 北門
-          [121.508, 25.042], // 西門
-          [121.513, 25.036], // 小南門
-          [121.518, 25.033], // 中正紀念堂
-          [121.521, 25.027], // 古亭
-          [121.522, 25.019], // 台電大樓
-          [121.536, 25.014], // 公館
-          [121.541, 24.978], // 大坪林
-          [121.542, 24.968]  // 新店
-        ]
-      }
-    }
-  ]
-};
+// 2. 雙北大眾運輸四軌資料源 (高鐵 ✕ 臺鐵 ✕ 捷運 ✕ 大臺北公車)
+const THSR_DATA = (typeof SHUANGBEI_THSR_NETWORK !== 'undefined') ? SHUANGBEI_THSR_NETWORK : null;
+const TRA_DATA = (typeof SHUANGBEI_TRA_NETWORK !== 'undefined') ? SHUANGBEI_TRA_NETWORK : null;
+const MRT_DATA = (typeof SHUANGBEI_MRT_NETWORK !== 'undefined') ? SHUANGBEI_MRT_NETWORK : [];
+const EBUS_KEY_ROUTES = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHUANGBEI_EBUS_KEY_ROUTES : [];
 
-// 3. 雙北 307 幹線公車真實 GPS 經緯度路徑
-const BUS_307_ROUTE = [
-  [121.457, 25.008], // 板橋府中站
-  [121.458, 25.010], // 學府路一段真實商圈
-  [121.461, 25.014], // 新板特區縣民大道
-  [121.472, 25.023], // 華翠大橋引道
-  [121.492, 25.032], // 萬華西園路
-  [121.505, 25.042], // 中華路西門町
-  [121.514, 25.045], // 忠孝西路中央專用道
-  [121.517, 25.046], // 台北車站(忠孝專用道站牌)
-  [121.522, 25.046], // 行政院/中山北路口
-  [121.522, 25.052], // 中山市場站
-  [121.533, 25.052], // 南京東路松江南京
-  [121.544, 25.052]  // 南京復興 (折返)
-];
-
-// 4. 全域地圖與圖層管理
+// 3. 全域地圖與圖層管理
 let map = null;
 let currentBaseLayerKey = 'osm';
 let activeBaseLayer = null;
 let baseLayers = {};
 let streetsLayerGroup = null;
-let transitLayerGroup = null;
+let thsrLayerGroup = null;
+let traLayerGroup = null;
+let mrtLayerGroup = null;
+let ebusLayerGroup = null;
+let ebusDynamicBusesGroup = null;
+let highlightedBusRouteGroup = null;
 let storeMarkerGroups = {};
 let casesLayerGroup = null;
 let sectorsLayerGroup = null;
+
 let isStreetsVisible = true;
-let isTransitVisible = true;
+let isThsrVisible = true;
+let isTraVisible = true;
+let isMrtVisible = true;
+let isBusVisible = true;
+let isEBusPanelOpen = false;
 let currentStoreFilter = 'all';
+
 
 // 初始化地圖主函式
 function initCyberRealMap() {
@@ -168,12 +92,17 @@ function initCyberRealMap() {
 
   // 3. 建立各圖層群組
   streetsLayerGroup = L.layerGroup().addTo(map);
-  transitLayerGroup = L.layerGroup().addTo(map);
+  thsrLayerGroup = L.layerGroup().addTo(map);
+  traLayerGroup = L.layerGroup().addTo(map);
+  mrtLayerGroup = L.layerGroup().addTo(map);
+  ebusLayerGroup = L.layerGroup().addTo(map);
+  ebusDynamicBusesGroup = L.layerGroup().addTo(map);
+  highlightedBusRouteGroup = L.layerGroup().addTo(map);
   casesLayerGroup = L.layerGroup().addTo(map);
   sectorsLayerGroup = L.layerGroup().addTo(map);
 
-  // 初始化門市圖層群組 (依品牌分類)
-  const brands = ['wanjiafu', 'lejiakang', 'seven', 'familymart', 'coco', 'market', 'transport', 'landmark'];
+  // 初始化門市圖層群組 (依品牌與大眾運輸分類)
+  const brands = ['wanjiafu', 'lejiakang', 'seven', 'familymart', 'coco', 'market', 'transport', 'landmark', 'thsr', 'tra', 'mrt', 'ebus'];
   brands.forEach(b => {
     storeMarkerGroups[b] = L.layerGroup().addTo(map);
   });
@@ -182,13 +111,18 @@ function initCyberRealMap() {
   renderSectorJumpButtons();
   renderCasesTopStrip();
   addMajorStreetsLayer();
-  addMrtAndBusLayers();
+  addThsrLayer();
+  addTraLayer();
+  addMrtLayer();
+  addEBusLayer();
+  renderEBusPanel();
+  initBusMotionSimulation();
   addSectorsLayer();
   addAllStoreMarkers();
   addDemoCasesMarkers();
   setupTelemetryListeners();
 
-  console.log('✅ 1:1 真實雙北網路街道全景圖已全數載入完成，街道與巷弄清楚可見！');
+  console.log('✅ 1:1 真實雙北網路街道全景圖與四軌大眾運輸已全數載入完成！');
 }
 
 // ──────────────────────────────────────────
@@ -402,54 +336,432 @@ function toggleStreetsLayer() {
 }
 
 // ──────────────────────────────────────────
-// 5. 繪製捷運與 307 公車發光真實向量軌道
+// 5. 雙北大眾運輸四軌全息 GIS 圖層 (THSR / TRA / MRT / eBus)
 // ──────────────────────────────────────────
-function addMrtAndBusLayers() {
-  transitLayerGroup.clearLayers();
 
-  // (1) 台北捷運發光路網
-  MRT_GEOJSON_LINES.features.forEach(f => {
-    const latLngs = f.geometry.coordinates.map(pt => [pt[1], pt[0]]);
-    
+// (1) 🚅 台灣高鐵 (THSR)
+function addThsrLayer() {
+  thsrLayerGroup.clearLayers();
+  if (!THSR_DATA) return;
+
+  // 高鐵高速專屬軌道 (底層外光暈 + 亮橘發光線 + 雙軌虛線)
+  L.polyline(THSR_DATA.corridor, {
+    color: THSR_DATA.color,
+    weight: 8,
+    opacity: 0.35,
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(thsrLayerGroup);
+
+  const thsrLine = L.polyline(THSR_DATA.corridor, {
+    color: THSR_DATA.glowColor,
+    weight: 4,
+    opacity: 0.95,
+    dashArray: '12, 6'
+  }).addTo(thsrLayerGroup);
+
+  thsrLine.bindTooltip('🚅 台灣高鐵 (THSR) - 南港 ➔ 台北 ➔ 板橋 ➔ 桃園青埔 (時速 300km/h)', { sticky: true });
+
+  // 高鐵三大特等站標記 (南港、台北、板橋)
+  THSR_DATA.stations.forEach(st => {
+    const icon = L.divIcon({
+      html: `<div class="transit-badge-pin pin-thsr">🚅 ${st.shortName}高鐵</div>`,
+      className: 'transit-pin-wrap',
+      iconAnchor: [35, 12]
+    });
+
+    const marker = L.marker([st.lat, st.lon], { icon }).addTo(thsrLayerGroup);
+
+    const popupHtml = `
+      <div style="font-family:sans-serif; min-width:240px; color:#f8fafc;">
+        <div style="font-size:13px; font-weight:900; color:#fb923c; margin-bottom:4px;">🚅 台灣高鐵 ${st.name}</div>
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">📍 ${st.addr}</div>
+        <div style="font-size:11px; background:rgba(234,88,12,0.15); border:1px solid #ea580c; border-radius:4px; padding:4px 6px; margin-bottom:6px;">
+          <b>${st.type}</b>｜特等站代碼: ${st.code}
+        </div>
+        <div style="font-size:10px; color:#cbd5e1; line-height:1.4;">
+          <b>🚊 轉乘節點：</b><br>
+          ${st.transfers.map(t => '• ' + t).join('<br>')}
+        </div>
+        <div style="margin-top:6px; font-size:10px; color:#4ade80;">
+          ⏱️ 極速 300 km/h 串聯全台西部科技走廊
+        </div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml);
+  });
+}
+
+// (2) 🚆 臺灣鐵路 (TRA 縱貫線北段 ✕ 宜蘭線平溪線)
+function addTraLayer() {
+  traLayerGroup.clearLayers();
+  if (!TRA_DATA) return;
+
+  // 鐵道枕木雙軌視覺 (黑底實線 + 藍白鐵道交替虛線)
+  L.polyline(TRA_DATA.corridor, {
+    color: '#0f172a',
+    weight: 8,
+    opacity: 0.9,
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(traLayerGroup);
+
+  const traLine = L.polyline(TRA_DATA.corridor, {
+    color: '#38bdf8',
+    weight: 3.5,
+    opacity: 1.0,
+    dashArray: '8, 8'
+  }).addTo(traLayerGroup);
+
+  traLine.bindTooltip('🚆 臺灣鐵路 (TRA) 縱貫線北段 (雙軌電氣化主幹線)', { sticky: true });
+
+  // 台鐵 16 大站點標記
+  TRA_DATA.stations.forEach(st => {
+    const icon = L.divIcon({
+      html: `<div class="transit-badge-pin pin-tra">🚆 ${st.name}</div>`,
+      className: 'transit-pin-wrap',
+      iconAnchor: [35, 12]
+    });
+
+    const marker = L.marker([st.lat, st.lon], { icon }).addTo(traLayerGroup);
+
+    const popupHtml = `
+      <div style="font-family:sans-serif; min-width:230px; color:#f8fafc;">
+        <div style="font-size:13px; font-weight:900; color:#38bdf8; margin-bottom:4px;">🚆 臺灣鐵路 ${st.name}</div>
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">路線: ${st.line}｜區域: ${st.zone}</div>
+        <div style="font-size:11px; color:#cbd5e1; line-height:1.4;">
+          雙北都會通勤主力鐵道，自強號、莒光號、區間快車高頻次靠泊。<br>
+          💳 全程支援悠遊卡、一卡通、TPASS 通勤月票感應進出站。
+        </div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml);
+  });
+}
+
+// (3) 🚇 大台北捷運 9 大完整路網 (Taipei Metro Network)
+function addMrtLayer() {
+  mrtLayerGroup.clearLayers();
+  if (!MRT_DATA || MRT_DATA.length === 0) return;
+
+  MRT_DATA.forEach(line => {
+    const coords = line.stations.map(st => [st.lat, st.lon]);
+
     // 外層光暈底線
-    L.polyline(latLngs, {
-      color: f.properties.color,
-      weight: 8,
+    L.polyline(coords, {
+      color: line.color,
+      weight: 7,
       opacity: 0.35,
       lineCap: 'round',
       lineJoin: 'round'
-    }).addTo(transitLayerGroup);
+    }).addTo(mrtLayerGroup);
 
-    // 核心亮線
-    const line = L.polyline(latLngs, {
-      color: f.properties.color,
+    // 核心發光亮線
+    const poly = L.polyline(coords, {
+      color: line.glowColor || line.color,
       weight: 3.5,
       opacity: 0.95
-    }).addTo(transitLayerGroup);
+    }).addTo(mrtLayerGroup);
 
-    line.bindTooltip(`🚇 ${f.properties.name}`, { sticky: true });
+    poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
+
+    // 繪製端點站與主要轉乘站 Marker
+    line.stations.forEach((st, idx) => {
+      // 僅標記關鍵樞紐與端點站，避免密集遮蔽
+      const isHub = (idx === 0 || idx === line.stations.length - 1 || 
+                     ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區'].includes(st.name));
+      if (!isHub) return;
+
+      const icon = L.divIcon({
+        html: `<div class="transit-badge-pin pin-mrt" style="border-color:${line.color};">🚇 ${st.name}</div>`,
+        className: 'transit-pin-wrap',
+        iconAnchor: [30, 10]
+      });
+
+      const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
+      marker.bindPopup(`
+        <div style="font-family:sans-serif; color:#f8fafc;">
+          <div style="font-size:12px; font-weight:900; color:${line.glowColor};">🚇 捷運 ${st.name}站</div>
+          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬：${line.name}</div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">雙北捷運核心轉運樞紐，各線互通直達。</div>
+        </div>
+      `);
+    });
+  });
+}
+
+// (4) 🚌 大臺北公車 (eBus - 參考 ebus.gov.taipei)
+function addEBusLayer() {
+  ebusLayerGroup.clearLayers();
+  if (!EBUS_KEY_ROUTES || EBUS_KEY_ROUTES.length === 0) return;
+
+  EBUS_KEY_ROUTES.forEach(r => {
+    // 繪製公車路線軌跡
+    L.polyline(r.path, {
+      color: r.color,
+      weight: 7,
+      opacity: 0.35,
+      dashArray: '10, 6'
+    }).addTo(ebusLayerGroup);
+
+    const busPoly = L.polyline(r.path, {
+      color: r.color,
+      weight: 3.5,
+      opacity: 0.95
+    }).addTo(ebusLayerGroup);
+
+    busPoly.bindTooltip(`🚌 ${r.name} (${r.headsign})`, { sticky: true });
+
+    // 繪製沿途真實站牌
+    r.stops.forEach(s => {
+      const icon = L.divIcon({
+        html: `<div class="transit-badge-pin pin-ebus" style="background:${r.color};">🚏 ${s.name}</div>`,
+        className: 'transit-pin-wrap',
+        iconAnchor: [35, 10]
+      });
+
+      const marker = L.marker([s.lat, s.lon], { icon }).addTo(ebusLayerGroup);
+
+      const popupHtml = `
+        <div style="font-family:sans-serif; min-width:240px; color:#f8fafc;">
+          <div style="font-size:12px; font-weight:900; color:#34d399; margin-bottom:4px;">🚌 ${r.name}</div>
+          <div style="font-size:11px; font-weight:700; color:#f1f5f9;">🚏 停靠站：${s.name}</div>
+          <div style="font-size:10px; color:#94a3b8; margin-top:4px; line-height:1.4;">
+            業者：${r.operator}<br>
+            票價：${r.fare}｜班距：${r.interval}<br>
+            <b>⏱️ 即時預估到站：<span style="color:#4ade80; font-weight:900;">${s.eta}</span></b>
+          </div>
+          <div style="margin-top:8px;">
+            <a href="${r.officialUrl}" target="_blank" style="display:inline-block; background:#059669; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
+              🔗 開啟 ebus.gov.taipei 官方即時動態
+            </a>
+          </div>
+        </div>
+      `;
+      marker.bindPopup(popupHtml);
+    });
+  });
+}
+
+// (5) 動態巡邏公車車輛物理模擬 (Simulated Real-time Moving Buses)
+let dynamicBusInterval = null;
+const movingBusesState = [
+  { id: 'sim_307', name: '307 幹線公車', route: 'bus_307', color: '#10b981', step: 0, marker: null },
+  { id: 'sim_299', name: '299 幹線公車', route: 'bus_299', color: '#0284c7', step: 2, marker: null },
+  { id: 'sim_99', name: '99 學府路專線', route: 'bus_99', color: '#059669', step: 1, marker: null }
+];
+
+function initBusMotionSimulation() {
+  if (dynamicBusInterval) clearInterval(dynamicBusInterval);
+  ebusDynamicBusesGroup.clearLayers();
+
+  movingBusesState.forEach(b => {
+    const r = EBUS_KEY_ROUTES.find(x => x.id === b.route);
+    if (!r || !r.path || r.path.length === 0) return;
+
+    const initialPt = r.path[b.step % r.path.length];
+    const icon = L.divIcon({
+      html: `<div style="background:${b.color}; color:#fff; font-size:10px; font-weight:900; padding:2px 6px; border-radius:10px; border:2px solid #fff; box-shadow:0 0 10px ${b.color}; white-space:nowrap; cursor:pointer;">🚌 ${b.name}</div>`,
+      className: 'moving-bus-icon',
+      iconAnchor: [35, 12]
+    });
+
+    b.marker = L.marker(initialPt, { icon }).addTo(ebusDynamicBusesGroup);
+    b.marker.bindPopup(`<b>🚌 ${b.name} (即時行駛中)</b><br>遵行 TDX 交通部規範道路軌跡巡航中。`);
   });
 
-  // (2) 307 幹線公車真實 GPS 巡航路徑
-  const busLatLngs = BUS_307_ROUTE.map(pt => [pt[1], pt[0]]);
-  
-  // 外層金色光暈
-  L.polyline(busLatLngs, {
-    color: '#f59e0b',
-    weight: 7,
-    opacity: 0.4,
-    dashArray: '10, 8'
-  }).addTo(transitLayerGroup);
+  dynamicBusInterval = setInterval(() => {
+    movingBusesState.forEach(b => {
+      const r = EBUS_KEY_ROUTES.find(x => x.id === b.route);
+      if (!r || !r.path || !b.marker) return;
 
-  // 核心發光線
-  const busLine = L.polyline(busLatLngs, {
-    color: '#fbbf24',
-    weight: 3.5,
-    opacity: 1.0
-  }).addTo(transitLayerGroup);
-
-  busLine.bindTooltip('🚌 307 幹線公車真實路徑 (板橋府中 ➔ 學府商圈 ➔ 台北車站 ➔ 中山松江南京)', { sticky: true });
+      b.step = (b.step + 1) % r.path.length;
+      const nextPt = r.path[b.step];
+      b.marker.setLatLng(nextPt);
+    });
+  }, 3500);
 }
+
+// (6) 大臺北公車檢索面板渲染 (eBus Realtime Navigator)
+function renderEBusPanel() {
+  const listEl = document.getElementById('ebusResultsList');
+  if (!listEl) return;
+
+  const routes = EBUS_KEY_ROUTES;
+  renderEBusResultsList(routes);
+}
+
+function handleEBusSearch(kw) {
+  if (typeof searchEBusDirectory !== 'function') return;
+  const results = searchEBusDirectory(kw);
+  renderEBusResultsList(results);
+}
+
+function renderEBusResultsList(routes) {
+  const listEl = document.getElementById('ebusResultsList');
+  if (!listEl) return;
+
+  if (!routes || routes.length === 0) {
+    listEl.innerHTML = '<div style="font-size:11px; color:#94a3b8; padding:10px; text-align:center;">查無公車路線，請嘗試 307、299、99 或 965</div>';
+    return;
+  }
+
+  let html = '';
+  routes.forEach(r => {
+    const isKey = r.stops && r.stops.length > 0;
+    const name = r.name || r.n || '公車路線';
+    const rid = r.id || '';
+    const operator = r.operator || '大臺北公車聯營';
+    const fare = r.fare || '一段票 ($15)';
+    const officialUrl = r.officialUrl || `https://ebus.gov.taipei/ebus?rid=${rid}`;
+
+    html += `
+      <div class="ebus-result-card" onclick="quickSelectEBus('${rid || name}')">
+        <div class="ebus-card-title">
+          <span>🚌 ${name}</span>
+          <span style="font-size:9px; color:#38bdf8;">${isKey ? '🌟 示範詳細線' : '官方目錄'}</span>
+        </div>
+        <div class="ebus-card-meta">
+          ${operator}｜${fare}<br>
+          ${r.headsign ? `<b>行經：</b>${r.headsign}` : '大台北公車路網營運中'}
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+          <span class="ebus-card-eta">${isKey ? '即時到站更新中' : '即時監測中'}</span>
+          <a href="${officialUrl}" target="_blank" onclick="event.stopPropagation();" style="color:#38bdf8; font-size:10px; text-decoration:underline;">
+            🔗 官方動態
+          </a>
+        </div>
+      </div>
+    `;
+  });
+
+  listEl.innerHTML = html;
+}
+
+function quickSelectEBus(routeIdOrName) {
+  const r = EBUS_KEY_ROUTES.find(x => x.id === routeIdOrName || x.name.includes(routeIdOrName));
+  if (r) {
+    highlightEBusOnMap(r);
+  } else {
+    // 官方 1037 路線搜尋
+    showNavToast(`🚌 已定位大臺北公車【${routeIdOrName}】，連結至 ebus.gov.taipei`);
+    window.open(`https://ebus.gov.taipei/EBus2/RouteList2`, '_blank');
+  }
+}
+
+function highlightEBusOnMap(route) {
+  highlightedBusRouteGroup.clearLayers();
+
+  if (!route.path || route.path.length === 0) return;
+
+  const poly = L.polyline(route.path, {
+    color: '#facc15',
+    weight: 8,
+    opacity: 0.9,
+    dashArray: '12, 6'
+  }).addTo(highlightedBusRouteGroup);
+
+  map.fitBounds(poly.getBounds(), { padding: [60, 60], maxZoom: 16 });
+  poly.bindPopup(`<b>🚌 ${route.name}</b><br>${route.headsign || ''}<br><span style="color:#4ade80;">即時路網發光高亮中</span>`).openPopup();
+  showNavToast(`🚌 已於真實地圖高光鎖定【${route.name}】！`);
+}
+
+function toggleEBusNavigator() {
+  isEBusPanelOpen = !isEBusPanelOpen;
+  const panel = document.getElementById('ebusNavigatorPanel');
+  const btn = document.getElementById('btnOpenEBusNavigator');
+  if (panel) panel.style.display = isEBusPanelOpen ? 'flex' : 'none';
+  if (btn) {
+    if (isEBusPanelOpen) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🔍 搜尋 1037 條公車</span><span style="color:#4ade80;">CLOSE</span>';
+    } else {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🔍 搜尋 1037 條公車</span><span style="color:#f59e0b;">OPEN</span>';
+    }
+  }
+}
+
+// 四大運輸圖層切換函式
+function toggleThsrLayer() {
+  isThsrVisible = !isThsrVisible;
+  const btn = document.getElementById('btnToggleThsr');
+  if (isThsrVisible) {
+    map.addLayer(thsrLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚅 台灣高鐵 (THSR)</span><span style="color:#ea580c;">ON</span>';
+    }
+  } else {
+    map.removeLayer(thsrLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🚅 台灣高鐵 (THSR)</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+function toggleTraLayer() {
+  isTraVisible = !isTraVisible;
+  const btn = document.getElementById('btnToggleTra');
+  if (isTraVisible) {
+    map.addLayer(traLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 16站)</span><span style="color:#38bdf8;">ON</span>';
+    }
+  } else {
+    map.removeLayer(traLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 16站)</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+function toggleMrtLayer() {
+  isMrtVisible = !isMrtVisible;
+  const btn = document.getElementById('btnToggleMrt');
+  if (isMrtVisible) {
+    map.addLayer(mrtLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚇 台北捷運 (9大路線)</span><span style="color:#00f0ff;">ON</span>';
+    }
+  } else {
+    map.removeLayer(mrtLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🚇 台北捷運 (9大路線)</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+function toggleBusLayer() {
+  isBusVisible = !isBusVisible;
+  const btn = document.getElementById('btnToggleBus');
+  if (isBusVisible) {
+    map.addLayer(ebusLayerGroup);
+    map.addLayer(ebusDynamicBusesGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚌 大臺北公車 (eBus)</span><span style="color:#4ade80;">ON</span>';
+    }
+  } else {
+    map.removeLayer(ebusLayerGroup);
+    map.removeLayer(ebusDynamicBusesGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🚌 大臺北公車 (eBus)</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+function toggleTransitLayer() {
+  toggleMrtLayer();
+  toggleBusLayer();
+}
+
 
 // ──────────────────────────────────────────
 // 6. 繪製雙北 41 行政特區輪廓與錨點
@@ -663,6 +975,27 @@ function filterStoreMarkers(brandKey, btnElement) {
     });
     map.addLayer(casesLayerGroup);
     visibleCount = CASES_DATA.length;
+  } else if (['thsr', 'tra', 'mrt', 'ebus', 'transport'].includes(brandKey)) {
+    // 大眾運輸快捷過濾
+    if (brandKey === 'thsr') {
+      if (!isThsrVisible) toggleThsrLayer();
+      map.flyTo([25.0478, 121.5171], 14, { duration: 1.2 });
+      visibleCount = 3;
+    } else if (brandKey === 'tra') {
+      if (!isTraVisible) toggleTraLayer();
+      map.flyTo([25.0478, 121.5171], 13.5, { duration: 1.2 });
+      visibleCount = TRA_DATA ? TRA_DATA.stations.length : 16;
+    } else if (brandKey === 'mrt') {
+      if (!isMrtVisible) toggleMrtLayer();
+      map.flyTo([25.0465, 121.5170], 13.8, { duration: 1.2 });
+      visibleCount = 131;
+    } else if (brandKey === 'ebus') {
+      if (!isBusVisible) toggleBusLayer();
+      if (!isEBusPanelOpen) toggleEBusNavigator();
+      visibleCount = 1037;
+    } else {
+      visibleCount = STORES_DATA.filter(s => s.brand === 'transport').length;
+    }
   } else {
     // 顯示指定品牌
     Object.keys(storeMarkerGroups).forEach(k => {
@@ -699,25 +1032,6 @@ function switchBaseLayer(layerKey) {
   };
   const hudSource = document.getElementById('hudSource');
   if (hudSource) hudSource.innerText = names[layerKey] || layerKey;
-}
-
-// 切換捷運與 307 公車路網
-function toggleTransitLayer() {
-  isTransitVisible = !isTransitVisible;
-  const btn = document.getElementById('btnToggleTransit');
-  if (isTransitVisible) {
-    map.addLayer(transitLayerGroup);
-    if (btn) {
-      btn.classList.add('active');
-      btn.innerHTML = '<span>🚇 捷運與 307 公車</span><span style="color:#4ade80;">ON</span>';
-    }
-  } else {
-    map.removeLayer(transitLayerGroup);
-    if (btn) {
-      btn.classList.remove('active');
-      btn.innerHTML = '<span>🚇 捷運與 307 公車</span><span style="color:#94a3b8;">OFF</span>';
-    }
-  }
 }
 
 // 雙北全景居中

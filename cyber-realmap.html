@@ -119,13 +119,30 @@
       <option value="satellite">🌍 Esri 真實高空衛星空拍</option>
     </select>
 
+    <div style="font-size:10px; color:#34d399; font-weight:800; margin:8px 0 4px 0;">🚊 雙北大眾運輸四軌圖層:</div>
     <div class="tool-btn-grid">
-      <button class="tactical-tool-btn active" id="btnToggleStreets" onclick="toggleStreetsLayer()">
-        <span>🛣️ 雙北真實街道高光</span>
+      <button class="tactical-tool-btn active" id="btnToggleThsr" onclick="toggleThsrLayer()">
+        <span>🚅 台灣高鐵 (THSR)</span>
+        <span style="color:#ea580c;">ON</span>
+      </button>
+      <button class="tactical-tool-btn active" id="btnToggleTra" onclick="toggleTraLayer()">
+        <span>🚆 臺灣鐵路 (TRA 16站)</span>
+        <span style="color:#38bdf8;">ON</span>
+      </button>
+      <button class="tactical-tool-btn active" id="btnToggleMrt" onclick="toggleMrtLayer()">
+        <span>🚇 台北捷運 (9大路線)</span>
+        <span style="color:#00f0ff;">ON</span>
+      </button>
+      <button class="tactical-tool-btn active" id="btnToggleBus" onclick="toggleBusLayer()">
+        <span>🚌 大臺北公車 (eBus)</span>
         <span style="color:#4ade80;">ON</span>
       </button>
-      <button class="tactical-tool-btn active" id="btnToggleTransit" onclick="toggleTransitLayer()">
-        <span>🚇 捷運與 307 公車</span>
+      <button class="tactical-tool-btn" id="btnOpenEBusNavigator" onclick="toggleEBusNavigator()">
+        <span>🔍 搜尋 1037 條公車</span>
+        <span style="color:#f59e0b;">OPEN</span>
+      </button>
+      <button class="tactical-tool-btn active" id="btnToggleStreets" onclick="toggleStreetsLayer()">
+        <span>🛣️ 雙北真實街道高光</span>
         <span style="color:#4ade80;">ON</span>
       </button>
       <button class="tactical-tool-btn" id="btnRadarScan" onclick="triggerRadarScan()">
@@ -140,31 +157,58 @@
 
     <!-- 品牌標記圖例 (Legend) -->
     <div style="margin-top:12px; border-top:1px solid rgba(0,240,255,0.2); padding-top:8px; font-size:10px; color:#94a3b8;">
-      <div style="margin-bottom:4px; font-weight:800; color:#38bdf8;">📍 實體門市圖例 (100% 真實座標):</div>
+      <div style="margin-bottom:4px; font-weight:800; color:#38bdf8;">📍 大眾運輸與實體圖例 (100% 真實座標):</div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#ea580c; border:1px solid #fdba74;"></span>
+        <span>🚅 台灣高鐵 (南港/台北/板橋 特等站)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#0284c7; border:1px solid #7dd3fc;"></span>
+        <span>🚆 臺灣鐵路 (縱貫線北段 ✕ 宜蘭線 16大站)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:3px; background:#0070bd; box-shadow:0 0 4px #0070bd;"></span>
+        <span>🚇 台北捷運 9 大路線 (板南/紅/綠/橘/文湖/環狀/機捷/輕軌)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:3px; background:#10b981; box-shadow:0 0 4px #10b981;"></span>
+        <span>🚌 大臺北公車 (ebus.gov.taipei 1037條官方路線)</span>
+      </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444; border:1px solid #fff;"></span>
-        <span>萬家福 (WanJiaFu) 大賣場旗艦</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#0284c7; border:1px solid #38bdf8;"></span>
-        <span>樂家康 (LeJiaKang) 超市便利購</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ea580c;"></span>
-        <span>7-Eleven / 全家便利超商</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#f97316;"></span>
-        <span>CoCo 都可手搖飲</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#eab308;"></span>
-        <span>傳統市場與觀光夜市 (市井情報)</span>
+        <span>萬家福大賣場旗艦 / 樂家康生鮮超市</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
-        <span style="display:inline-block; width:12px; height:2px; background:#0070bd; box-shadow:0 0 4px #0070bd;"></span>
-        <span>雙北捷運 / 307 幹線路網</span>
+        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ea580c;"></span>
+        <span>7-11 / 全家便利超商 / 傳統市場夜市</span>
       </div>
+    </div>
+  </aside>
+
+  <!-- 🚌 大臺北公車即時檢索與動態面板 (Taipei eBus Realtime Navigator) -->
+  <aside class="ebus-navigator-panel" id="ebusNavigatorPanel" style="display:none;">
+    <div class="ebus-panel-header">
+      <div class="ebus-panel-title">
+        <span>🚌 大臺北公車即時檢索 (1037線)</span>
+      </div>
+      <button onclick="toggleEBusNavigator()" style="background:none; border:none; color:#94a3b8; font-size:14px; cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">
+      依據 <a href="https://ebus.gov.taipei/EBus2/RouteList2" target="_blank" style="color:#34d399; text-decoration:underline;">ebus.gov.taipei</a> 官方目錄整合
+    </div>
+    <div class="ebus-search-input-wrap">
+      <input type="text" class="ebus-search-input" id="ebusSearchInput" placeholder="輸入路線 (如 307, 299, 99, 965, 承德...)" oninput="handleEBusSearch(this.value)">
+    </div>
+    <div class="ebus-quick-chips">
+      <button class="ebus-chip-btn active" onclick="quickSelectEBus('bus_307')">307幹線</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_299')">299幹線</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_265')">265幹線</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_99')">99學府路</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_965')">965九份</button>
+      <button class="ebus-chip-btn" onclick="quickSelectEBus('bus_chengde')">承德幹線</button>
+    </div>
+    <div class="ebus-results-list" id="ebusResultsList">
+      <!-- 由 JS 動態注入 -->
     </div>
   </aside>
 
@@ -179,11 +223,15 @@
   <div class="bottom-hint-bar">
     <span><span class="hint-key">[滑鼠滾輪 / 雙指縮放]</span> 1:1 無級縮放到雙北真實巷弄門牌</span>
     <span><span class="hint-key">[拖曳平移]</span> 自由探索雙北 41 行政特區</span>
-    <span><span class="hint-key">[點擊門市 / 🚨警報]</span> 即時調取真實門牌、物資庫存與自然科學案情</span>
+    <span><span class="hint-key">[點擊門市 / 站牌 / 🚨警報]</span> 即時調取真實門牌、公車到站預報與自然科學案情</span>
   </div>
 
   <!-- 雙軌 SSOT 單一資料源 -->
   <script src="shared-data.js"></script>
+  <!-- 雙北大眾運輸四軌 SSOT (高鐵 ✕ 台鐵 ✕ 捷運 ✕ eBus公車) -->
+  <script src="transit-data.js"></script>
+  <!-- 大臺北公車官方 1037 條完整路線檢索目錄 (ebus.gov.taipei) -->
+  <script src="ebus-directory.js"></script>
 
   <!-- Leaflet JS (本機 vendor 優先，CDN 備援) -->
   <script src="vendor/leaflet/leaflet.js" onerror="this.onerror=null;this.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';"></script>

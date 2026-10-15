@@ -377,6 +377,38 @@ const busZhongshanRoute = [
   { x: 84, z: -195, stopName: '晴光商圈站 (北行終點)', street: '中山・雙城街口' }
 ];
 
+// 99 幹線公車真實路線 (新莊 ⇄ 新埔 ⇄ 新板特區 ⇄ 板橋學府路一段 1:1 商圈 ⇄ 海山)
+const bus99Route = [
+  { x: -142, z: 195, stopName: '板橋・文化路一段站', street: '板橋・文化路一段' },
+  { x: -148, z: 168, stopName: '板橋・學府路一段 (樂家康超市門前)', street: '板橋・學府路一段 (1:1真實商圈)' },
+  { x: -142, z: 130, stopName: '新板特區站 (板橋公車站)', street: '板橋・縣民大道一段' },
+  { x: -142, z: 108, stopName: '捷運新埔站 (民生路口)', street: '板橋・民生路三段' },
+  { x: -160, z: 25,  stopName: '西門町中華路站 (轉乘樞紐)', street: '萬華・中華路一段' },
+  // 返程 (南行)
+  { x: -136, z: 25,  street: '萬華・中華路 (南行)' },
+  { x: -136, z: 108, stopName: '捷運新埔站 (返程)', street: '板橋・民生路三段' },
+  { x: -136, z: 130, stopName: '新板特區站 (返程)', street: '板橋・縣民大道一段' },
+  { x: -144, z: 168, stopName: '學府路一段 (海山商圈返程)', street: '板橋・學府路一段' },
+  { x: -136, z: 195, stopName: '板橋文化路 (終點站)', street: '板橋・文化路一段' }
+];
+
+// 299 幹線公車真實路線 (新莊輔大 ⇄ 三重重新路 ⇄ 忠孝西路 ⇄ 台北車站 ⇄ 忠孝復興)
+const bus299Route = [
+  { x: -142, z: 0,   street: '新莊・重新路走廊' },
+  { x: -92,  z: 0,   street: '中正・忠孝西路二段' },
+  { x: -20,  z: -4,  stopName: '台北車站(忠孝)299月台', street: '中正・忠孝西路公車專用道' },
+  { x: 35,   z: -4,  street: '中正・忠孝西路一段' },
+  { x: 120,  z: 0,   stopName: '捷運忠孝新生站', street: '大安・忠孝東路三段' },
+  { x: 180,  z: 0,   stopName: '捷運忠孝復興站 (折返)', street: '大安・忠孝東路四段' },
+  // 返程 (西行)
+  { x: 180,  z: 4,   street: '大安・忠孝東路四段 (西行)' },
+  { x: 120,  z: 4,   stopName: '捷運忠孝新生站 (西行)', street: '大安・忠孝東路三段' },
+  { x: 35,   z: 4,   street: '中正・忠孝西路' },
+  { x: -20,  z: 4,   stopName: '台北車站(忠孝西行月台)', street: '中正・忠孝西路專用道' },
+  { x: -92,  z: 4,   street: '中正・忠孝西路 (往新莊)' },
+  { x: -142, z: 4,   stopName: '西門町重慶路口 (西行)', street: '萬華・忠孝西路二段' }
+];
+
 // 雙北真實路網巡航車隊
 const cityBuses = [
   {
@@ -432,6 +464,42 @@ const cityBuses = [
     stopTimer: 0,
     currentStreet: busZhongshanRoute[0].street,
     nextStopName: busZhongshanRoute[1].stopName
+  },
+  {
+    id: 'bus_99',
+    lineName: '99 幹線 (學府路專線)',
+    ledText: '99 ➔ 板橋學府路一段 ➔ 海山',
+    themeColor: '#10b981', // 翡翠翠綠
+    w: 18,
+    d: 5.2,
+    speed: 0.27,
+    waypoints: bus99Route,
+    currentWaypointIndex: 0,
+    x: bus99Route[0].x,
+    z: bus99Route[0].z,
+    angle: Math.PI / 2,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus99Route[0].street,
+    nextStopName: bus99Route[1].stopName
+  },
+  {
+    id: 'bus_299',
+    lineName: '299 幹線',
+    ledText: '299 ➔ 台北車站 ➔ 永春',
+    themeColor: '#0369a1', // 大都會天藍
+    w: 18,
+    d: 5.2,
+    speed: 0.28,
+    waypoints: bus299Route,
+    currentWaypointIndex: 0,
+    x: bus299Route[0].x,
+    z: bus299Route[0].z,
+    angle: 0,
+    isStopped: false,
+    stopTimer: 0,
+    currentStreet: bus299Route[0].street,
+    nextStopName: bus299Route[2].stopName
   }
 ];
 
@@ -476,12 +544,14 @@ function updateBusPhysics(bus) {
     const nextPt = bus.waypoints[bus.currentWaypointIndex];
     if (nextPt.stopName) {
       bus.nextStopName = nextPt.stopName;
-      if (bus.id === 'bus_307_a') {
-        bus.ledText = bus.currentWaypointIndex < 16 ? '307 ➔ 南京東路' : '307 ➔ 板橋府中';
-      } else if (bus.id === 'bus_307_b') {
+      if (bus.id === 'bus_307_a' || bus.id === 'bus_307_b') {
         bus.ledText = bus.currentWaypointIndex < 16 ? '307 ➔ 南京東路' : '307 ➔ 板橋府中';
       } else if (bus.id === 'bus_zhongshan') {
         bus.ledText = bus.currentWaypointIndex < 9 ? '中山幹線 ➔ 師大' : '中山幹線 ➔ 晴光商圈';
+      } else if (bus.id === 'bus_99') {
+        bus.ledText = bus.currentWaypointIndex < 5 ? '99 ➔ 板橋學府路一段' : '99 ➔ 新北新埔 ➔ 新莊';
+      } else if (bus.id === 'bus_299') {
+        bus.ledText = bus.currentWaypointIndex < 6 ? '299 ➔ 台北車站 ➔ 忠孝復興' : '299 ➔ 三重 ➔ 輔大';
       }
     }
   } else {
@@ -1246,6 +1316,107 @@ function renderScene() {
     [70, 260, "大坪林"], [-40, 180, "景安"], [-130, 130, "板橋車站"], [-220, 100, "頭前庄"],
     [-240, 60, "新北產業園區"]
   ], '#eab308', "環狀線");
+
+  // 🟣 桃園機場捷運雙北段 (Airport MRT)
+  drawMetroCorridor([
+    [0, 0, "A1台北車站"], [-220, -170, "A2三重"], [-240, 60, "A3新北產業園區"], [-280, 80, "A4新莊副都心"]
+  ], '#8246af', "機場捷運");
+
+  // 🩵 淡海輕軌 (Danhai LRT)
+  drawMetroCorridor([
+    [-240, -340, "紅樹林"], [-250, -380, "崁頂/漁人碼頭"]
+  ], '#0099cc', "淡海輕軌");
+
+  // 🩷 安坑輕軌 (Ankeng LRT)
+  drawMetroCorridor([
+    [70, 260, "十四張"], [60, 340, "雙城"]
+  ], '#e67799', "安坑輕軌");
+
+  // 🚅 台灣高鐵走廊 (THSR High Speed Rail Dedicated Corridor)
+  function drawHighSpeedRailCorridor(points) {
+    if (points.length < 2) return;
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = Math.max(5, scale * 0.35);
+    ctx.shadowColor = '#ea580c';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 橘白虛線代表高鐵電氣化極速軌道
+    ctx.strokeStyle = '#fdba74';
+    ctx.lineWidth = Math.max(2.2, scale * 0.15);
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    points.forEach(pt => {
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.arc(screenX(pt[0]), screenZ(pt[1]), Math.max(4, scale * 0.25), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (pt[2] && scale >= 2.5) {
+        ctx.fillStyle = '#fdba74';
+        ctx.font = `bold ${Math.max(9, scale * 0.4)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`🚅 ${pt[2]}`, screenX(pt[0]), screenZ(pt[1] - 6));
+      }
+    });
+  }
+
+  drawHighSpeedRailCorridor([
+    [360, -20, "高鐵南港"], [0, 0, "高鐵台北"], [-130, 130, "高鐵板橋"], [-260, 240, "往桃園青埔"]
+  ]);
+
+  // 🚆 臺灣鐵路縱貫線 (TRA Western Main Line & Yilan Line)
+  function drawRailroadTrackCorridor(points) {
+    if (points.length < 2) return;
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = Math.max(6, scale * 0.38);
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    ctx.stroke();
+
+    // 鐵道枕木交錯線
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = Math.max(2.5, scale * 0.16);
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(screenX(points[0][0]), screenZ(points[0][1]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(screenX(points[i][0]), screenZ(points[i][1]));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    points.forEach(pt => {
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.arc(screenX(pt[0]), screenZ(pt[1]), Math.max(3.5, scale * 0.22), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (pt[2] && scale >= 2.5) {
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = `bold ${Math.max(9, scale * 0.38)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`🚆 ${pt[2]}`, screenX(pt[0]), screenZ(pt[1] - 5));
+      }
+    });
+  }
+
+  drawRailroadTrackCorridor([
+    [380, -40, "汐止"], [360, -20, "南港"], [290, -95, "松山"], [0, 0, "臺北車站"],
+    [-160, 80, "萬華"], [-130, 130, "板橋車站"], [-200, 210, "樹林"], [-310, 290, "鶯歌"]
+  ]);
 
   // 0.5 雙北全境東西向延伸大動脈 (Macro Arterials Extents)
   ctx.fillStyle = '#2d3748';

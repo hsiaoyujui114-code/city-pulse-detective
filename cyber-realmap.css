@@ -1018,4 +1018,186 @@ html, body {
   gap: 3px;
 }
 
+/* 🚅 高鐵、🚆 臺鐵、🚇 捷運與 🚌 公車 Marker 專屬全息樣式 */
+.transit-badge-pin {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  border: 1.5px solid #fff;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform 0.2s ease;
+}
+
+.transit-badge-pin:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  z-index: 1000 !important;
+}
+
+.pin-thsr {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  border-color: #fdba74;
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.6);
+}
+
+.pin-tra {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border-color: #7dd3fc;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.6);
+}
+
+.pin-mrt {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.pin-ebus {
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #6ee7b7;
+  box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
+}
+
+/* 🚌 大臺北公車即時檢索面板 (Taipei eBus Realtime Navigator Drawer) */
+.ebus-navigator-panel {
+  position: absolute;
+  top: 168px;
+  left: 274px;
+  width: 320px;
+  max-height: 480px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--emerald-neon);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(16, 185, 129, 0.2);
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  font-family: var(--font-sans);
+}
+
+.ebus-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.ebus-panel-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ebus-search-input-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.ebus-search-input {
+  width: 100%;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid #10b981;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ebus-search-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+.ebus-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.ebus-chip-btn {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ebus-chip-btn:hover, .ebus-chip-btn.active {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.ebus-results-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.ebus-result-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.ebus-result-card:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+.ebus-card-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ebus-card-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.ebus-card-eta {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-weight: 700;
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+
 
