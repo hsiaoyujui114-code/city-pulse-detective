@@ -34,7 +34,7 @@ html, body {
   user-select: none;
 }
 
-/* 1:1 真實 MapLibre 畫布容器 (深星空藍底色，絕不黑屏) */
+/* 1:1 真實 MapLibre / Leaflet 畫布容器 (深星空藍底色，絕不黑屏) */
 #map {
   width: 100vw;
   height: 100vh;
@@ -43,6 +43,8 @@ html, body {
   left: 0;
   z-index: 1;
   background-color: #070d24;
+  transform: translateZ(0); /* 啟用獨立 GPU 渲染層 */
+  will-change: transform;
 }
 
 /* 頂部全息戰術導航條 (Top Tactical Navigation Bar) */
@@ -779,6 +781,20 @@ html, body {
 .leaflet-container {
   background-color: #070d24 !important;
   font-family: var(--font-sans) !important;
+  transform: translateZ(0);
+}
+
+.leaflet-pane {
+  will-change: transform;
+}
+
+.leaflet-tile-pane {
+  transform: translateZ(0);
+}
+
+.leaflet-overlay-pane canvas {
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .leaflet-bar {
@@ -840,6 +856,8 @@ html, body {
   box-shadow: 0 0 10px rgba(0,0,0,0.7);
   border: 2px solid #ffffff;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .store-holo-pin:hover {

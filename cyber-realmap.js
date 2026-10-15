@@ -58,7 +58,12 @@ function initCyberRealMap() {
     zoom: 15.2,
     minZoom: 9,
     maxZoom: 19,
-    zoomControl: false
+    zoomControl: false,
+    preferCanvas: true, // 核心效能突破：開啟硬體加速 Canvas 渲染向量圖層，徹底解決 SVG DOM 移動卡頓
+    wheelPxPerZoomLevel: 100, // 平滑滾輪縮放
+    wheelDebounceTime: 40,
+    zoomSnap: 0.1, // 支援平滑連續縮放
+    zoomDelta: 0.5
   });
 
   // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
@@ -1197,20 +1202,33 @@ function flyToCaseLocation(lat, lon) {
 // ──────────────────────────────────────────
 // 14. 遙測 HUD 監聽與最近特區偵測
 // ──────────────────────────────────────────
+let isTelemetryPending = false;
+let lastTelemetryLon = '', lastTelemetryLat = '', lastTelemetryZoom = '';
+let lastSectorCode = '';
+
 function setupTelemetryListeners() {
   map.on('move', () => {
-    const center = map.getCenter();
-    const zoom = map.getZoom();
+    if (isTelemetryPending) return;
+    isTelemetryPending = true;
+    requestAnimationFrame(() => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
 
-    const hudLon = document.getElementById('hudLon');
-    const hudLat = document.getElementById('hudLat');
-    const hudZoom = document.getElementById('hudZoom');
+      const hudLon = document.getElementById('hudLon');
+      const hudLat = document.getElementById('hudLat');
+      const hudZoom = document.getElementById('hudZoom');
 
-    if (hudLon) hudLon.innerText = center.lng.toFixed(5) + '°';
-    if (hudLat) hudLat.innerText = center.lat.toFixed(5) + '°';
-    if (hudZoom) hudZoom.innerText = zoom.toFixed(1) + 'x';
+      const lonStr = center.lng.toFixed(5) + '°';
+      const latStr = center.lat.toFixed(5) + '°';
+      const zoomStr = zoom.toFixed(1) + 'x';
 
-    detectNearestSector(center.lng, center.lat);
+      if (hudLon && lonStr !== lastTelemetryLon) { hudLon.innerText = lonStr; lastTelemetryLon = lonStr; }
+      if (hudLat && latStr !== lastTelemetryLat) { hudLat.innerText = latStr; lastTelemetryLat = latStr; }
+      if (hudZoom && zoomStr !== lastTelemetryZoom) { hudZoom.innerText = zoomStr; lastTelemetryZoom = zoomStr; }
+
+      detectNearestSector(center.lng, center.lat);
+      isTelemetryPending = false;
+    });
   });
 }
 
@@ -1218,15 +1236,19 @@ function detectNearestSector(lon, lat) {
   let closest = null;
   let minDist = Infinity;
 
-  SECTORS_DATA.forEach(s => {
+  for (let i = 0; i < SECTORS_DATA.length; i++) {
+    const s = SECTORS_DATA[i];
+    // 曼哈頓快速粗篩，避免大量平方根計算
+    if (Math.abs(s.lon - lon) > 0.15 || Math.abs(s.lat - lat) > 0.15) continue;
     const d = Math.hypot(s.lon - lon, s.lat - lat);
     if (d < minDist) {
       minDist = d;
       closest = s;
     }
-  });
+  }
 
-  if (closest) {
+  if (closest && closest.code !== lastSectorCode) {
+    lastSectorCode = closest.code;
     const titleEl = document.getElementById('currentSectorTitle');
     const subEl = document.getElementById('currentSectorSub');
     if (titleEl) titleEl.innerText = `${closest.code}｜${closest.name}`;
