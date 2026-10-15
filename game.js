@@ -138,8 +138,9 @@ const camera = {
   targetScale: 5.2, // 預設舒適街區視角：開局即見清晰街道、萬家福/樂家康、307公車與角色，徹底告別黑屏！
   currentScale: 5.2,
   minScale: 0.85,   // 支援宏觀雙北全景總覽
-  maxScale: 28.0    // 放大為街廓與門市立面
+  maxScale: 160.0   // 核心突破：大幅提升至 160.0，支援超大微觀角色特寫！
 };
+let cameraLockToPlayer = true; // 視角嚴密鎖定於主角正上方，移動時無縫同步推進
 
 // 奔跑腳底塵土/氣流粒子系統
 const sprintParticles = [];
@@ -1259,8 +1260,12 @@ window.addEventListener("keyup", e => {
 /* ─── 6. 控制器輸入與平滑移動運算 (支援幽靈天眼滑鼠拖曳、滾輪縮放與鍵盤漫遊) ─── */
 const keys = {};
 window.addEventListener("keydown", e => {
-  keys[e.key.toLowerCase()] = true;
-  if (e.key === "e" || e.key === "E") triggerCurrentInteraction();
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+    cameraLockToPlayer = true;
+  }
+  if (k === "e") triggerCurrentInteraction();
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
@@ -1302,11 +1307,17 @@ window.addEventListener("mouseup", () => {
   isDragging = false;
 });
 
-// 滑鼠滾輪縮放 (Zoom in / out)
+// 滑鼠滾輪縮放 (Zoom in / out - 支援超大微觀人物特寫 160.0x)
 canvas.addEventListener("wheel", e => {
   e.preventDefault();
-  const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+  const zoomFactor = e.deltaY < 0 ? 1.20 : 0.82;
   camera.targetScale = Math.max(camera.minScale, Math.min(camera.maxScale, camera.targetScale * zoomFactor));
+  // 當放大為人物微觀特寫時，自動鎖定置中於人物正上方
+  if (!gameState.isGhostMode && camera.targetScale >= 12.0) {
+    cameraLockToPlayer = true;
+    camera.x = playerPos.x;
+    camera.z = playerPos.z;
+  }
 }, { passive: false });
 
 // 點擊地圖任意門市/地標直接互動
@@ -1498,10 +1509,21 @@ function updateMovement() {
   playerPos.x = Math.max(-460, Math.min(650, playerPos.x));
   playerPos.z = Math.max(-520, Math.min(460, playerPos.z));
 
-  // 動態攝影機平滑跟隨 (Smooth Lerp Camera) - 拖曳中直接跟隨滑鼠，避免反覆拉扯頓挫
+  // 動態攝影機平滑跟隨 (Smooth Lerp Camera) - 嚴密鎖定人物正上方 (以人物為中心)
   if (!isDragging) {
-    camera.x += (playerPos.x - camera.x) * 0.15;
-    camera.z += (playerPos.z - camera.z) * 0.15;
+    if (cameraLockToPlayer || playerPos.isMoving || camera.currentScale >= 12.0) {
+      // 緊貼角色：特寫或移動中直接精準同步，保證人物始終置於視窗正中央 (視角剛好在人物正上方，移動跟隨推進)
+      const lerpSpd = (camera.currentScale >= 15.0 || playerPos.isMoving) ? 0.48 : 0.28;
+      camera.x += (playerPos.x - camera.x) * lerpSpd;
+      camera.z += (playerPos.z - camera.z) * lerpSpd;
+      if (Math.hypot(playerPos.x - camera.x, playerPos.z - camera.z) < 0.05) {
+        camera.x = playerPos.x;
+        camera.z = playerPos.z;
+      }
+    } else {
+      camera.x += (playerPos.x - camera.x) * 0.18;
+      camera.z += (playerPos.z - camera.z) * 0.18;
+    }
   }
   camera.currentScale += (camera.targetScale - camera.currentScale) * 0.18;
 
@@ -1698,8 +1720,8 @@ function renderScene() {
   const startZ = Math.floor(minWorldZ / subStep) * subStep;
   const endZ = Math.ceil(maxWorldZ / subStep) * subStep;
 
-  // 次級賽博格線 (Sub-Grid Lines - 僅在適度放大時繪製，防止超遠距下萬筆頂點消耗 GPU)
-  if (scale >= 2.5) {
+  // 次級賽博格線 (Sub-Grid Lines - 僅在宏觀至中觀適度放大時繪製；超特寫 scale > 12.0 時隱藏以消除區塊感)
+  if (scale >= 2.5 && scale <= 12.0) {
     ctx.strokeStyle = 'rgba(30, 68, 160, 0.35)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1718,19 +1740,21 @@ function renderScene() {
     ctx.stroke();
   }
 
-  // 主要賽博全息格線 (Major Cyber Grid Lines)
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.28)';
-  ctx.lineWidth = 1.3;
-  ctx.beginPath();
-  for (let x = startX; x <= endX; x += gridStep) {
-    ctx.moveTo(screenX(x), screenZ(minWorldZ));
-    ctx.lineTo(screenX(x), screenZ(maxWorldZ));
+  // 主要賽博全息格線 (Major Cyber Grid Lines - scale <= 12.0 時繪製，特寫時隱藏讓真實街景完全呈現)
+  if (scale <= 12.0) {
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.28)';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    for (let x = startX; x <= endX; x += gridStep) {
+      ctx.moveTo(screenX(x), screenZ(minWorldZ));
+      ctx.lineTo(screenX(x), screenZ(maxWorldZ));
+    }
+    for (let z = startZ; z <= endZ; z += gridStep) {
+      ctx.moveTo(screenX(minWorldX), screenZ(z));
+      ctx.lineTo(screenX(maxWorldX), screenZ(z));
+    }
+    ctx.stroke();
   }
-  for (let z = startZ; z <= endZ; z += gridStep) {
-    ctx.moveTo(screenX(minWorldX), screenZ(z));
-    ctx.lineTo(screenX(maxWorldX), screenZ(z));
-  }
-  ctx.stroke();
 
   // 賽博經緯十字準星與科技座標銘印 (限制軸線步數在 25 以內，防止千次運算)
   const numStepsX = Math.ceil((endX - startX) / gridStep);
@@ -1789,57 +1813,59 @@ function renderScene() {
   // 【完整涵蓋：臺北市 12 區 ✕ 新北市全境 29 行政區，絕無遺漏！】
   // ──────────────────────────────────────────
 
-  // 繪製 41 大特區之賽博全像板塊與邊界微流光 (Circuit Cyber Slabs - 視錐剔除優化)
-  shuangbeiSectors.forEach(sec => {
-    if (!isInViewport(sec.x, sec.z, Math.max(sec.w, sec.h) / 2 + 10)) return;
+  // 繪製 41 大特區之賽博全像板塊與邊界微流光 (僅在宏觀/中觀視角 scale <= 7.5 時繪製，特寫時全面隱藏以徹底消除「看到很多區塊」！)
+  if (scale <= 7.5) {
+    shuangbeiSectors.forEach(sec => {
+      if (!isInViewport(sec.x, sec.z, Math.max(sec.w, sec.h) / 2 + 10)) return;
 
-    const sx = screenX(sec.x - sec.w / 2);
-    const sz = screenZ(sec.z - sec.h / 2);
-    const sw = sec.w * scale;
-    const sh = sec.h * scale;
+      const sx = screenX(sec.x - sec.w / 2);
+      const sz = screenZ(sec.z - sec.h / 2);
+      const sw = sec.w * scale;
+      const sh = sec.h * scale;
 
-    // 板塊底色 (科技半透明全息電路芯片)
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
-    drawSafeRoundRect(ctx, sx, sz, sw, sh, 6);
-    ctx.fill();
-
-    // 板塊霓虹外框 (以高效向量線條取代耗效能之高斯模糊 shadowBlur，流暢 60FPS)
-    ctx.strokeStyle = sec.col;
-    ctx.lineWidth = scale < 2.0 ? 1.0 : 1.5;
-    ctx.stroke();
-
-    // 科技四角折角瞄準器 (Cyber Tactical Corner Brackets)
-    const cornerSize = Math.max(3, scale * 0.4);
-    ctx.fillStyle = sec.col;
-    ctx.fillRect(sx, sz, cornerSize, 1.5);
-    ctx.fillRect(sx, sz, 1.5, cornerSize);
-    ctx.fillRect(sx + sw - cornerSize, sz, cornerSize, 1.5);
-    ctx.fillRect(sx + sw - 1.5, sz, 1.5, cornerSize);
-    ctx.fillRect(sx, sz + sh - 1.5, cornerSize, 1.5);
-    ctx.fillRect(sx, sz + sh - cornerSize, 1.5, cornerSize);
-    ctx.fillRect(sx + sw - cornerSize, sz + sh - 1.5, cornerSize, 1.5);
-    ctx.fillRect(sx + sw - 1.5, sz + sh - cornerSize, 1.5, cornerSize);
-
-    // 特區全像標籤與編號 (Sleek Sci-Fi Badge - 確保縮放時絕不扁平重疊)
-    if (scale <= 4.0) {
-      const tagW = Math.max(90, Math.min(sw * 0.95, 135));
-      const tagH = 22;
-      const tcx = sx + sw / 2;
-      const tcy = sz + sh / 2;
-
-      ctx.fillStyle = 'rgba(7, 13, 36, 0.92)';
-      drawSafeRoundRect(ctx, tcx - tagW / 2, tcy - tagH / 2, tagW, tagH, 4);
+      // 板塊底色 (科技半透明全息電路芯片)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      drawSafeRoundRect(ctx, sx, sz, sw, sh, 6);
       ctx.fill();
+
+      // 板塊霓虹外框 (以高效向量線條取代耗效能之高斯模糊 shadowBlur，流暢 60FPS)
       ctx.strokeStyle = sec.col;
-      ctx.lineWidth = 1.3;
+      ctx.lineWidth = scale < 2.0 ? 1.0 : 1.5;
       ctx.stroke();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(sec.name.split('・')[0], tcx, tcy + 4);
-    }
-  });
+      // 科技四角折角瞄準器 (Cyber Tactical Corner Brackets)
+      const cornerSize = Math.max(3, scale * 0.4);
+      ctx.fillStyle = sec.col;
+      ctx.fillRect(sx, sz, cornerSize, 1.5);
+      ctx.fillRect(sx, sz, 1.5, cornerSize);
+      ctx.fillRect(sx + sw - cornerSize, sz, cornerSize, 1.5);
+      ctx.fillRect(sx + sw - 1.5, sz, 1.5, cornerSize);
+      ctx.fillRect(sx, sz + sh - 1.5, cornerSize, 1.5);
+      ctx.fillRect(sx, sz + sh - cornerSize, 1.5, cornerSize);
+      ctx.fillRect(sx + sw - cornerSize, sz + sh - 1.5, cornerSize, 1.5);
+      ctx.fillRect(sx + sw - 1.5, sz + sh - cornerSize, 1.5, cornerSize);
+
+      // 特區全像標籤與編號 (Sleek Sci-Fi Badge - 確保縮放時絕不扁平重疊)
+      if (scale <= 4.0) {
+        const tagW = Math.max(90, Math.min(sw * 0.95, 135));
+        const tagH = 22;
+        const tcx = sx + sw / 2;
+        const tcy = sz + sh / 2;
+
+        ctx.fillStyle = 'rgba(7, 13, 36, 0.92)';
+        drawSafeRoundRect(ctx, tcx - tagW / 2, tcy - tagH / 2, tagW, tagH, 4);
+        ctx.fill();
+        ctx.strokeStyle = sec.col;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(sec.name.split('・')[0], tcx, tcy + 4);
+      }
+    });
+  }
 
   // 0.4 雙北周邊盆地山系自然山稜線 (Holographic Basin Mountain Ridgelines)
   ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
@@ -2541,21 +2567,24 @@ function renderScene() {
 
   // 5. 瀝青路面高對比路名與台灣經典綠底路牌標示 (High-Visibility Taiwan Street Signage - 視錐剔除)
   function drawTaiwanRoadSign(text, x, z) {
+    if (scale > 15.0) return; // 特寫模式下避免路牌放大成巨大色塊擋住人物視線
     if (!isInViewport(x, z, 35)) return;
     const sx = screenX(x);
     const sz = screenZ(z);
     ctx.save();
-    ctx.font = `bold ${Math.max(10, scale * 0.65)}px sans-serif`;
-    const txtWidth = ctx.measureText(text).width + 16;
+    const fontSize = Math.min(13, Math.max(9, scale * 0.45));
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const txtWidth = ctx.measureText(text).width + 12;
+    const txtHeight = fontSize + 6;
     ctx.fillStyle = '#065f46'; // 經典台灣綠底路牌
-    drawSafeRoundRect(ctx, sx - txtWidth / 2, sz - 9 * scale * 0.35, txtWidth, 18 * scale * 0.35, 4);
+    drawSafeRoundRect(ctx, sx - txtWidth / 2, sz - txtHeight / 2, txtWidth, txtHeight, 3);
     ctx.fill();
     ctx.strokeStyle = '#a7f3d0';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.0;
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
-    ctx.fillText(text, sx, sz + 4 * scale * 0.35);
+    ctx.fillText(text, sx, sz + fontSize * 0.35);
     ctx.restore();
   }
 
@@ -2601,8 +2630,9 @@ function renderScene() {
   drawTaiwanRoadSign('🛣️ 貢寮福隆街・極東海洋風景線', 560, 210);
   drawTaiwanRoadSign('🛣️ 烏來溫泉街・地熱生態綠廊', 110, 380);
 
-  // 6. 雙北全境 41 行政特區 1:1 微縮銘板 (District HUD Badges - 視錐剔除)
+  // 6. 雙北全境 41 行政特區 1:1 微縮銘板 (僅在宏觀 scale <= 7.5 時繪製，特寫時隱藏以消除「看到很多區塊」)
   function drawDistrictBadge(text, x, z, col) {
+    if (scale > 7.5) return; // 【核心優化】：放大特寫時隱藏宏觀特區銘板，避免大量色塊遮擋視線！
     if (!isInViewport(x, z, 35)) return;
     const bx = screenX(x);
     const bz = screenZ(z);
@@ -3452,7 +3482,13 @@ function renderScene() {
 
   // 【人物與居民渲染】：依據使用者要求，在幽靈天眼模式下隱藏人物與居民！地面模式下才顯示！
   if (!gameState.isGhostMode) {
-    // NPC 行人
+    // 角色動態等比縮放係數 (Dynamic Character Scale Factor)
+    // 解決人物尺寸固定過小問題：隨 scale 動態放大，在特寫時達到超大巨型身形！
+    const pScale = Math.max(1.0, scale * 0.22);
+    const npcScale = Math.max(0.9, scale * 0.18);
+    const rpScale = Math.max(1.0, scale * 0.22);
+
+    // 1. NPC 行人居民 (隨 scale 動態放大)
     pedestrians.forEach(p => {
       p.walkCycle += 0.12;
       if (p.isZAxis) {
@@ -3470,102 +3506,395 @@ function renderScene() {
         draw: () => {
           const px = screenX(p.x);
           const pz = screenZ(p.z);
+          // 陰影
           ctx.beginPath();
-          ctx.ellipse(px, pz + 2, 8, 4, 0, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(0,0,0,0.4)';
+          ctx.ellipse(px, pz + 2 * npcScale, 8 * npcScale, 4 * npcScale, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
           ctx.fill();
 
+          // 軀幹
           ctx.fillStyle = p.shirt;
-          drawSafeRoundRect(ctx, px - 6, pz - 16, 12, 12, 3);
+          drawSafeRoundRect(ctx, px - 6 * npcScale, pz - 16 * npcScale, 12 * npcScale, 12 * npcScale, 3 * npcScale);
           ctx.fill();
+
+          // 頭部
           ctx.beginPath();
-          ctx.arc(px, pz - 21, 5.5, 0, Math.PI * 2);
+          ctx.arc(px, pz - 21 * npcScale, 5.5 * npcScale, 0, Math.PI * 2);
           ctx.fillStyle = '#fed7aa';
           ctx.fill();
+
+          // 雙腿
           ctx.fillStyle = p.pants;
-          const legSwing = Math.sin(p.walkCycle) * 3;
-          ctx.fillRect(px - 4, pz - 4, 3, 5 + legSwing);
-          ctx.fillRect(px + 1, pz - 4, 3, 5 - legSwing);
+          const legSwing = Math.sin(p.walkCycle) * 3 * npcScale;
+          ctx.fillRect(px - 4 * npcScale, pz - 4 * npcScale, 3 * npcScale, 5 * npcScale + legSwing);
+          ctx.fillRect(px + 1 * npcScale, pz - 4 * npcScale, 3 * npcScale, 5 * npcScale - legSwing);
         }
       });
     });
 
-    // 遠端連線其他玩家
+    // 2. 遠端連線其他玩家 (隨 scale 動態放大)
     remotePlayers.forEach(rp => {
       renderList.push({
         z: rp.z || 0,
         draw: () => {
           const rx = screenX(rp.x || 0);
           const rz = screenZ(rp.z || 0);
-          ctx.fillStyle = '#059669';
-          drawSafeRoundRect(ctx, rx - 7, rz - 18, 14, 14, 3);
-          ctx.fill();
+          // 陰影
           ctx.beginPath();
-          ctx.arc(rx, rz - 23, 6, 0, Math.PI * 2);
+          ctx.ellipse(rx, rz + 2 * rpScale, 9 * rpScale, 4.5 * rpScale, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fill();
+
+          // 綠色風衣軀幹
+          ctx.fillStyle = '#059669';
+          drawSafeRoundRect(ctx, rx - 7 * rpScale, rz - 18 * rpScale, 14 * rpScale, 14 * rpScale, 3 * rpScale);
+          ctx.fill();
+
+          // 頭部
+          ctx.beginPath();
+          ctx.arc(rx, rz - 23 * rpScale, 6 * rpScale, 0, Math.PI * 2);
           ctx.fillStyle = '#fed7aa';
           ctx.fill();
 
+          // 暱稱標籤
           ctx.fillStyle = '#34d399';
-          ctx.font = 'bold 10px sans-serif';
+          ctx.font = `bold ${Math.max(10, rpScale * 3.5)}px sans-serif`;
           ctx.textAlign = 'center';
-          ctx.fillText(rp.nickname, rx, rz - 34);
+          ctx.fillText(rp.nickname, rx, rz - 32 * rpScale);
         }
       });
     });
 
-    // 主角 (全息巡航者)
+    // 3. 主角 (全息巡航者 - 支援超大微觀特寫 160x 動漫級精緻渲染)
     renderList.push({
       z: playerPos.z,
       draw: () => {
         const px = screenX(playerPos.x);
         const pz = screenZ(playerPos.z);
 
-        // 影子
+        // (1) 地面動態柔和陰影 (隨奔跑擴散)
         ctx.beginPath();
-        const shadowW = gameState.isRunning ? 14 : 10;
-        ctx.ellipse(px, pz + 2, shadowW, 5, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        const shadowW = (gameState.isRunning ? 20 : 15) * pScale;
+        const shadowH = 6 * pScale;
+        ctx.ellipse(px, pz + 2 * pScale, shadowW, shadowH, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
         ctx.fill();
 
-        // 滑板
+        // (2) 戰術全息地面光環與朝向指針 (當放大特寫時展現高科技儀表感)
+        if (scale >= 8.0) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+          ctx.lineWidth = Math.max(1.2, pScale * 0.25);
+          ctx.beginPath();
+          ctx.arc(px, pz + 2 * pScale, 14 * pScale, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // 朝向指針
+          const facingAngle = playerPos.facing === 'down' ? Math.PI / 2 :
+                             (playerPos.facing === 'up' ? -Math.PI / 2 :
+                             (playerPos.facing === 'left' ? Math.PI : 0));
+          const arrowDist = 14 * pScale;
+          const ax = px + Math.cos(facingAngle) * arrowDist;
+          const az = pz + 2 * pScale + Math.sin(facingAngle) * arrowDist;
+          ctx.fillStyle = '#00f0ff';
+          ctx.beginPath();
+          ctx.arc(ax, az, Math.max(2, 2.5 * pScale * 0.35), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // (3) 滑板 / 賽博懸浮滑板 (Cyber Hoverboard)
         if (gameState.hasSkateboard) {
+          ctx.save();
           ctx.fillStyle = '#ef4444';
-          drawSafeRoundRect(ctx, px - 12, pz, 24, 5, 2);
+          drawSafeRoundRect(ctx, px - 16 * pScale, pz - 1 * pScale, 32 * pScale, 6 * pScale, 2.5 * pScale);
+          ctx.fill();
+          ctx.strokeStyle = '#fca5a5';
+          ctx.lineWidth = Math.max(1, pScale * 0.2);
+          ctx.stroke();
+          // 懸浮光子氣流
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.6)';
+          ctx.fillRect(px - 14 * pScale, pz + 5 * pScale, 28 * pScale, 1.8 * pScale);
+          ctx.restore();
+        }
+
+        // (4) 動態擺動四肢與皮靴 (依朝向與 walkCycle 步態擺動)
+        const cycle = playerPos.walkCycle;
+        const swingDist = (gameState.isRunning ? 6.5 : 3.8) * pScale;
+        const legSwing = playerPos.isMoving ? Math.sin(cycle) * swingDist : 0;
+        const legW = 4.2 * pScale;
+        const legH = 13 * pScale;
+        const legSpacing = 4.2 * pScale;
+
+        if (playerPos.facing === 'down' || playerPos.facing === 'up') {
+          // 挺拔長褲 (深藍黑)
+          ctx.fillStyle = '#1e293b';
+          drawSafeRoundRect(ctx, px - legSpacing - legW / 2, pz - legH + legSwing * 0.7, legW, legH, 1.5 * pScale);
+          ctx.fill();
+          drawSafeRoundRect(ctx, px + legSpacing - legW / 2, pz - legH - legSwing * 0.7, legW, legH, 1.5 * pScale);
+          ctx.fill();
+
+          // 皮靴 (黑色皮革 + 科技鞋底)
+          ctx.fillStyle = '#0f172a';
+          drawSafeRoundRect(ctx, px - legSpacing - legW / 2 - 0.5 * pScale, pz + legSwing * 0.7 - 2 * pScale, legW + 1 * pScale, 4.5 * pScale, 1.5 * pScale);
+          ctx.fill();
+          drawSafeRoundRect(ctx, px + legSpacing - legW / 2 - 0.5 * pScale, pz - legSwing * 0.7 - 2 * pScale, legW + 1 * pScale, 4.5 * pScale, 1.5 * pScale);
+          ctx.fill();
+
+          // 鞋底微光
+          if (pScale >= 2.0) {
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillRect(px - legSpacing - legW / 2, pz + legSwing * 0.7 + 1.8 * pScale, legW, 0.8 * pScale);
+            ctx.fillRect(px + legSpacing - legW / 2, pz - legSwing * 0.7 + 1.8 * pScale, legW, 0.8 * pScale);
+          }
+        } else {
+          // 側面行走步伐 (Left / Right)
+          const frontLegX = playerPos.facing === 'left' ? px - legSwing : px + legSwing;
+          const backLegX = playerPos.facing === 'left' ? px + legSwing : px - legSwing;
+          ctx.fillStyle = '#1e293b';
+          drawSafeRoundRect(ctx, backLegX - legW / 2, pz - legH, legW, legH, 1.5 * pScale);
+          ctx.fill();
+          drawSafeRoundRect(ctx, frontLegX - legW / 2, pz - legH, legW, legH, 1.5 * pScale);
+          ctx.fill();
+
+          ctx.fillStyle = '#0f172a';
+          drawSafeRoundRect(ctx, backLegX - legW / 2 - 1 * pScale, pz - 2 * pScale, legW + 2 * pScale, 4.5 * pScale, 1.5 * pScale);
+          ctx.fill();
+          drawSafeRoundRect(ctx, frontLegX - legW / 2 - 1 * pScale, pz - 2 * pScale, legW + 2 * pScale, 4.5 * pScale, 1.5 * pScale);
           ctx.fill();
         }
 
-        // 風衣軀幹
-        ctx.fillStyle = '#1d4ed8';
-        drawSafeRoundRect(ctx, px - 7, pz - 18, 14, 14, 3);
+        // (5) 風衣軀幹與外層俐落立體剪裁 (Anime Trenchcoat)
+        const torsoW = 16 * pScale;
+        const torsoH = 18 * pScale;
+        const torsoY = pz - 29 * pScale;
+
+        // 風衣飄動下擺
+        const coatFlap = playerPos.isMoving ? Math.sin(cycle * 1.5) * (gameState.isRunning ? 3 : 1.5) * pScale : 0;
+        ctx.fillStyle = '#1e40af';
+        drawSafeRoundRect(ctx, px - torsoW / 2 - 1.5 * pScale, torsoY + torsoH * 0.55, torsoW + 3 * pScale, torsoH * 0.65 + coatFlap, 3 * pScale);
         ctx.fill();
 
-        // 擺動四肢
-        ctx.fillStyle = '#1e293b';
-        const legSwing = Math.sin(playerPos.walkCycle) * (gameState.isRunning ? 5 : 3);
-        ctx.fillRect(px - 5, pz - 4, 3.5, 6 + legSwing);
-        ctx.fillRect(px + 1.5, pz - 4, 3.5, 6 - legSwing);
+        // 風衣主體 (深藍經典俐落風衣)
+        ctx.fillStyle = '#1d4ed8';
+        drawSafeRoundRect(ctx, px - torsoW / 2, torsoY, torsoW, torsoH, 4 * pScale);
+        ctx.fill();
 
-        // 頭部與帽子
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = Math.max(1, 0.8 * pScale);
+        ctx.stroke();
+
+        // 風衣細部裝飾 (領口、領結、胸章與腰帶)
+        if (playerPos.facing === 'down') {
+          // 襯衫白領
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.moveTo(px - 3.5 * pScale, torsoY);
+          ctx.lineTo(px, torsoY + 7 * pScale);
+          ctx.lineTo(px + 3.5 * pScale, torsoY);
+          ctx.closePath();
+          ctx.fill();
+
+          // 鮮紅領帶 / 戰術科技領結
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.moveTo(px - 1.2 * pScale, torsoY + 1.5 * pScale);
+          ctx.lineTo(px + 1.2 * pScale, torsoY + 1.5 * pScale);
+          ctx.lineTo(px + 1.8 * pScale, torsoY + 9 * pScale);
+          ctx.lineTo(px, torsoY + 11.5 * pScale);
+          ctx.lineTo(px - 1.8 * pScale, torsoY + 9 * pScale);
+          ctx.closePath();
+          ctx.fill();
+
+          // 金色金屬胸章
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(px - 4.5 * pScale, torsoY + 4 * pScale, 1.6 * pScale, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 皮革腰帶與金屬帶扣
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(px - torsoW / 2, torsoY + torsoH - 4.5 * pScale, torsoW, 3 * pScale);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(px - 2.5 * pScale, torsoY + torsoH - 5 * pScale, 5 * pScale, 4 * pScale);
+        } else if (playerPos.facing === 'up') {
+          // 背面風衣背脊壓線
+          ctx.strokeStyle = '#1e3a8a';
+          ctx.lineWidth = Math.max(1, pScale * 0.4);
+          ctx.beginPath();
+          ctx.moveTo(px, torsoY + 1 * pScale);
+          ctx.lineTo(px, torsoY + torsoH);
+          ctx.stroke();
+          // 腰帶背面
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(px - torsoW / 2, torsoY + torsoH - 4.5 * pScale, torsoW, 3 * pScale);
+        } else {
+          // 側身 (left / right)
+          const sideDir = playerPos.facing === 'left' ? -1 : 1;
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(px - torsoW / 2, torsoY + torsoH - 4.5 * pScale, torsoW, 3 * pScale);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(px + sideDir * 2 * pScale - 1.5 * pScale, torsoY + torsoH - 5 * pScale, 3 * pScale, 4 * pScale);
+        }
+
+        // (6) 手臂與皮手套 (依移動自然前後擺動)
+        const armW = 4.2 * pScale;
+        const armH = 15 * pScale;
+        const armSwing = playerPos.isMoving ? Math.cos(cycle) * swingDist : 0;
+
+        // 左手
+        ctx.fillStyle = '#1d4ed8';
+        drawSafeRoundRect(ctx, px - torsoW / 2 - armW + 0.5 * pScale, torsoY + 2 * pScale - armSwing * 0.7, armW, armH - 3 * pScale, 2 * pScale);
+        ctx.fill();
+        ctx.fillStyle = '#334155';
+        drawSafeRoundRect(ctx, px - torsoW / 2 - armW, torsoY + armH - 2 * pScale - armSwing * 0.7, armW + 0.5 * pScale, 4.5 * pScale, 2 * pScale);
+        ctx.fill();
+
+        // 右手
+        ctx.fillStyle = '#1d4ed8';
+        drawSafeRoundRect(ctx, px + torsoW / 2 - 0.5 * pScale, torsoY + 2 * pScale + armSwing * 0.7, armW, armH - 3 * pScale, 2 * pScale);
+        ctx.fill();
+        ctx.fillStyle = '#334155';
+        drawSafeRoundRect(ctx, px + torsoW / 2 - 0.5 * pScale, torsoY + armH - 2 * pScale + armSwing * 0.7, armW + 0.5 * pScale, 4.5 * pScale, 2 * pScale);
+        ctx.fill();
+
+        // (7) 脖子、動漫面龐、眼神與層次髮絲 (Anime Face & High-Res Features)
+        const headR = 8.5 * pScale;
+        const headY = torsoY - headR + 2 * pScale;
+
+        // 脖子
+        ctx.fillStyle = '#fed7aa';
+        ctx.fillRect(px - 2.5 * pScale, torsoY - 2 * pScale, 5 * pScale, 4 * pScale);
+
+        // 頭部皮膚底色
         ctx.beginPath();
-        ctx.arc(px, pz - 24, 7, 0, Math.PI * 2);
+        ctx.arc(px, headY, headR, 0, Math.PI * 2);
         ctx.fillStyle = '#fed7aa';
         ctx.fill();
+
+        if (playerPos.facing === 'down') {
+          // 動漫大眼
+          const eyeY = headY - 0.5 * pScale;
+          const eyeSpacing = 3.6 * pScale;
+          const eyeW = 2.4 * pScale;
+          const eyeH = 3.0 * pScale;
+
+          // 眼白
+          ctx.fillStyle = '#ffffff';
+          drawSafeRoundRect(ctx, px - eyeSpacing - eyeW / 2, eyeY - eyeH / 2, eyeW, eyeH, 1.2 * pScale);
+          ctx.fill();
+          drawSafeRoundRect(ctx, px + eyeSpacing - eyeW / 2, eyeY - eyeH / 2, eyeW, eyeH, 1.2 * pScale);
+          ctx.fill();
+
+          // 寶石青藍瞳孔
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(px - eyeSpacing, eyeY, 1.2 * pScale, 0, Math.PI * 2);
+          ctx.arc(px + eyeSpacing, eyeY, 1.2 * pScale, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 眼神靈魂高光
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(px - eyeSpacing - 0.4 * pScale, eyeY - 0.5 * pScale, 0.5 * pScale, 0, Math.PI * 2);
+          ctx.arc(px + eyeSpacing - 0.4 * pScale, eyeY - 0.5 * pScale, 0.5 * pScale, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 堅毅微笑
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = Math.max(1, 0.7 * pScale);
+          ctx.beginPath();
+          ctx.arc(px, headY + 3.8 * pScale, 2 * pScale, 0.1 * Math.PI, 0.9 * Math.PI);
+          ctx.stroke();
+
+          // 前額層次瀏海
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(px - headR + 1 * pScale, headY - 2 * pScale);
+          ctx.lineTo(px - 4 * pScale, headY + 1.2 * pScale);
+          ctx.lineTo(px - 1.5 * pScale, headY - 1.5 * pScale);
+          ctx.lineTo(px + 1 * pScale, headY + 1.5 * pScale);
+          ctx.lineTo(px + 4 * pScale, headY - 1 * pScale);
+          ctx.lineTo(px + headR - 1 * pScale, headY - 2 * pScale);
+          ctx.closePath();
+          ctx.fill();
+        } else if (playerPos.facing === 'left' || playerPos.facing === 'right') {
+          const sideDir = playerPos.facing === 'left' ? -1 : 1;
+          ctx.fillStyle = '#ffffff';
+          drawSafeRoundRect(ctx, px + sideDir * 3.5 * pScale - 1.2 * pScale, headY - 1.5 * pScale, 2.4 * pScale, 3.0 * pScale, 1.2 * pScale);
+          ctx.fill();
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(px + sideDir * 3.5 * pScale, headY - 0.2 * pScale, 1.1 * pScale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(px + sideDir * 3.2 * pScale, headY - 0.5 * pScale, 0.45 * pScale, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // 背面立體髮流
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(px, headY, headR * 0.95, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // (8) 帥氣軟呢偵探帽 / 科技貝雷帽 (Fedora / Cyber Cap)
+        const hatBrimW = 26 * pScale;
+        const hatBrimH = 6 * pScale;
+        const hatBrimY = headY - headR * 0.7;
+
+        // 帽簷
         ctx.fillStyle = '#0f172a';
-        drawSafeRoundRect(ctx, px - 8, pz - 31, 16, 7, 3);
+        drawSafeRoundRect(ctx, px - hatBrimW / 2, hatBrimY, hatBrimW, hatBrimH, 2.8 * pScale);
         ctx.fill();
 
-        // 頭頂對話氣泡
-        ctx.fillStyle = 'rgba(10, 25, 50, 0.9)';
-        drawSafeRoundRect(ctx, px - 65, pz - 60, 130, 22, 6);
+        // 帽冠
+        const hatCrownW = 17 * pScale;
+        const hatCrownH = 11 * pScale;
+        const hatCrownY = hatBrimY - hatCrownH + 1 * pScale;
+        ctx.fillStyle = '#1e293b';
+        drawSafeRoundRect(ctx, px - hatCrownW / 2, hatCrownY, hatCrownW, hatCrownH, 3.5 * pScale);
+        ctx.fill();
+
+        // 賽博青光霓虹飾帶 (Cyber Cyan Ribbon)
+        ctx.fillStyle = '#00f0ff';
+        ctx.fillRect(px - hatCrownW / 2, hatBrimY - 2.5 * pScale, hatCrownW, 2.5 * pScale);
+
+        // (9) 動態全息對話氣泡 (Dynamic Floating Holographic Bubble)
+        const bubbleText = gameState.currentBubble;
+        const bFontSize = Math.min(14, Math.max(11, pScale * 1.5));
+        ctx.font = `bold ${bFontSize}px sans-serif`;
+        const bMetrics = ctx.measureText(bubbleText);
+        const bubbleW = Math.max(120, bMetrics.width + 24);
+        const bubbleH = Math.min(32, Math.max(22, pScale * 2.2));
+        const bubbleY = hatCrownY - bubbleH - 12;
+
+        ctx.fillStyle = 'rgba(10, 25, 50, 0.92)';
+        drawSafeRoundRect(ctx, px - bubbleW / 2, bubbleY, bubbleW, bubbleH, 6);
         ctx.fill();
         ctx.strokeStyle = '#00d2ff';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+
+        // 氣泡指向下角尖嘴
+        ctx.fillStyle = 'rgba(10, 25, 50, 0.92)';
+        ctx.beginPath();
+        ctx.moveTo(px - 5, bubbleY + bubbleH);
+        ctx.lineTo(px, bubbleY + bubbleH + 5);
+        ctx.lineTo(px + 5, bubbleY + bubbleH);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#00d2ff';
+        ctx.beginPath();
+        ctx.moveTo(px - 5, bubbleY + bubbleH);
+        ctx.lineTo(px, bubbleY + bubbleH + 5);
+        ctx.lineTo(px + 5, bubbleY + bubbleH);
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(gameState.currentBubble, px, pz - 45);
+        ctx.fillText(bubbleText, px, bubbleY + bubbleH * 0.65);
       }
     });
   } else {
@@ -4457,6 +4786,11 @@ function toggleGhostMode() {
 
 function zoomInCamera() {
   camera.targetScale = Math.min(camera.maxScale, camera.targetScale * 1.25);
+  if (!gameState.isGhostMode && camera.targetScale >= 12.0) {
+    cameraLockToPlayer = true;
+    camera.x = playerPos.x;
+    camera.z = playerPos.z;
+  }
   playTone(700, 'sine', 0.05);
   updateGhostDroneHUD();
 }
@@ -4467,13 +4801,49 @@ function zoomOutCamera() {
   updateGhostDroneHUD();
 }
 
-function resetCameraCenter() {
-  camera.x = 0;
-  camera.z = 14;
-  camera.targetScale = 5.2;
-  playTone(600, 'sine', 0.08);
+function setCloseUpMode() {
+  camera.targetScale = 65.0; // 超特寫微觀人物視角 (人物超巨大、五官風衣清晰可見)
+  camera.x = playerPos.x;
+  camera.z = playerPos.z;
+  cameraLockToPlayer = true;
+  if (gameState.isGhostMode) {
+    toggleGhostMode(); // 自動轉回地面角色模式
+  }
+  playTone(850, 'sine', 0.08);
   updateGhostDroneHUD();
-  showNavToast("🎯 鏡頭已重置置中於【台北車站 忠孝西路核心街區】！");
+  showNavToast("👤 已進入【超大微觀人物特寫模式】！視角嚴密鎖定人物正上方，隨移動無縫同步推進！");
+}
+
+function lockCameraToPlayer() {
+  camera.x = playerPos.x;
+  camera.z = playerPos.z;
+  cameraLockToPlayer = true;
+  playTone(650, 'sine', 0.06);
+  updateGhostDroneHUD();
+  showNavToast("🎯 視角已嚴密鎖定於人物正上方！人物移動視角無縫跟隨！");
+}
+
+function setStreetViewMode() {
+  camera.targetScale = 6.5; // 都會街區標準巡航視角
+  camera.x = playerPos.x;
+  camera.z = playerPos.z;
+  cameraLockToPlayer = true;
+  playTone(550, 'sine', 0.06);
+  updateGhostDroneHUD();
+  showNavToast("🏙️ 已切換至【都會街區標準巡航視角】！");
+}
+
+function resetCameraOverview() {
+  camera.x = 70;
+  camera.z = -20;
+  camera.targetScale = 1.15; // 雙北全景總覽
+  playTone(450, 'sine', 0.08);
+  updateGhostDroneHUD();
+  showNavToast("🗺️ 已切換至【雙北都會全景總覽】！");
+}
+
+function resetCameraCenter() {
+  lockCameraToPlayer();
 }
 
 // ──────────────────────────────────────────

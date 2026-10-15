@@ -158,11 +158,14 @@
     <span id="ghostToggleText">全域巡航 (無角色)</span>
   </div>
 
-  <!-- 浮動縮放控制鍵 (Zoom In / Out / Reset) -->
+  <!-- 浮動縮放與視角模式控制鍵 (Zoom & Camera Modes) -->
   <div class="zoom-controls-floating">
-    <div class="zoom-btn" onclick="zoomInCamera()" title="放大街區視角 [滾輪向上]">➕</div>
-    <div class="zoom-btn" onclick="zoomOutCamera()" title="縮小雙北全景 [滾輪向下]">➖</div>
-    <div class="zoom-btn" onclick="resetCameraCenter()" title="置中重置雙北全景">🎯</div>
+    <div class="zoom-btn" onclick="zoomInCamera()" title="放大視角 [滾輪向上]">➕</div>
+    <div class="zoom-btn" onclick="zoomOutCamera()" title="縮小視角 [滾輪向下]">➖</div>
+    <div class="zoom-btn" onclick="setCloseUpMode()" title="👤 超大微觀人物特寫 (RPG Close-Up Mode)">👤</div>
+    <div class="zoom-btn" onclick="lockCameraToPlayer()" title="🎯 視角居中鎖定人物正上方">🎯</div>
+    <div class="zoom-btn" onclick="setStreetViewMode()" title="🏙️ 都會街區標準巡航視角">🏙️</div>
+    <div class="zoom-btn" onclick="resetCameraOverview()" title="🗺️ 雙北全景總覽">🗺️</div>
   </div>
 
   <!-- 劇情對話 / 內心獨白視窗 -->

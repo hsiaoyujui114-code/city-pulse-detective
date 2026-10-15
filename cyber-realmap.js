@@ -58,12 +58,12 @@ function initCyberRealMap() {
     return;
   }
 
-  // 1. 建立地圖實例 (預設聚焦台北車站站前核心，直接以 15.2x 街廓特寫展現每條街道與巷弄門牌)
+  // 1. 建立地圖實例 (預設聚焦台北車站站前核心，支援 22x 超微觀特寫展現每條街道與巷弄門牌)
   map = L.map('map', {
     center: [25.0465, 121.5170],
     zoom: 15.2,
     minZoom: 9,
-    maxZoom: 19,
+    maxZoom: 22, // 提升至 22 級極限微觀特寫
     zoomControl: false,
     preferCanvas: true, // 核心效能突破：開啟硬體加速 Canvas 渲染向量圖層，徹底解決 SVG DOM 移動卡頓
     wheelPxPerZoomLevel: 100, // 平滑滾輪縮放
@@ -75,24 +75,28 @@ function initCyberRealMap() {
   // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立 1:1 真實網路地圖瓦片服務 (OpenStreetMap 預設、CARTO Voyager、CARTO Dark、Esri Satellite)
+  // 2. 建立 1:1 真實網路地圖瓦片服務 (OpenStreetMap 預設、CARTO Voyager、CARTO Dark、Esri Satellite - 支援 maxZoom 22 平滑插值放大)
   baseLayers = {
     osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
+      maxNativeZoom: 19,
+      maxZoom: 22,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
     }),
     voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxZoom: 20,
+      maxNativeZoom: 20,
+      maxZoom: 22,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }),
     dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxZoom: 20,
+      maxNativeZoom: 20,
+      maxZoom: 22,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     }),
     satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
+      maxNativeZoom: 19,
+      maxZoom: 22,
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     })
   };
@@ -135,9 +139,48 @@ function initCyberRealMap() {
   addSectorsLayer();
   addAllStoreMarkers();
   addDemoCasesMarkers();
+  initPlayerAvatarMarker(); // 核心：微觀主角巡航標記與特寫跟隨
   setupTelemetryListeners();
 
   console.log('✅ 1:1 真實雙北網路街道全景圖與四軌大眾運輸已全數載入完成！');
+}
+
+// ──────────────────────────────────────────
+// 4.1 超微觀角色特寫與巡航鎖定模式 (Close-Up Character Avatar & Focus)
+// ──────────────────────────────────────────
+let playerAvatarMarker = null;
+
+function initPlayerAvatarMarker() {
+  const avatarHtml = `
+    <div style="position:relative; width:48px; height:48px; display:flex; align-items:center; justify-content:center;">
+      <div style="position:absolute; width:48px; height:48px; border-radius:50%; border:2px solid #00f0ff; opacity:0.6; animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;"></div>
+      <div style="position:relative; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle, #0284c7 0%, #0f172a 100%); border:2px solid #38bdf8; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(0,240,255,0.7);">
+        <span style="font-size:18px;">🕵️</span>
+      </div>
+      <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.92); border:1px solid #00f0ff; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; white-space:nowrap;">
+        雙北全息巡航者
+      </div>
+    </div>
+  `;
+  const icon = L.divIcon({
+    className: 'player-avatar-marker',
+    html: avatarHtml,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24]
+  });
+  playerAvatarMarker = L.marker([25.0465, 121.5170], { icon: icon, zIndexOffset: 2000 }).addTo(map);
+  playerAvatarMarker.bindPopup(`
+    <div style="font-size:12px; color:#f8fafc; padding:4px;">
+      <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 雙北全息巡航者 (即時定位)</div>
+      <div>當前位置：台北車站 忠孝西路一段核心</div>
+      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">點擊【超微觀角色特寫 20x】將鏡頭鎖定至人物正上方！</div>
+    </div>
+  `);
+}
+
+function togglePlayerFocusMode() {
+  if (!map) return;
+  map.flyTo([25.0465, 121.5170], 20.2, { duration: 1.2 });
 }
 
 // ──────────────────────────────────────────
