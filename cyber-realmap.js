@@ -10,6 +10,7 @@
 // 1. 取得單一資料源 (SSOT)
 const SECTORS_DATA = (typeof SHUANGBEI_41_SECTORS !== 'undefined') ? SHUANGBEI_41_SECTORS : [];
 const STORES_DATA = (typeof REAL_WORLD_STORES !== 'undefined') ? REAL_WORLD_STORES : [];
+const PARKS_DATA = (typeof SHUANGBEI_REAL_PARKS !== 'undefined') ? SHUANGBEI_REAL_PARKS : [];
 const CASES_DATA = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
 
 // 2. 雙北大眾運輸四軌資料源 (高鐵 ✕ 臺鐵 ✕ 捷運 ✕ 大臺北公車)
@@ -24,6 +25,7 @@ let currentBaseLayerKey = 'osm';
 let activeBaseLayer = null;
 let baseLayers = {};
 let streetsLayerGroup = null;
+let parksLayerGroup = null;
 let thsrLayerGroup = null;
 let traLayerGroup = null;
 let mrtLayerGroup = null;
@@ -36,6 +38,7 @@ let casesLayerGroup = null;
 let sectorsLayerGroup = null;
 
 let isStreetsVisible = true;
+let isParksVisible = true;
 let isThsrVisible = true;
 let isTraVisible = true;
 let isMrtVisible = true;
@@ -100,6 +103,7 @@ function initCyberRealMap() {
 
   // 3. 建立各圖層群組
   streetsLayerGroup = L.layerGroup().addTo(map);
+  parksLayerGroup = L.layerGroup().addTo(map);
   thsrLayerGroup = L.layerGroup().addTo(map);
   traLayerGroup = L.layerGroup().addTo(map);
   mrtLayerGroup = L.layerGroup().addTo(map);
@@ -120,6 +124,7 @@ function initCyberRealMap() {
   renderSectorJumpButtons();
   renderCasesTopStrip();
   addMajorStreetsLayer();
+  addParksLayer();
   addThsrLayer();
   addTraLayer();
   addMrtLayer();
@@ -290,6 +295,355 @@ const SHUANGBEI_MAJOR_STREETS = [
       [25.0160, 121.4660],
       [25.0230, 121.4720]
     ]
+  },
+  // ── 臺北市其他行政區 1:1 核心幹道顯示線 ──
+  {
+    name: '忠孝東路四段~七段 (信義東區 ✕ 南港經貿軸線)',
+    shortName: '忠孝東路 (東區/南港)',
+    color: '#0284c7',
+    coreColor: '#38bdf8',
+    width: 8,
+    center: [25.0415, 121.5580],
+    coords: [
+      [25.0418, 121.5440],
+      [25.0415, 121.5580],
+      [25.0410, 121.5680],
+      [25.0475, 121.5870],
+      [25.0530, 121.6065],
+      [25.0560, 121.6170]
+    ]
+  },
+  {
+    name: '信義路一段~五段 (101高塔 ✕ 象山林蔭大道)',
+    shortName: '信義路 (101大道)',
+    color: '#f59e0b',
+    coreColor: '#fbbf24',
+    width: 8,
+    center: [25.0335, 121.5435],
+    coords: [
+      [25.0355, 121.5185],
+      [25.0345, 121.5285],
+      [25.0335, 121.5435],
+      [25.0332, 121.5655],
+      [25.0330, 121.5710]
+    ]
+  },
+  {
+    name: '仁愛路一段~四段 (台北市景觀林蔭大道)',
+    shortName: '仁愛路',
+    color: '#10b981',
+    coreColor: '#34d399',
+    width: 8,
+    center: [25.0380, 121.5435],
+    coords: [
+      [25.0390, 121.5190],
+      [25.0385, 121.5330],
+      [25.0380, 121.5435],
+      [25.0375, 121.5580],
+      [25.0372, 121.5650]
+    ]
+  },
+  {
+    name: '羅斯福路一段~六段 (台大公館 ✕ 景美文山樞紐)',
+    shortName: '羅斯福路 (台大/景美)',
+    color: '#059669',
+    coreColor: '#4ade80',
+    width: 7,
+    center: [25.0180, 121.5330],
+    coords: [
+      [25.0320, 121.5185],
+      [25.0270, 121.5220],
+      [25.0180, 121.5330],
+      [25.0080, 121.5370],
+      [24.9920, 121.5410]
+    ]
+  },
+  {
+    name: '承德路一段~七段 (大同 ➔ 士林 ➔ 北投連貫軸)',
+    shortName: '承德路 (大同/士林/北投)',
+    color: '#6366f1',
+    coreColor: '#818cf8',
+    width: 7,
+    center: [25.0750, 121.5210],
+    coords: [
+      [25.0485, 121.5175],
+      [25.0610, 121.5195],
+      [25.0750, 121.5210],
+      [25.0930, 121.5225],
+      [25.1150, 121.5150]
+    ]
+  },
+  {
+    name: '內湖成功路二段~五段 (內科高能 ✕ 大湖水岸)',
+    shortName: '內湖成功路',
+    color: '#06b6d4',
+    coreColor: '#22d3ee',
+    width: 7,
+    center: [25.0780, 121.5880],
+    coords: [
+      [25.0610, 121.5790],
+      [25.0700, 121.5850],
+      [25.0780, 121.5880],
+      [25.0830, 121.6020]
+    ]
+  },
+  {
+    name: '士林中正路 ✕ 北投大業路 (天母 ✕ 溫泉特區)',
+    shortName: '士林中正路/北投大業路',
+    color: '#ec4899',
+    coreColor: '#f472b6',
+    width: 7,
+    center: [25.0935, 121.5260],
+    coords: [
+      [25.0935, 121.5260],
+      [25.0945, 121.5150],
+      [25.1150, 121.5050],
+      [25.1320, 121.5010]
+    ]
+  },
+  {
+    name: '文山木柵路一段~四段 (文山生態 ✕ 動物園綠廊)',
+    shortName: '木柵路 (文山生態)',
+    color: '#10b981',
+    coreColor: '#34d399',
+    width: 7,
+    center: [24.9930, 121.5620],
+    coords: [
+      [24.9910, 121.5450],
+      [24.9930, 121.5620],
+      [24.9980, 121.5750],
+      [24.9985, 121.5810]
+    ]
+  },
+
+  // ── 新北市 29 全境行政特區 1:1 核心幹道顯示線 ──
+  {
+    name: '三重重新路一段~五段 (三重樞紐 ✕ 重新商圈)',
+    shortName: '三重重新路',
+    color: '#0284c7',
+    coreColor: '#38bdf8',
+    width: 8,
+    center: [25.0600, 121.4920],
+    coords: [
+      [25.0640, 121.5010],
+      [25.0600, 121.4920],
+      [25.0550, 121.4850],
+      [25.0450, 121.4720],
+      [25.0380, 121.4600]
+    ]
+  },
+  {
+    name: '蘆洲三民路 (捷運蘆洲線走廊)',
+    shortName: '蘆洲三民路',
+    color: '#22d3ee',
+    coreColor: '#67e8f9',
+    width: 7,
+    center: [25.0850, 121.4720],
+    coords: [
+      [25.0770, 121.4850],
+      [25.0850, 121.4720],
+      [25.0920, 121.4650]
+    ]
+  },
+  {
+    name: '新莊中正路 ✕ 幸福路 (副都心 ✕ 輔仁大學核心軸)',
+    shortName: '新莊中正路',
+    color: '#a3e635',
+    coreColor: '#bef264',
+    width: 8,
+    center: [25.0345, 121.4420],
+    coords: [
+      [25.0380, 121.4600],
+      [25.0360, 121.4530],
+      [25.0345, 121.4420],
+      [25.0320, 121.4350],
+      [25.0250, 121.4200]
+    ]
+  },
+  {
+    name: '中和景平路 ✕ 中山路二段 (中和科技園 ✕ 環狀線走廊)',
+    shortName: '中和景平路',
+    color: '#c084fc',
+    coreColor: '#d8b4fe',
+    width: 8,
+    center: [24.9950, 121.5020],
+    coords: [
+      [24.9880, 121.5300],
+      [24.9930, 121.5150],
+      [24.9950, 121.5020],
+      [24.9990, 121.4920],
+      [25.0040, 121.4820]
+    ]
+  },
+  {
+    name: '永和中正路 ✕ 永和路 (頂溪迷宮 ✕ 樂華夜市)',
+    shortName: '永和中正路/永和路',
+    color: '#e879f9',
+    coreColor: '#f0abfc',
+    width: 7,
+    center: [25.0080, 121.5130],
+    coords: [
+      [25.0140, 121.5160],
+      [25.0080, 121.5130],
+      [25.0020, 121.5100],
+      [24.9980, 121.5180]
+    ]
+  },
+  {
+    name: '土城中央路一段~四段 (土城科技 ✕ 頂埔園區)',
+    shortName: '土城中央路',
+    color: '#2dd4bf',
+    coreColor: '#5eead4',
+    width: 7,
+    center: [24.9750, 121.4440],
+    coords: [
+      [24.9980, 121.4530],
+      [24.9850, 121.4490],
+      [24.9750, 121.4440],
+      [24.9650, 121.4350]
+    ]
+  },
+  {
+    name: '新店北新路一段~三段 (捷運綠線 ✕ 碧潭風景區)',
+    shortName: '新店北新路',
+    color: '#06b6d4',
+    coreColor: '#38bdf8',
+    width: 8,
+    center: [24.9680, 121.5410],
+    coords: [
+      [24.9880, 121.5410],
+      [24.9780, 121.5410],
+      [24.9680, 121.5410],
+      [24.9580, 121.5380],
+      [24.9520, 121.5360]
+    ]
+  },
+  {
+    name: '樹林大安路 ✕ 中山路 (樹林車站 ✕ 調車場廊帶)',
+    shortName: '樹林大安路',
+    color: '#4ade80',
+    coreColor: '#86efac',
+    width: 7,
+    center: [24.9920, 121.4240],
+    coords: [
+      [25.0020, 121.4350],
+      [24.9920, 121.4240],
+      [24.9800, 121.4100],
+      [24.9720, 121.3850]
+    ]
+  },
+  {
+    name: '鶯歌文化路 ✕ 國慶街 (鶯歌陶瓷 ✕ 三鶯水岸)',
+    shortName: '鶯歌文化路',
+    color: '#f472b6',
+    coreColor: '#f9a8d4',
+    width: 6,
+    center: [24.9540, 121.3540],
+    coords: [
+      [24.9600, 121.3650],
+      [24.9540, 121.3540],
+      [24.9500, 121.3450]
+    ]
+  },
+  {
+    name: '三峽介壽路 ✕ 復興路 (三峽老街 ✕ 台北大學)',
+    shortName: '三峽介壽路',
+    color: '#fb923c',
+    coreColor: '#fdba74',
+    width: 7,
+    center: [24.9380, 121.3720],
+    coords: [
+      [24.9500, 121.3850],
+      [24.9380, 121.3720],
+      [24.9320, 121.3650]
+    ]
+  },
+  {
+    name: '淡水中正路 ✕ 淡金路 (金色水岸 ✕ 淡海輕軌軸線)',
+    shortName: '淡水中正路/淡金路',
+    color: '#00f0ff',
+    coreColor: '#67e8f9',
+    width: 8,
+    center: [25.1720, 121.4420],
+    coords: [
+      [25.1350, 121.4650],
+      [25.1550, 121.4580],
+      [25.1720, 121.4420],
+      [25.1880, 121.4350],
+      [25.2000, 121.4300]
+    ]
+  },
+  {
+    name: '汐止大同路一段~三段 ✕ 新台五路 (汐科 ✕ 雲端科技園)',
+    shortName: '汐止大同路/新台五路',
+    color: '#818cf8',
+    coreColor: '#a5b4fc',
+    width: 8,
+    center: [25.0640, 121.6550],
+    coords: [
+      [25.0550, 121.6200],
+      [25.0600, 121.6450],
+      [25.0640, 121.6550],
+      [25.0720, 121.6700],
+      [25.0800, 121.6850]
+    ]
+  },
+  {
+    name: '林口文化一路~三段 (林口長庚 ✕ 影視星雲台地)',
+    shortName: '林口文化路',
+    color: '#facc15',
+    coreColor: '#fde047',
+    width: 8,
+    center: [25.0750, 121.3750],
+    coords: [
+      [25.0580, 121.3650],
+      [25.0700, 121.3700],
+      [25.0750, 121.3750],
+      [25.0850, 121.3850]
+    ]
+  },
+  {
+    name: '八里龍米路 ✕ 五股成泰路 ✕ 泰山明志路',
+    shortName: '八里/五股/泰山主幹道',
+    color: '#10b981',
+    coreColor: '#6ee7b7',
+    width: 7,
+    center: [25.1050, 121.4350],
+    coords: [
+      [25.1550, 121.4250],
+      [25.1200, 121.4350],
+      [25.0830, 121.4380],
+      [25.0500, 121.4280]
+    ]
+  },
+  {
+    name: '瑞芳明燈路 ✕ 金瓜石金光路 (黃金山城 ✕ 九份老街)',
+    shortName: '瑞芳/九份/金瓜石公路',
+    color: '#fbbf24',
+    coreColor: '#fde68a',
+    width: 7,
+    center: [25.1080, 121.8250],
+    coords: [
+      [25.1050, 121.7850],
+      [25.1080, 121.8060],
+      [25.1090, 121.8440],
+      [25.1060, 121.8590]
+    ]
+  },
+  {
+    name: '萬里瑪鋉路 ✕ 金山中山路 ✕ 石門中央路 (北海岸風景線)',
+    shortName: '北海岸風景線 (萬里/金山/石門)',
+    color: '#0284c7',
+    coreColor: '#38bdf8',
+    width: 7,
+    center: [25.2300, 121.6100],
+    coords: [
+      [25.1850, 121.6900],
+      [25.2050, 121.6850],
+      [25.2220, 121.6420],
+      [25.2600, 121.5950],
+      [25.2900, 121.5680]
+    ]
   }
 ];
 
@@ -341,6 +695,74 @@ function toggleStreetsLayer() {
     if (btn) {
       btn.classList.remove('active');
       btn.innerHTML = '<span>🛣️ 雙北真實街道高光</span><span style="color:#94a3b8;">OFF</span>';
+    }
+  }
+}
+
+// ──────────────────────────────────────────
+// 4.6 雙北全境 41 行政特區 1:1 真實公園綠地圖層 (SHUANGBEI_REAL_PARKS)
+// 【落實委託人指示：如果這地方有公園也要有公園，整個雙北全部 1:1 實裝】
+// ──────────────────────────────────────────
+function addParksLayer() {
+  parksLayerGroup.clearLayers();
+  if (!PARKS_DATA || PARKS_DATA.length === 0) return;
+
+  PARKS_DATA.forEach(pk => {
+    // 綠意生態圓形範圍 (半透明翡翠綠底 + 翠綠外光暈)
+    const radius = Math.max(120, (pk.w || 35) * 6);
+    const circle = L.circle([pk.lat, pk.lon], {
+      color: '#10b981',
+      fillColor: '#059669',
+      fillOpacity: 0.28,
+      weight: 2,
+      radius: radius
+    }).addTo(parksLayerGroup);
+
+    // 公園圖示標籤 (自然綠底 Badge Marker)
+    const parkBadge = L.divIcon({
+      html: `<div class="park-badge-marker">🌲 ${pk.name}</div>`,
+      className: 'park-badge-wrap',
+      iconAnchor: [45, 12]
+    });
+
+    const marker = L.marker([pk.lat, pk.lon], { icon: parkBadge }).addTo(parksLayerGroup);
+
+    const popupHtml = `
+      <div style="font-family:sans-serif; min-width:250px; color:#f8fafc; padding:2px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <div style="font-size:13px; font-weight:900; color:#34d399;">🌲 ${pk.name}</div>
+          <span style="font-size:10px; background:#065f46; color:#a7f3d0; padding:1px 5px; border-radius:3px;">${pk.category}</span>
+        </div>
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">
+          📍 行政特區：<b>${pk.sectorId}</b> ｜ 座標：${pk.lat.toFixed(4)}°N, ${pk.lon.toFixed(4)}°E
+        </div>
+        <div style="font-size:11px; background:rgba(16,185,129,0.15); border:1px solid #10b981; border-radius:4px; padding:6px; margin-bottom:6px; line-height:1.45;">
+          🌿 <b>核心生態與景觀特色：</b><br>${pk.features}
+        </div>
+        <div style="font-size:10px; color:#6ee7b7; display:flex; align-items:center; gap:4px;">
+          <span>🌐</span> 雙北 1:1 真實地理生態系 ✕ 純自然芬多精場域
+        </div>
+      </div>
+    `;
+    circle.bindPopup(popupHtml);
+    marker.bindPopup(popupHtml);
+  });
+}
+
+function toggleParksLayer() {
+  isParksVisible = !isParksVisible;
+  const btn = document.getElementById('btnToggleParks');
+  if (isParksVisible) {
+    map.addLayer(parksLayerGroup);
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🌲 雙北真實公園綠地</span><span style="color:#10b981;">ON</span>';
+    }
+  } else {
+    map.removeLayer(parksLayerGroup);
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>🌲 雙北真實公園綠地</span><span style="color:#94a3b8;">OFF</span>';
     }
   }
 }
@@ -1247,6 +1669,11 @@ function filterStoreMarkers(brandKey, btnElement) {
     } else {
       visibleCount = STORES_DATA.filter(s => s.brand === 'transport').length;
     }
+  } else if (brandKey === 'parks') {
+    // 雙北 41 行政特區 1:1 真實公園綠地過濾
+    if (!isParksVisible) toggleParksLayer();
+    map.flyTo([25.035, 121.530], 13, { duration: 1.2 });
+    visibleCount = PARKS_DATA.length;
   } else {
     // 顯示指定品牌
     Object.keys(storeMarkerGroups).forEach(k => {

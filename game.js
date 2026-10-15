@@ -296,6 +296,55 @@ const interactables = [
   {"id": "landmark_lin_garden", "x": -195, "z": 210, "w": 24, "d": 20, "r": 9.0, "type": "landmark", "name": "國定古蹟 林本源園邸 (林家花園)", "address": "板橋區西門街 9 號 (府中生活圈)", "label": "漫遊 林家花園 (百年江南庭園與來青閣)"}
 ];
 
+// ──────────────────────────────────────────
+// 4.1 全雙北 41 行政特區 1:1 真實門市與公園綠地同步注入 (SSOT Integration)
+// 【落實委託人指示：整個雙北都要一樣，這個地方有什麼就要有什麼，有公園也要有公園】
+// ──────────────────────────────────────────
+if (typeof REAL_WORLD_STORES !== 'undefined') {
+  REAL_WORLD_STORES.forEach(s => {
+    // 檢查是否已存在，並嚴守間距避免重疊
+    const exists = interactables.some(it => it.id === s.id || (Math.hypot(it.x - s.x, it.z - s.z) < 8));
+    if (!exists && s.x !== undefined && s.z !== undefined) {
+      const isFlagship = s.brand === 'wanjiafu' && (s.name.includes('旗艦') || s.name.includes('量販'));
+      interactables.push({
+        id: s.id,
+        x: s.x,
+        z: s.z,
+        w: isFlagship ? 34 : 24,
+        d: isFlagship ? 24 : 20,
+        r: isFlagship ? 11.0 : 8.5,
+        type: s.brand,
+        name: s.name,
+        address: s.addr || '',
+        isFlagship: isFlagship,
+        label: `進入 ${s.name} (${s.category || '補給站'})`
+      });
+    }
+  });
+}
+
+if (typeof SHUANGBEI_REAL_PARKS !== 'undefined') {
+  SHUANGBEI_REAL_PARKS.forEach(pk => {
+    const exists = interactables.some(it => it.id === pk.id || (Math.hypot(it.x - pk.x, it.z - pk.z) < 12));
+    if (!exists && pk.x !== undefined && pk.z !== undefined) {
+      interactables.push({
+        id: pk.id,
+        x: pk.x,
+        z: pk.z,
+        w: pk.w || 35,
+        d: pk.d || 35,
+        r: 10.0,
+        type: 'park',
+        name: pk.name,
+        category: pk.category,
+        features: pk.features,
+        sectorId: pk.sectorId,
+        label: `漫步 ${pk.name} (${pk.category})`
+      });
+    }
+  });
+}
+
 // ─── 雙北真實路網幹線公車系統 (Real Route Bus Waypoint Network) ───
 // 307 幹線公車真實路線 (板橋府中 ✕ 學府生活圈 ✕ 萬華西門町 ✕ 台北車站專用道 ✕ 中山市場 ✕ 松江南京 ✕ 南京復興)
 const bus307Route = [
@@ -993,6 +1042,173 @@ function drawRotatedMrtTrain(train) {
   ctx.restore();
 }
 
+// ──────────────────────────────────────────
+// 4.7 🚆 臺灣鐵路縱貫線動態列車系統 (TRA Main Line Dynamic Express Trains)
+// 包含 EMU900 區間快車與新自強號 EMU3000，穿梭雙北 8 大樞紐車站
+// ──────────────────────────────────────────
+const traTrack = [
+  // 縱貫線西向 (汐止 ➔ 南港 ➔ 松山 ➔ 臺北車站 ➔ 萬華 ➔ 板橋 ➔ 樹林 ➔ 鶯歌)
+  { x: 380,  z: -40, stopName: '汐止車站 (TRA)', line: '台鐵縱貫線' },
+  { x: 360,  z: -20, stopName: '南港車站 (TRA)', line: '台鐵縱貫線' },
+  { x: 290,  z: -95, stopName: '松山車站 (TRA)', line: '台鐵縱貫線' },
+  { x: 0,    z: 0,   stopName: '臺北車站 (TRA特等站)', line: '台鐵縱貫線' },
+  { x: -160, z: 80,  stopName: '萬華車站 (TRA)', line: '台鐵縱貫線' },
+  { x: -130, z: 130, stopName: '板橋車站 (TRA特等站)', line: '台鐵縱貫線' },
+  { x: -200, z: 210, stopName: '樹林車站 (TRA)', line: '台鐵縱貫線' },
+  { x: -310, z: 290, stopName: '鶯歌車站 (TRA)', line: '台鐵縱貫線' },
+
+  // 縱貫線東向返程 (鶯歌 ➔ 樹林 ➔ 板橋 ➔ 萬華 ➔ 臺北車站 ➔ 松山 ➔ 南港 ➔ 汐止)
+  { x: -310, z: 295, stopName: '鶯歌車站 (返程發車)', line: '台鐵縱貫線' },
+  { x: -200, z: 215, stopName: '樹林車站 (東行)', line: '台鐵縱貫線' },
+  { x: -130, z: 135, stopName: '板橋車站 (東行特等月台)', line: '台鐵縱貫線' },
+  { x: -160, z: 85,  stopName: '萬華車站 (東行)', line: '台鐵縱貫線' },
+  { x: 0,    z: 5,   stopName: '臺北車站 (東行特等月台)', line: '台鐵縱貫線' },
+  { x: 290,  z: -90, stopName: '松山車站 (東行)', line: '台鐵縱貫線' },
+  { x: 360,  z: -15, stopName: '南港車站 (東行)', line: '台鐵縱貫線' },
+  { x: 380,  z: -35, stopName: '汐止車站 (終點調度)', line: '台鐵縱貫線' }
+];
+
+const traTrains = [
+  {
+    id: 'tra_emu900_01',
+    lineCode: 'TRA',
+    lineName: '臺鐵 EMU900 區間快車',
+    ledText: '🚆 臺鐵 ➔ 台北特等站 ➔ 板橋 ➔ 樹林 ➔ 鶯歌',
+    themeColor: '#0284c7', // 台鐵深邃湛藍
+    accentColor: '#38bdf8',
+    track: traTrack,
+    currentWaypointIndex: 0,
+    x: traTrack[0].x,
+    z: traTrack[0].z,
+    angle: 0,
+    speed: 0.65,
+    isStopped: false,
+    stopTimer: 0,
+    w: 42,
+    d: 6.8,
+    currentStation: traTrack[0].stopName
+  },
+  {
+    id: 'tra_emu3000_02',
+    lineCode: 'TRA',
+    lineName: '臺鐵 新自強號 EMU3000',
+    ledText: '🚆 新自強號 ➔ 台北特等站 ➔ 松山 ➔ 南港 ➔ 汐止',
+    themeColor: '#1e293b', // 黑白極簡沉穩
+    accentColor: '#fbbf24',
+    track: traTrack,
+    currentWaypointIndex: 8, // 返程段
+    x: traTrack[8].x,
+    z: traTrack[8].z,
+    angle: Math.PI,
+    speed: 0.72,
+    isStopped: false,
+    stopTimer: 0,
+    w: 44,
+    d: 7.0,
+    currentStation: traTrack[8].stopName
+  }
+];
+
+function updateTraPhysics(train) {
+  if (train.isStopped) {
+    train.stopTimer--;
+    if (train.stopTimer <= 0) train.isStopped = false;
+    return;
+  }
+
+  const target = train.track[train.currentWaypointIndex];
+  const dx = target.x - train.x;
+  const dz = target.z - train.z;
+  const dist = Math.hypot(dx, dz);
+
+  const targetAngle = Math.atan2(dz, dx);
+  let diff = targetAngle - train.angle;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  train.angle += diff * 0.20;
+
+  if (dist <= train.speed * 1.5) {
+    train.x = target.x;
+    train.z = target.z;
+    if (target.stopName && !target.justStopped) {
+      train.isStopped = true;
+      train.stopTimer = 90; // 停站 1.5 秒上下客
+      train.currentStation = target.stopName;
+      target.justStopped = true;
+      setTimeout(() => { target.justStopped = false; }, 9000);
+    }
+    train.currentWaypointIndex = (train.currentWaypointIndex + 1) % train.track.length;
+    const nextPt = train.track[train.currentWaypointIndex];
+    if (nextPt.stopName) {
+      train.ledText = train.currentWaypointIndex < 8
+        ? '🚆 臺鐵 ➔ 台北特等站 ➔ 板橋 ➔ 樹林 ➔ 鶯歌'
+        : '🚆 臺鐵 ➔ 台北特等站 ➔ 松山 ➔ 南港 ➔ 汐止';
+    }
+  } else {
+    train.x += Math.cos(train.angle) * train.speed;
+    train.z += Math.sin(train.angle) * train.speed;
+  }
+}
+
+function drawRotatedTraTrain(train) {
+  const cx = screenX(train.x);
+  const cz = screenZ(train.z);
+  const trainW = train.w * scale;
+  const trainD = train.d * scale;
+
+  ctx.save();
+  ctx.translate(cx, cz);
+  ctx.rotate(train.angle);
+
+  // 1. 地面陰影與鐵道反光
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  drawSafeRoundRect(ctx, -trainW / 2 + 1.5 * scale, -trainD / 2 + 2.0 * scale, trainW, trainD, 2.5 * scale);
+  ctx.fill();
+
+  // 鐵道發光
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+  ctx.fillRect(-trainW / 2 - 2 * scale, -trainD / 2 - 1 * scale, trainW + 4 * scale, trainD + 2 * scale);
+
+  // 2. 流線型台鐵車身 (EMU900 或 EMU3000)
+  ctx.fillStyle = '#e2e8f0';
+  drawSafeRoundRect(ctx, -trainW / 2, -trainD / 2, trainW, trainD, 3.2 * scale);
+  ctx.fill();
+
+  // 3. 台鐵經典塗裝色帶
+  ctx.fillStyle = train.themeColor || '#0284c7';
+  ctx.fillRect(-trainW / 2 + 3 * scale, -trainD / 2 + 1.0 * scale, trainW - 6 * scale, 1.8 * scale);
+  ctx.fillRect(-trainW / 2 + 3 * scale, trainD / 2 - 2.8 * scale, trainW - 6 * scale, 1.8 * scale);
+
+  // 4. 車窗排列 (模擬 8 節編組台鐵列車)
+  ctx.fillStyle = '#0f172a';
+  for (let i = -trainW / 2 + 7 * scale; i < trainW / 2 - 7 * scale; i += 7.5 * scale) {
+    ctx.fillRect(i, -trainD / 2 + 0.6 * scale, 5 * scale, 1.2 * scale);
+    ctx.fillRect(i, trainD / 2 - 1.8 * scale, 5 * scale, 1.2 * scale);
+  }
+
+  // 5. 車頭擋風玻璃與前大燈
+  ctx.fillStyle = '#0284c7';
+  drawSafeRoundRect(ctx, trainW / 2 - 4.5 * scale, -trainD / 2 + 1.0 * scale, 4.0 * scale, trainD - 2.0 * scale, 1.5 * scale);
+  ctx.fill();
+
+  // 6. 頂部 LED 標牌
+  ctx.fillStyle = '#0f172a';
+  drawSafeRoundRect(ctx, -trainW / 3, -trainD / 2 - 6 * scale, trainW * 0.66, 5 * scale, 2 * scale);
+  ctx.fill();
+  ctx.strokeStyle = train.accentColor || '#38bdf8';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = train.isStopped ? '#fbbf24' : '#38bdf8';
+  ctx.font = `bold ${Math.max(8, Math.round(7.5 * scale))}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const displayLabel = train.isStopped ? `🚆 停靠[${train.currentStation}]` : train.ledText;
+  ctx.fillText(displayLabel, 0, -trainD / 2 - 3.5 * scale);
+
+  ctx.restore();
+}
+
 // 雙北街頭行人 NPC (Pedestrians)
 const pedestrians = [
   { x: 15, z: 28, minX: -60, maxX: 70, dir: 1, speed: 0.08, walkCycle: 0, shirt: '#d97706', pants: '#1e293b', name: '通勤上班族' },
@@ -1310,10 +1526,11 @@ function updateMinimapRadar() {
   dot.style.top = `${normZ}px`;
 }
 
-/* ─── 7. 公車與捷運動態路網連續運行系統 ─── */
+/* ─── 7. 公車、捷運與臺鐵動態路網連續運行系統 ─── */
 function updateBusWorld() {
   cityBuses.forEach(b => updateBusPhysics(b));
   mrtTrains.forEach(t => updateMrtPhysics(t));
+  traTrains.forEach(t => updateTraPhysics(t));
 }
 
 const transitHud = document.getElementById("transitHud");
@@ -2342,25 +2559,55 @@ function renderScene() {
     ctx.restore();
   }
 
+  // 台北核心幹道路標
   drawTaiwanRoadSign('🛣️ 忠孝西路一段 ✕ 公車專用道', 0, -1);
+  drawTaiwanRoadSign('🛣️ 忠孝東路 (東區商圈 ✕ 市府)', 180, 0);
+  drawTaiwanRoadSign('🛣️ 中山北路一段・樟樹林蔭大道', 78, -30);
+  drawTaiwanRoadSign('🛣️ 重慶南路一段・書店街', -92, 50);
+  drawTaiwanRoadSign('🛣️ 中華路一段・西門町徒步區', -145, 40);
+  drawTaiwanRoadSign('🛣️ 南京西路 / 南京東路金融走廊', 120, -93);
+  drawTaiwanRoadSign('🛣️ 信義路・世貿 101 大道', 180, 50);
+  drawTaiwanRoadSign('🛣️ 仁愛路・林蔭大道', 150, 25);
+  drawTaiwanRoadSign('🛣️ 羅斯福路・公館師大文教', 80, 160);
+  drawTaiwanRoadSign('🛣️ 民權西路 / 民權東路', 10, -193);
+  drawTaiwanRoadSign('🛣️ 承德路 / 大業路・北投溫泉線', 0, -220);
+  drawTaiwanRoadSign('🛣️ 木柵路・文山生態走廊', 160, 220);
+  drawTaiwanRoadSign('🛣️ 內湖港墘路・科技心臟', 270, -160);
+  drawTaiwanRoadSign('🛣️ 南港三重路・南軟經貿', 370, -60);
+
+  // 新北 29 行政特區 1:1 核心幹道路標
   drawTaiwanRoadSign('🛣️ 板橋學府路一段 (1:1 真實商圈)', -110, 169);
   drawTaiwanRoadSign('🛣️ 縣民大道・新板特區', -110, 131);
   drawTaiwanRoadSign('🛣️ 文化路一段・府中商圈', -110, 196);
-  drawTaiwanRoadSign('🛣️ 中山北路一段・樟樹林蔭大道', 78, -30);
-  drawTaiwanRoadSign('🛣️ 重慶南路一段・書店街', -92, 50);
-  drawTaiwanRoadSign('🛣️ 南京西路商圈', 10, -93);
-  drawTaiwanRoadSign('🛣️ 中華路一段・西門町徒步區', -145, 40);
-  drawTaiwanRoadSign('🛣️ 民生西路・大稻埕與雙連', 10, -138);
-  drawTaiwanRoadSign('🛣️ 民權西路・晴光商圈', 10, -193);
-  drawTaiwanRoadSign('🛣️ 松江路・金融特區', 155, -40);
+  drawTaiwanRoadSign('🛣️ 三重重新路・天台商圈', -260, -30);
+  drawTaiwanRoadSign('🛣️ 蘆洲三民路・微風水岸', -250, -150);
+  drawTaiwanRoadSign('🛣️ 新莊中正路・輔大副都心', -310, 80);
+  drawTaiwanRoadSign('🛣️ 中和景平路・科技聚落', -35, 175);
+  drawTaiwanRoadSign('🛣️ 永和中正路・樂華生活圈', -65, 135);
+  drawTaiwanRoadSign('🛣️ 新店北新路・碧潭水岸', 80, 275);
+  drawTaiwanRoadSign('🛣️ 土城中央路・頂埔科技廊道', -120, 250);
+  drawTaiwanRoadSign('🛣️ 樹林大安路・調車機廠線', -220, 240);
+  drawTaiwanRoadSign('🛣️ 鶯歌文化路・陶瓷水岸', -330, 310);
+  drawTaiwanRoadSign('🛣️ 三峽介壽路・藍染老街', -260, 320);
+  drawTaiwanRoadSign('🛣️ 淡水淡金路・金色水岸', -230, -320);
+  drawTaiwanRoadSign('🛣️ 汐止大同路・新台五路雲端', 390, -30);
+  drawTaiwanRoadSign('🛣️ 林口文化一路・影視星雲台地', -380, -180);
+  drawTaiwanRoadSign('🛣️ 八里龍米路・左岸水岸線', -310, -300);
+  drawTaiwanRoadSign('🛣️ 五股成泰路・水碓觀景', -310, -80);
+  drawTaiwanRoadSign('🛣️ 泰山明志路・貴子走廊', -340, 0);
+  drawTaiwanRoadSign('🛣️ 瑞芳明燈路・黃金礦嶺九份老街', 480, -60);
+  drawTaiwanRoadSign('🛣️ 北海岸淡金公路 (萬里/金山/石門)', -150, -420);
+  drawTaiwanRoadSign('🛣️ 平溪十分街・天燈光子水瀑', 430, 160);
+  drawTaiwanRoadSign('🛣️ 貢寮福隆街・極東海洋風景線', 560, 210);
+  drawTaiwanRoadSign('🛣️ 烏來溫泉街・地熱生態綠廊', 110, 380);
 
-  // 6. 雙北行政區微縮銘板 (District HUD Badges - 視錐剔除)
+  // 6. 雙北全境 41 行政特區 1:1 微縮銘板 (District HUD Badges - 視錐剔除)
   function drawDistrictBadge(text, x, z, col) {
     if (!isInViewport(x, z, 35)) return;
     const bx = screenX(x);
     const bz = screenZ(z);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    drawSafeRoundRect(ctx, bx - 42 * scale * 0.35, bz - 8 * scale * 0.35, 84 * scale * 0.35, 16 * scale * 0.35, 3);
+    drawSafeRoundRect(ctx, bx - 45 * scale * 0.35, bz - 8 * scale * 0.35, 90 * scale * 0.35, 16 * scale * 0.35, 3);
     ctx.fill();
     ctx.strokeStyle = col;
     ctx.lineWidth = 1;
@@ -2370,24 +2617,52 @@ function renderScene() {
     ctx.textAlign = 'center';
     ctx.fillText(text, bx, bz + 4 * scale * 0.35);
   }
-  drawDistrictBadge('🏛️ 中正區・站前核心', 0, -28, '#38bdf8');
-  drawDistrictBadge('📚 中正區・重慶南路書街', -92, 25, '#60a5fa');
-  drawDistrictBadge('🎮 萬華區・西門商圈', -178, 25, '#f472b6');
+
+  // 臺北市 12 核心行政特區
+  drawDistrictBadge('🏛️ 中正區・站前政經', 0, -28, '#38bdf8');
+  drawDistrictBadge('🎮 萬華區・西門艋舺', -178, 25, '#f472b6');
   drawDistrictBadge('🏮 大同區・大稻埕寧夏', -115, -120, '#fbbf24');
-  drawDistrictBadge('🌳 中山區・林蔭商圈', 78, -115, '#a78bfa');
-  drawDistrictBadge('💼 中山區・松江南京', 170, -60, '#38bdf8');
-  drawDistrictBadge('🌲 大安區・森林公園', 120, 80, '#34d399');
+  drawDistrictBadge('🌳 中山區・林蔭金融', 78, -115, '#a78bfa');
+  drawDistrictBadge('🌲 大安區・森林學府', 120, 80, '#34d399');
   drawDistrictBadge('🏙️ 信義區・台北101', 230, 50, '#f59e0b');
-  drawDistrictBadge('🎤 松山區・小巨蛋饒河', 230, -95, '#fb7185');
-  drawDistrictBadge('⛩️ 士林區・士林夜市', -60, -210, '#f43f5e');
-  drawDistrictBadge('♨️ 北投區・溫泉關渡', -160, -260, '#a855f7');
-  drawDistrictBadge('🌊 淡水區・老街出海口', -230, -320, '#38bdf8');
+  drawDistrictBadge('🎤 松山區・巨蛋饒河', 230, -95, '#fb7185');
+  drawDistrictBadge('🔬 南港區・軟體生技', 370, -60, '#38bdf8');
+  drawDistrictBadge('⚡ 內湖區・內科科技園', 270, -160, '#00f0ff');
+  drawDistrictBadge('⛩️ 士林區・官邸夜市', -60, -210, '#f43f5e');
+  drawDistrictBadge('♨️ 北投區・溫泉地熱', -160, -260, '#a855f7');
+  drawDistrictBadge('🍵 文山區・貓空政大', 160, 220, '#10b981');
+
+  // 新北市 29 全境行政特區 (1:1 實裝)
   drawDistrictBadge('🏫 板橋區・學府商圈 (1:1)', -120, 156, '#34d399');
-  drawDistrictBadge('🏙️ 板橋區・新板特區', -145, 215, '#10b981');
-  drawDistrictBadge('🏭 三重區・重新商圈', -270, -30, '#94a3b8');
-  drawDistrictBadge('🛍️ 新莊區・輔大廟街', -300, 100, '#e2e8f0');
-  drawDistrictBadge('🏘️ 中和／永和區', -40, 175, '#c084fc');
-  drawDistrictBadge('🚣 新店區・碧潭水岸', 80, 280, '#22d3ee');
+  drawDistrictBadge('🏙️ 板橋區・新板特等門戶', -145, 215, '#10b981');
+  drawDistrictBadge('🏭 三重區・重新大都會', -260, -30, '#94a3b8');
+  drawDistrictBadge('🌾 蘆洲區・湧蓮微風水岸', -250, -150, '#22d3ee');
+  drawDistrictBadge('🛍️ 新莊區・輔大副都心', -310, 80, '#a3e635');
+  drawDistrictBadge('🏢 中和區・遠東科技城', -35, 175, '#c084fc');
+  drawDistrictBadge('🏮 永和區・頂溪樂華商圈', -65, 135, '#e879f9');
+  drawDistrictBadge('🚣 新店區・碧潭水電樞紐', 80, 275, '#22d3ee');
+  drawDistrictBadge('🌲 土城區・頂埔科技承天', -120, 250, '#059669');
+  drawDistrictBadge('🚆 樹林區・調車場大安紅樹', -220, 240, '#f97316');
+  drawDistrictBadge('🏺 鶯歌區・陶瓷古都水岸', -330, 310, '#f472b6');
+  drawDistrictBadge('📜 三峽區・祖師廟藍染客家', -260, 320, '#fb923c');
+  drawDistrictBadge('🌊 淡水區・老街出海口金色水岸', -230, -320, '#38bdf8');
+  drawDistrictBadge('☁️ 汐止區・雲端園區科技廊道', 390, -30, '#818cf8');
+  drawDistrictBadge('🌫️ 林口區・台地星雲影視城', -380, -180, '#facc15');
+  drawDistrictBadge('🚢 八里區・左岸風帆十三行', -310, -300, '#06b6d4');
+  drawDistrictBadge('⛰️ 五股區・水碓景觀高新谷', -310, -80, '#6ee7b7');
+  drawDistrictBadge('⛩️ 泰山區・明志書院科技聚落', -340, 0, '#bef264');
+  drawDistrictBadge('🍲 深坑區・老街豆腐簪花香', 250, 210, '#fbbf24');
+  drawDistrictBadge('🍵 石碇區・千島茶鄉翡翠水庫', 330, 260, '#34d399');
+  drawDistrictBadge('🍃 坪林區・包種茶金水岸古道', 370, 330, '#10b981');
+  drawDistrictBadge('♨️ 烏來區・地熱瀑布泰雅生態', 110, 380, '#2dd4bf');
+  drawDistrictBadge('⛏️ 瑞芳區・黃金山城九份貓村', 480, -60, '#fbbf24');
+  drawDistrictBadge('🏮 平溪區・天燈光子十分瀑布', 430, 160, '#f472b6');
+  drawDistrictBadge('🌿 雙溪區・低碳清流虎豹潭', 490, 220, '#22c55e');
+  drawDistrictBadge('🏖️ 貢寮區・極東福隆三貂角', 560, 210, '#38bdf8');
+  drawDistrictBadge('🌊 金山區・金包里溫泉雙嶼', -150, -420, '#0284c7');
+  drawDistrictBadge('👑 萬里區・野柳女王頭翡翠灣', 70, -420, '#00f0ff');
+  drawDistrictBadge('🧭 石門區・極北富貴角風能老梅', -220, -450, '#38bdf8');
+  drawDistrictBadge('🌸 三芝區・淺水灣櫻花水岸', -290, -410, '#06b6d4');
 
   // ──────────────────────────────────────────
   // 1.5 雙北街廓真實都會建築群、綠帶公園與林蔭行道樹 (Urban Fabric & Architecture - 視錐剔除)
@@ -3108,6 +3383,43 @@ function renderScene() {
           ctx.fillText('🌸 紙條', bx, bz);
         }
       });
+    } else if (it.type === 'park') {
+      renderList.push({
+        z: it.z,
+        draw: () => {
+          const bx = screenX(it.x - it.w / 2);
+          const bz = screenZ(it.z - it.d / 2);
+          // 雙北真實公園綠地 (半透明翠綠底 + 翡翠綠邊框)
+          ctx.fillStyle = '#14532d';
+          drawSafeRoundRect(ctx, bx, bz, it.w * scale, it.d * scale, 8);
+          ctx.fill();
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+
+          // 公園內部樹木與步道景觀
+          const numTrees = Math.min(5, Math.max(2, Math.floor(it.w / 8)));
+          for (let ti = 0; ti < numTrees; ti++) {
+            const tx = bx + (ti * 7 + 4) * scale;
+            const tz = bz + (it.d * 0.45) * scale;
+            ctx.beginPath();
+            ctx.arc(tx, tz, 2.8 * scale, 0, Math.PI * 2);
+            ctx.fillStyle = '#15803d';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tx - 0.6 * scale, tz - 0.6 * scale, 1.8 * scale, 0, Math.PI * 2);
+            ctx.fillStyle = '#34d399';
+            ctx.fill();
+          }
+
+          if (scale >= 1.5) {
+            ctx.fillStyle = '#86efac';
+            ctx.font = `bold ${Math.max(8.5, scale * 0.52)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`🌲 ${it.name}`, bx + (it.w / 2) * scale, bz + (it.d / 2) * scale + 3);
+          }
+        }
+      });
     }
   });
 
@@ -3126,6 +3438,15 @@ function renderScene() {
     renderList.push({
       z: train.z,
       draw: () => drawRotatedMrtTrain(train)
+    });
+  });
+
+  // 臺灣鐵路縱貫線動態列車渲染 (Rotated 2.5D TRA Trains - 視錐剔除)
+  traTrains.forEach(train => {
+    if (!isInViewport(train.x, train.z, 50)) return;
+    renderList.push({
+      z: train.z,
+      draw: () => drawRotatedTraTrain(train)
     });
   });
 
@@ -3473,6 +3794,9 @@ function updateActionPills(item) {
     addActionPill("📜 調查花圃暗號紙條", "E", () => guideToClue());
   } else if (item.type === "rest") {
     addActionPill("🛏️ 長椅休息", "E", () => openRestModal());
+  } else if (item.type === "park") {
+    addActionPill(`🌲 漫步 ${item.name}`, "E", () => openParkModal(item));
+    addActionPill("🌿 進行生態深呼吸 (體力+35)", "🌿", () => restInPark(item));
   }
 }
 
@@ -3508,7 +3832,25 @@ function triggerDirectInteraction(it) {
   else if (it.type === "nightmarket") openNightMarketModal();
   else if (it.type === "ferry") openFerryModal();
   else if (it.type === "rest") openRestModal();
+  else if (it.type === "park") openParkModal(it);
   else if (it.type === "clue_ground") guideToClue();
+}
+
+function openParkModal(park) {
+  if (!park) return;
+  showNavToast(`🌲 漫步抵達【${park.name}】！沉浸於真實自然生態中！`);
+  showDetectiveDialogue(`「抵達【${park.name}】(${park.category || '公園綠地'})！特色：${park.features || '綠意盎然、芬多精環繞、都會中的大自然庇護所'}。」`, "雙北生態");
+  playTone(523, 'sine', 0.2);
+}
+
+function restInPark(park) {
+  if (!park) return;
+  gameState.stamina = Math.min(100, gameState.stamina + 35);
+  gameState.mood = Math.min(100, gameState.mood + 30);
+  updateBars();
+  playTone(659, 'triangle', 0.25);
+  showNavToast(`🌿 在【${park.name}】深呼吸芬多精！體力 +35、心情 +30！`);
+  showDetectiveDialogue(`「在【${park.name}】林蔭草坪深呼吸，充分吸收負離子與芬多精，體能與精神狀態大幅回升！」`, "體能維護");
 }
 
 function guideToClue() {
@@ -4070,6 +4412,19 @@ function jumpToDistrict(distId) {
     const btn = document.getElementById("btnJumpSanchong");
     if (btn) btn.classList.add("highlight");
     showNavToast("🏭 已鎖定定位【三重新莊創新工坊 ✕ 重新路 ✕ 副都心】！");
+  } else {
+    // 支援任意 41 行政特區代碼 (如 TPE-01~12, NTP-01~29) 或 45+ 真實公園名稱
+    const sec = (typeof sectors !== 'undefined') ? sectors.find(s => s.id === distId || s.name.includes(distId)) : null;
+    if (sec) {
+      camera.x = sec.x; camera.z = sec.z; camera.targetScale = 12;
+      showNavToast(`🛰️ 已躍遷至【${sec.name}】！`);
+    } else {
+      const pk = (typeof SHUANGBEI_REAL_PARKS !== 'undefined') ? SHUANGBEI_REAL_PARKS.find(p => p.id === distId || p.name.includes(distId)) : null;
+      if (pk) {
+        camera.x = pk.x; camera.z = pk.z; camera.targetScale = 14;
+        showNavToast(`🌲 已鎖定前往【${pk.name}】！`);
+      }
+    }
   }
   updateMinimapRadar();
   updateGhostDroneHUD();

@@ -65,6 +65,7 @@
     <button class="filter-chip-btn" data-filter="familymart" onclick="filterStoreMarkers('familymart', this)">🔵 全家超商</button>
     <button class="filter-chip-btn" data-filter="coco" onclick="filterStoreMarkers('coco', this)">🧋 CoCo手搖飲</button>
     <button class="filter-chip-btn" data-filter="market" onclick="filterStoreMarkers('market', this)">🏮 傳統市場與夜市</button>
+    <button class="filter-chip-btn" data-filter="parks" onclick="filterStoreMarkers('parks', this)">🌲 41區真實公園 (45+)</button>
     <button class="filter-chip-btn" data-filter="transport" onclick="filterStoreMarkers('transport', this)">🚇 大眾運輸/站點</button>
     <button class="filter-chip-btn" data-filter="cases" onclick="filterStoreMarkers('cases', this)">🚨 10大示範案件</button>
   </div>
@@ -153,6 +154,10 @@
         <span>🛣️ 雙北真實街道高光</span>
         <span style="color:#4ade80;">ON</span>
       </button>
+      <button class="tactical-tool-btn active" id="btnToggleParks" onclick="toggleParksLayer()">
+        <span>🌲 雙北真實公園綠地</span>
+        <span style="color:#10b981;">ON</span>
+      </button>
       <button class="tactical-tool-btn" id="btnRadarScan" onclick="triggerRadarScan()">
         <span>📡 全息雷達掃描</span>
         <span style="color:#94a3b8;">STANDBY</span>
@@ -166,6 +171,10 @@
     <!-- 品牌標記圖例 (Legend) -->
     <div style="margin-top:12px; border-top:1px solid rgba(0,240,255,0.2); padding-top:8px; font-size:10px; color:#94a3b8;">
       <div style="margin-bottom:4px; font-weight:800; color:#38bdf8;">📍 大眾運輸與實體圖例 (100% 真實座標):</div>
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#059669; border:1px solid #6ee7b7;"></span>
+        <span>🌲 雙北 1:1 真實公園綠地 (41 行政特區全覆蓋)</span>
+      </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#ea580c; border:1px solid #fdba74;"></span>
         <span>🚅 台灣高鐵 (南港/台北/板橋 特等站)</span>

@@ -1036,6 +1036,29 @@ html, body {
   gap: 3px;
 }
 
+.park-badge-marker {
+  background: linear-gradient(135deg, #059669, #065f46);
+  border: 1.5px solid #6ee7b7;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 8px rgba(16, 185, 129, 0.5);
+  pointer-events: auto;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: transform 0.2s ease;
+}
+
+.park-badge-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.8);
+}
+
 /* 🚅 高鐵、🚆 臺鐵、🚇 捷運與 🚌 公車 Marker 專屬全息樣式 */
 .transit-badge-pin {
   display: flex;
