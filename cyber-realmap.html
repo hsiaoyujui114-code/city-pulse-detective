@@ -55,16 +55,22 @@
     </div>
   </div>
 
-  <!-- 🏪 門市品牌篩選條 (落實委託人指示：所有標示店面皆在地圖中顯示) -->
+  <!-- 🏪 門市品牌篩選條 (落實委託人指示：全品牌真實官方樣式，放大檢視、縮小隱藏避擠) -->
   <div class="store-filter-strip" id="storeFilterStrip">
     <span class="store-filter-label">🏪 門市篩選:</span>
-    <button class="filter-chip-btn active" data-filter="all" onclick="filterStoreMarkers('all', this)">🌐 全部 (65+)</button>
+    <button class="filter-chip-btn active" data-filter="all" onclick="filterStoreMarkers('all', this)">🌐 全部 (176+)</button>
     <button class="filter-chip-btn" data-filter="wanjiafu" onclick="filterStoreMarkers('wanjiafu', this)">🛒 家樂福 (量販/便利購)</button>
+    <button class="filter-chip-btn" data-filter="pxmart" onclick="filterStoreMarkers('pxmart', this)">🔵 全聯福利中心</button>
     <button class="filter-chip-btn" data-filter="seven" onclick="filterStoreMarkers('seven', this)">🟢 7-Eleven</button>
-    <button class="filter-chip-btn" data-filter="familymart" onclick="filterStoreMarkers('familymart', this)">🔵 全家超商</button>
-    <button class="filter-chip-btn" data-filter="coco" onclick="filterStoreMarkers('coco', this)">🧋 CoCo手搖飲</button>
-    <button class="filter-chip-btn" data-filter="market" onclick="filterStoreMarkers('market', this)">🏮 傳統市場與夜市</button>
-    <button class="filter-chip-btn" data-filter="parks" onclick="filterStoreMarkers('parks', this)">🌲 41區真實公園 (45+)</button>
+    <button class="filter-chip-btn" data-filter="familymart" onclick="filterStoreMarkers('familymart', this)">🔵 全家 FamilyMart</button>
+    <button class="filter-chip-btn" data-filter="mcdonalds" onclick="filterStoreMarkers('mcdonalds', this)">🍟 麥當勞</button>
+    <button class="filter-chip-btn" data-filter="starbucks" onclick="filterStoreMarkers('starbucks', this)">☕ 星巴克</button>
+    <button class="filter-chip-btn" data-filter="mosburger" onclick="filterStoreMarkers('mosburger', this)">🍔 摩斯漢堡</button>
+    <button class="filter-chip-btn" data-filter="watsons" onclick="filterStoreMarkers('watsons', this)">💊 屈臣氏</button>
+    <button class="filter-chip-btn" data-filter="cosmed" onclick="filterStoreMarkers('cosmed', this)">🌸 康是美</button>
+    <button class="filter-chip-btn" data-filter="coco" onclick="filterStoreMarkers('coco', this)">🧋 CoCo 都可</button>
+    <button class="filter-chip-btn" data-filter="market" onclick="filterStoreMarkers('market', this)">🏮 傳統市場/夜市</button>
+    <button class="filter-chip-btn" data-filter="parks" onclick="filterStoreMarkers('parks', this)">🌲 41區真實公園</button>
     <button class="filter-chip-btn" data-filter="transport" onclick="filterStoreMarkers('transport', this)">🚇 大眾運輸/站點</button>
     <button class="filter-chip-btn" data-filter="cases" onclick="filterStoreMarkers('cases', this)">🚨 10大示範案件</button>
   </div>

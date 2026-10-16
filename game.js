@@ -3112,18 +3112,21 @@ function renderScene() {
     });
   } else {
     // 預設全部地標點位發光提示 (視錐剔除：僅繪製可視區內的項目)
-    interactables.forEach(it => {
-      if (!isInViewport(it.x, it.z, 20)) return;
-      const ix = screenX(it.x);
-      const iz = screenZ(it.z);
-      ctx.beginPath();
-      ctx.arc(ix, iz, it.r * scale * 0.75, 0, Math.PI * 2);
-      ctx.strokeStyle = '#00d2ff';
-      ctx.lineWidth = 1.8;
-      ctx.setLineDash([6, 6]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    });
+    // 依據委託人指示：縮小概覽時隱藏發光圈保持畫面清爽整潔，放大特寫 (scale >= 4.8) 時才顯示
+    if (scale >= 4.8) {
+      interactables.forEach(it => {
+        if (!isInViewport(it.x, it.z, 20)) return;
+        const ix = screenX(it.x);
+        const iz = screenZ(it.z);
+        ctx.beginPath();
+        ctx.arc(ix, iz, it.r * scale * 0.75, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00d2ff';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([6, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+    }
   }
 
   // 奔跑塵土粒子渲染
@@ -3223,119 +3226,250 @@ function renderScene() {
     ctx.restore();
   }
 
-  // (1) CoCo 都可 手搖飲門市立面
-  function drawCocoStore(x, z, branchName) {
-    const bx = screenX(x - 12);
-    const bz = screenZ(z - 10);
+  // ──────────────────────────────────────────
+  // 品牌官方標準向量標誌渲染引擎 (Canvas Vector Brand Logos)
+  // 【落實委託人指示：我要的是它的樣式，而不是在下面寫個它的名字。放大到一定程度才顯示，不然畫面會很擠】
+  // ──────────────────────────────────────────
+
+  // 🟢 7-Eleven 官方經典標誌 (綠框橘白紅 '7' ✕ 'ELEVEN')
+  function drawSevenElevenLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 22;
+    const boxH = h || 22;
     ctx.fillStyle = '#ffffff';
-    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 3);
     ctx.fill();
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#00843d';
+    ctx.lineWidth = Math.max(1, boxW * 0.08);
     ctx.stroke();
 
-    // 亮橘波浪招牌
-    ctx.fillStyle = '#f97316';
-    drawSafeRoundRect(ctx, bx - 2, bz, 28 * scale, 5.5 * scale, 4);
-    ctx.fill();
+    const barH = boxH * 0.22;
+    ctx.fillStyle = '#ff7900';
+    ctx.fillRect(-boxW * 0.35, -boxH * 0.38, boxW * 0.7, barH);
 
-    // 圓形微笑商標
+    ctx.fillStyle = '#ed1c24';
     ctx.beginPath();
-    ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 2.2 * scale, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(bx + 4 * scale, bz + 2.7 * scale, 1.6 * scale, 0, Math.PI * 2);
-    ctx.fillStyle = '#f97316';
+    ctx.moveTo(boxW * 0.35, -boxH * 0.38 + barH);
+    ctx.lineTo(boxW * 0.12, -boxH * 0.38 + barH);
+    ctx.lineTo(-boxW * 0.15, boxH * 0.38);
+    ctx.lineTo(boxW * 0.05, boxH * 0.38);
+    ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    // 招牌名稱
-    if (scale >= 2.2) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(10, scale * 0.72)}px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText(`CoCo (${branchName})`, bx + 7.5 * scale, bz + 3.8 * scale);
-    }
-
-    // 服務點餐木質吧檯與不銹鋼茶桶
-    ctx.fillStyle = '#78350f';
-    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 12 * scale, 14 * scale, 4 * scale, 3);
-    ctx.fill();
-    ctx.fillStyle = '#e2e8f0';
-    drawSafeRoundRect(ctx, bx + 7 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
-    ctx.fill();
-    drawSafeRoundRect(ctx, bx + 14 * scale, bz + 8.5 * scale, 2.5 * scale, 3.5 * scale, 2);
-    ctx.fill();
+    ctx.fillRect(-boxW * 0.42, -boxH * 0.08, boxW * 0.84, boxH * 0.24);
+    ctx.fillStyle = '#00843d';
+    ctx.font = `900 ${Math.max(6, boxH * 0.2)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ELEVEN', 0, boxH * 0.04);
+    ctx.restore();
   }
 
-  // (2) 全家便利商店 FamilyMart 門市立面
-  function drawFamilyMartStore(x, z, branchName) {
-    const bx = screenX(x - 12);
-    const bz = screenZ(z - 10);
-    ctx.fillStyle = '#f8fafc';
-    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
-    ctx.fill();
-    ctx.strokeStyle = '#059669';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 綠藍雙色燈箱
-    ctx.fillStyle = '#009944';
-    ctx.fillRect(bx, bz, 24 * scale, 3 * scale);
+  // 🔵 全家 FamilyMart 官方綠藍雙色標誌
+  function drawFamilyMartLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 24;
+    const boxH = h || 20;
     ctx.fillStyle = '#0068b7';
-    ctx.fillRect(bx, bz + 3 * scale, 24 * scale, 2.5 * scale);
-
-    if (scale >= 2.2) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(`FamilyMart (${branchName})`, bx + 12 * scale, bz + 4 * scale);
-    }
-
-    // 玻璃自動門
-    ctx.fillStyle = 'rgba(219, 234, 254, 0.45)';
-    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 10 * scale, 12 * scale, 9 * scale, 3);
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH / 2, 2);
     ctx.fill();
-    ctx.strokeStyle = '#009944';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.fillStyle = '#00a040';
+    drawSafeRoundRect(ctx, -boxW / 2, 0, boxW, boxH / 2, 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-boxW * 0.38, -boxH * 0.08, boxW * 0.76, boxH * 0.16);
+    ctx.restore();
   }
 
-  // (3) 7-Eleven 統一超商 門市立面
-  function drawSevenElevenStore(x, z, branchName) {
-    const bx = screenX(x - 12);
-    const bz = screenZ(z - 10);
-    ctx.fillStyle = '#f8fafc';
-    drawSafeRoundRect(ctx, bx, bz, 24 * scale, 20 * scale, 6);
+  // 🔵 全聯福利中心 PX-Mart 官方藍底紅白雙環無限標誌
+  function drawPxmartLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const r = Math.min(w, h) / 2 || 11;
+    ctx.fillStyle = '#003da5';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1, r * 0.22);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.65, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 經典橘綠紅三色橫條
-    const stripeH = 1.8 * scale;
-    ctx.fillStyle = '#ea580c';
-    ctx.fillRect(bx, bz, 24 * scale, stripeH);
-    ctx.fillStyle = '#16a34a';
-    ctx.fillRect(bx, bz + stripeH, 24 * scale, stripeH);
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(bx, bz + stripeH * 2, 24 * scale, stripeH);
-
-    if (scale >= 2.2) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(9.5, scale * 0.7)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(`7-Eleven (${branchName})`, bx + 12 * scale, bz + 3.8 * scale);
-    }
-
-    // 落地透光自動門
-    ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
-    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 10 * scale, 12 * scale, 9 * scale, 3);
-    ctx.fill();
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#e3001b';
+    ctx.lineWidth = Math.max(1.2, r * 0.18);
+    ctx.beginPath();
+    ctx.arc(-r * 0.24, 0, r * 0.24, 0, Math.PI * 2);
+    ctx.arc(r * 0.24, 0, r * 0.24, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  // 🍟 麥當勞 McDonald's 官方金色雙拱門標誌 (Golden Arches 'M')
+  function drawMcdonaldsLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 22;
+    const boxH = h || 22;
+    ctx.fillStyle = '#da291c';
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 4);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffc72c';
+    ctx.lineWidth = Math.max(2, boxW * 0.14);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-boxW * 0.28, boxH * 0.28);
+    ctx.bezierCurveTo(-boxW * 0.28, -boxH * 0.35, -boxW * 0.03, -boxH * 0.35, -boxW * 0.03, boxH * 0.28);
+    ctx.bezierCurveTo(-boxW * 0.03, -boxH * 0.35, boxW * 0.25, -boxH * 0.35, boxW * 0.25, boxH * 0.28);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ☕ 星巴克 Starbucks 官方深綠海妖標誌
+  function drawStarbucksLogo(ctx, cx, cy, radius) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const r = radius || 11;
+    ctx.fillStyle = '#006241';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(0.8, r * 0.1);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.82, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, -r * 0.42, r * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0, r * 0.08, r * 0.42, 0, Math.PI);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 🍔 摩斯漢堡 MOS Burger 官方圓弧紅色 M 標誌
+  function drawMosBurgerLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 22;
+    const boxH = h || 20;
+    ctx.fillStyle = '#ffffff';
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 4);
+    ctx.fill();
+    ctx.strokeStyle = '#e60012';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.strokeStyle = '#e60012';
+    ctx.lineWidth = Math.max(2, boxW * 0.14);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-boxW * 0.32, boxH * 0.15);
+    ctx.bezierCurveTo(-boxW * 0.32, -boxH * 0.28, -boxW * 0.05, -boxH * 0.28, -boxW * 0.02, boxH * 0.05);
+    ctx.bezierCurveTo(0, -boxH * 0.28, boxW * 0.32, -boxH * 0.28, boxW * 0.32, boxH * 0.15);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 💊 屈臣氏 Watsons 官方湖水綠標誌
+  function drawWatsonsLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 24;
+    const boxH = h || 18;
+    ctx.fillStyle = '#008899';
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 3);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold italic ${Math.max(7, boxH * 0.48)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('watsons', 0, 0);
+    ctx.restore();
+  }
+
+  // 🌸 康是美 Cosmed 官方活力珊瑚橘十字花瓣標誌
+  function drawCosmedLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 22;
+    const boxH = h || 20;
+    ctx.fillStyle = '#f57200';
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 4);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    const pw = boxW * 0.22;
+    const ph = boxH * 0.55;
+    drawSafeRoundRect(ctx, -pw / 2, -ph / 2, pw, ph, 2);
+    ctx.fill();
+    drawSafeRoundRect(ctx, -ph / 2, -pw / 2, ph, pw, 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 🧋 CoCo 都可 手搖飲官方微笑標誌
+  function drawCocoLogo(ctx, cx, cy, radius) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const r = radius || 10;
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1.2, r * 0.2);
+    ctx.beginPath();
+    ctx.arc(0, -r * 0.1, r * 0.5, 0.2 * Math.PI, 0.8 * Math.PI);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-r * 0.3, -r * 0.25, r * 0.12, 0, Math.PI * 2);
+    ctx.arc(r * 0.3, -r * 0.25, r * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 🏮 傳統市場與夜市 官方牌樓與紅燈籠標誌
+  function drawMarketArchwayLogo(ctx, cx, cy, w, h) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    const boxW = w || 24;
+    const boxH = h || 20;
+    ctx.fillStyle = '#78350f';
+    drawSafeRoundRect(ctx, -boxW / 2, -boxH / 2, boxW, boxH, 4);
+    ctx.fill();
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.moveTo(-boxW * 0.45, -boxH * 0.15);
+    ctx.lineTo(0, -boxH * 0.42);
+    ctx.lineTo(boxW * 0.45, -boxH * 0.15);
+    ctx.lineTo(boxW * 0.35, -boxH * 0.05);
+    ctx.lineTo(-boxW * 0.35, -boxH * 0.05);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(-boxW * 0.28, boxH * 0.2, boxW * 0.12, 0, Math.PI * 2);
+    ctx.arc(boxW * 0.28, boxH * 0.2, boxW * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   // 🛒 全球正統家樂福官方向量標誌 (Carrefour Dual-Color Diamond ✕ Negative White 'C')
@@ -3356,7 +3490,6 @@ function renderScene() {
     ctx.save();
     ctx.translate(cx - w / 2, cy - h / 2);
 
-    // 圓角白底背板（確保紅藍標誌在任何深色背景皆能完美凸顯負空間白 C）
     ctx.fillStyle = '#ffffff';
     drawSafeRoundRect(ctx, -2, -2, w + 4, h + 4, 3);
     ctx.fill();
@@ -3365,17 +3498,15 @@ function renderScene() {
     ctx.scale(scaleRatio, scaleRatio);
 
     if (carrefourRedPath2D && carrefourBluePath2D) {
-      // 官方 Path2D 高精向量繪製
-      ctx.fillStyle = '#C20016'; // 家樂福專屬正紅
+      ctx.fillStyle = '#C20016';
       ctx.fill(carrefourRedPath2D);
 
       ctx.save();
       ctx.translate(21.766520, 0.121053);
-      ctx.fillStyle = '#254F9B'; // 家樂福專屬深藍
+      ctx.fillStyle = '#254F9B';
       ctx.fill(carrefourBluePath2D);
       ctx.restore();
     } else {
-      // 幾何貝茲曲線平滑備援模式
       ctx.fillStyle = '#C20016';
       ctx.beginPath();
       ctx.moveTo(18, 1.6);
@@ -3396,21 +3527,18 @@ function renderScene() {
     ctx.restore();
   }
 
-  // 🚇 台北捷運官方雙色流線標誌 (Taipei Metro Official Dual-Color Logo)
-  // 由科技藍 (#0070bc) 與生機綠 (#00a650) 雙向互繞飛鳥箭頭組成
+  // 🚇 台北捷運官方雙色流線標誌
   function drawTaipeiMetroLogo(ctx, cx, cy, radius) {
     ctx.save();
     ctx.translate(cx, cy);
     const s = radius / 36;
     ctx.scale(s, s);
 
-    // 圓形純白底托
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(0, 0, 36, 0, Math.PI * 2);
     ctx.fill();
 
-    // 上弧箭頭：科技藍 (#0070bc)
     ctx.fillStyle = '#0070bc';
     ctx.beginPath();
     ctx.moveTo(-26, 10);
@@ -3425,7 +3553,6 @@ function renderScene() {
     ctx.closePath();
     ctx.fill();
 
-    // 下弧箭頭：生機綠 (#00a650)
     ctx.fillStyle = '#00a650';
     ctx.beginPath();
     ctx.moveTo(26, -10);
@@ -3441,6 +3568,345 @@ function renderScene() {
     ctx.fill();
 
     ctx.restore();
+  }
+
+  // 🌟 全門市層級細節 (LOD) 與官方純粹樣式浮動指示器：落實委託人指示
+  // 「那些只要出現的商店，我要的是它的樣式，而不是在下面寫個它的名字。我要的是它的樣式，並且要放大到一定程度我才會看得到。不然畫面會很擠」
+  function drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, brand, borderColor = '#00f0ff') {
+    if (scale < 4.8) return; // 縮小 (scale < 4.8) 時絕不繪製，確保大景深視野整潔不擁擠！
+
+    const badgeW = Math.min(46, Math.max(34, scale * 2.2));
+    const badgeH = Math.min(32, Math.max(22, scale * 1.4));
+    const badgeX = bx + (storeW * scale - badgeW) / 2;
+    const badgeY = bz - badgeH - 6;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+    drawSafeRoundRect(ctx, badgeX, badgeY, badgeW, badgeH, 6);
+    ctx.fill();
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1.6;
+    ctx.shadowColor = borderColor;
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+
+    const cx = badgeX + badgeW / 2;
+    const cy = badgeY + badgeH / 2;
+    const iconW = Math.min(26, badgeW * 0.72);
+    const iconH = Math.min(20, badgeH * 0.72);
+
+    switch (brand) {
+      case 'wanjiafu':
+      case 'carrefour':
+      case 'lejiakang':
+        drawCarrefourLogo(ctx, cx, cy, iconW, iconW * 40 / 61);
+        break;
+      case 'seven':
+        drawSevenElevenLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'familymart':
+        drawFamilyMartLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'pxmart':
+        drawPxmartLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'mcdonalds':
+        drawMcdonaldsLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'starbucks':
+        drawStarbucksLogo(ctx, cx, cy, Math.min(iconW, iconH) / 2);
+        break;
+      case 'mosburger':
+        drawMosBurgerLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'watsons':
+        drawWatsonsLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'cosmed':
+        drawCosmedLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      case 'coco':
+        drawCocoLogo(ctx, cx, cy, Math.min(iconW, iconH) / 2);
+        break;
+      case 'market':
+        drawMarketArchwayLogo(ctx, cx, cy, iconW, iconH);
+        break;
+      default:
+        drawSevenElevenLogo(ctx, cx, cy, iconW, iconH);
+    }
+    // 嚴格遵守委託人鐵令：僅呈現純粹官方樣式，絕不在下方附加雜亂文字！
+    ctx.restore();
+  }
+
+  // (1) CoCo 都可 手搖飲門市立面
+  function drawCocoStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#ffffff';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 亮橘招牌
+    ctx.fillStyle = '#f97316';
+    drawSafeRoundRect(ctx, bx - 2, bz, (storeW + 4) * scale, 5.5 * scale, 4);
+    ctx.fill();
+
+    // 圓形微笑官方商標 (純粹樣式，無文字)
+    const logoR = Math.max(5.5, scale * 0.9);
+    drawCocoLogo(ctx, bx + (storeW * scale) / 2, bz + 2.7 * scale, logoR);
+
+    // 服務點餐吧檯
+    ctx.fillStyle = '#78350f';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 11 * scale, 14 * scale, 5 * scale, 3);
+    ctx.fill();
+    ctx.fillStyle = '#e2e8f0';
+    drawSafeRoundRect(ctx, bx + 7 * scale, bz + 7.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+    ctx.fill();
+    drawSafeRoundRect(ctx, bx + 14 * scale, bz + 7.5 * scale, 2.5 * scale, 3.5 * scale, 2);
+    ctx.fill();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'coco', '#f97316');
+  }
+
+  // (2) 全家便利商店 FamilyMart 門市立面
+  function drawFamilyMartStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#f8fafc';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 綠藍雙色燈箱
+    ctx.fillStyle = '#0068b7';
+    ctx.fillRect(bx, bz, storeW * scale, 2.7 * scale);
+    ctx.fillStyle = '#00a040';
+    ctx.fillRect(bx, bz + 2.7 * scale, storeW * scale, 2.7 * scale);
+
+    // 官方綠藍向量標誌
+    const logoSize = Math.max(14, scale * 2.0);
+    drawFamilyMartLogo(ctx, bx + (storeW * scale) / 2, bz + 2.7 * scale, logoSize, logoSize * 0.7);
+
+    // 玻璃自動門
+    ctx.fillStyle = 'rgba(219, 234, 254, 0.45)';
+    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 9 * scale, 12 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#00a040';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'familymart', '#00a040');
+  }
+
+  // (3) 7-Eleven 統一超商 門市立面
+  function drawSevenElevenStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#f8fafc';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 經典橘綠紅三色橫條
+    const stripeH = 1.8 * scale;
+    ctx.fillStyle = '#ff7900';
+    ctx.fillRect(bx, bz, storeW * scale, stripeH);
+    ctx.fillStyle = '#00843d';
+    ctx.fillRect(bx, bz + stripeH, storeW * scale, stripeH);
+    ctx.fillStyle = '#ed1c24';
+    ctx.fillRect(bx, bz + stripeH * 2, storeW * scale, stripeH);
+
+    // 官方 7-Eleven 標誌
+    const logoSize = Math.max(12, scale * 1.8);
+    drawSevenElevenLogo(ctx, bx + (storeW * scale) / 2, bz + 2.7 * scale, logoSize, logoSize);
+
+    // 落地透光自動門
+    ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
+    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 9 * scale, 12 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#00843d';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'seven', '#00843d');
+  }
+
+  // (3.1) 🔵 全聯福利中心 PX-Mart 門市立面
+  function drawPxmartStore(x, z, branchName) {
+    const storeW = 26, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#003da5';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#003da5';
+    ctx.fillRect(bx, bz, storeW * scale, 5.4 * scale);
+
+    const logoSize = Math.max(12, scale * 1.8);
+    drawPxmartLogo(ctx, bx + (storeW * scale) / 2, bz + 2.7 * scale, logoSize, logoSize);
+
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+    drawSafeRoundRect(ctx, bx + 6 * scale, bz + 9 * scale, 14 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'pxmart', '#003da5');
+  }
+
+  // (3.2) 🍟 麥當勞 McDonald's 門市立面
+  function drawMcdonaldsStore(x, z, branchName) {
+    const storeW = 26, storeH = 22;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#1e293b';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#da291c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#da291c';
+    ctx.fillRect(bx, bz, storeW * scale, 6 * scale);
+
+    const logoSize = Math.max(14, scale * 2.0);
+    drawMcdonaldsLogo(ctx, bx + (storeW * scale) / 2, bz + 3 * scale, logoSize, logoSize * 0.85);
+
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.25)';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 10 * scale, 16 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'mcdonalds', '#ffc72c');
+  }
+
+  // (3.3) ☕ 星巴克 Starbucks 門市立面
+  function drawStarbucksStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#1c1917';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#006241';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#006241';
+    ctx.fillRect(bx, bz, storeW * scale, 5.2 * scale);
+
+    const logoR = Math.max(6, scale * 1.0);
+    drawStarbucksLogo(ctx, bx + (storeW * scale) / 2, bz + 2.6 * scale, logoR);
+
+    ctx.fillStyle = 'rgba(253, 230, 138, 0.22)';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, 14 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'starbucks', '#006241');
+  }
+
+  // (3.4) 🍔 摩斯漢堡 MOS Burger 門市立面
+  function drawMosBurgerStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#fafaf9';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#e60012';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#e60012';
+    ctx.fillRect(bx, bz, storeW * scale, 5 * scale);
+
+    const logoSize = Math.max(12, scale * 1.8);
+    drawMosBurgerLogo(ctx, bx + (storeW * scale) / 2, bz + 2.5 * scale, logoSize, logoSize * 0.8);
+
+    ctx.fillStyle = 'rgba(254, 242, 242, 0.4)';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, 14 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#e60012';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'mosburger', '#e60012');
+  }
+
+  // (3.5) 💊 屈臣氏 Watsons 門市立面
+  function drawWatsonsStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#008899';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#008899';
+    ctx.fillRect(bx, bz, storeW * scale, 5.2 * scale);
+
+    const logoSize = Math.max(14, scale * 2.0);
+    drawWatsonsLogo(ctx, bx + (storeW * scale) / 2, bz + 2.6 * scale, logoSize, logoSize * 0.7);
+
+    ctx.fillStyle = 'rgba(45, 212, 191, 0.2)';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, 14 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#14b8a6';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'watsons', '#008899');
+  }
+
+  // (3.6) 🌸 康是美 Cosmed 門市立面
+  function drawCosmedStore(x, z, branchName) {
+    const storeW = 24, storeH = 20;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
+    ctx.fillStyle = '#0f172a';
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#f57200';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f57200';
+    ctx.fillRect(bx, bz, storeW * scale, 5.2 * scale);
+
+    const logoSize = Math.max(12, scale * 1.8);
+    drawCosmedLogo(ctx, bx + (storeW * scale) / 2, bz + 2.6 * scale, logoSize, logoSize * 0.85);
+
+    ctx.fillStyle = 'rgba(251, 146, 60, 0.2)';
+    drawSafeRoundRect(ctx, bx + 5 * scale, bz + 9 * scale, 14 * scale, 10 * scale, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#fb923c';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'cosmed', '#f57200');
   }
 
   // (4) 🛒 家樂福 Carrefour (旗艦量販 ✕ 便利購超市)
@@ -3461,17 +3927,9 @@ function renderScene() {
     ctx.fillStyle = isFlagship ? '#1e3a8a' : '#0369a1';
     ctx.fillRect(bx, bz, storeW * scale, 5 * scale);
 
-    // 門面正統家樂福紅白藍雙箭頭白 C 標誌
+    // 門面正統家樂福紅白藍雙箭頭白 C 標誌 (純粹樣式，無多餘文字)
     const logoSize = Math.max(12, scale * 1.8);
-    drawCarrefourLogo(ctx, bx + 5 * scale, bz + 2.5 * scale, logoSize, logoSize * 40 / 61);
-
-    // 招牌名稱
-    if (scale >= 2.2) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(9, scale * 0.68)}px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText(isFlagship ? `家樂福旗艦 (${branchName})` : `家樂福便利購 (${branchName})`, bx + 9.5 * scale, bz + 3.6 * scale);
-    }
+    drawCarrefourLogo(ctx, bx + (storeW * scale) / 2, bz + 2.5 * scale, logoSize, logoSize * 40 / 61);
 
     // 挑高全息玻璃帷幕與能量補給站門面
     ctx.fillStyle = isFlagship ? 'rgba(37, 79, 155, 0.22)' : 'rgba(2, 132, 199, 0.18)';
@@ -3488,38 +3946,8 @@ function renderScene() {
 
     // 🌟 委託人指示重要鐵令：
     // 「如果這邊有什麼家樂福的標示，縮小的時候不要看到，要放大到一定的大小，上面才顯示一個小小的家樂福標示。我不要一個圈圈下面寫「家」，我要一個家樂福的標示。」
-    // 縮小 (scale < 4.8) 時不繪製頂部浮動標示；放大到一定大小 (scale >= 4.8) 時，在建築上方繪製一個小巧精緻的家樂福標示
-    if (scale >= 4.8) {
-      const badgeW = Math.min(136, Math.max(96, scale * 5.8));
-      const badgeH = Math.min(30, Math.max(22, scale * 1.4));
-      const badgeX = bx + (storeW * scale - badgeW) / 2;
-      const badgeY = bz - badgeH - 6;
-
-      ctx.save();
-      // 深色半透明玻璃藥丸底板
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      drawSafeRoundRect(ctx, badgeX, badgeY, badgeW, badgeH, 6);
-      ctx.fill();
-      ctx.strokeStyle = '#254F9B';
-      ctx.lineWidth = 1.6;
-      ctx.shadowColor = 'rgba(37, 79, 155, 0.6)';
-      ctx.shadowBlur = 8;
-      ctx.stroke();
-
-      // 小巧家樂福正統向量標示
-      const iconW = Math.min(22, badgeH * 0.72);
-      const iconH = iconW * 40 / 61;
-      drawCarrefourLogo(ctx, badgeX + 16, badgeY + badgeH / 2, iconW, iconH);
-
-      // 品牌名稱文字 (純淨白字，標註「家樂福 Carrefour」)
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${Math.max(9, Math.min(12, badgeH * 0.44))}px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      const titleText = badgeW > 110 ? `家樂福 ${branchName}` : `家樂福 Carrefour`;
-      ctx.fillText(titleText, badgeX + 30, badgeY + badgeH / 2);
-      ctx.restore();
-    }
+    // 嚴格落實 LOD (scale >= 4.8) 與純樣式無文字
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'carrefour', isFlagship ? '#254F9B' : '#0284c7');
   }
 
   // (4.1) 🚇 台北捷運立體高畫質出入口 (Taipei Metro Isometric Entrance)
@@ -3857,11 +4285,12 @@ function renderScene() {
 
   // (6) 傳統市場與觀光夜市 (Traditional Market / Night Market)
   function drawMarketPlace(x, z, marketName) {
-    const bx = screenX(x - 14);
-    const bz = screenZ(z - 12);
+    const storeW = 28, storeH = 24;
+    const bx = screenX(x - storeW / 2);
+    const bz = screenZ(z - storeH / 2);
     // 主建築底色 (傳統暖色磚紅/檜木色)
     ctx.fillStyle = '#451a03';
-    drawSafeRoundRect(ctx, bx, bz, 28 * scale, 24 * scale, 6);
+    drawSafeRoundRect(ctx, bx, bz, storeW * scale, storeH * scale, 6);
     ctx.fill();
     ctx.strokeStyle = '#b45309';
     ctx.lineWidth = 2;
@@ -3869,25 +4298,16 @@ function renderScene() {
 
     // 傳統中式斜簷 / 紅金雙色遮雨棚 (Striped Canopy)
     ctx.fillStyle = '#dc2626';
-    drawSafeRoundRect(ctx, bx - 2, bz, 32 * scale, 6 * scale, 4);
+    drawSafeRoundRect(ctx, bx - 2, bz, (storeW + 4) * scale, 6 * scale, 4);
     ctx.fill();
     ctx.fillStyle = '#f59e0b';
-    for (let stripe = 0; stripe < 32; stripe += 8) {
+    for (let stripe = 0; stripe < storeW + 4; stripe += 8) {
       ctx.fillRect(bx - 2 + stripe * scale, bz, 4 * scale, 6 * scale);
     }
 
-    // 傳統木匾招牌
-    ctx.fillStyle = '#78350f';
-    drawSafeRoundRect(ctx, bx + 2 * scale, bz + 1.2 * scale, 26 * scale, 3.8 * scale, 2);
-    ctx.fill();
-    ctx.strokeStyle = '#fef08a';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = '#fef08a';
-    ctx.font = `bold ${Math.max(9, scale * 0.65)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText(`🏮 ${marketName}`, bx + 15 * scale, bz + 3.8 * scale);
+    // 門面官方向量傳統牌樓標誌 (純粹樣式，無多餘文字)
+    const logoSize = Math.max(14, scale * 2.2);
+    drawMarketArchwayLogo(ctx, bx + (storeW * scale) / 2, bz + 3 * scale, logoSize, logoSize * 0.8);
 
     // 左右兩側懸掛紅燈籠
     function drawLantern(lx, ly) {
@@ -3900,52 +4320,47 @@ function renderScene() {
       ctx.fillStyle = '#b91c1c';
       ctx.fillRect(lx - 0.5 * scale, ly + 2.2 * scale, 1 * scale, 1.5 * scale);
     }
-    drawLantern(bx + 1 * scale, bz + 9 * scale);
-    drawLantern(bx + 27 * scale, bz + 9 * scale);
+    drawLantern(bx + 2 * scale, bz + 9 * scale);
+    drawLantern(bx + (storeW - 2) * scale, bz + 9 * scale);
 
     // 熱鬧攤販檔口 (生鮮蔬果木箱 / 熱氣小吃吧台)
     ctx.fillStyle = '#92400e';
-    drawSafeRoundRect(ctx, bx + 4 * scale, bz + 13 * scale, 20 * scale, 8 * scale, 3);
+    drawSafeRoundRect(ctx, bx + 4 * scale, bz + 13 * scale, (storeW - 8) * scale, 8 * scale, 3);
     ctx.fill();
     ctx.strokeStyle = '#d97706';
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // 小吃蒸籠 / 食物陳列
-    ctx.fillStyle = '#fef3c7';
-    ctx.beginPath();
-    ctx.arc(bx + 9 * scale, bz + 16 * scale, 2.5 * scale, 0, Math.PI * 2);
-    ctx.arc(bx + 19 * scale, bz + 16 * scale, 2.5 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#b45309';
-    ctx.font = `bold ${Math.max(8, scale * 0.52)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('老字號', bx + 14 * scale, bz + 19 * scale);
+    // 浮動純樣式標示 (scale >= 4.8)
+    drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'market', '#ef4444');
   }
 
-  // 全雙北 124+ 處互動地標與連鎖門市動態加入深度排序清單 (Y-Sorting - 視錐剔除核心優化)
+  // 全雙北 176+ 處互動地標與連鎖門市動態加入深度排序清單 (Y-Sorting - 視錐剔除核心優化)
   interactables.forEach(it => {
     if (!isInViewport(it.x, it.z, 28)) return;
+    const cleanName = (it.name || '').replace(/[\(\)]/g, '');
     if (it.type === 'coco') {
-      const bName = it.name.replace('CoCo 都可 (', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawCocoStore(it.x, it.z, bName) });
+      renderList.push({ z: it.z, draw: () => drawCocoStore(it.x, it.z, cleanName) });
     } else if (it.type === 'familymart') {
-      const bName = it.name.replace('全家便利商店 (', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawFamilyMartStore(it.x, it.z, bName) });
+      renderList.push({ z: it.z, draw: () => drawFamilyMartStore(it.x, it.z, cleanName) });
     } else if (it.type === 'seven') {
-      const bName = it.name.replace('7-Eleven 統一超商 (', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawSevenElevenStore(it.x, it.z, bName) });
-    } else if (it.type === 'wanjiafu' || it.type === 'carrefour') {
-      const bName = it.name.replace('萬家福便利購 (', '').replace('萬家福超市 (', '').replace('萬家福 ', '')
-                           .replace('樂家康便利購 (', '').replace('樂家康超市 (', '').replace('樂家康 ', '')
-                           .replace('家樂福便利購 (', '').replace('家樂福超市 (', '').replace('家樂福 ', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawWanjiafuStore(it.x, it.z, bName, !!it.isFlagship) });
+      renderList.push({ z: it.z, draw: () => drawSevenElevenStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'wanjiafu' || it.type === 'carrefour' || it.type === 'lejiakang') {
+      renderList.push({ z: it.z, draw: () => drawWanjiafuStore(it.x, it.z, cleanName, !!it.isFlagship) });
     } else if (it.type === 'pxmart') {
-      const bName = it.name.replace('樂家康超市 (', '').replace('樂家康便利購 (', '').replace('全聯福利中心 (', '').replace(')', '');
-      renderList.push({ z: it.z, draw: () => drawWanjiafuStore(it.x, it.z, bName, false) });
+      renderList.push({ z: it.z, draw: () => drawPxmartStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'mcdonalds') {
+      renderList.push({ z: it.z, draw: () => drawMcdonaldsStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'starbucks') {
+      renderList.push({ z: it.z, draw: () => drawStarbucksStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'mosburger') {
+      renderList.push({ z: it.z, draw: () => drawMosBurgerStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'watsons') {
+      renderList.push({ z: it.z, draw: () => drawWatsonsStore(it.x, it.z, cleanName) });
+    } else if (it.type === 'cosmed') {
+      renderList.push({ z: it.z, draw: () => drawCosmedStore(it.x, it.z, cleanName) });
     } else if (it.type === 'market') {
-      const bName = it.name.replace('傳統市場', '').replace('觀光夜市', '').replace('老市集', '');
-      renderList.push({ z: it.z, draw: () => drawMarketPlace(it.x, it.z, bName) });
+      renderList.push({ z: it.z, draw: () => drawMarketPlace(it.x, it.z, cleanName) });
     } else if (it.type === 'station') {
       renderList.push({
         z: it.z,

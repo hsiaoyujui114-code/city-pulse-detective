@@ -793,13 +793,10 @@ html, body {
   image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
   -ms-interpolation-mode: nearest-neighbor !important;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .leaflet-tile-pane {
-  filter: contrast(106%) saturate(104%);
+  filter: contrast(105%) saturate(104%);
   transform: translateZ(0);
 }
 
@@ -853,91 +850,218 @@ html, body {
   font-size: 16px !important;
 }
 
-/* 實體門市專屬全息光標 (Store Holographic Pin) */
+/* 實體門市專屬官方品牌樣式標記 (Official Brand Style Signboard & Vector Pins) */
+.store-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
 .store-holo-pin {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0,0,0,0.7);
-  border: 2px solid #ffffff;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  will-change: transform;
-  transform: translateZ(0);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.65), 0 0 8px rgba(0,240,255,0.2);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  user-select: none;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .store-holo-pin:hover {
   transform: scale(1.3) translateY(-4px);
   z-index: 1000 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.85), 0 0 16px rgba(0,240,255,0.7);
 }
 
+/* 1. 7-Eleven 正統官方綠框白底橘綠紅三色標誌 */
+.pin-seven {
+  background: #ffffff !important;
+  border: 1.5px solid #008054 !important;
+  box-shadow: 0 0 10px rgba(0, 128, 84, 0.4), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-seven svg {
+  width: 28px;
+  height: 18px;
+  display: block;
+}
+
+/* 2. FamilyMart 全家便利商店 官方藍綠雙色橫條招牌 */
+.pin-familymart {
+  background: #ffffff !important;
+  border: 1.5px solid #009944 !important;
+  box-shadow: 0 0 10px rgba(0, 153, 68, 0.4), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-familymart svg {
+  width: 30px;
+  height: 20px;
+  display: block;
+}
+
+/* 3. 家樂福 Carrefour 經典 45度菱形紅白雙翼白C標誌 */
 .pin-carrefour,
 .pin-wanjiafu,
 .pin-lejiakang {
   background: #ffffff !important;
   border: 1.5px solid #254F9B !important;
-  box-shadow: 0 0 10px rgba(37, 79, 155, 0.45), 0 2px 5px rgba(0,0,0,0.5) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  box-shadow: 0 0 10px rgba(37, 79, 155, 0.45), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
   padding: 2px !important;
-  border-radius: 6px !important;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
-
 .pin-carrefour svg,
 .pin-wanjiafu svg,
 .pin-lejiakang svg {
-  width: 22px;
-  height: 15px;
+  width: 26px;
+  height: 17px;
   display: block;
 }
 
-.pin-seven {
-  background: radial-gradient(circle, #ea580c 55%, #15803d);
-  border-color: #fed7aa;
-  box-shadow: 0 0 12px #ea580c;
-  color: #ffffff;
+/* 4. 全聯福利中心 PX-Mart 經典深藍底雙環彩帶標誌 */
+.pin-pxmart {
+  background: #ffffff !important;
+  border: 1.5px solid #003da5 !important;
+  box-shadow: 0 0 10px rgba(0, 61, 165, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-pxmart svg {
+  width: 28px;
+  height: 18px;
+  display: block;
 }
 
-.pin-familymart {
-  background: radial-gradient(circle, #0284c7 50%, #16a34a);
-  border-color: #bae6fd;
-  box-shadow: 0 0 12px #38bdf8;
-  color: #ffffff;
+/* 5. 麥當勞 McDonald's 經典紅底金黃雙拱門 M 標誌 */
+.pin-mcdonalds {
+  background: #da291c !important;
+  border: 1.5px solid #ffc72c !important;
+  box-shadow: 0 0 12px rgba(218, 41, 28, 0.6), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-mcdonalds svg {
+  width: 26px;
+  height: 18px;
+  display: block;
 }
 
+/* 6. 星巴克 Starbucks 經典深綠圓形海妖雙尾賽蓮標誌 */
+.pin-starbucks {
+  background: #006241 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 12px rgba(0, 98, 65, 0.6), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+}
+.pin-starbucks svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* 7. 摩斯漢堡 MOS Burger 官方紅底純白流線 M 標誌 */
+.pin-mosburger {
+  background: #d9251d !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 10px rgba(217, 37, 29, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-mosburger svg {
+  width: 26px;
+  height: 18px;
+  display: block;
+}
+
+/* 8. 屈臣氏 Watsons 官方湖水青綠底純白字樣招牌 */
+.pin-watsons {
+  background: #009aa6 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 10px rgba(0, 154, 166, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 34px !important;
+  height: 20px !important;
+}
+.pin-watsons svg {
+  width: 30px;
+  height: 16px;
+  display: block;
+}
+
+/* 9. 康是美 Cosmed 官方鮮橘底白紅蝶花十字標誌 */
+.pin-cosmed {
+  background: #ff6600 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 10px rgba(255, 102, 0, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 26px !important;
+  height: 26px !important;
+}
+.pin-cosmed svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* 10. CoCo 都可手搖飲 官方溫暖亮橘圓角笑臉標誌 */
 .pin-coco {
-  background: radial-gradient(circle, #f97316 60%, #c2410c);
-  border-color: #ffedd5;
-  box-shadow: 0 0 12px #f97316;
-  color: #ffffff;
+  background: #f97316 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 32px !important;
+  height: 22px !important;
+}
+.pin-coco svg {
+  width: 28px;
+  height: 18px;
+  display: block;
 }
 
+/* 11. 雙北傳統市場與觀光夜市 經典金木牌樓與大紅燈籠樣式 */
 .pin-market {
-  background: radial-gradient(circle, #eab308 60%, #ca8a04);
-  border-color: #fef08a;
-  box-shadow: 0 0 14px #eab308;
-  color: #1e293b;
+  background: linear-gradient(135deg, #78350f, #451a03) !important;
+  border: 1.5px solid #f59e0b !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 30px !important;
+  height: 24px !important;
+}
+.pin-market svg {
+  width: 26px;
+  height: 20px;
+  display: block;
 }
 
+/* 12. 大眾運輸捷運/公車/臺鐵/高鐵 官方代表色標誌 */
 .pin-transport {
-  background: radial-gradient(circle, #6366f1 60%, #4338ca);
-  border-color: #e0e7ff;
-  box-shadow: 0 0 12px #818cf8;
-  color: #ffffff;
+  background: #0f172a !important;
+  border: 1.5px solid #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+}
+.pin-transport svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
+/* 13. 文化歷史古蹟與名勝 */
 .pin-landmark {
-  background: radial-gradient(circle, #a855f7 60%, #7e22ce);
-  border-color: #f3e8ff;
-  box-shadow: 0 0 14px #c084fc;
-  color: #ffffff;
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1.5px solid #c084fc !important;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), 0 3px 8px rgba(0,0,0,0.6) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+}
+.pin-landmark svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 /* 門市彈窗詳細卡片 */

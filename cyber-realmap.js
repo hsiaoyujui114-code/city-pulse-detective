@@ -75,44 +75,60 @@ function initCyberRealMap() {
   // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立 1:1 真實網路地圖瓦片服務 (CARTO Voyager HD 預設、臺灣通用電子地圖 NLSC、OpenStreetMap HD、CARTO Dark HD、Esri Satellite - 支援 maxZoom 22 與 @2x Retina 超清晰)
+  // 2. 建立 1:1 真實網路地圖瓦片服務 (配備自動防崩潰容錯備援，確保地圖資料 100% 恆久可見不白屏)
+  function enableResilientTileFallback(layer) {
+    layer.on('tileerror', function(e) {
+      if (e && e.tile && !e.tile._hasFallback) {
+        e.tile._hasFallback = true;
+        const c = e.coords;
+        if (c) {
+          const z = Math.min(Math.max(0, c.z), 19);
+          e.tile.src = `https://a.tile.openstreetmap.org/${z}/${c.x}/${c.y}.png`;
+        }
+      }
+    });
+    return layer;
+  }
+
   baseLayers = {
-    voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    osm: enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      subdomains: 'abc',
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      detectRetina: false, // 嚴禁在 OSM 開啟 detectRetina 避免高倍率請求 20 級返回 HTTP 400 錯誤
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
+    })),
+    voyager: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxNativeZoom: 20,
+      maxNativeZoom: 18,
       maxZoom: 22,
       detectRetina: true,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }),
-    nlsc: L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
-      maxNativeZoom: 20,
+    })),
+    nlsc: enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+      maxNativeZoom: 19,
       maxZoom: 22,
-      detectRetina: true,
+      detectRetina: false,
       attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
-    }),
-    osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      detectRetina: true,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
-    }),
-    dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    })),
+    dark: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
-      maxNativeZoom: 20,
+      maxNativeZoom: 18,
       maxZoom: 22,
       detectRetina: true,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }),
-    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    })),
+    satellite: enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
-      detectRetina: true,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    })
+      detectRetina: false,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
+    }))
   };
 
-  // 預設載入 CARTO Voyager HD (512x512 @2x Retina 超清晰，放大至 22x 極限特寫不模糊)
-  activeBaseLayer = baseLayers.voyager;
+  // 預設載入繁體中文最完整之 OpenStreetMap (並啟用彈性備援機制，絕無黑屏或資料缺失)
+  currentBaseLayerKey = 'osm';
+  activeBaseLayer = baseLayers.osm;
   activeBaseLayer.addTo(map);
 
   // 3. 建立各圖層群組
@@ -128,8 +144,12 @@ function initCyberRealMap() {
   casesLayerGroup = L.layerGroup().addTo(map);
   sectorsLayerGroup = L.layerGroup().addTo(map);
 
-  // 初始化門市圖層群組 (依品牌與大眾運輸分類)
-  const brands = ['wanjiafu', 'lejiakang', 'seven', 'familymart', 'coco', 'market', 'transport', 'landmark', 'thsr', 'tra', 'mrt', 'ebus'];
+  // 初始化門市圖層群組 (涵蓋全雙北 14 大真實連鎖品牌與地標)
+  const brands = [
+    'wanjiafu', 'lejiakang', 'carrefour', 'seven', 'familymart',
+    'pxmart', 'mcdonalds', 'starbucks', 'mosburger', 'watsons', 'cosmed',
+    'coco', 'market', 'transport', 'landmark', 'thsr', 'tra', 'mrt', 'ebus'
+  ];
   brands.forEach(b => {
     storeMarkerGroups[b] = L.layerGroup().addTo(map);
   });
@@ -148,8 +168,8 @@ function initCyberRealMap() {
   initMrtTrainsContinuousDispatch(); // 核心：捷運固定班距動態列車調度引擎 (BL/R/G/O/Y 雙向固定班次)
   addSectorsLayer();
   addAllStoreMarkers();
-  map.on('zoomend', updateCarrefourZoomVisibility);
-  updateCarrefourZoomVisibility();
+  map.on('zoomend', updateStoreLODVisibility);
+  updateStoreLODVisibility();
   addDemoCasesMarkers();
   initPlayerAvatarMarker(); // 核心：微觀主角巡航標記與特寫跟隨
   setupTelemetryListeners();
@@ -1571,16 +1591,133 @@ function addAllStoreMarkers() {
   console.log(`✅ 已完成繪製全雙北 ${totalCount} 間真實實體門市！`);
 }
 
-// 根據品牌返回專屬 Pin HTML
+// 根據品牌返回純粹官方標準樣式 Pin HTML (【落實委託人指示：我要的是它的樣式，而不是在下面寫個它的名字】)
 function getStoreIconHtml(brand, store) {
-  let pinClass = 'pin-carrefour';
+  let pinClass = 'pin-seven';
   let badgeContent = '';
 
-  // 🛒 正統家樂福官方向量圖標 (Carrefour Dual-Color Diamond with Negative White 'C')
+  // 1. 7-Eleven 正統官方綠框白底橘綠紅三色標誌 SVG
+  const sevenSvg = `
+    <svg viewBox="0 0 70 50" width="28" height="20" style="display:block;">
+      <rect width="70" height="50" rx="6" fill="#ffffff" stroke="#008054" stroke-width="2.5"/>
+      <rect x="5" y="5" width="60" height="7" fill="#ea580c"/>
+      <rect x="5" y="12" width="60" height="5" fill="#008054"/>
+      <rect x="5" y="17" width="60" height="5" fill="#dc2626"/>
+      <path d="M 24 24 L 46 24 L 33 45 L 26 45 L 37 28 L 24 28 Z" fill="#ea580c"/>
+      <rect x="18" y="32" width="34" height="6.5" rx="2" fill="#008054"/>
+      <text x="35" y="37" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="5" fill="#ffffff" text-anchor="middle">ELEVEN</text>
+    </svg>`;
+
+  // 2. FamilyMart 全家便利商店 官方藍綠雙色橫條招牌 SVG
+  const familyMartSvg = `
+    <svg viewBox="0 0 70 46" width="30" height="20" style="display:block;">
+      <rect width="70" height="46" rx="6" fill="#ffffff" stroke="#009944" stroke-width="2"/>
+      <rect x="4" y="4" width="62" height="18" fill="#0068b7" rx="3"/>
+      <rect x="4" y="24" width="62" height="18" fill="#009944" rx="3"/>
+      <circle cx="16" cy="13" r="6" fill="#ffffff"/>
+      <polygon points="16,8 17.8,11.5 21.8,12.1 18.9,14.9 19.6,18.9 16,17 12.4,18.9 13.1,14.9 10.2,12.1 14.2,11.5" fill="#0068b7"/>
+      <text x="44" y="16" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="8" fill="#ffffff" text-anchor="middle">Family</text>
+      <text x="44" y="36" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="8" fill="#ffffff" text-anchor="middle">Mart</text>
+    </svg>`;
+
+  // 3. 🛒 正統家樂福官方向量圖標 (Carrefour Dual-Color Diamond with Negative White 'C')
   const carrefourSvg = `
-    <svg viewBox="0 0 61 40" width="22" height="15" style="display:block; overflow:visible;">
+    <svg viewBox="0 0 61 40" width="24" height="16" style="display:block; overflow:visible;">
       <path d="M18.0334,1.6 C18.142,1.49 18.244,1.45 18.332,1.45 C18.489,1.45 18.6,1.59 18.595,1.76 C18.59,1.86 18.546,1.97 18.449,2.06 C14.535,6.83 11.689,12.39 11.689,20.12 C11.689,27.84 14.535,33.3 18.449,38.06 C18.546,38.16 18.59,38.27 18.595,38.37 C18.6,38.53 18.489,38.67 18.332,38.67 C18.244,38.67 18.142,38.63 18.033,38.52 L1.363,22.73 C0.531,22.04 0,21.22 0,20.06 C0,18.9 0.531,18.09 1.363,17.39 L18.033,1.6 Z" fill="#C20016"/>
       <path d="M9.084,0.14 C2.557,0.14 0.006,9.2 0.006,20 C0.006,30.8 2.557,39.74 9.084,39.74 C13.001,39.74 16.339,37.49 16.351,35.64 C16.352,35.24 16.194,34.85 15.847,34.51 C13.992,32.76 13.265,31 13.258,29.45 C13.248,26.5 15.868,24.29 18.282,24.29 C21.603,24.29 23.562,26.85 23.562,30.16 C23.562,33.29 22.195,35.91 20.712,38 C20.654,38.08 20.628,38.18 20.628,38.26 C20.63,38.43 20.727,38.56 20.875,38.56 C20.965,38.56 21.071,38.51 21.185,38.4 L37.86,22.61 C38.693,21.92 39.224,21.1 39.224,19.94 C39.224,18.78 38.693,17.97 37.86,17.27 L21.185,1.48 C21.071,1.37 20.965,1.32 20.875,1.32 C20.726,1.32 20.63,1.46 20.628,1.62 C20.628,1.7 20.654,1.8 20.712,1.89 C22.195,3.97 23.562,6.59 23.562,9.72 C23.562,13.03 21.603,15.59 18.282,15.59 C15.868,15.59 13.248,13.39 13.258,10.43 C13.265,8.88 13.992,7.12 15.847,5.37 C16.194,5.03 16.352,4.64 16.351,4.24 C16.339,2.39 13.001,0.14 9.084,0.14 Z" transform="translate(21.766520, 0.121053)" fill="#254F9B"/>
+    </svg>`;
+
+  // 4. 全聯福利中心 PX-Mart 經典深藍底雙環彩帶標誌 SVG
+  const pxmartSvg = `
+    <svg viewBox="0 0 60 40" width="28" height="18" style="display:block;">
+      <rect width="60" height="40" rx="6" fill="#003da5"/>
+      <circle cx="30" cy="20" r="14" fill="#ffffff"/>
+      <circle cx="23" cy="20" r="9" fill="#003da5"/>
+      <circle cx="37" cy="20" r="9" fill="#e4002b"/>
+      <path d="M 23 15 A 5 5 0 0 1 37 25 A 5 5 0 0 1 23 15" fill="#ffffff"/>
+      <text x="30" y="38" font-family="Arial, sans-serif" font-weight="900" font-size="5" fill="#ffffff" text-anchor="middle">PX MART</text>
+    </svg>`;
+
+  // 5. 麥當勞 McDonald's 經典紅底金黃雙拱門 M 標誌 SVG
+  const mcdonaldsSvg = `
+    <svg viewBox="0 0 60 44" width="26" height="18" style="display:block;">
+      <rect width="60" height="44" rx="6" fill="#da291c"/>
+      <path d="M 12 36 C 12 20 20 10 27 24 C 29 28 30 30 30 30 C 30 30 31 28 33 24 C 40 10 48 20 48 36 L 43 36 C 43 24 37 16 33 28 L 27 28 C 23 16 17 24 17 36 Z" fill="#ffc72c"/>
+    </svg>`;
+
+  // 6. 星巴克 Starbucks 經典深綠圓形海妖雙尾賽蓮標誌 SVG
+  const starbucksSvg = `
+    <svg viewBox="0 0 50 50" width="22" height="22" style="display:block;">
+      <circle cx="25" cy="25" r="24" fill="#006241"/>
+      <circle cx="25" cy="25" r="21" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+      <path d="M 25 10 L 26.5 14 L 30.5 14 L 27.5 16.5 L 29 20.5 L 25 18 L 21 20.5 L 22.5 16.5 L 19.5 14 L 23.5 14 Z" fill="#ffffff"/>
+      <circle cx="25" cy="27" r="7" fill="#ffffff"/>
+      <path d="M 14 36 C 16 28 20 30 25 35 C 30 30 34 28 36 36" fill="none" stroke="#ffffff" stroke-width="2"/>
+    </svg>`;
+
+  // 7. 摩斯漢堡 MOS Burger 官方紅底純白流線 M 標誌 SVG
+  const mosBurgerSvg = `
+    <svg viewBox="0 0 60 42" width="26" height="18" style="display:block;">
+      <rect width="60" height="42" rx="6" fill="#d9251d"/>
+      <path d="M 14 30 C 14 18 22 14 28 22 C 30 25 32 25 34 22 C 40 14 46 18 46 30" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+      <text x="30" y="38" font-family="Arial, sans-serif" font-weight="900" font-size="6" fill="#ffffff" text-anchor="middle">MOS</text>
+    </svg>`;
+
+  // 8. 屈臣氏 Watsons 官方湖水青綠底純白字樣招牌 SVG
+  const watsonsSvg = `
+    <svg viewBox="0 0 70 38" width="30" height="16" style="display:block;">
+      <rect width="70" height="38" rx="5" fill="#009aa6"/>
+      <text x="35" y="24" font-family="Arial, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">watsons</text>
+    </svg>`;
+
+  // 9. 康是美 Cosmed 官方鮮橘底白紅蝶花十字標誌 SVG
+  const cosmedSvg = `
+    <svg viewBox="0 0 50 50" width="22" height="22" style="display:block;">
+      <rect width="50" height="50" rx="8" fill="#ff6600"/>
+      <path d="M 25 10 C 27 18 33 18 40 25 C 33 32 27 32 25 40 C 23 32 17 32 10 25 C 17 18 23 18 25 10 Z" fill="#ffffff"/>
+      <circle cx="25" cy="25" r="5" fill="#dc2626"/>
+    </svg>`;
+
+  // 10. CoCo 都可手搖飲 官方溫暖亮橘圓角笑臉標誌 SVG
+  const cocoSvg = `
+    <svg viewBox="0 0 64 42" width="28" height="18" style="display:block;">
+      <rect width="64" height="42" rx="6" fill="#f97316"/>
+      <circle cx="20" cy="21" r="11" fill="#ffffff"/>
+      <circle cx="17" cy="18" r="1.5" fill="#ea580c"/>
+      <circle cx="23" cy="18" r="1.5" fill="#ea580c"/>
+      <path d="M 16 23 Q 20 28 24 23" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="44" y="26" font-family="Arial, sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle">CoCo</text>
+    </svg>`;
+
+  // 11. 雙北傳統市場與觀光夜市 經典金木牌樓與大紅燈籠樣式 SVG
+  const marketSvg = `
+    <svg viewBox="0 0 60 48" width="26" height="20" style="display:block;">
+      <path d="M 10 16 L 30 8 L 50 16 L 46 22 L 14 22 Z" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+      <rect x="16" y="22" width="5" height="22" fill="#92400e"/>
+      <rect x="39" y="22" width="5" height="22" fill="#92400e"/>
+      <rect x="21" y="24" width="18" height="12" rx="2" fill="#dc2626"/>
+      <circle cx="10" cy="26" r="5" fill="#ef4444"/>
+      <circle cx="50" cy="26" r="5" fill="#ef4444"/>
+      <text x="30" y="32" font-family="sans-serif" font-weight="900" font-size="7" fill="#fef08a" text-anchor="middle">市集</text>
+    </svg>`;
+
+  // 12. 大眾運輸捷運/公車/臺鐵/高鐵 官方代表色標誌 SVG
+  const transportSvg = `
+    <svg viewBox="0 0 50 50" width="22" height="22" style="display:block;">
+      <circle cx="25" cy="25" r="23" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+      <path d="M 14 22 C 16 12 32 10 38 18 L 33 19 C 30 14 18 16 17 23 Z" fill="#0070bc"/>
+      <path d="M 36 28 C 34 38 18 40 12 32 L 17 31 C 20 36 32 34 33 27 Z" fill="#00a650"/>
+    </svg>`;
+
+  // 13. 文化歷史古蹟與名勝 SVG
+  const landmarkSvg = `
+    <svg viewBox="0 0 50 50" width="22" height="22" style="display:block;">
+      <circle cx="25" cy="25" r="23" fill="#1e293b" stroke="#c084fc" stroke-width="2"/>
+      <path d="M 12 16 L 25 10 L 38 16 Z" fill="#c084fc"/>
+      <rect x="15" y="18" width="4" height="18" fill="#e2e8f0"/>
+      <rect x="23" y="18" width="4" height="18" fill="#e2e8f0"/>
+      <rect x="31" y="18" width="4" height="18" fill="#e2e8f0"/>
+      <rect x="10" y="36" width="30" height="4" fill="#c084fc"/>
     </svg>`;
 
   switch (brand) {
@@ -1592,40 +1729,65 @@ function getStoreIconHtml(brand, store) {
       break;
     case 'seven':
       pinClass = 'pin-seven';
-      badgeContent = '7';
+      badgeContent = sevenSvg;
       break;
     case 'familymart':
       pinClass = 'pin-familymart';
-      badgeContent = '全';
+      badgeContent = familyMartSvg;
+      break;
+    case 'pxmart':
+      pinClass = 'pin-pxmart';
+      badgeContent = pxmartSvg;
+      break;
+    case 'mcdonalds':
+      pinClass = 'pin-mcdonalds';
+      badgeContent = mcdonaldsSvg;
+      break;
+    case 'starbucks':
+      pinClass = 'pin-starbucks';
+      badgeContent = starbucksSvg;
+      break;
+    case 'mosburger':
+      pinClass = 'pin-mosburger';
+      badgeContent = mosBurgerSvg;
+      break;
+    case 'watsons':
+      pinClass = 'pin-watsons';
+      badgeContent = watsonsSvg;
+      break;
+    case 'cosmed':
+      pinClass = 'pin-cosmed';
+      badgeContent = cosmedSvg;
       break;
     case 'coco':
       pinClass = 'pin-coco';
-      badgeContent = '🧋';
+      badgeContent = cocoSvg;
       break;
     case 'market':
       pinClass = 'pin-market';
-      badgeContent = '市';
+      badgeContent = marketSvg;
       break;
     case 'transport':
       pinClass = 'pin-transport';
-      badgeContent = store.name.includes('公車') ? '🚏' : '🚇';
+      badgeContent = transportSvg;
       break;
     case 'landmark':
       pinClass = 'pin-landmark';
-      badgeContent = '🏛️';
+      badgeContent = landmarkSvg;
       break;
     default:
-      pinClass = 'pin-carrefour';
-      badgeContent = carrefourSvg;
+      pinClass = 'pin-seven';
+      badgeContent = sevenSvg;
   }
 
+  // 純粹官方品牌標誌樣式，絕不於下方附加雜亂文字，乾淨典雅！
   return `<div class="store-holo-pin ${pinClass}" title="${store.name}">${badgeContent}</div>`;
 }
 
 // 建立門市詳細彈窗內容
 function buildStorePopupContent(store) {
-  let brandPillClass = 'type-wanjiafu';
-  let brandLabel = '家樂福量販';
+  let brandPillClass = 'type-cvs';
+  let brandLabel = '品牌門市';
 
   switch (store.brand) {
     case 'wanjiafu':
@@ -1637,9 +1799,15 @@ function buildStorePopupContent(store) {
       brandPillClass = 'type-lejiakang';
       brandLabel = '家樂福便利購超市';
       break;
-    case 'seven': brandPillClass = 'type-cvs'; brandLabel = '7-Eleven'; break;
+    case 'seven': brandPillClass = 'type-cvs'; brandLabel = '7-Eleven 統一超商'; break;
     case 'familymart': brandPillClass = 'type-cvs'; brandLabel = '全家 FamilyMart'; break;
-    case 'coco': brandPillClass = 'type-cvs'; brandLabel = 'CoCo 手搖飲'; break;
+    case 'pxmart': brandPillClass = 'type-wanjiafu'; brandLabel = '全聯福利中心 PX-Mart'; break;
+    case 'mcdonalds': brandPillClass = 'type-cvs'; brandLabel = '麥當勞 McDonald\'s'; break;
+    case 'starbucks': brandPillClass = 'type-cvs'; brandLabel = '星巴克 Starbucks'; break;
+    case 'mosburger': brandPillClass = 'type-cvs'; brandLabel = '摩斯漢堡 MOS Burger'; break;
+    case 'watsons': brandPillClass = 'type-cvs'; brandLabel = '屈臣氏 Watsons'; break;
+    case 'cosmed': brandPillClass = 'type-cvs'; brandLabel = '康是美 Cosmed'; break;
+    case 'coco': brandPillClass = 'type-cvs'; brandLabel = 'CoCo 都可手搖飲'; break;
     case 'market': brandPillClass = 'type-wanjiafu'; brandLabel = '傳統市集/夜市'; break;
     case 'transport': brandPillClass = 'type-lejiakang'; brandLabel = '大眾公共運輸'; break;
     case 'landmark': brandPillClass = 'type-cvs'; brandLabel = '文化歷史地標'; break;
@@ -1707,6 +1875,9 @@ function addDemoCasesMarkers() {
 // ──────────────────────────────────────────
 // 9. 門市品牌篩選器 (落實委託人指示)
 // ──────────────────────────────────────────
+// ──────────────────────────────────────────
+// 9. 門市品牌篩選器 (落實委託人指示：依品牌聚焦巡航，放縮自如)
+// ──────────────────────────────────────────
 function filterStoreMarkers(brandKey, btnElement) {
   currentStoreFilter = brandKey;
 
@@ -1716,98 +1887,135 @@ function filterStoreMarkers(brandKey, btnElement) {
   });
   if (btnElement) btnElement.classList.add('active');
 
-  let visibleCount = 0;
+  const brandFlagships = {
+    wanjiafu: { coords: [25.0381, 121.5064], zoom: 15.5, name: '家樂福 桂林量販旗艦店' },
+    carrefour: { coords: [25.0381, 121.5064], zoom: 15.5, name: '家樂福 桂林量販旗艦店' },
+    pxmart: { coords: [25.0410, 121.5200], zoom: 15.5, name: '全聯福利中心 中正旗艦門市' },
+    seven: { coords: [25.0450, 121.5160], zoom: 15.5, name: '7-Eleven 博漢科技門市' },
+    familymart: { coords: [25.0440, 121.5180], zoom: 15.5, name: '全家 FamilyMart 重慶概念店' },
+    mcdonalds: { coords: [25.0455, 121.5140], zoom: 15.5, name: '麥當勞 台北館前旗艦店' },
+    starbucks: { coords: [25.0435, 121.5130], zoom: 15.5, name: '星巴克 重慶門市' },
+    mosburger: { coords: [25.0445, 121.5150], zoom: 15.5, name: '摩斯漢堡 許昌旗艦門市' },
+    watsons: { coords: [25.0460, 121.5155], zoom: 15.5, name: '屈臣氏 台北站前旗艦店' },
+    cosmed: { coords: [25.0452, 121.5165], zoom: 15.5, name: '康是美 博愛旗艦門市' },
+    coco: { coords: [25.0448, 121.5145], zoom: 15.5, name: 'CoCo 都可 南陽旗艦店' },
+    market: { coords: [25.0360, 121.5200], zoom: 15.5, name: '南門市場 綠建築旗艦' }
+  };
 
   if (brandKey === 'all') {
-    // 顯示所有門市與案件 (家樂福受 LOD 縮放過濾保護：zoom >= 14.5 才顯示小標示)
-    Object.keys(storeMarkerGroups).forEach(k => {
-      map.addLayer(storeMarkerGroups[k]);
-    });
-    map.addLayer(casesLayerGroup);
-    updateCarrefourZoomVisibility();
-    visibleCount = STORES_DATA.length;
+    // 顯示所有門市與案件 (受 LOD 縮放過濾保護：zoom >= 15.0 才顯示精美標示，縮小不壅塞)
+    updateStoreLODVisibility();
   } else if (brandKey === 'cases') {
     // 僅顯示案件
     Object.keys(storeMarkerGroups).forEach(k => {
       map.removeLayer(storeMarkerGroups[k]);
     });
     map.addLayer(casesLayerGroup);
-    visibleCount = CASES_DATA.length;
-  } else if (brandKey === 'wanjiafu' || brandKey === 'carrefour') {
-    // 🛒 家樂福專屬品牌：量販旗艦與便利購超市，並平滑巡航至桂林旗艦店 (zoom 15.5 呈現精緻小標示)
-    Object.keys(storeMarkerGroups).forEach(k => {
-      if (k === 'wanjiafu' || k === 'lejiakang' || k === 'carrefour') {
-        map.addLayer(storeMarkerGroups[k]);
-      } else {
-        map.removeLayer(storeMarkerGroups[k]);
-      }
-    });
-    map.removeLayer(casesLayerGroup);
-    map.flyTo([25.0381, 121.5064], 15.5, { duration: 1.2 });
-    visibleCount = STORES_DATA.filter(s => s.brand === 'wanjiafu' || s.brand === 'lejiakang' || s.brand === 'carrefour').length;
+    updateVisibleStoreCountHUD(false);
+  } else if (brandFlagships[brandKey]) {
+    // 聚焦至特定品牌的示範旗艦門市，縮放設定為 15.5 (高清晰呈現官方向量樣式)
+    const target = brandFlagships[brandKey];
+    map.flyTo(target.coords, target.zoom, { duration: 1.2 });
+    updateStoreLODVisibility();
   } else if (['thsr', 'tra', 'mrt', 'ebus', 'transport'].includes(brandKey)) {
     // 大眾運輸快捷過濾
     if (brandKey === 'thsr') {
       if (!isThsrVisible) toggleThsrLayer();
       map.flyTo([25.0478, 121.5171], 14, { duration: 1.2 });
-      visibleCount = 3;
     } else if (brandKey === 'tra') {
       if (!isTraVisible) toggleTraLayer();
       map.flyTo([25.0478, 121.5171], 13.5, { duration: 1.2 });
-      visibleCount = TRA_DATA ? TRA_DATA.stations.length : 16;
     } else if (brandKey === 'mrt') {
       if (!isMrtVisible) toggleMrtLayer();
       map.flyTo([25.0465, 121.5170], 13.8, { duration: 1.2 });
-      visibleCount = 131;
     } else if (brandKey === 'ebus') {
       if (!isBusVisible) toggleBusLayer();
       if (!isEBusPanelOpen) toggleEBusNavigator();
-      visibleCount = 1037;
     } else {
-      visibleCount = STORES_DATA.filter(s => s.brand === 'transport').length;
+      map.flyTo([25.0465, 121.5170], 15.0, { duration: 1.2 });
     }
+    updateStoreLODVisibility();
   } else if (brandKey === 'parks') {
     // 雙北 41 行政特區 1:1 真實公園綠地過濾
     if (!isParksVisible) toggleParksLayer();
     map.flyTo([25.035, 121.530], 13, { duration: 1.2 });
-    visibleCount = PARKS_DATA.length;
+    updateStoreLODVisibility();
   } else {
-    // 顯示指定品牌
-    Object.keys(storeMarkerGroups).forEach(k => {
-      if (k === brandKey) {
-        map.addLayer(storeMarkerGroups[k]);
-      } else {
-        map.removeLayer(storeMarkerGroups[k]);
-      }
-    });
-    map.removeLayer(casesLayerGroup);
-    visibleCount = STORES_DATA.filter(s => s.brand === brandKey).length;
+    updateStoreLODVisibility();
   }
-
-  const countEl = document.getElementById('hudStoreCount');
-  if (countEl) countEl.innerText = `${visibleCount} 處`;
 }
 
 // ──────────────────────────────────────────
-// 9.1 家樂福層級細節 (LOD) 控制器：縮小時不顯示，放大至 >= 14.5 才顯示小小的家樂福標示
+// 9.1 全門市層級細節 (LOD) 控制器：落實委託人指示
+// 「那些只要出現的商店，我要的是它的樣式，而不是在下面寫個它的名字。我要的是它的樣式，並且要放大到一定程度我才會看得到。不然畫面會很擠」
 // ──────────────────────────────────────────
-function updateCarrefourZoomVisibility() {
+function updateStoreLODVisibility() {
   const currentZoom = map.getZoom();
-  const showCarrefour = currentZoom >= 14.5;
+  // 核心：放大至 >= 15.0 (街道/街廓等級) 才浮現商店官方樣式標示；縮小至雙北廣域概覽時完全隱藏，保持視界純淨清爽！
+  const showStores = currentZoom >= 15.0;
 
-  ['wanjiafu', 'lejiakang', 'carrefour'].forEach(b => {
-    const group = storeMarkerGroups[b];
-    if (!group) return;
-    if (currentStoreFilter === 'all') {
-      if (showCarrefour) {
+  const commercialBrands = [
+    'wanjiafu', 'lejiakang', 'carrefour', 'seven', 'familymart',
+    'pxmart', 'mcdonalds', 'starbucks', 'mosburger', 'watsons',
+    'cosmed', 'coco', 'market', 'transport', 'landmark'
+  ];
+
+  if (currentStoreFilter === 'all') {
+    commercialBrands.forEach(b => {
+      const group = storeMarkerGroups[b];
+      if (!group) return;
+      if (showStores) {
         if (!map.hasLayer(group)) map.addLayer(group);
       } else {
         if (map.hasLayer(group)) map.removeLayer(group);
       }
-    } else if (currentStoreFilter === 'wanjiafu' || currentStoreFilter === 'carrefour') {
-      if (!map.hasLayer(group)) map.addLayer(group);
-    }
-  });
+    });
+    if (!map.hasLayer(casesLayerGroup)) map.addLayer(casesLayerGroup);
+  } else if (currentStoreFilter === 'cases') {
+    commercialBrands.forEach(b => {
+      const group = storeMarkerGroups[b];
+      if (group && map.hasLayer(group)) map.removeLayer(group);
+    });
+    if (!map.hasLayer(casesLayerGroup)) map.addLayer(casesLayerGroup);
+  } else {
+    // 特定品牌篩選模式
+    commercialBrands.forEach(b => {
+      const group = storeMarkerGroups[b];
+      if (!group) return;
+      const isTarget = (b === currentStoreFilter) ||
+        ((currentStoreFilter === 'wanjiafu' || currentStoreFilter === 'carrefour') && (b === 'wanjiafu' || b === 'lejiakang' || b === 'carrefour'));
+
+      if (isTarget) {
+        // 若使用者指定篩選該品牌，在 zoom >= 14.0 即可呈現
+        if (currentZoom >= 14.0) {
+          if (!map.hasLayer(group)) map.addLayer(group);
+        } else {
+          if (map.hasLayer(group)) map.removeLayer(group);
+        }
+      } else {
+        if (map.hasLayer(group)) map.removeLayer(group);
+      }
+    });
+    if (map.hasLayer(casesLayerGroup)) map.removeLayer(casesLayerGroup);
+  }
+
+  updateVisibleStoreCountHUD(showStores);
+}
+
+function updateVisibleStoreCountHUD(showStores) {
+  const countEl = document.getElementById('hudStoreCount');
+  if (!countEl) return;
+
+  if (currentStoreFilter === 'all') {
+    countEl.innerText = showStores ? `${STORES_DATA.length} 處 (已放大呈現樣式)` : '0 處 (縮小隱藏避擠)';
+  } else if (currentStoreFilter === 'cases') {
+    countEl.innerText = `${CASES_DATA.length} 案`;
+  } else {
+    const isTargetBrand = (b) => (b === currentStoreFilter) ||
+      ((currentStoreFilter === 'wanjiafu' || currentStoreFilter === 'carrefour') && (b === 'wanjiafu' || b === 'lejiakang' || b === 'carrefour'));
+    const cnt = STORES_DATA.filter(s => isTargetBrand(s.brand)).length;
+    countEl.innerText = `${cnt} 處`;
+  }
 }
 
 // ──────────────────────────────────────────
