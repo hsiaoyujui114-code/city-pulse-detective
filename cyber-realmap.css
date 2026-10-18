@@ -1300,6 +1300,25 @@ html, body {
   letter-spacing: 0.5px;
 }
 
+.pin-mrt-compact-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pin-mrt-compact-dot:hover {
+  transform: scale(2.0);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 1.0);
+}
+
+.compact-dot-wrap {
+  width: 10px !important;
+  height: 10px !important;
+}
+
 .pin-ebus {
   background: linear-gradient(135deg, #059669, #047857);
   border-color: #6ee7b7;

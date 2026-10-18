@@ -168,7 +168,10 @@ function initCyberRealMap() {
   initMrtTrainsContinuousDispatch(); // 核心：捷運固定班距動態列車調度引擎 (BL/R/G/O/Y 雙向固定班次)
   addSectorsLayer();
   addAllStoreMarkers();
-  map.on('zoomend', updateStoreLODVisibility);
+  map.on('zoomend', () => {
+    updateStoreLODVisibility();
+    addMrtLayer();
+  });
   updateStoreLODVisibility();
   addDemoCasesMarkers();
   initPlayerAvatarMarker(); // 核心：微觀主角巡航標記與特寫跟隨
@@ -719,6 +722,168 @@ const SHUANGBEI_MAJOR_STREETS = [
       [25.2600, 121.5950],
       [25.2900, 121.5680]
     ]
+  },
+  // ── 雙北核心高快速公路路網 (Highways & Expressways) ──
+  {
+    name: '台64線快速公路 (八里新店線)',
+    shortName: '台64八里新店快',
+    color: '#dc2626',
+    coreColor: '#f87171',
+    width: 9,
+    center: [25.0450, 121.4650],
+    coords: [
+      [25.1580, 121.3980],
+      [25.1050, 121.4350],
+      [25.0720, 121.4480],
+      [25.0550, 121.4580],
+      [25.0380, 121.4650],
+      [25.0180, 121.4720],
+      [25.0020, 121.4920],
+      [24.9920, 121.5050],
+      [24.9780, 121.5350],
+      [24.9650, 121.5420]
+    ]
+  },
+  {
+    name: '台65線快速公路 (五股土城線)',
+    shortName: '台65五股土城快',
+    color: '#ea580c',
+    coreColor: '#fb923c',
+    width: 9,
+    center: [25.0320, 121.4450],
+    coords: [
+      [25.0680, 121.4420],
+      [25.0550, 121.4420],
+      [25.0380, 121.4430],
+      [25.0180, 121.4480],
+      [24.9950, 121.4420],
+      [24.9720, 121.4380],
+      [24.9620, 121.4320]
+    ]
+  },
+  {
+    name: '新北環河快速道路 (新北環快)',
+    shortName: '新北環快',
+    color: '#0891b2',
+    coreColor: '#22d3ee',
+    width: 8,
+    center: [25.0250, 121.4950],
+    coords: [
+      [25.0750, 121.4950],
+      [25.0580, 121.4980],
+      [25.0420, 121.4920],
+      [25.0250, 121.4850],
+      [25.0050, 121.5050],
+      [24.9950, 121.5150],
+      [24.9820, 121.5350]
+    ]
+  },
+  {
+    name: '市民大道高架道路 ✕ 環東大道',
+    shortName: '市民高架/環東',
+    color: '#7c3aed',
+    coreColor: '#a78bfa',
+    width: 8,
+    center: [25.0460, 121.5550],
+    coords: [
+      [25.0494, 121.5106],
+      [25.0470, 121.5250],
+      [25.0450, 121.5380],
+      [25.0450, 121.5580],
+      [25.0480, 121.5780],
+      [25.0530, 121.6050],
+      [25.0580, 121.6250]
+    ]
+  },
+  {
+    name: '建國南北路高架道路',
+    shortName: '建國高架道路',
+    color: '#059669',
+    coreColor: '#34d399',
+    width: 8,
+    center: [25.0450, 121.5380],
+    coords: [
+      [25.0750, 121.5360],
+      [25.0600, 121.5370],
+      [25.0520, 121.5380],
+      [25.0420, 121.5380],
+      [25.0330, 121.5380],
+      [25.0240, 121.5390],
+      [25.0180, 121.5420]
+    ]
+  },
+  {
+    name: '新生高架道路',
+    shortName: '新生高架道路',
+    color: '#2563eb',
+    coreColor: '#60a5fa',
+    width: 8,
+    center: [25.0600, 121.5280],
+    coords: [
+      [25.0850, 121.5260],
+      [25.0720, 121.5280],
+      [25.0620, 121.5280],
+      [25.0520, 121.5290],
+      [25.0440, 121.5290]
+    ]
+  },
+  {
+    name: '水源快速道路',
+    shortName: '水源快速道路',
+    color: '#0284c7',
+    coreColor: '#38bdf8',
+    width: 8,
+    center: [25.0150, 121.5180],
+    coords: [
+      [25.0320, 121.4920],
+      [25.0220, 121.5050],
+      [25.0150, 121.5180],
+      [25.0050, 121.5300],
+      [24.9920, 121.5380]
+    ]
+  },
+  {
+    name: '環河南北路快速道路',
+    shortName: '環河南北快速',
+    color: '#d97706',
+    coreColor: '#fbbf24',
+    width: 8,
+    center: [25.0500, 121.5050],
+    coords: [
+      [25.0750, 121.5100],
+      [25.0600, 121.5080],
+      [25.0480, 121.5050],
+      [25.0350, 121.4980],
+      [25.0220, 121.4920]
+    ]
+  },
+  {
+    name: '洲美快速道路',
+    shortName: '洲美快速道路',
+    color: '#4f46e5',
+    coreColor: '#818cf8',
+    width: 8,
+    center: [25.1050, 121.5050],
+    coords: [
+      [25.1250, 121.4950],
+      [25.1100, 121.5050],
+      [25.0920, 121.5150],
+      [25.0850, 121.5180]
+    ]
+  },
+  {
+    name: '信義快速道路',
+    shortName: '信義快速道路',
+    color: '#c026d3',
+    coreColor: '#e879f9',
+    width: 8,
+    center: [25.0150, 121.5720],
+    coords: [
+      [25.0330, 121.5700],
+      [25.0220, 121.5720],
+      [25.0100, 121.5740],
+      [25.0020, 121.5680]
+    ]
   }
 ];
 
@@ -899,30 +1064,33 @@ function addThsrLayer() {
   });
 }
 
-// (2) 🚆 臺灣鐵路 (TRA 縱貫線北段 ✕ 宜蘭線平溪線)
+// (2) 🚆 臺灣鐵路 (TRA 縱貫線北段 ✕ 宜蘭線平溪線 ✕ 深澳線 雙北 28 站全覆蓋)
 function addTraLayer() {
   traLayerGroup.clearLayers();
   if (!TRA_DATA) return;
 
   // 鐵道枕木雙軌視覺 (黑底實線 + 藍白鐵道交替虛線)
-  L.polyline(TRA_DATA.corridor, {
-    color: '#0f172a',
-    weight: 8,
-    opacity: 0.9,
-    lineCap: 'round',
-    lineJoin: 'round'
-  }).addTo(traLayerGroup);
+  const corridors = TRA_DATA.corridors || (TRA_DATA.corridor ? [TRA_DATA.corridor] : []);
+  corridors.forEach(c => {
+    L.polyline(c, {
+      color: '#0f172a',
+      weight: 8,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(traLayerGroup);
 
-  const traLine = L.polyline(TRA_DATA.corridor, {
-    color: '#38bdf8',
-    weight: 3.5,
-    opacity: 1.0,
-    dashArray: '8, 8'
-  }).addTo(traLayerGroup);
+    const traLine = L.polyline(c, {
+      color: '#38bdf8',
+      weight: 3.5,
+      opacity: 1.0,
+      dashArray: '8, 8'
+    }).addTo(traLayerGroup);
 
-  traLine.bindTooltip('🚆 臺灣鐵路 (TRA) 縱貫線北段 (雙軌電氣化主幹線)', { sticky: true });
+    traLine.bindTooltip('🚆 臺灣鐵路 (TRA) 雙軌電氣化主幹線 / 支線 (雙北 28 站全線貫通)', { sticky: true });
+  });
 
-  // 台鐵 16 大站點標記
+  // 台鐵 28 大站點標記
   TRA_DATA.stations.forEach(st => {
     const icon = L.divIcon({
       html: `<div class="transit-badge-pin pin-tra">🚆 ${st.name}</div>`,
@@ -934,11 +1102,13 @@ function addTraLayer() {
 
     const popupHtml = `
       <div style="font-family:sans-serif; min-width:230px; color:#f8fafc;">
-        <div style="font-size:13px; font-weight:900; color:#38bdf8; margin-bottom:4px;">🚆 臺灣鐵路 ${st.name}</div>
-        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">路線: ${st.line}｜區域: ${st.zone}</div>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <strong style="font-size:13px; color:#38bdf8;">🚆 臺灣鐵路 ${st.name}</strong>
+        </div>
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px;">路線: <b>${st.line}</b> ｜ 區域: ${st.zone}</div>
         <div style="font-size:11px; color:#cbd5e1; line-height:1.4;">
-          雙北都會通勤主力鐵道，自強號、莒光號、區間快車高頻次靠泊。<br>
-          💳 全程支援悠遊卡、一卡通、TPASS 通勤月票感應進出站。
+          雙北都會通勤與城際鐵路主力，自強號、莒光號、區間快車高頻次靠泊。<br>
+          💳 全程支援悠遊卡、一卡通、TPASS 基北北桃 1200 通勤月票感應進出站。
         </div>
       </div>
     `;
@@ -946,10 +1116,13 @@ function addTraLayer() {
   });
 }
 
-// (3) 🚇 大台北捷運 9 大完整路網 (Taipei Metro Network)
+// (3) 🚇 大台北捷運 9 大完整路網 (Taipei Metro & New Taipei Metro)
+// 包含 9 大路線全線 131+ 站點 (無閹割 1:1 實裝)
 function addMrtLayer() {
   mrtLayerGroup.clearLayers();
   if (!MRT_DATA || MRT_DATA.length === 0) return;
+
+  const currentZoom = (typeof map !== 'undefined' && map) ? map.getZoom() : 13;
 
   MRT_DATA.forEach(line => {
     const coords = line.stations.map(st => [st.lat, st.lon]);
@@ -972,38 +1145,43 @@ function addMrtLayer() {
 
     poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
 
-    // 繪製高畫質捷運站點標籤 Marker
+    // 繪製高畫質捷運站點標籤 Marker (雙北 131+ 全站無閹割 1:1 實裝)
     line.stations.forEach((st, idx) => {
-      // 關鍵樞紐站與端點站
+      // 關鍵樞紐站與端點站 (在廣域縮小時優先顯示全標籤)
       const isHub = (idx === 0 || idx === line.stations.length - 1 || 
-                     ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區'].includes(st.name));
-      if (!isHub) return;
+                     ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區', '動物園', '南港展覽館', '淡水', '頂埔', '新店', '南勢角', '蘆洲', '迴龍'].includes(st.name));
 
       const metroSvg = `<svg class="metro-official-logo" viewBox="-50 -50 100 100" width="16" height="16">
         <path d="M -26,10 C -28,-14 -12,-36 14,-36 C 26,-36 36,-30 42,-20 L 46,-30 L 46,-6 L 22,-10 L 32,-17 C 27,-23 21,-27 14,-27 C -6,-27 -18,-11 -17,10 Z" fill="#0070bc" />
         <path d="M 26,-10 C 28,14 12,36 -14,36 C -26,36 -36,30 -42,20 L -46,30 L -46,6 L -22,10 L -32,17 C -27,23 -21,27 -14,27 C 6,27 18,11 17,-10 Z" fill="#00a650" />
       </svg>`;
 
-      const lineCode = line.lineCode || (line.name.includes('板南') ? 'BL' : (line.name.includes('淡水') ? 'R' : (line.name.includes('松山') ? 'G' : (line.name.includes('中和') ? 'O' : (line.name.includes('文湖') ? 'BR' : 'Y')))));
+      const lineCode = st.code || line.lineCode || 'MRT';
+      // 雙層級呈現：當縮小至 zoom < 14 時，普通站點呈現精緻光點避擠；放大至 >= 14 或關鍵樞紐站時，呈現完整超高畫質官方向量標記
+      const showFullPin = (currentZoom >= 14.0) || isHub;
+
+      const html = showFullPin ? `
+        <div class="pin-mrt-vector" style="border-color:${line.color};">
+          <span class="mrt-logo-box">${metroSvg}</span>
+          <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
+          <span class="mrt-station-title">${st.name}</span>
+        </div>
+      ` : `
+        <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
+      `;
 
       const icon = L.divIcon({
-        html: `
-          <div class="pin-mrt-vector" style="border-color:${line.color};">
-            <span class="mrt-logo-box">${metroSvg}</span>
-            <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
-            <span class="mrt-station-title">${st.name}</span>
-          </div>
-        `,
-        className: 'transit-pin-wrap',
-        iconAnchor: [48, 14]
+        html: html,
+        className: 'transit-pin-wrap' + (showFullPin ? '' : ' compact-dot-wrap'),
+        iconAnchor: showFullPin ? [48, 14] : [5, 5]
       });
 
       const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
       marker.bindPopup(`
-        <div style="font-family:sans-serif; color:#f8fafc; min-width:190px;">
+        <div style="font-family:sans-serif; color:#f8fafc; min-width:200px;">
           <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
             <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${line.color};"></span>
-            <strong style="font-size:13px; color:#ffffff;">捷運 ${st.name} 站</strong>
+            <strong style="font-size:13px; color:#ffffff;">捷運 ${st.name} 站 ${st.code ? '(' + st.code + ')' : ''}</strong>
           </div>
           <div style="font-size:11px; color:#38bdf8; font-weight:700;">官方標誌：科技藍 (#0070bc) ✕ 生機綠 (#00a650)</div>
           <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬路線：${line.name} [代表色 ${lineCode}：${line.color}]</div>

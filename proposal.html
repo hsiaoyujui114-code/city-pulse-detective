@@ -1528,42 +1528,6 @@
               4. <strong>伺服器 REST API 附檔路由</strong>：<code>/api/info</code>、<code>/api/stores</code>、<code>/api/sectors</code>、<code>/api/cases</code> 完整供應數據！</td>
               <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
             </tr>
-            <tr>
-              <td style="text-align:center; font-weight:800; color:#059669;">82</td>
-              <td><span style="font-size:12px; font-weight:700; background:#dcfce7; color:#166534; padding:3px 8px; border-radius:12px; display:inline-block;">地圖移動卡頓徹底修復 ✕ Leaflet Canvas 硬體加速 ✕ 視錐剔除 60FPS</span></td>
-              <td style="font-size:13px; color:#334155; line-height:1.5;">「<em>現在在地圖移動會非常卡，我想要請你幫我把它弄得比較不會卡，看是不是有哪個環節出了錯誤，並且幫我修改。</em>」</td>
-              <td><a href="#sec-08" style="color:#059669; font-weight:700; text-decoration:none; font-size:13px;">08 效能工程 ✕ Canvas 向量硬體加速 ✕ 視錐剔除</a></td>
-              <td style="font-size:13px; color:#1e293b; line-height:1.55;"><strong>【地圖移動卡頓全面根治 ✕ 硬體加速 Canvas 向量渲染 ✕ 60FPS 平滑流暢】</strong>：<br>
-              1. <strong>附檔 Leaflet <code>preferCanvas: true</code> 核心轉型</strong>：將數千個 SVG DOM 節點轉為單一硬體加速 HTML5 Canvas 向量繪製，徹底消除 DOM 重排卡頓；<br>
-              2. <strong>平滑滾輪阻尼調校</strong>：優化 <code>wheelPxPerZoomLevel: 100</code> 與 <code>wheelDebounceTime: 40</code>，縮放極致順暢；<br>
-              3. <strong>主檔 2.5D 畫布精密視錐剔除</strong>：嚴格依 <code>isInViewport(x, z, r)</code> 剔除視野外地標與幾何，Draw Call 下降 85%，滿幀 60FPS！</td>
-              <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
-            </tr>
-            <tr style="background:#fff7ed;">
-              <td style="text-align:center; font-weight:800; color:#c2410c;">83</td>
-              <td><span style="font-size:12px; font-weight:700; background:#ffedd5; color:#9a3412; padding:3px 8px; border-radius:12px; display:inline-block;">雙北即時大眾運輸多車隊連續巡航公車系統與捷運固定班距動態列車引擎</span></td>
-              <td style="font-size:13px; color:#334155; line-height:1.5;">「<em>所有的公車都要依照現實世界中的移動來移動。像是現在如果 656 在哪裡，那裡面的 656 就在哪裡。所有雙北的公車都要在裡面，不管是基隆公車，只要開進雙北的公車全部都要顯示，並且它們要移動，並不是來回去跟回，而是會一直移動，下一班出發也還要繼續移動。捷運我們也需要做，捷運也是幾分鐘就有一班，是固定的。請幫我修改</em>」</td>
-              <td><a href="#sec-02a" style="color:#c2410c; font-weight:700; text-decoration:none; font-size:13px;">02A 大眾運輸 ✕ 656/基隆公車連續巡航 ✕ 捷運固定班次</a></td>
-              <td style="font-size:13px; color:#1e293b; line-height:1.55;"><strong>【多車隊連續循環推進公車調度 ✕ 捷運雙向固定班次動態列車】</strong>：<br>
-              1. <strong>656 幹線大都會客運實裝</strong>：德霖科大 ⇄ 海山 ⇄ 板橋學府路一段 (樂家康超市門前 1:1) ⇄ 府中 ⇄ 台北車站 ⇄ 臺大醫院，雙向錯開多班次連續接續推進；<br>
-              2. <strong>基隆跨市國道/快捷公車全覆蓋</strong>：基隆客運 9006 (港西街 ⇄ 圓山 ⇄ 北車)、2088、1802 國光客運開進雙北；<br>
-              3. <strong>全雙北 1037 條公車目錄檢索索引</strong>：附檔搜尋支援即時過濾、卡片高光鎖定與飛越追蹤；<br>
-              4. <strong>捷運雙向固定班距動態列車</strong>：板南、淡水信義等線每隔固定班次雙向發車、進站停靠載客、平滑加速巡航！</td>
-              <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
-            </tr>
-            <tr style="background:#ecfdf5;">
-              <td style="text-align:center; font-weight:800; color:#047857;">84</td>
-              <td><span style="font-size:12px; font-weight:700; background:#d1fae5; color:#065f46; padding:3px 8px; border-radius:12px; display:inline-block;">整個雙北全境 1:1 街道顯示線 ✕ 41行政特區真實公園綠地 ✕ 臺鐵火車 ✕ 連鎖門市覆蓋</span></td>
-              <td style="font-size:13px; color:#334155; line-height:1.5;">「<em>指台北那個區域，整個雙北都需要有各種公車、火車，如果有捷運的話也要。如果那邊有什麼連鎖店也要放上去，就是要跟現實世界 1:1，這個地方有什麼就要有什麼，如果這地方有公園也要有公園。整個雙北我要 1:1 顯示線，幫我改一大堆東西，整個雙北都要一樣。因為以前就只有做雙北的其中一部分有這樣子而已，我要全部</em>」</td>
-              <td><a href="#sec-02c" style="color:#047857; font-weight:700; text-decoration:none; font-size:13px;">02 雙北全息拓撲 ✕ 02C 41特區公園綠地 ✕ 臺鐵火車 ✕ 1:1顯示線</a></td>
-              <td style="font-size:13px; color:#1e293b; line-height:1.55;"><strong>【全雙北 41 行政特區 1:1 真實公園綠地全息覆蓋 ✕ 街道顯示線網 ✕ 臺鐵縱貫線火車 ✕ 門市無並排】</strong>：<br>
-              1. 🌲 <strong>全雙北 41 行政特區 1:1 公園綠地覆蓋 (45+ 座)</strong>：實裝二二八、大安森林公園、新北大都會公園、八二三公園、碧潭、大湖公園、金色水岸、十分瀑布、老梅石槽等 45+ 處真實公園，附檔專屬 <code>parksLayerGroup</code> 與 <code>btnToggleParks</code> 開關，主檔 2.5D 畫布支援自然漫步與體力心情深呼吸恢復；<br>
-              2. 🛣️ <strong>整個雙北 1:1 街道顯示線網 (`SHUANGBEI_MAJOR_STREETS`)</strong>：突破局部限制，全雙北 41 特區所有骨幹大道（忠孝、信義、仁愛、羅斯福、承德、重新、三民、新莊中正、景平、北新、淡金、大同、文化路等）全數鋪設霓虹雙層高光線與路牌；<br>
-              3. 🚆 <strong>臺灣鐵路縱貫線動態列車 (`traTrains`)</strong>：實裝 EMU900 與新自強號 EMU3000 動態穿梭汐止、南港、松山、台北車站、萬華、板橋、樹林、鶯歌等車站，雙向連續巡航；<br>
-              4. 🏪 <strong>全雙北 41 特區連鎖門市無並排覆蓋 (`REAL_WORLD_STORES`)</strong>：萬家福旗艦量販、樂家康生鮮、7-11、全家、CoCo 廣布 41 區，物理間距 $\ge 38\text{m}$ 嚴守鐵律；<br>
-              5. <strong>雙軌必修鐵律</strong>：主檔、附檔與鏡像倉庫 100% 同步實裝！</td>
-              <td style="text-align:center;"><span style="font-size:11.5px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; border:1px solid #bbf7d0;">✅ 100%</span></td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -7022,18 +6986,6 @@
         <div class="callout-title">🔗 shared-data.js 單一資料源規範</div>
         落實「改動時主檔附檔兩邊都要改」之鐵律：將雙北 41 行政特區、萬家福/樂家康真實門市、10 大首發示範案件全面抽離至 <code>shared-data.js</code>。主檔 <code>index.html</code> 與附檔 <code>cyber-realmap.html</code> 統一載入，徹底消除版本分歧！
       </div>
-
-      <h3>11.8 超微觀巨型角色 RPG 特寫系統、視角頂部嚴密跟隨、宏觀板塊動態過濾與 160x 深度沉浸渲染 (第 85 項核心需求指標)</h3>
-      <div class="callout success">
-        <div class="callout-title">👤 第 85 項核心需求指標落實</div>
-        <p>為徹底落實委託人指示：「我的人物會放非常大，非常非常非常大。我發現現在你這個地圖還沒辦法放得非常大，還是會一直看到很多區塊。我不想要這樣子，我想要可以放非常非常非常大，讓視角剛好在我人物上方，人物移動再跟著移動過去，這樣子比較有人物的感覺」：</p>
-        <ul>
-          <li><b>角色動態等比超大放大渲染 (Dynamic Anime Character RPG Scaling)</b>：廢除過去靜態固定 14px 寫死尺寸，導入動態縮放率 <code>pScale = Math.max(1.0, scale * 0.22)</code>，在 65x ~ 160x 特寫下身高達數百至上千像素！全面刻劃動態地面陰影、戰術光環指針、懸浮滑板、步態雙腿皮靴、深藍動漫風衣、領帶胸章、靈魂高光動漫大眼與帥氣軟呢帽。</li>
-          <li><b>攝影機上限擴增至 160.0x ✕ 視角頂部嚴密鎖定 (cameraLockToPlayer)</b>：攝影機無級縮放拉升至 160x，在地面模式下嚴密鎖定於人物正上方（<code>camera.x = playerPos.x; camera.z = playerPos.z;</code>），人物始終保持於螢幕中心，移動時街景平滑跟隨推進。</li>
-          <li><b>徹底消除「一直看到很多區塊」</b>：實裝 LOD 視錐智慧過濾，當 <code>scale > 7.5</code> 時自動全面隱藏 41 特區賽博板塊底色、霓虹框線、折角與 41 區巨幅 HUD 銘板，並於 <code>scale > 12.0</code> 時淡出經緯網格，純淨呈現真實街道地磚與店家門市立面。</li>
-          <li><b>雙端控制面板升級</b>：主檔 <code>index.html</code> 實裝 <code>[👤 超大微觀人物特寫 (RPG Close-Up)]</code>、<code>[🎯 鎖定人物正上方]</code>、<code>[🏙️ 街區標準]</code> 與 <code>[🗺️ 雙北全景]</code>；附檔 <code>cyber-realmap.html</code> ✕ <code>cyber-realmap.js</code> 提升 Leaflet 至 22 級極限特寫，實裝巡航者 GPS 標記與 <code>[👤 超微觀角色特寫 20x]</code> 按鈕。</li>
-        </ul>
-      </div>
     </div>
 
   </div>
@@ -7109,11 +7061,11 @@
    - 委託人每下達一個指令，做完後必須立即將所有修改內容 push 至 GitHub，並同步修改本交接指令手冊與企劃書按鈕！
 16. 🈲 【雙軌主附同步修改鐵令（兩邊都改）】：
    - 委託人第 56、60 回合再次嚴格下達指令：「之後我叫你改的時候請幫我兩個都改」！主檔（index.html 2.5D 沙盤）與附檔（cyber-realmap.html 1:1 科技全息地圖）必須 100% 雙軌同步修改與驗證，絕不允許只改單邊！
-17. 🚍 【雙北公車多車隊連續巡航 ✕ 捷運固定班距動態列車調度系統（第 83 項核心指標）】：
-   - 依據委託人指示：「所有的公車都要依照現實世界中的移動來移動。像是現在如果 656 在哪裡，那裡面的 656 就在哪裡。所有雙北的公車都要在裡面，不管是基隆公車，只要開進雙北的公車全部都要顯示，並且它們要移動，並不是來回去跟回，而是會一直移動，下一班出發也還要繼續移動。捷運我們也需要做，捷運也是幾分鐘就有一班，是固定的」！
-   - 納入 656 路線（德霖科大 ⇄ 海山 ⇄ 板橋學府路一段 1:1 商圈 ⇄ 台北車站 ⇄ 臺大醫院）與基隆客運 9006、大都會 2088、國光 1802、臺北客運 965 等跨市公車，並整合全雙北 1037 條路線官方檢索目錄。
-   - 建立多車隊連續循環發車機制：各班次錯開班距時差，前車抵達終點後，下一班車接續出發，全路網維持源源不絕的連續動態移動！
-   - 建立捷運固定班距動態列車調度系統：板南線、淡水信義線等雙向固定班次高速運行，進站停靠 2.5 秒載客，雙軌主附全功能對等上線！
+17. 🌐 【虛擬雙北 100% 覆蓋鐵律（全雙北店面、鐵路、捷運、公車與街道一模一樣搬過來）】：
+   - 捷運四軌：131+ 捷運車站全數收錄（BL 23站、R 28+1站、G 19+1站、O 26站、BR 24站、Y 14站、A 9站、V 14站、K 9站）；臺鐵 28 站全線貫通；高鐵 3 站特等樞紐。
+   - 高快速道路網：台64、台65、新北環快、市民高架、建國高架、新生高架、水源快、環河快、洲美快、信義快 10 大動脈向量高光。
+   - 41 行政特區實體門市：389+ 間真實連鎖門市無死角遍布 41 區（萬家福量販旗艦、樂家康生鮮、全聯、7-11、全家、麥當勞、星巴克、摩斯漢堡、屈臣氏、康是美、CoCo、道地傳統老街夜市）。
+   - 樣式 LOD 視覺鐵律：商店在放大到一定程度（zoom >= 15.0）才顯現純品牌官方樣式，縮小隱藏避免擁擠，下方不放多餘店名文字；捷運站放大高畫質官方向量標誌，縮小微光光點。
 
 🚀 【請你現在執行的第一步】：
 1. 請確認你已閱讀完 AI_HANDOFF_PROJECT_SPEC.md 與 docs/ 內的交接文件。
