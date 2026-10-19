@@ -80,7 +80,7 @@ const SHUANGBEI_TRA_NETWORK = {
   stripeColor: '#38bdf8',
   weight: 6,
   stations: [
-    // 縱貫線北段 (13 站)
+    // 縱貫線北段 (雙北 ➔ 基隆段)
     { id: 'TRA-01', name: '五堵車站', lat: 25.0772, lon: 121.6775, line: '縱貫線北段', zone: '汐止特區' },
     { id: 'TRA-02', name: '汐止車站', lat: 25.0682, lon: 121.6622, line: '縱貫線北段', zone: '汐止特區' },
     { id: 'TRA-03', name: '汐科車站', lat: 25.0607, lon: 121.6468, line: '縱貫線北段', zone: '汐止遠東世界' },
@@ -94,6 +94,11 @@ const SHUANGBEI_TRA_NETWORK = {
     { id: 'TRA-11', name: '南樹林站', lat: 24.9818, lon: 121.4112, line: '縱貫線北段', zone: '樹林機廠' },
     { id: 'TRA-12', name: '山佳車站', lat: 24.9723, lon: 121.3857, line: '縱貫線北段', zone: '山佳百年古蹟' },
     { id: 'TRA-13', name: '鶯歌車站', lat: 24.9548, lon: 121.3556, line: '縱貫線北段', zone: '陶瓷重鎮' },
+    // 基隆連結節點 (消除虛擬穿山直線，還原基隆河河谷真實物理路網)
+    { id: 'TRA-K01', name: '百福車站', lat: 25.0885, lon: 121.7015, line: '縱貫線北段', zone: '基隆河畔' },
+    { id: 'TRA-K02', name: '七堵車站', lat: 25.0945, lon: 121.7145, line: '縱貫線北段', zone: '北部主要調車基地' },
+    { id: 'TRA-K03', name: '八堵車站', lat: 25.1085, lon: 121.7285, line: '縱貫/宜蘭分歧樞紐', zone: '鐵道關鍵轉乘' },
+    { id: 'TRA-K04', name: '暖暖車站', lat: 25.1025, lon: 121.7415, line: '宜蘭線', zone: '基隆暖暖' },
     // 宜蘭線新北段 (8 站)
     { id: 'TRA-14', name: '四腳亭車站', lat: 25.1017, lon: 121.7607, line: '宜蘭線', zone: '瑞芳四腳亭' },
     { id: 'TRA-15', name: '瑞芳車站', lat: 25.1087, lon: 121.8062, line: '宜蘭線/平溪線', zone: '黃金山城門戶' },
@@ -110,7 +115,8 @@ const SHUANGBEI_TRA_NETWORK = {
     { id: 'TRA-25', name: '嶺腳車站', lat: 25.0298, lon: 121.7481, line: '平溪支線', zone: '嶺腳古橋古道' },
     { id: 'TRA-26', name: '平溪車站', lat: 25.0258, lon: 121.7397, line: '平溪支線', zone: '平溪老街天燈' },
     { id: 'TRA-27', name: '菁桐車站', lat: 25.0232, lon: 121.7248, line: '平溪支線', zone: '木造古蹟終點站' },
-    // 深澳線 (1 站)
+    // 深澳線 (2 站)
+    { id: 'TRA-S01', name: '海科館車站', lat: 25.1385, lon: 121.7995, line: '深澳支線', zone: '海洋科技博物館' },
     { id: 'TRA-28', name: '八斗子車站', lat: 25.1356, lon: 121.8033, line: '深澳支線', zone: '最美臨海月台' }
   ],
   corridor: [
@@ -138,27 +144,28 @@ const SHUANGBEI_TRA_NETWORK = {
     [25.0162, 121.9442]  // 福隆
   ],
   corridors: [
-    // 縱貫線北段
+    // 縱貫線北段 (鶯歌 ➔ 台北 ➔ 汐止 ➔ 百福 ➔ 七堵 ➔ 八堵)
     [
       [24.9548, 121.3556], [24.9723, 121.3857], [24.9818, 121.4112], [24.9915, 121.4248],
       [25.0048, 121.4447], [25.0138, 121.4638], [25.0230, 121.4720], [25.0335, 121.4998],
       [25.0478, 121.5171], [25.0494, 121.5779], [25.0531, 121.6070], [25.0607, 121.6468],
-      [25.0682, 121.6622], [25.0772, 121.6775]
+      [25.0682, 121.6622], [25.0772, 121.6775], [25.0885, 121.7015], [25.0945, 121.7145],
+      [25.1085, 121.7285]
     ],
-    // 宜蘭線
+    // 宜蘭線 (八堵分歧 ➔ 暖暖 ➔ 四腳亭 ➔ 瑞芳 ➔ 福隆)
     [
-      [25.0772, 121.6775], [25.1017, 121.7607], [25.1087, 121.8062], [25.0872, 121.8281],
-      [25.0594, 121.8227], [25.0392, 121.8540], [25.0347, 121.8656], [25.0182, 121.9125],
-      [25.0162, 121.9442]
+      [25.1085, 121.7285], [25.1025, 121.7415], [25.1017, 121.7607], [25.1087, 121.8062],
+      [25.0872, 121.8281], [25.0594, 121.8227], [25.0392, 121.8540], [25.0347, 121.8656],
+      [25.0182, 121.9125], [25.0162, 121.9442]
     ],
     // 平溪支線
     [
       [25.0594, 121.8227], [25.0463, 121.8062], [25.0428, 121.7770], [25.0357, 121.7583],
       [25.0298, 121.7481], [25.0258, 121.7397], [25.0232, 121.7248]
     ],
-    // 深澳支線
+    // 深澳支線 (瑞芳 ➔ 海科館 ➔ 八斗子)
     [
-      [25.1087, 121.8062], [25.1220, 121.8050], [25.1356, 121.8033]
+      [25.1087, 121.8062], [25.1220, 121.8050], [25.1385, 121.7995], [25.1356, 121.8033]
     ]
   ]
 };
@@ -204,6 +211,49 @@ const SHUANGBEI_MRT_NETWORK = [
     lineCode: 'R',
     color: '#e3002c',
     glowColor: '#f87171',
+    branches: [
+      {
+        name: '淡水信義主線 (象山 ⇄ 淡水)',
+        branchCode: 'R_main',
+        stations: [
+          { name: '象山', code: 'R02', lat: 25.0329, lon: 121.5707 },
+          { name: '台北101/世貿', code: 'R03', lat: 25.0332, lon: 121.5645 },
+          { name: '信義安和', code: 'R04', lat: 25.0333, lon: 121.5528 },
+          { name: '大安', code: 'R05', lat: 25.0329, lon: 121.5435 },
+          { name: '大安森林公園', code: 'R06', lat: 25.0333, lon: 121.5348 },
+          { name: '東門', code: 'R07', lat: 25.0339, lon: 121.5284 },
+          { name: '中正紀念堂', code: 'R08', lat: 25.0327, lon: 121.5186 },
+          { name: '台大醫院', code: 'R09', lat: 25.0413, lon: 121.5160 },
+          { name: '台北車站', code: 'R10', lat: 25.0463, lon: 121.5175 },
+          { name: '中山', code: 'R11', lat: 25.0527, lon: 121.5204 },
+          { name: '雙連', code: 'R12', lat: 25.0578, lon: 121.5207 },
+          { name: '民權西路', code: 'R13', lat: 25.0619, lon: 121.5199 },
+          { name: '圓山', code: 'R14', lat: 25.0713, lon: 121.5200 },
+          { name: '劍潭', code: 'R15', lat: 25.0849, lon: 121.5250 },
+          { name: '士林', code: 'R16', lat: 25.0934, lon: 121.5262 },
+          { name: '芝山', code: 'R17', lat: 25.1029, lon: 121.5227 },
+          { name: '明德', code: 'R18', lat: 25.1100, lon: 121.5187 },
+          { name: '石牌', code: 'R19', lat: 25.1147, lon: 121.5157 },
+          { name: '唭哩岸', code: 'R20', lat: 25.1207, lon: 121.5061 },
+          { name: '奇岩', code: 'R21', lat: 25.1259, lon: 121.5011 },
+          { name: '北投', code: 'R22', lat: 25.1318, lon: 121.4986 },
+          { name: '復興崗', code: 'R23', lat: 25.1375, lon: 121.4855 },
+          { name: '忠義', code: 'R24', lat: 25.1308, lon: 121.4735 },
+          { name: '關渡', code: 'R25', lat: 25.1256, lon: 121.4671 },
+          { name: '竹圍', code: 'R26', lat: 25.1369, lon: 121.4594 },
+          { name: '紅樹林', code: 'R27', lat: 25.1540, lon: 121.4590 },
+          { name: '淡水', code: 'R28', lat: 25.1678, lon: 121.4456 }
+        ]
+      },
+      {
+        name: '新北投支線 (北投 ⇄ 新北投)',
+        branchCode: 'R_xinbeitou',
+        stations: [
+          { name: '北投', code: 'R22', lat: 25.1318, lon: 121.4986 },
+          { name: '新北投', code: 'R22A', lat: 25.1369, lon: 121.5028 }
+        ]
+      }
+    ],
     stations: [
       { name: '象山', code: 'R02', lat: 25.0329, lon: 121.5707 },
       { name: '台北101/世貿', code: 'R03', lat: 25.0332, lon: 121.5645 },
@@ -240,6 +290,41 @@ const SHUANGBEI_MRT_NETWORK = [
     lineCode: 'G',
     color: '#008659',
     glowColor: '#34d399',
+    branches: [
+      {
+        name: '松山新店主線 (新店 ⇄ 松山)',
+        branchCode: 'G_main',
+        stations: [
+          { name: '新店', code: 'G01', lat: 24.9577, lon: 121.5376 },
+          { name: '新店區公所', code: 'G02', lat: 24.9669, lon: 121.5414 },
+          { name: '七張', code: 'G03', lat: 24.9751, lon: 121.5428 },
+          { name: '大坪林', code: 'G04', lat: 24.9829, lon: 121.5414 },
+          { name: '景美', code: 'G05', lat: 24.9934, lon: 121.5407 },
+          { name: '萬隆', code: 'G06', lat: 25.0018, lon: 121.5392 },
+          { name: '公館', code: 'G07', lat: 25.0136, lon: 121.5342 },
+          { name: '台電大樓', code: 'G08', lat: 25.0207, lon: 121.5283 },
+          { name: '古亭', code: 'G09', lat: 25.0264, lon: 121.5226 },
+          { name: '中正紀念堂', code: 'G10', lat: 25.0327, lon: 121.5186 },
+          { name: '小南門', code: 'G11', lat: 25.0355, lon: 121.5108 },
+          { name: '西門', code: 'G12', lat: 25.0421, lon: 121.5083 },
+          { name: '北門', code: 'G13', lat: 25.0494, lon: 121.5106 },
+          { name: '中山', code: 'G14', lat: 25.0527, lon: 121.5204 },
+          { name: '松江南京', code: 'G15', lat: 25.0521, lon: 121.5332 },
+          { name: '南京復興', code: 'G16', lat: 25.0522, lon: 121.5441 },
+          { name: '台北小巨蛋', code: 'G17', lat: 25.0519, lon: 121.5501 },
+          { name: '南京三民', code: 'G18', lat: 25.0516, lon: 121.5606 },
+          { name: '松山', code: 'G19', lat: 25.0499, lon: 121.5780 }
+        ]
+      },
+      {
+        name: '小碧潭支線 (七張 ⇄ 小碧潭)',
+        branchCode: 'G_xiaobitan',
+        stations: [
+          { name: '七張', code: 'G03', lat: 24.9751, lon: 121.5428 },
+          { name: '小碧潭', code: 'G03A', lat: 24.9723, lon: 121.5303 }
+        ]
+      }
+    ],
     stations: [
       { name: '新店', code: 'G01', lat: 24.9577, lon: 121.5376 },
       { name: '新店區公所', code: 'G02', lat: 24.9669, lon: 121.5414 },
@@ -268,6 +353,47 @@ const SHUANGBEI_MRT_NETWORK = [
     lineCode: 'O',
     color: '#f8b61c',
     glowColor: '#fde047',
+    branches: [
+      {
+        name: '新莊迴龍主線 (南勢角 ⇄ 迴龍)',
+        branchCode: 'O_main',
+        stations: [
+          { name: '南勢角', code: 'O01', lat: 24.9902, lon: 121.4993 },
+          { name: '景安', code: 'O02', lat: 24.9937, lon: 121.5048 },
+          { name: '永安市場', code: 'O03', lat: 25.0020, lon: 121.5113 },
+          { name: '頂溪', code: 'O04', lat: 25.0138, lon: 121.5152 },
+          { name: '古亭', code: 'O05', lat: 25.0264, lon: 121.5226 },
+          { name: '東門', code: 'O06', lat: 25.0339, lon: 121.5284 },
+          { name: '忠孝新生', code: 'O07', lat: 25.0423, lon: 121.5332 },
+          { name: '松江南京', code: 'O08', lat: 25.0521, lon: 121.5332 },
+          { name: '行天宮', code: 'O09', lat: 25.0598, lon: 121.5332 },
+          { name: '中山國小', code: 'O10', lat: 25.0628, lon: 121.5264 },
+          { name: '民權西路', code: 'O11', lat: 25.0619, lon: 121.5199 },
+          { name: '大橋頭', code: 'O12', lat: 25.0632, lon: 121.5126 },
+          { name: '台北橋', code: 'O13', lat: 25.0632, lon: 121.4998 },
+          { name: '菜寮', code: 'O14', lat: 25.0607, lon: 121.4917 },
+          { name: '三重', code: 'O15', lat: 25.0553, lon: 121.4851 },
+          { name: '先嗇宮', code: 'O16', lat: 25.0463, lon: 121.4715 },
+          { name: '頭前庄', code: 'O17', lat: 25.0398, lon: 121.4608 },
+          { name: '新莊', code: 'O18', lat: 25.0360, lon: 121.4530 },
+          { name: '輔大', code: 'O19', lat: 25.0326, lon: 121.4357 },
+          { name: '丹鳳', code: 'O20', lat: 25.0292, lon: 121.4230 },
+          { name: '迴龍', code: 'O21', lat: 25.0195, lon: 121.4116 }
+        ]
+      },
+      {
+        name: '蘆洲支線 (大橋頭 ⇄ 蘆洲)',
+        branchCode: 'O_luzhou',
+        stations: [
+          { name: '大橋頭', code: 'O12', lat: 25.0632, lon: 121.5126 },
+          { name: '三重國小', code: 'O50', lat: 25.0705, lon: 121.4975 },
+          { name: '三和國中', code: 'O51', lat: 25.0768, lon: 121.4878 },
+          { name: '徐匯中學', code: 'O52', lat: 25.0805, lon: 121.4800 },
+          { name: '三民高中', code: 'O53', lat: 25.0858, lon: 121.4735 },
+          { name: '蘆洲', code: 'O54', lat: 25.0914, lon: 121.4645 }
+        ]
+      }
+    ],
     stations: [
       { name: '南勢角', code: 'O01', lat: 24.9902, lon: 121.4993 },
       { name: '景安', code: 'O02', lat: 24.9937, lon: 121.5048 },
@@ -281,7 +407,6 @@ const SHUANGBEI_MRT_NETWORK = [
       { name: '中山國小', code: 'O10', lat: 25.0628, lon: 121.5264 },
       { name: '民權西路', code: 'O11', lat: 25.0619, lon: 121.5199 },
       { name: '大橋頭', code: 'O12', lat: 25.0632, lon: 121.5126 },
-      // 迴龍段
       { name: '台北橋', code: 'O13', lat: 25.0632, lon: 121.4998 },
       { name: '菜寮', code: 'O14', lat: 25.0607, lon: 121.4917 },
       { name: '三重', code: 'O15', lat: 25.0553, lon: 121.4851 },
@@ -291,7 +416,6 @@ const SHUANGBEI_MRT_NETWORK = [
       { name: '輔大', code: 'O19', lat: 25.0326, lon: 121.4357 },
       { name: '丹鳳', code: 'O20', lat: 25.0292, lon: 121.4230 },
       { name: '迴龍', code: 'O21', lat: 25.0195, lon: 121.4116 },
-      // 蘆洲支線
       { name: '三重國小', code: 'O50', lat: 25.0705, lon: 121.4975 },
       { name: '三和國中', code: 'O51', lat: 25.0768, lon: 121.4878 },
       { name: '徐匯中學', code: 'O52', lat: 25.0805, lon: 121.4800 },
@@ -375,6 +499,35 @@ const SHUANGBEI_MRT_NETWORK = [
     lineCode: 'V',
     color: '#0099cc',
     glowColor: '#38bdf8',
+    branches: [
+      {
+        name: '綠山線 (紅樹林 ⇄ 崁頂)',
+        branchCode: 'V_green',
+        stations: [
+          { name: '紅樹林', code: 'V01', lat: 25.1540, lon: 121.4590 },
+          { name: '竿蓁林', code: 'V02', lat: 25.1614, lon: 121.4560 },
+          { name: '淡金鄧公', code: 'V03', lat: 25.1663, lon: 121.4542 },
+          { name: '淡江大學', code: 'V04', lat: 25.1740, lon: 121.4520 },
+          { name: '淡金北新', code: 'V05', lat: 25.1798, lon: 121.4497 },
+          { name: '新市一路', code: 'V06', lat: 25.1868, lon: 121.4447 },
+          { name: '淡水行政中心', code: 'V07', lat: 25.1912, lon: 121.4431 },
+          { name: '濱海義山', code: 'V08', lat: 25.1932, lon: 121.4357 },
+          { name: '濱海沙崙', code: 'V09', lat: 25.1952, lon: 121.4308 },
+          { name: '淡海新市鎮', code: 'V10', lat: 25.1970, lon: 121.4320 },
+          { name: '崁頂', code: 'V11', lat: 25.1985, lon: 121.4335 }
+        ]
+      },
+      {
+        name: '藍海線 (濱海沙崙 ⇄ 淡水漁人碼頭)',
+        branchCode: 'V_blue',
+        stations: [
+          { name: '濱海沙崙', code: 'V09', lat: 25.1952, lon: 121.4308 },
+          { name: '台北海洋大學', code: 'V28', lat: 25.1920, lon: 121.4230 },
+          { name: '沙崙', code: 'V27', lat: 25.1882, lon: 121.4168 },
+          { name: '淡水漁人碼頭', code: 'V26', lat: 25.1832, lon: 121.4118 }
+        ]
+      }
+    ],
     stations: [
       { name: '紅樹林', code: 'V01', lat: 25.1540, lon: 121.4590 },
       { name: '竿蓁林', code: 'V02', lat: 25.1614, lon: 121.4560 },
@@ -387,9 +540,9 @@ const SHUANGBEI_MRT_NETWORK = [
       { name: '濱海沙崙', code: 'V09', lat: 25.1952, lon: 121.4308 },
       { name: '淡海新市鎮', code: 'V10', lat: 25.1970, lon: 121.4320 },
       { name: '崁頂', code: 'V11', lat: 25.1985, lon: 121.4335 },
-      { name: '淡水漁人碼頭', code: 'V26', lat: 25.1832, lon: 121.4118 },
+      { name: '台北海洋大學', code: 'V28', lat: 25.1920, lon: 121.4230 },
       { name: '沙崙', code: 'V27', lat: 25.1882, lon: 121.4168 },
-      { name: '台北海洋大學', code: 'V28', lat: 25.1920, lon: 121.4230 }
+      { name: '淡水漁人碼頭', code: 'V26', lat: 25.1832, lon: 121.4118 }
     ]
   },
   {
@@ -400,7 +553,7 @@ const SHUANGBEI_MRT_NETWORK = [
     stations: [
       { name: '雙城', code: 'K01', lat: 24.9450, lon: 121.5050 },
       { name: '玫瑰中國城', code: 'K02', lat: 24.9490, lon: 121.5080 },
-      { name: '礁溪公筆', code: 'K03', lat: 24.9540, lon: 121.5120 },
+      { name: "台北小城", code: "K03", lat: 24.9540, lon: 121.5120 },
       { name: '耕莘安康院區', code: 'K04', lat: 24.9650, lon: 121.5180 },
       { name: '景文科大', code: 'K05', lat: 24.9690, lon: 121.5220 },
       { name: '安康', code: 'K06', lat: 24.9750, lon: 121.5260 },
@@ -1017,6 +1170,295 @@ function searchEBusDirectory(keyword) {
   return [];
 }
 
+
+// ──────────────────────────────────────────
+// 6. 🚧 興建中大眾運輸網絡 (Under-Construction Transit Lines 2024~2027)
+// 包含三鶯線 (LB01-LB12)、萬大-中和-樹林線一期 (LG01-LG09)、環狀線南北環段
+// ──────────────────────────────────────────
+const SHUANGBEI_UNDER_CONSTRUCTION_MRT = [
+  {
+    name: '三鶯線 (LB Line)',
+    lineCode: 'LB',
+    color: '#06b6d4',
+    glowColor: '#67e8f9',
+    status: '🚧 施工進度 88%，全線高架成型，進入列車動態測試 (預計 2025-2026 通車)',
+    stations: [
+      { name: '頂埔', code: 'LB01', lat: 24.9601, lon: 121.4205 },
+      { name: '媽祖田', code: 'LB02', lat: 24.9515, lon: 121.4095 },
+      { name: '企埔', code: 'LB03', lat: 24.9450, lon: 121.3980 },
+      { name: '橫溪', code: 'LB04', lat: 24.9385, lon: 121.3880 },
+      { name: '龍埔', code: 'LB05', lat: 24.9350, lon: 121.3780 },
+      { name: '三峽', code: 'LB06', lat: 24.9330, lon: 121.3680 },
+      { name: '臺北大學', code: 'LB07', lat: 24.9420, lon: 121.3650 },
+      { name: '鶯歌車站', code: 'LB08', lat: 24.9548, lon: 121.3556 },
+      { name: '陶瓷老街', code: 'LB09', lat: 24.9510, lon: 121.3480 },
+      { name: '國華', code: 'LB10', lat: 24.9560, lon: 121.3400 },
+      { name: '鶯桃福德', code: 'LB11', lat: 24.9630, lon: 121.3320 },
+      { name: '鳳鳴', code: 'LB12', lat: 24.9700, lon: 121.3250 }
+    ]
+  },
+  {
+    name: '萬大-中和-樹林線 (LG Line 一期)',
+    lineCode: 'LG',
+    color: '#84cc16',
+    glowColor: '#a3e635',
+    status: '🚧 一期全線地下潛盾施工中 (預計 2026-2027 完工通車)',
+    stations: [
+      { name: '中正紀念堂', code: 'LG01', lat: 25.0327, lon: 121.5186 },
+      { name: '植物園', code: 'LG02', lat: 25.0305, lon: 121.5085 },
+      { name: '廈安', code: 'LG03', lat: 25.0260, lon: 121.5035 },
+      { name: '加蚋', code: 'LG04', lat: 25.0210, lon: 121.4965 },
+      { name: '永和永平國小', code: 'LG05', lat: 25.0115, lon: 121.5020 },
+      { name: '中和', code: 'LG06', lat: 25.0003, lon: 121.4939 },
+      { name: '連城錦和', code: 'LG07', lat: 24.9940, lon: 121.4870 },
+      { name: '中和高中', code: 'LG08', lat: 24.9880, lon: 121.4780 },
+      { name: '莒光', code: 'LG09', lat: 24.9920, lon: 121.4650 }
+    ]
+  }
+];
+
+// ──────────────────────────────────────────
+// 7. 🛣️ 雙北核心國道高速公路網絡 (Freeway Expressways)
+// 包含國道一號 (中山高)、國道三號 (福高)、國道五號 (雪山隧道)
+// ──────────────────────────────────────────
+const SHUANGBEI_EXPRESSWAYS = [
+  {
+    id: 'hwy_01',
+    name: '國道一號 (中山高速公路)',
+    shortName: '國道一號',
+    color: '#2563eb',
+    glowColor: '#60a5fa',
+    width: 6,
+    coords: [
+      [25.0820, 121.6850], // 汐止交流道
+      [25.0680, 121.6500], // 汐止系統
+      [25.0620, 121.5950], // 內湖交流道
+      [25.0740, 121.5230], // 圓山交流道
+      [25.0700, 121.5100], // 台北交流道 (重慶北路)
+      [25.0680, 121.4850], // 三重交流道
+      [25.0620, 121.4350], // 五股交流道
+      [25.0710, 121.3650]  // 林口交流道
+    ]
+  },
+  {
+    id: 'hwy_03',
+    name: '國道三號 (福爾摩沙高速公路)',
+    shortName: '國道三號',
+    color: '#059669',
+    glowColor: '#34d399',
+    width: 6,
+    coords: [
+      [25.0750, 121.6700], // 汐止系統
+      [25.0500, 121.6150], // 南港交流道
+      [25.0050, 121.5850], // 木柵交流道
+      [24.9750, 121.5450], // 新店交流道
+      [24.9820, 121.5120], // 安坑交流道
+      [24.9950, 121.4850], // 中和交流道
+      [24.9700, 121.4380], // 土城交流道
+      [24.9450, 121.3750], // 三峽交流道
+      [24.9400, 121.3400]  // 鶯歌系統
+    ]
+  },
+  {
+    id: 'hwy_05',
+    name: '國道五號 (蔣渭水高速公路 / 雪山隧道段)',
+    shortName: '國道五號',
+    color: '#d97706',
+    glowColor: '#fbbf24',
+    width: 5,
+    coords: [
+      [25.0500, 121.6150], // 南港系統
+      [25.0080, 121.6550], // 石碇服務區
+      [24.9420, 121.7100], // 坪林交流道 (雪隧北口)
+      [24.8700, 121.7700]  // 雪隧往宜蘭
+    ]
+  }
+];
+
+// ──────────────────────────────────────────
+// 8. 🏢 雙北三大特等長途國道客運轉運中樞 (Highway Coach Hubs)
+// ──────────────────────────────────────────
+const SHUANGBEI_HIGHWAY_COACH_HUBS = [
+  {
+    id: 'hub_taipei',
+    name: '台北轉運站 (交九 / 京站廣場)',
+    lat: 25.0490,
+    lon: 121.5185,
+    desc: '全台最大長途國道客運總樞紐，統聯/國光/和欣/阿羅哈/葛瑪蘭進駐，直達中南部各縣市。',
+    coaches: ['統聯客運 (往台中/台南/高雄)', '國光客運 (往全台各主要都市)', '和欣客運 (尊爵白金商務座)', '葛瑪蘭客運 (往宜蘭礁溪/羅東)']
+  },
+  {
+    id: 'hub_cityhall',
+    name: '市府轉運站 (統一時代百貨一樓)',
+    lat: 25.0410,
+    lon: 121.5655,
+    desc: '東區最大國道客運樞紐，首都客運/大都會客運北宜高國五大本營，兼具桃機快捷專線。',
+    coaches: ['首都之星 (往宜蘭市/羅東/礁溪/花蓮)', '大都會客運 2088 (往基隆女中/八斗子)', '大有巴士 1960 (往桃園國際機場)']
+  },
+  {
+    id: 'hub_banqiao',
+    name: '板橋客運轉運站 (新北三鐵共構西側)',
+    lat: 25.0135,
+    lon: 121.4645,
+    desc: '新北市最大公路客運轉運核心，連接台64/65快速道路與國道三號，往中南部與桃園機場。',
+    coaches: ['國光客運 (往台中/嘉義/台南)', '統聯客運 (往彰化/台南/高雄)', '大有巴士 1962 (往桃園國際機場)', '葛瑪蘭客運 (往宜蘭羅東)']
+  }
+];
+
+// ──────────────────────────────────────────
+// 9. 🚦 雙北真實規律交通號誌節點 (Traffic Light Nodes & Signal Engine)
+// 依規律循序週期：綠燈 (通行) ➔ 黃燈 (警告減速) ➔ 紅燈 (強制公車停等)
+// ──────────────────────────────────────────
+const SHUANGBEI_TRAFFIC_LIGHTS = [
+  {
+    id: 'tl_01',
+    name: '忠孝西路一段 ✕ 館前路口 (台北車站前特等路口)',
+    lat: 25.0463,
+    lon: 121.5160,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 0,
+    routes: ['bus_307', 'bus_656']
+  },
+  {
+    id: 'tl_02',
+    name: '忠孝西路一段 ✕ 中山北路一段口 (行政院樞紐)',
+    lat: 25.0461,
+    lon: 121.5200,
+    greenSec: 16,
+    yellowSec: 3,
+    redSec: 16,
+    offsetSec: 10,
+    routes: ['bus_307', 'bus_656', 'bus_zs']
+  },
+  {
+    id: 'tl_03',
+    name: '中山北路一段 ✕ 南京東路一段口 (中山南京商圈)',
+    lat: 25.0524,
+    lon: 121.5218,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 5,
+    routes: ['bus_307', 'bus_zs']
+  },
+  {
+    id: 'tl_04',
+    name: '南京東路二段 ✕ 松江路口 (金融商務核心)',
+    lat: 25.0521,
+    lon: 121.5332,
+    greenSec: 20,
+    yellowSec: 3,
+    redSec: 15,
+    offsetSec: 15,
+    routes: ['bus_307']
+  },
+  {
+    id: 'tl_05',
+    name: '中華路一段 ✕ 成都路口 (西門町地標十字路口)',
+    lat: 25.0426,
+    lon: 121.5080,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 8,
+    routes: ['bus_307', 'bus_656', 'bus_9006']
+  },
+  {
+    id: 'tl_06',
+    name: '縣民大道二段 ✕ 新站路口 (板橋新板特區樞紐)',
+    lat: 25.0138,
+    lon: 121.4650,
+    greenSec: 22,
+    yellowSec: 3,
+    redSec: 15,
+    offsetSec: 12,
+    routes: ['bus_307', 'bus_656']
+  },
+  {
+    id: 'tl_07',
+    name: '土城學府路一段 ✕ 明德路口 (海山生活圈重要路口)',
+    lat: 25.0080,
+    lon: 121.4550,
+    greenSec: 16,
+    yellowSec: 3,
+    redSec: 15,
+    offsetSec: 20,
+    routes: ['bus_656']
+  },
+  {
+    id: 'tl_08',
+    name: '重新路二段 ✕ 正義北路口 (三重天台生活圈)',
+    lat: 25.0632,
+    lon: 121.4980,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 4,
+    routes: ['bus_299', 'bus_1802']
+  },
+  {
+    id: 'tl_09',
+    name: '基隆市港西街 ✕ 忠一路口 (基隆港海洋廣場前)',
+    lat: 25.1320,
+    lon: 121.7390,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 7,
+    routes: ['bus_9006', 'bus_2088']
+  },
+  {
+    id: 'tl_10',
+    name: '中正路 ✕ 文化路口 (淡水捷運站前大道)',
+    lat: 25.1685,
+    lon: 121.4445,
+    greenSec: 18,
+    yellowSec: 3,
+    redSec: 14,
+    offsetSec: 14,
+    routes: ['bus_857']
+  }
+];
+
+// 計算即時號誌狀態演算法
+function getTrafficLightState(tl, nowSec) {
+  const cycle = tl.greenSec + tl.yellowSec + tl.redSec;
+  const t = (nowSec + tl.offsetSec) % cycle;
+  if (t < tl.greenSec) {
+    const remaining = Math.ceil(tl.greenSec - t);
+    return {
+      state: 'GREEN',
+      color: '#22c55e',
+      icon: '🟢',
+      label: '綠燈通行',
+      remaining: remaining,
+      total: tl.greenSec
+    };
+  } else if (t < tl.greenSec + tl.yellowSec) {
+    const remaining = Math.ceil(tl.greenSec + tl.yellowSec - t);
+    return {
+      state: 'YELLOW',
+      color: '#eab308',
+      icon: '🟡',
+      label: '黃燈注意',
+      remaining: remaining,
+      total: tl.yellowSec
+    };
+  } else {
+    const remaining = Math.ceil(cycle - t);
+    return {
+      state: 'RED',
+      color: '#ef4444',
+      icon: '🔴',
+      label: '紅燈停等',
+      remaining: remaining,
+      total: tl.redSec
+    };
+  }
+}
+
 // 供 Node.js 環境匯出
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -1025,6 +1467,11 @@ if (typeof module !== 'undefined' && module.exports) {
     SHUANGBEI_MRT_NETWORK,
     SHUANGBEI_EBUS_KEY_ROUTES,
     SHUANGBEI_MRT_SCHEDULE_SPEC,
+    SHUANGBEI_UNDER_CONSTRUCTION_MRT,
+    SHUANGBEI_EXPRESSWAYS,
+    SHUANGBEI_HIGHWAY_COACH_HUBS,
+    SHUANGBEI_TRAFFIC_LIGHTS,
+    getTrafficLightState,
     searchEBusDirectory
   };
 }

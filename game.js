@@ -236,7 +236,7 @@ const interactables = [
   {"id": "seven_gq", "x": -20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前館前店)", "address": "中正區館前路 59 號", "label": "進入 7-Eleven (站前館前店)"},
   {"id": "coco_ny", "x": 20, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (台北站前店)", "address": "中正區南陽街 13 號", "label": "購買 CoCo 手搖飲 (站前店)"},
   {"id": "seven_gy", "x": 60, "z": 35, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (站前公園店)", "address": "中正區公園路 20 號", "label": "進入 7-Eleven (站前公園店)"},
-  {"id": "wanjiafu_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入家樂福便利購 (站前開封店)"},
+  {"id": "wanjiafu_kf", "x": 20, "z": 110, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (站前開封店)", "address": "中正區開封街一段 38 號", "label": "進入樂家康 (站前開封店)"},
   {"id": "coco_cq", "x": -95, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (重慶書店街店)", "address": "中正區重慶南路一段 55 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
   {"id": "market_cz", "x": -95, "z": 55, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "城中市場老市集", "address": "中正區武昌街一段 22 巷 (省城隍廟口)", "label": "進入 城中市場老市集 (老台北在地情報與小吃)"},
   {"id": "seven_hy", "x": -95, "z": 95, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正衡陽店)", "address": "中正區衡陽路 51 號", "label": "進入 7-Eleven (中正衡陽店)"},
@@ -245,37 +245,37 @@ const interactables = [
   {"id": "fmart_wc", "x": -205, "z": 15, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門武昌店)", "address": "萬華區武昌街二段 37 號", "label": "進入全家 (西門武昌店)"},
   {"id": "coco_xm", "x": -175, "z": 40, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (西門町店)", "address": "萬華區武昌街二段 4 號", "label": "購買 CoCo 手搖飲 (西門町店)"},
   {"id": "market_xm", "x": -135, "z": 52, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "西門市場 ✕ 紅樓文創市集", "address": "萬華區成都路 10 號", "label": "進入 西門市場/紅樓文創市集 (潮流古著與點心)"},
-  {"id": "wanjiafu_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入家樂福便利購 (萬華長沙店)"},
-  {"id": "wanjiafu_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "家樂福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入家樂福桂林旗艦店 (24H量販店)"},
+  {"id": "wanjiafu_cs", "x": -185, "z": 80, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (萬華長沙店)", "address": "萬華區長沙街二段 110 號", "label": "進入樂家康 (萬華長沙店)"},
+  {"id": "wanjiafu_gl_flagship", "x": -140, "z": 95, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 桂林旗艦店 (24H量販店)", "address": "萬華區桂林路 1 號", "isFlagship": true, "label": "進入萬家福桂林旗艦店 (24H量販店)"},
   {"id": "fmart_circle", "x": -95, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (建成圓環店)", "address": "大同區重慶北路二段 12 號", "label": "進入全家 (建成圓環店)"},
   {"id": "market_nx", "x": -55, "z": -95, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "建成圓環 ✕ 寧夏觀光夜市", "address": "大同區寧夏路民生西路口", "label": "進入 寧夏觀光夜市 (鹽酥雞 / 潤餅 / 章魚燒)"},
   {"id": "seven_circle", "x": -55, "z": -145, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (寧夏夜市店)", "address": "大同區民生西路 188 號", "label": "進入 7-Eleven (寧夏夜市店)"},
-  {"id": "wanjiafu_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "家樂福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入家樂福重慶旗艦店 (大賣場)"},
-  {"id": "wanjiafu_cq_store", "x": -95, "z": -175, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (重慶北店)", "address": "大同區重慶北路三段 154 號", "label": "進入家樂福便利購 (重慶北店)"},
+  {"id": "wanjiafu_cq_flagship", "x": -100, "z": -115, "w": 32, "d": 24, "r": 11.0, "type": "wanjiafu", "name": "萬家福 重慶旗艦店 (雙層大賣場)", "address": "大同區重慶北路二段 171 號", "isFlagship": true, "label": "進入萬家福重慶旗艦店 (大賣場)"},
+  {"id": "wanjiafu_cq_store", "x": -95, "z": -175, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (重慶北店)", "address": "大同區重慶北路三段 154 號", "label": "進入樂家康 (重慶北店)"},
   {"id": "coco_yp", "x": -145, "z": -45, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (延平北路店)", "address": "大同區延平北路二段 80 號", "label": "購買 CoCo 手搖飲 (延平店)"},
-  {"id": "wanjiafu_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入家樂福便利購 (大稻埕民生店)"},
+  {"id": "wanjiafu_dh", "x": -145, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (大稻埕民生店)", "address": "大同區民生西路 230 號", "label": "進入樂家康 (大稻埕民生店)"},
   {"id": "market_yl", "x": -185, "z": -60, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大稻埕永樂市場", "address": "大同區迪化街一段 21 號", "label": "進入 大稻埕永樂市場 (百年布行與油飯旗魚羹)"},
   {"id": "seven_dh", "x": -185, "z": -125, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化店)", "address": "大同區迪化街一段 54 號", "label": "進入 7-Eleven (大稻埕迪化店)"},
   {"id": "market_lz", "x": -145, "z": -185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "大同蘭州傳統市場", "address": "大同區昌吉街 55 號", "label": "進入 大同蘭州傳統市場 (黑點雞肉 / 生鮮果菜市集)"},
   {"id": "market_zs", "x": 35, "z": -45, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "中山傳統市場", "address": "中山區長安西路 3 號 (中山北路口)", "label": "進入 中山傳統市場 (品嚐古早味切仔麵 / 潤餅)"},
   {"id": "fmart_zs", "x": 125, "z": -20, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山北路店)", "address": "中山區中山北路一段 105 號", "label": "進入全家 (中山北路店)"},
   {"id": "seven_ls", "x": 125, "z": -60, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (林森條通店)", "address": "中山區林森北路 119 號", "label": "進入 7-Eleven (林森條通店)"},
-  {"id": "wanjiafu_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入家樂福便利購 (中山南京店)"},
+  {"id": "wanjiafu_nj", "x": 35, "z": -95, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (中山南京店)", "address": "中山區南京西路 36 號", "label": "進入樂家康 (中山南京店)"},
   {"id": "coco_zs", "x": 115, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (中山北路門市)", "address": "中山區中山北路一段 92 號", "label": "購買 CoCo 手搖飲 (中山門市)"},
   {"id": "market_sl", "x": 45, "z": -145, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "雙連傳統市場", "address": "大同區民生西路 198 號 (文昌宮旁)", "label": "進入 雙連傳統市場 (品嚐文昌宮古早味美食)"},
   {"id": "fmart_sl", "x": 105, "z": -150, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (中山雙連店)", "address": "中山區民生西路 66 號", "label": "進入全家 (中山雙連店)"},
   {"id": "market_qg", "x": 85, "z": -195, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "晴光傳統商圈市場", "address": "中山區雙城街 12 巷 (晴光商圈)", "label": "進入 晴光商圈市場 (晴光紅豆餅 / 脆皮鮮奶甜甜圈)"},
   {"id": "seven_mq", "x": 35, "z": -195, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中山民權店)", "address": "中山區中山北路二段 92 號", "label": "進入 7-Eleven (中山民權店)"},
-  {"id": "wanjiafu_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入家樂福便利購 (中山吉林店)"},
+  {"id": "wanjiafu_jl", "x": 165, "z": -55, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (中山吉林店)", "address": "中山區吉林路 108 號", "label": "進入樂家康 (中山吉林店)"},
   {"id": "fmart_sj", "x": 165, "z": -105, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (松江南京店)", "address": "中山區松江路 102 號", "label": "進入全家 (松江南京店)"},
   {"id": "coco_sj", "x": 165, "z": -155, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (松江南京店)", "address": "中山區松江路 120 號", "label": "購買 CoCo 手搖飲 (松江店)"},
   {"id": "seven_fx", "x": 205, "z": -55, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (復興長安店)", "address": "中山區復興北路 88 號", "label": "進入 7-Eleven (復興長安店)"},
-  {"id": "wanjiafu_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入家樂福便利購 (中山松江店)"},
+  {"id": "wanjiafu_sj", "x": 205, "z": -115, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (中山松江店)", "address": "中山區松江路 168 號", "label": "進入樂家康 (中山松江店)"},
   {"id": "fmart_fx", "x": 205, "z": -175, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (復興南京店)", "address": "中山區復興北路 45 號", "label": "進入全家 (復興南京店)"},
   {"id": "seven_ms", "x": 80, "z": 75, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正紀念堂店)", "address": "中正區中山南路 21 號", "label": "進入 7-Eleven (中正紀念堂店)"},
-  {"id": "wanjiafu_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入家樂福便利購 (古亭和平店)"},
+  {"id": "wanjiafu_gt", "x": 55, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (古亭和平店)", "address": "中正區和平西路一段 28 號", "label": "進入樂家康 (古亭和平店)"},
   {"id": "seven_rf", "x": 55, "z": 185, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (羅斯福師大店)", "address": "中正區羅斯福路二段 88 號", "label": "進入 7-Eleven (羅斯福師大店)"},
-  {"id": "wanjiafu_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入家樂福便利購 (師大店)"},
+  {"id": "wanjiafu_sd", "x": 105, "z": 135, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (師大龍泉店)", "address": "大安區師大路 39 號", "label": "進入樂家康 (師大店)"},
   {"id": "market_sd", "x": 105, "z": 185, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "師大夜市 ✕ 龍泉傳統市場", "address": "大安區師大路 49 巷", "label": "進入 師大夜市/龍泉市場 (生煎包 / 鹽水雞 / 滷味)"},
   {"id": "fmart_da", "x": 155, "z": 65, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (大安信義店)", "address": "大安區信義路三段 102 號", "label": "進入全家 (大安信義店)"},
   {"id": "coco_da", "x": 155, "z": 125, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (大安復興店)", "address": "大安區復興南路一段 150 號", "label": "購買 CoCo 手搖飲 (大安店)"},
@@ -285,18 +285,18 @@ const interactables = [
   {"id": "market_ny", "x": -205, "z": 168, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋湳雅觀光夜市", "address": "板橋區南雅東路 87 號", "label": "進入 板橋湳雅觀光夜市 (麻油雞 / 旗魚黑輪 / 烤肉串)"},
   {"id": "seven_xf", "x": -95, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (學城門市)", "address": "新北海山生活圈 學府路一段 118 號", "label": "進入 7-Eleven (學城門市)"},
   {"id": "coco_xf", "x": -40, "z": 168, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋重慶店)", "address": "板橋生活圈 重慶路 179 號", "label": "購買 CoCo 手搖飲 (重慶店)"},
-  {"id": "wanjiafu_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入家樂福便利購 (廣明店)"},
+  {"id": "wanjiafu_xf", "x": 15, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (土城廣明店)", "address": "新北海山生活圈 廣明街 63 號", "label": "進入樂家康 (廣明店)"},
   {"id": "market_hs", "x": -185, "z": 210, "w": 28, "d": 24, "r": 9.5, "type": "market", "name": "板橋黃石傳統市場", "address": "板橋區宮口街 37 號 (府中商圈)", "label": "進入 板橋黃石市場 (傳承老店高記生炒魷魚 / 蘿蔔糕)"},
   {"id": "fmart_fz", "x": -100, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (板橋府中店)", "address": "板橋區府中路 35 號", "label": "進入全家 (板橋府中店)"},
-  {"id": "wanjiafu_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入家樂福便利購 (板橋文化店)"},
+  {"id": "wanjiafu_wh", "x": -50, "z": 210, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (板橋文化店)", "address": "板橋區文化路一段 145 號", "label": "進入樂家康 (板橋文化店)"},
   {"id": "seven_wh", "x": -5, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (板橋文化店)", "address": "板橋區文化路一段 136 號", "label": "進入 7-Eleven (板橋文化店)"},
   {"id": "seven_ag", "x": 55, "z": 110, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (中正愛國店)", "address": "中正區愛國西路 9 號", "label": "進入 7-Eleven (中正愛國店)"},
   {"id": "fmart_cd", "x": -185, "z": 45, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (西門成都店)", "address": "萬華區成都路 23 號", "label": "進入全家 (西門成都店)"},
   {"id": "coco_fz", "x": -140, "z": 210, "w": 24, "d": 20, "r": 8.0, "type": "coco", "name": "CoCo 都可 (板橋府中店)", "address": "板橋區中山路一段 50 號", "label": "購買 CoCo 手搖飲 (府中店)"},
-  {"id": "wanjiafu_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入家樂福便利購 (板橋新埔店)"},
+  {"id": "wanjiafu_xp", "x": -185, "z": 168, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (板橋新埔店)", "address": "板橋區文化路一段 360 號", "label": "進入樂家康 (板橋新埔店)"},
   {"id": "seven_dh_2", "x": -185, "z": -80, "w": 24, "d": 20, "r": 8.0, "type": "seven", "name": "7-Eleven 統一超商 (大稻埕迪化二店)", "address": "大同區迪化街一段 82 號", "label": "進入 7-Eleven (迪化二店)"},
   {"id": "fmart_sd_lq", "x": 105, "z": 155, "w": 24, "d": 20, "r": 8.0, "type": "familymart", "name": "全家便利商店 (師大龍泉店)", "address": "大安區師大路 59 號", "label": "進入全家 (師大龍泉店)"},
-  {"id": "wanjiafu_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "家樂福便利購 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入家樂福便利購 (重慶北店)"},
+  {"id": "wanjiafu_cq_north", "x": -85, "z": -145, "w": 24, "d": 20, "r": 9.5, "type": "wanjiafu", "name": "樂家康 (大同重慶北店)", "address": "大同區重慶北路三段 88 號", "label": "進入樂家康 (重慶北店)"},
   {"id": "landmark_jf_gate", "x": 60, "z": 108, "w": 18, "d": 18, "r": 9.0, "type": "landmark", "name": "國定古蹟 景福門 (東門圓環)", "address": "中正區中山南路 ✕ 凱達格蘭大道口", "label": "瞻仰 景福門古蹟 (台北府城東門)"},
   {"id": "landmark_museum", "x": -67.5, "z": 66, "w": 24, "d": 16, "r": 9.0, "type": "landmark", "name": "國立臺灣博物館", "address": "中正區襄陽路 2 號 (二二八公園北側)", "label": "參觀 國立臺灣博物館 (希臘多立克式宮殿與百年銅頂)"},
   {"id": "landmark_lin_garden", "x": -195, "z": 210, "w": 24, "d": 20, "r": 9.0, "type": "landmark", "name": "國定古蹟 林本源園邸 (林家花園)", "address": "板橋區西門街 9 號 (府中生活圈)", "label": "漫遊 林家花園 (百年江南庭園與來青閣)"}
@@ -738,7 +738,29 @@ const cityBuses = [
 const bus307 = cityBuses[0];
 
 // 幹線公車真實路網動態動力學與自動站點導航
+// 2.5D 沙盤真實號誌節點 (忠孝館前、中山南京、西門中華、新板特區、土城學府)
+const sandpitTrafficLights = [
+  { id: 'stl_01', name: '忠孝館前路口', x: -5, z: 10, green: 700, yellow: 120, red: 500, offset: 0 },
+  { id: 'stl_02', name: '中山南京路口', x: 80, z: -80, green: 650, yellow: 120, red: 520, offset: 150 },
+  { id: 'stl_03', name: '西門中華路口', x: -140, z: 20, green: 700, yellow: 120, red: 500, offset: 350 },
+  { id: 'stl_04', name: '新板縣民大道', x: -120, z: 140, green: 750, yellow: 120, red: 550, offset: 200 },
+  { id: 'stl_05', name: '土城學府明德', x: -148, z: 165, green: 650, yellow: 120, red: 500, offset: 100 }
+];
+
+let sandpitLightFrame = 0;
+
+function getSandpitLightState(tl) {
+  const cycle = tl.green + tl.yellow + tl.red;
+  const t = (sandpitLightFrame + tl.offset) % cycle;
+  if (t < tl.green) return { state: 'GREEN', color: '#22c55e', remaining: Math.ceil((tl.green - t) / 60) };
+  if (t < tl.green + tl.yellow) return { state: 'YELLOW', color: '#eab308', remaining: Math.ceil((tl.green + tl.yellow - t) / 60) };
+  return { state: 'RED', color: '#ef4444', remaining: Math.ceil((cycle - t) / 60) };
+}
+
+// 幹線公車真實路網動態動力學與自動站點導航 (遵守規律交通號誌，紅燈強制停等)
 function updateBusPhysics(bus) {
+  sandpitLightFrame++;
+
   if (bus.isStopped) {
     bus.stopTimer--;
     if (bus.stopTimer <= 0) {
@@ -746,6 +768,30 @@ function updateBusPhysics(bus) {
     }
     return;
   }
+
+  // 號誌偵測：公車周圍 20 單位內是否有紅燈停等線
+  let waitingAtRed = false;
+  let activeLight = null;
+  for (let i = 0; i < sandpitTrafficLights.length; i++) {
+    const tl = sandpitTrafficLights[i];
+    const distToLight = Math.hypot(tl.x - bus.x, tl.z - bus.z);
+    if (distToLight < 22) {
+      const s = getSandpitLightState(tl);
+      if (s.state === 'RED' || (s.state === 'YELLOW' && s.remaining <= 1)) {
+        waitingAtRed = true;
+        activeLight = { tl, s };
+        break;
+      }
+    }
+  }
+
+  if (waitingAtRed && activeLight) {
+    // ★ 紅燈強制停等：車速歸零，LED 提示
+    bus.isWaitingLight = true;
+    bus.ledText = `🚦 ${activeLight.tl.name} 紅燈停等中 (${activeLight.s.remaining}s)`;
+    return;
+  }
+  bus.isWaitingLight = false;
 
   const target = bus.waypoints[bus.currentWaypointIndex];
   const dx = target.x - bus.x;
@@ -784,7 +830,7 @@ function updateBusPhysics(bus) {
       } else if (bus.id === 'bus_zhongshan') {
         bus.ledText = bus.currentWaypointIndex < 9 ? '中山幹線 ➔ 師大' : '中山幹線 ➔ 晴光商圈';
       } else if (bus.id === 'bus_99') {
-        bus.ledText = bus.currentWaypointIndex < 5 ? '99 ➔ 板橋學府路一段' : '99 ➔ 新北新埔 ➔ 新莊';
+        bus.ledText = bus.currentWaypointIndex < 5 ? '99 ➔ 土城學府路一段' : '99 ➔ 新北新埔 ➔ 新莊';
       } else if (bus.id === 'bus_299') {
         bus.ledText = bus.currentWaypointIndex < 6 ? '299 ➔ 台北車站 ➔ 忠孝復興' : '299 ➔ 三重 ➔ 輔大';
       }
@@ -938,18 +984,47 @@ const mrtTrains = [
   }
 ];
 
-// 捷運列車連續班距運動物理學
+// 捷運列車真實速度與物理學 (起步平滑加速、依站距巡航極速、進站前平滑減速煞車)
 function updateMrtPhysics(train) {
   if (train.isStopped) {
     train.stopTimer--;
+    train.currentSpeed = 0;
     if (train.stopTimer <= 0) train.isStopped = false;
     return;
   }
 
+  const prevIdx = (train.currentWaypointIndex - 1 + train.track.length) % train.track.length;
+  const prevPt = train.track[prevIdx];
   const target = train.track[train.currentWaypointIndex];
+
+  const segDist = Math.hypot(target.x - prevPt.x, target.z - prevPt.z) || 50;
   const dx = target.x - train.x;
   const dz = target.z - train.z;
-  const dist = Math.hypot(dx, dz);
+  const distRemaining = Math.hypot(dx, dz);
+  const traveled = Math.max(0, segDist - distRemaining);
+
+  // 依站距決定極速：長站距 (如圓山到台北車站) 速度大幅提高
+  let topSpeed = train.speed || 0.60;
+  if (segDist > 70) topSpeed = 0.88;
+  else if (segDist > 45) topSpeed = 0.65;
+  else topSpeed = 0.48;
+
+  // 3 階段平滑速度曲線
+  let curSpeed = topSpeed;
+  const accelZone = segDist * 0.28;
+  const decelZone = segDist * 0.30;
+
+  if (traveled < accelZone) {
+    // 階段 1：起步平滑加速
+    curSpeed = Math.max(0.12, topSpeed * (traveled / accelZone));
+  } else if (distRemaining < decelZone) {
+    // 階段 2：進站前平滑煞車減速
+    curSpeed = Math.max(0.10, topSpeed * (distRemaining / decelZone));
+  } else {
+    // 階段 3：區間最高速巡航
+    curSpeed = topSpeed;
+  }
+  train.currentSpeed = curSpeed;
 
   const targetAngle = Math.atan2(dz, dx);
   let diff = targetAngle - train.angle;
@@ -957,29 +1032,29 @@ function updateMrtPhysics(train) {
   while (diff > Math.PI) diff -= Math.PI * 2;
   train.angle += diff * 0.20;
 
-  if (dist <= train.speed * 1.5) {
+  if (distRemaining <= curSpeed * 1.5) {
     train.x = target.x;
     train.z = target.z;
     if (target.stopName && !target.justStopped) {
       train.isStopped = true;
-      train.stopTimer = 85; // 停站 1.4 秒模擬月台上下客
+      train.stopTimer = 90; // 停站約 1.5 秒模擬月台上下客
       train.currentStation = target.stopName;
       target.justStopped = true;
       setTimeout(() => { target.justStopped = false; }, 8000);
     }
-    // 依固定班距連續循環推進，前車抵達終點，次班接續運行
     train.currentWaypointIndex = (train.currentWaypointIndex + 1) % train.track.length;
     const nextPt = train.track[train.currentWaypointIndex];
     if (nextPt.stopName) {
+      const speedDisplay = Math.round(curSpeed * 100);
       if (train.lineCode === 'BL') {
-        train.ledText = train.currentWaypointIndex < 8 ? '🚇 板南線 ➔ 南港展覽館' : '🚇 板南線 ➔ 板橋府中 ➔ 頂埔';
+        train.ledText = train.currentWaypointIndex < 8 ? `🚇 板南線 ➔ 南港 (${speedDisplay}km/h)` : `🚇 板南線 ➔ 頂埔 (${speedDisplay}km/h)`;
       } else if (train.lineCode === 'R') {
-        train.ledText = train.currentWaypointIndex < 7 ? '🚇 淡水信義線 ➔ 象山' : '🚇 淡水信義線 ➔ 圓山 ➔ 淡水';
+        train.ledText = train.currentWaypointIndex < 7 ? `🚇 淡水信義線 ➔ 象山 (${speedDisplay}km/h)` : `🚇 淡水信義線 ➔ 淡水 (${speedDisplay}km/h)`;
       }
     }
   } else {
-    train.x += Math.cos(train.angle) * train.speed;
-    train.z += Math.sin(train.angle) * train.speed;
+    train.x += Math.cos(train.angle) * curSpeed;
+    train.z += Math.sin(train.angle) * curSpeed;
   }
 }
 

@@ -45,8 +45,19 @@ let isMrtVisible = true;
 let isMrtTrainsVisible = true;
 let isBusVisible = true;
 let isBusFleetVisible = true;
+let isTrafficLightsVisible = true;
+let isUnderConstructionVisible = true;
+let isExpresswaysVisible = true;
+let isCoachHubsVisible = true;
 let isEBusPanelOpen = false;
 let currentStoreFilter = 'all';
+
+let trafficLightsLayerGroup = null;
+let underConstructionLayerGroup = null;
+let expresswaysLayerGroup = null;
+let coachHubsLayerGroup = null;
+let trafficLightMarkers = new Map();
+let trafficLightsTimer = null;
 
 
 // 初始化地圖主函式
@@ -58,51 +69,69 @@ function initCyberRealMap() {
     return;
   }
 
-  // 1. 建立地圖實例 (預設聚焦台北車站站前核心，支援 22x 超微觀特寫展現每條街道與巷弄門牌)
+  // 1. 建立地圖實例 (採用整數 ZoomSnap 徹底杜絕浮點縮放卡頓與瓦片撕裂)
   map = L.map('map', {
     center: [25.0465, 121.5170],
-    zoom: 15.0,
+    zoom: 14,
     minZoom: 9,
-    maxZoom: 22, // 提升至 22 級極限微觀特寫
+    maxZoom: 22,
     zoomControl: false,
-    preferCanvas: true, // 核心效能突破：開啟硬體加速 Canvas 渲染向量圖層，徹底解決 SVG DOM 移動卡頓
-    wheelPxPerZoomLevel: 100, // 平滑滾輪縮放
-    wheelDebounceTime: 40,
-    zoomSnap: 0.5, // 0.5 整數/半整數吸附，徹底消除奇異浮點縮放導致的瓦片雙線性模糊！
-    zoomDelta: 0.5
+    preferCanvas: true, // 開啟 Canvas 硬體加速向量渲染
+    zoomSnap: 1, // 整數級別吸附，極限消除重繪負擔與圖層模糊
+    zoomDelta: 1,
+    wheelPxPerZoomLevel: 120,
+    wheelDebounceTime: 60
   });
 
-  // 縮放控制面板 (置於右下角，避免遮蔽頂部導航)
+  // 縮放控制面板
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立 1:1 真實網路地圖瓦片服務 (配備自動防崩潰容錯備援，確保地圖資料 100% 恆久可見不白屏)
+  // 2. 建立精確座標換算備援機制 (依照層級比例縮放座標，杜絕 404/400 導致的黑屏或街道缺失)
   function enableResilientTileFallback(layer) {
     layer.on('tileerror', function(e) {
       if (e && e.tile && !e.tile._hasFallback) {
         e.tile._hasFallback = true;
         const c = e.coords;
         if (c) {
-          const z = Math.min(Math.max(0, c.z), 19);
-          e.tile.src = `https://a.tile.openstreetmap.org/${z}/${c.x}/${c.y}.png`;
+          const nativeMax = layer.options.maxNativeZoom || 18;
+          const targetZ = Math.min(Math.max(0, c.z), nativeMax, 18);
+          const dz = Math.max(0, c.z - targetZ);
+          const scale = Math.pow(2, dz);
+          const x = Math.floor(c.x / scale);
+          const y = Math.floor(c.y / scale);
+          e.tile.src = `https://tile.openstreetmap.org/${targetZ}/${x}/${y}.png`;
         }
       }
     });
     return layer;
   }
 
-  baseLayers = {
-    osm: enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      subdomains: 'abc',
+  // 複合衛星街道層：高空衛星疊加 100% 真實公路、街道與地名標籤，確保切換衛星時街道依然清晰可見！
+  const satelliteHybridLayer = L.layerGroup([
+    enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
-      detectRetina: false, // 嚴禁在 OSM 開啟 detectRetina 避免高倍率請求 20 級返回 HTTP 400 錯誤
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
+      detectRetina: false,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
     })),
+    enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      opacity: 0.95
+    })),
+    enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      opacity: 0.95
+    }))
+  ]);
+
+  baseLayers = {
     voyager: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxNativeZoom: 18,
       maxZoom: 22,
-      detectRetina: true,
+      detectRetina: false,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
     })),
     nlsc: enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
@@ -111,24 +140,26 @@ function initCyberRealMap() {
       detectRetina: false,
       attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
     })),
+    osm: enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      subdomains: 'abc',
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      detectRetina: false,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
+    })),
     dark: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains: 'abcd',
       maxNativeZoom: 18,
       maxZoom: 22,
-      detectRetina: true,
+      detectRetina: false,
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     })),
-    satellite: enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      detectRetina: false,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
-    }))
+    satellite: satelliteHybridLayer
   };
 
-  // 預設載入繁體中文最完整之 OpenStreetMap (並啟用彈性備援機制，絕無黑屏或資料缺失)
-  currentBaseLayerKey = 'osm';
-  activeBaseLayer = baseLayers.osm;
+  // 預設載入清晰流暢之 CARTO Voyager HD (配備街道高光與 1:1 實體對應)
+  currentBaseLayerKey = 'voyager';
+  activeBaseLayer = baseLayers.voyager;
   activeBaseLayer.addTo(map);
 
   // 3. 建立各圖層群組
@@ -143,6 +174,10 @@ function initCyberRealMap() {
   highlightedBusRouteGroup = L.layerGroup().addTo(map);
   casesLayerGroup = L.layerGroup().addTo(map);
   sectorsLayerGroup = L.layerGroup().addTo(map);
+  trafficLightsLayerGroup = L.layerGroup().addTo(map);
+  underConstructionLayerGroup = L.layerGroup().addTo(map);
+  expresswaysLayerGroup = L.layerGroup().addTo(map);
+  coachHubsLayerGroup = L.layerGroup().addTo(map);
 
   // 初始化門市圖層群組 (涵蓋全雙北 14 大真實連鎖品牌與地標)
   const brands = [
@@ -163,18 +198,22 @@ function initCyberRealMap() {
   addTraLayer();
   addMrtLayer();
   addEBusLayer();
+  addTrafficLightsLayer();
+  addUnderConstructionLayer();
+  addExpresswaysLayer();
+  addCoachHubsLayer();
   renderEBusPanel();
-  initBusFleetContinuousDispatch(); // 核心：多車隊連續循環發車引擎 (含 656、基隆9006/2088/1802、307等)
-  initMrtTrainsContinuousDispatch(); // 核心：捷運固定班距動態列車調度引擎 (BL/R/G/O/Y 雙向固定班次)
+  initBusFleetContinuousDispatch(); // 多車隊連續循環發車 (遵守紅綠燈號誌強制停等)
+  initMrtTrainsContinuousDispatch(); // 捷運真實加減速、站距高速動態巡航
   addSectorsLayer();
   addAllStoreMarkers();
   map.on('zoomend', () => {
     updateStoreLODVisibility();
-    addMrtLayer();
+    updateMrtLODVisibility();
   });
   updateStoreLODVisibility();
   addDemoCasesMarkers();
-  initPlayerAvatarMarker(); // 核心：微觀主角巡航標記與特寫跟隨
+  initPlayerAvatarMarker();
   setupTelemetryListeners();
 
   console.log('✅ 1:1 真實雙北網路街道全景圖與四軌大眾運輸已全數載入完成！');
@@ -1125,29 +1164,53 @@ function addMrtLayer() {
   const currentZoom = (typeof map !== 'undefined' && map) ? map.getZoom() : 13;
 
   MRT_DATA.forEach(line => {
-    const coords = line.stations.map(st => [st.lat, st.lon]);
+    // 依分支獨立繪製軌道線 (徹底修復中和新蘆線 15 公里雷射線、淡水線新北投折返、新店線小碧潭折返、淡海輕軌跨海直連)
+    if (line.branches && line.branches.length > 0) {
+      line.branches.forEach(branch => {
+        const branchCoords = branch.stations.map(st => [st.lat, st.lon]);
 
-    // 外層光暈底線
-    L.polyline(coords, {
-      color: line.color,
-      weight: 7,
-      opacity: 0.35,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }).addTo(mrtLayerGroup);
+        // 外層光暈底線
+        L.polyline(branchCoords, {
+          color: line.color,
+          weight: 7,
+          opacity: 0.35,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(mrtLayerGroup);
 
-    // 核心發光亮線
-    const poly = L.polyline(coords, {
-      color: line.glowColor || line.color,
-      weight: 3.5,
-      opacity: 0.95
-    }).addTo(mrtLayerGroup);
+        // 核心發光亮線
+        const poly = L.polyline(branchCoords, {
+          color: line.glowColor || line.color,
+          weight: 3.5,
+          opacity: 0.95
+        }).addTo(mrtLayerGroup);
 
-    poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
+        poly.bindTooltip(`🚇 ${line.name} (${branch.name})`, { sticky: true });
+      });
+    } else {
+      const coords = line.stations.map(st => [st.lat, st.lon]);
 
-    // 繪製高畫質捷運站點標籤 Marker (雙北 131+ 全站無閹割 1:1 實裝)
+      // 外層光暈底線
+      L.polyline(coords, {
+        color: line.color,
+        weight: 7,
+        opacity: 0.35,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(mrtLayerGroup);
+
+      // 核心發光亮線
+      const poly = L.polyline(coords, {
+        color: line.glowColor || line.color,
+        weight: 3.5,
+        opacity: 0.95
+      }).addTo(mrtLayerGroup);
+
+      poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
+    }
+
+    // 繪製捷運站點標籤 Marker (雙層 DOM 內嵌，縮放切換純靠 CSS，0ms 重繪卡頓)
     line.stations.forEach((st, idx) => {
-      // 關鍵樞紐站與端點站 (在廣域縮小時優先顯示全標籤)
       const isHub = (idx === 0 || idx === line.stations.length - 1 || 
                      ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區', '動物園', '南港展覽館', '淡水', '頂埔', '新店', '南勢角', '蘆洲', '迴龍'].includes(st.name));
 
@@ -1157,28 +1220,27 @@ function addMrtLayer() {
       </svg>`;
 
       const lineCode = st.code || line.lineCode || 'MRT';
-      // 雙層級呈現：當縮小至 zoom < 14 時，普通站點呈現精緻光點避擠；放大至 >= 14 或關鍵樞紐站時，呈現完整超高畫質官方向量標記
-      const showFullPin = (currentZoom >= 14.0) || isHub;
 
-      const html = showFullPin ? `
-        <div class="pin-mrt-vector" style="border-color:${line.color};">
-          <span class="mrt-logo-box">${metroSvg}</span>
-          <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
-          <span class="mrt-station-title">${st.name}</span>
+      const html = `
+        <div class="mrt-pin-hybrid ${isHub ? 'is-hub' : ''}">
+          <div class="pin-mrt-vector" style="border-color:${line.color};">
+            <span class="mrt-logo-box">${metroSvg}</span>
+            <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
+            <span class="mrt-station-title">${st.name}</span>
+          </div>
+          <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
         </div>
-      ` : `
-        <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
       `;
 
       const icon = L.divIcon({
         html: html,
-        className: 'transit-pin-wrap' + (showFullPin ? '' : ' compact-dot-wrap'),
-        iconAnchor: showFullPin ? [48, 14] : [5, 5]
+        className: 'transit-pin-wrap station-marker-wrap' + (isHub ? ' is-hub' : ''),
+        iconAnchor: [48, 14]
       });
 
       const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
       marker.bindPopup(`
-        <div style="font-family:sans-serif; color:#f8fafc; min-width:200px;">
+        <div style="font-family:sans-serif; color:#f8fafc; min-width:210px;">
           <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
             <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${line.color};"></span>
             <strong style="font-size:13px; color:#ffffff;">捷運 ${st.name} 站 ${st.code ? '(' + st.code + ')' : ''}</strong>
@@ -1190,6 +1252,12 @@ function addMrtLayer() {
       `);
     });
   });
+}
+
+function updateMrtLODVisibility() {
+  if (typeof map === 'undefined' || !map) return;
+  const isNear = map.getZoom() >= 14.0;
+  document.body.classList.toggle('map-zoom-near', isNear);
 }
 
 // (4) 🚌 大臺北公車 (eBus - 參考 ebus.gov.taipei)
@@ -1312,6 +1380,268 @@ function interpolatePolyline(path, progress) {
   return [lat, lon];
 }
 
+
+// ──────────────────────────────────────────
+// 🚦 雙北規律三色交通號誌圖層 (Traffic Lights Layer & Dynamic Signal Engine)
+// 包含 10 大關鍵樞紐十字路口，綠燈 ➔ 黃燈 ➔ 紅燈循序循環，強制公車遵守停等
+// ──────────────────────────────────────────
+function addTrafficLightsLayer() {
+  trafficLightsLayerGroup.clearLayers();
+  trafficLightMarkers.clear();
+  if (trafficLightsTimer) clearInterval(trafficLightsTimer);
+
+  const lights = (typeof SHUANGBEI_TRAFFIC_LIGHTS !== 'undefined') ? SHUANGBEI_TRAFFIC_LIGHTS : [];
+  if (lights.length === 0) return;
+
+  const nowSec = Date.now() / 1000;
+
+  lights.forEach(tl => {
+    const state = getTrafficLightState(tl, nowSec);
+
+    const iconHtml = `
+      <div class="traffic-light-signal-box" id="tl_box_${tl.id}">
+        <div class="tl-housing">
+          <span class="tl-lamp tl-red ${state.state === 'RED' ? 'active' : ''}"></span>
+          <span class="tl-lamp tl-yellow ${state.state === 'YELLOW' ? 'active' : ''}"></span>
+          <span class="tl-lamp tl-green ${state.state === 'GREEN' ? 'active' : ''}"></span>
+        </div>
+        <div class="tl-countdown-pill" id="tl_pill_${tl.id}" style="border-color:${state.color}; color:${state.color};">
+          ${state.icon} ${state.remaining}s
+        </div>
+      </div>
+    `;
+
+    const icon = L.divIcon({
+      html: iconHtml,
+      className: 'traffic-light-icon-wrap',
+      iconAnchor: [38, 14]
+    });
+
+    const marker = L.marker([tl.lat, tl.lon], { icon }).addTo(trafficLightsLayerGroup);
+
+    const updatePopup = (s) => `
+      <div style="font-family:sans-serif; color:#f8fafc; min-width:230px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:12px; font-weight:900; color:#38bdf8;">🚦 台灣標準三色交通號誌</span>
+          <span style="font-size:10px; background:${s.color}; color:#fff; padding:1px 5px; border-radius:4px; font-weight:700;">${s.label}</span>
+        </div>
+        <strong style="font-size:12px; color:#ffffff;">${tl.name}</strong>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:6px; line-height:1.5;">
+          即時週期：<b style="color:${s.color};">${s.icon} ${s.label} (剩餘 ${s.remaining} 秒)</b><br>
+          完整秒數：綠燈 ${tl.greenSec}s ➔ 黃燈 ${tl.yellowSec}s ➔ 紅燈 ${tl.redSec}s<br>
+          監控行駛公車：${tl.routes.join(', ')}<br>
+          <span style="color:#ef4444; font-weight:700;">★ 交通法規：紅燈亮起時，公車與巡航車隊強制停駛於停止線前。</span>
+        </div>
+      </div>
+    `;
+
+    marker.bindPopup(updatePopup(state));
+    trafficLightMarkers.set(tl.id, { tl, marker, updatePopup });
+  });
+
+  // 每 1000ms 更新號誌燈狀態與倒數秒數
+  trafficLightsTimer = setInterval(() => {
+    if (!isTrafficLightsVisible) return;
+    const curSec = Date.now() / 1000;
+    trafficLightMarkers.forEach(({ tl, marker, updatePopup }) => {
+      const s = getTrafficLightState(tl, curSec);
+      const box = document.getElementById(`tl_box_${tl.id}`);
+      if (box) {
+        const r = box.querySelector('.tl-red');
+        const y = box.querySelector('.tl-yellow');
+        const g = box.querySelector('.tl-green');
+        if (r && y && g) {
+          r.className = 'tl-lamp tl-red' + (s.state === 'RED' ? ' active' : '');
+          y.className = 'tl-lamp tl-yellow' + (s.state === 'YELLOW' ? ' active' : '');
+          g.className = 'tl-lamp tl-green' + (s.state === 'GREEN' ? ' active' : '');
+        }
+        const pill = document.getElementById(`tl_pill_${tl.id}`);
+        if (pill) {
+          pill.style.borderColor = s.color;
+          pill.style.color = s.color;
+          pill.innerHTML = `${s.icon} ${s.remaining}s`;
+        }
+      }
+      if (marker.isPopupOpen()) {
+        marker.setPopupContent(updatePopup(s));
+      }
+    });
+  }, 1000);
+}
+
+// ──────────────────────────────────────────
+// 🚧 雙北興建中捷運網絡圖層 (Under-Construction Transit Lines)
+// 包含三鶯線 (LB01-LB12)、萬大-中和-樹林線一期 (LG01-LG09)
+// ──────────────────────────────────────────
+function addUnderConstructionLayer() {
+  underConstructionLayerGroup.clearLayers();
+  const ucLines = (typeof SHUANGBEI_UNDER_CONSTRUCTION_MRT !== 'undefined') ? SHUANGBEI_UNDER_CONSTRUCTION_MRT : [];
+
+  ucLines.forEach(line => {
+    const coords = line.stations.map(st => [st.lat, st.lon]);
+
+    // 外層光暈底線
+    L.polyline(coords, {
+      color: line.color,
+      weight: 6,
+      opacity: 0.35,
+      dashArray: '10, 8'
+    }).addTo(underConstructionLayerGroup);
+
+    // 核心發光虛線
+    const poly = L.polyline(coords, {
+      color: line.glowColor || line.color,
+      weight: 3.5,
+      opacity: 0.95,
+      dashArray: '8, 8'
+    }).addTo(underConstructionLayerGroup);
+
+    poly.bindTooltip(`🚧 ${line.name} [${line.status}]`, { sticky: true });
+
+    // 興建中站點
+    line.stations.forEach(st => {
+      const icon = L.divIcon({
+        html: `<div class="pin-uc-station" style="border-color:${line.color};" title="${line.name} ${st.name}站 (${st.code})">🚧 ${st.name}</div>`,
+        className: 'uc-pin-wrap',
+        iconAnchor: [30, 10]
+      });
+
+      const marker = L.marker([st.lat, st.lon], { icon }).addTo(underConstructionLayerGroup);
+      marker.bindPopup(`
+        <div style="font-family:sans-serif; color:#f8fafc; min-width:220px;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${line.color};"></span>
+            <strong style="font-size:13px; color:${line.color};">🚧 興建中捷運：${st.name} 站 (${st.code})</strong>
+          </div>
+          <div style="font-size:11px; color:#38bdf8; font-weight:700;">路線：${line.name}</div>
+          <div style="font-size:10px; color:#cbd5e1; margin-top:4px; line-height:1.5;">
+            進度概況：${line.status}<br>
+            雙北捷運下一代都會外環與中運量走廊，完工後將直接串聯新北三鶯與雙北生活圈。
+          </div>
+        </div>
+      `);
+    });
+  });
+}
+
+// ──────────────────────────────────────────
+// 🛣️ 雙北核心國道高速公路圖層 (Freeway Expressways Layer)
+// ──────────────────────────────────────────
+function addExpresswaysLayer() {
+  expresswaysLayerGroup.clearLayers();
+  const expressways = (typeof SHUANGBEI_EXPRESSWAYS !== 'undefined') ? SHUANGBEI_EXPRESSWAYS : [];
+
+  expressways.forEach(hwy => {
+    // 外層光暈底線
+    L.polyline(hwy.coords, {
+      color: hwy.color,
+      weight: hwy.width + 4,
+      opacity: 0.40,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(expresswaysLayerGroup);
+
+    // 核心高速公路亮線
+    const line = L.polyline(hwy.coords, {
+      color: hwy.glowColor || hwy.color,
+      weight: hwy.width,
+      opacity: 0.95
+    }).addTo(expresswaysLayerGroup);
+
+    line.bindTooltip(`🛣️ ${hwy.name}`, { sticky: true });
+
+    // 標示國道編號盾牌
+    if (hwy.coords.length > 2) {
+      const midIdx = Math.floor(hwy.coords.length / 2);
+      const centerPt = hwy.coords[midIdx];
+      const icon = L.divIcon({
+        html: `<div class="hwy-shield-badge" style="border-color:${hwy.color};">🛣️ ${hwy.shortName}</div>`,
+        className: 'hwy-badge-wrap',
+        iconAnchor: [35, 10]
+      });
+      L.marker(centerPt, { icon, interactive: false }).addTo(expresswaysLayerGroup);
+    }
+  });
+}
+
+// ──────────────────────────────────────────
+// 🏢 雙北三大特等長途國道客運轉運中樞 (Coach Hubs Layer)
+// ──────────────────────────────────────────
+function addCoachHubsLayer() {
+  coachHubsLayerGroup.clearLayers();
+  const hubs = (typeof SHUANGBEI_HIGHWAY_COACH_HUBS !== 'undefined') ? SHUANGBEI_HIGHWAY_COACH_HUBS : [];
+
+  hubs.forEach(hub => {
+    const icon = L.divIcon({
+      html: `<div class="coach-hub-pin">🏢 ${hub.name.split(' (')[0]}</div>`,
+      className: 'coach-hub-pin-wrap',
+      iconAnchor: [45, 12]
+    });
+
+    const marker = L.marker([hub.lat, hub.lon], { icon }).addTo(coachHubsLayerGroup);
+    marker.bindPopup(`
+      <div style="font-family:sans-serif; color:#f8fafc; min-width:240px;">
+        <strong style="font-size:13px; color:#f59e0b;">🏢 ${hub.name}</strong>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:4px; line-height:1.5;">
+          ${hub.desc}
+        </div>
+        <div style="font-size:10px; color:#38bdf8; margin-top:6px; font-weight:700;">主要國道客運路線：</div>
+        <ul style="font-size:10px; color:#94a3b8; margin:2px 0 0 16px; padding:0;">
+          ${hub.coaches.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+      </div>
+    `);
+  });
+}
+
+function toggleTrafficLightsLayer() {
+  isTrafficLightsVisible = !isTrafficLightsVisible;
+  if (isTrafficLightsVisible) map.addLayer(trafficLightsLayerGroup);
+  else map.removeLayer(trafficLightsLayerGroup);
+  const btn = document.getElementById('btnToggleTrafficLights');
+  if (btn) {
+    btn.classList.toggle('active', isTrafficLightsVisible);
+    const badge = btn.querySelector('span:last-child');
+    if (badge) badge.innerText = isTrafficLightsVisible ? 'ON' : 'OFF';
+  }
+}
+
+function toggleUnderConstructionLayer() {
+  isUnderConstructionVisible = !isUnderConstructionVisible;
+  if (isUnderConstructionVisible) map.addLayer(underConstructionLayerGroup);
+  else map.removeLayer(underConstructionLayerGroup);
+  const btn = document.getElementById('btnToggleUnderConstruction');
+  if (btn) {
+    btn.classList.toggle('active', isUnderConstructionVisible);
+    const badge = btn.querySelector('span:last-child');
+    if (badge) badge.innerText = isUnderConstructionVisible ? 'ON' : 'OFF';
+  }
+}
+
+function toggleExpresswaysLayer() {
+  isExpresswaysVisible = !isExpresswaysVisible;
+  if (isExpresswaysVisible) map.addLayer(expresswaysLayerGroup);
+  else map.removeLayer(expresswaysLayerGroup);
+  const btn = document.getElementById('btnToggleExpressways');
+  if (btn) {
+    btn.classList.toggle('active', isExpresswaysVisible);
+    const badge = btn.querySelector('span:last-child');
+    if (badge) badge.innerText = isExpresswaysVisible ? 'ON' : 'OFF';
+  }
+}
+
+function toggleCoachHubsLayer() {
+  isCoachHubsVisible = !isCoachHubsVisible;
+  if (isCoachHubsVisible) map.addLayer(coachHubsLayerGroup);
+  else map.removeLayer(coachHubsLayerGroup);
+  const btn = document.getElementById('btnToggleCoachHubs');
+  if (btn) {
+    btn.classList.toggle('active', isCoachHubsVisible);
+    const badge = btn.querySelector('span:last-child');
+    if (badge) badge.innerText = isCoachHubsVisible ? 'ON' : 'OFF';
+  }
+}
+
 function initBusFleetContinuousDispatch() {
   if (busFleetAnimationTimer) clearInterval(busFleetAnimationTimer);
   ebusDynamicBusesGroup.clearLayers();
@@ -1326,9 +1656,10 @@ function initBusFleetContinuousDispatch() {
     const initPt = path[0];
 
     const iconHtml = `
-      <div class="moving-fleet-bus" style="background:${spec.color}; color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:12px; border:2px solid #ffffff; box-shadow:0 0 10px ${spec.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+      <div class="moving-fleet-bus" id="bus_icon_${spec.id}" style="background:${spec.color}; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; border:2px solid #ffffff; box-shadow:0 0 10px ${spec.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
         <span style="font-size:11px;">🚍</span>
         <span>${spec.name}</span>
+        <span class="bus-live-speed-tag" style="background:rgba(0,0,0,0.4); padding:1px 4px; border-radius:6px; font-size:9px;">32 km/h</span>
       </div>
     `;
 
@@ -1339,41 +1670,103 @@ function initBusFleetContinuousDispatch() {
     });
 
     const marker = L.marker(initPt, { icon }).addTo(ebusDynamicBusesGroup);
-    busFleetMarkers.set(spec.id, { spec, route, path, marker });
+    busFleetMarkers.set(spec.id, {
+      spec,
+      route,
+      path,
+      marker,
+      isStoppedAtRed: false,
+      lastPt: initPt,
+      holdProgress: 0,
+      activeTl: null
+    });
   });
 
-  // 2. 高頻連續平滑推進 (每 800ms 平滑計算，配合 CSS transition 實現連續無縫移動)
+  // 2. 高頻連續平滑推進 (每 600ms 平滑計算，遵守雙北規律交通號誌，紅燈強制停駛)
   busFleetAnimationTimer = setInterval(() => {
     if (!isBusFleetVisible) return;
     const nowSec = Date.now() / 1000;
+    const lights = (typeof SHUANGBEI_TRAFFIC_LIGHTS !== 'undefined') ? SHUANGBEI_TRAFFIC_LIGHTS : [];
 
     busFleetMarkers.forEach(item => {
       const { spec, route, path, marker } = item;
-      // 時間驅動連續進度：前車跑完終點，下一班接續發車，連續循環推進
+      
+      // 計算預設時間驅動前進進度
       const elapsed = (nowSec + spec.offsetSec) % spec.cycleSec;
-      const progress = elapsed / spec.cycleSec;
-      const currentPt = interpolatePolyline(path, progress);
+      const nominalProgress = elapsed / spec.cycleSec;
+      const nominalPt = interpolatePolyline(path, nominalProgress);
 
-      // 動態速度與到站狀態模擬
-      const speed = Math.round(32 + Math.sin(nowSec + spec.offsetSec) * 12);
-      const nextBusCountdown = Math.round(spec.cycleSec - elapsed);
+      // 號誌偵測：公車前方 65 公尺內是否存在紅燈或即將轉紅的黃燈
+      let shouldStopAtRed = false;
+      let activeTrafficLight = null;
+      let activeState = null;
+
+      for (let i = 0; i < lights.length; i++) {
+        const tl = lights[i];
+        const dLat = (item.lastPt ? item.lastPt[0] : nominalPt[0]) - tl.lat;
+        const dLon = (item.lastPt ? item.lastPt[1] : nominalPt[1]) - tl.lon;
+        const distSq = dLat * dLat + dLon * dLon;
+
+        // 判定距離路口小於 0.00065 度 (約 65 公尺)
+        if (distSq < 0.00065 * 0.00065) {
+          const s = getTrafficLightState(tl, nowSec);
+          if (s.state === 'RED' || (s.state === 'YELLOW' && s.remaining <= 2)) {
+            shouldStopAtRed = true;
+            activeTrafficLight = tl;
+            activeState = s;
+            break;
+          }
+        }
+      }
+
+      let speed = 0;
+      let statusText = '';
+      let currentPt = nominalPt;
+
+      if (shouldStopAtRed && activeTrafficLight) {
+        // ★ 核心交通法規落實：遇紅燈強制停下，車速降為 0，保持在路口停止線
+        item.isStoppedAtRed = true;
+        speed = 0;
+        statusText = `🚦 遵行號誌：【紅燈】停等中 (${activeTrafficLight.name.split(' (')[0]} 倒數 ${activeState.remaining}s)`;
+        currentPt = item.lastPt || nominalPt;
+      } else {
+        item.isStoppedAtRed = false;
+        item.lastPt = nominalPt;
+        currentPt = nominalPt;
+        speed = Math.round(36 + Math.sin(nowSec + spec.offsetSec) * 8);
+        statusText = `🚍 綠燈通暢・巡航行駛中 (${speed} km/h)`;
+      }
 
       marker.setLatLng(currentPt);
 
+      // 更新車身即時車速標籤
+      const busDom = document.getElementById(`bus_icon_${spec.id}`);
+      if (busDom) {
+        const tag = busDom.querySelector('.bus-live-speed-tag');
+        if (tag) {
+          tag.innerText = item.isStoppedAtRed ? '🛑 0 km/h' : `${speed} km/h`;
+          tag.style.color = item.isStoppedAtRed ? '#f87171' : '#4ade80';
+        }
+      }
+
       // 繫結即時資訊彈窗
+      const nextBusCountdown = Math.round(spec.cycleSec - elapsed);
       const popupHtml = `
-        <div style="font-family:sans-serif; min-width:240px; color:#f8fafc;">
+        <div style="font-family:sans-serif; min-width:250px; color:#f8fafc;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:13px; font-weight:900; color:${spec.color};">🚍 ${spec.name}</span>
-            <span style="font-size:10px; background:${spec.color}; color:#fff; padding:1px 5px; border-radius:4px;">即時巡航中</span>
+            <span style="font-size:10px; background:${item.isStoppedAtRed ? '#ef4444' : spec.color}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
+              ${item.isStoppedAtRed ? '🚦 遵行紅燈' : '即時巡航中'}
+            </span>
           </div>
           <div style="font-size:11px; font-weight:700; color:#38bdf8;">行駛方向：${spec.headsign}</div>
           <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.5;">
-            路線：${route.name}<br>
-            業者：${route.operator}<br>
-            即時車速：<b style="color:#4ade80;">${speed} km/h</b><br>
+            所屬路線：${route.name}<br>
+            營運業者：${route.operator}<br>
+            行駛狀態：<b style="color:${item.isStoppedAtRed ? '#f87171' : '#4ade80'};">${statusText}</b><br>
+            即時車速：<b style="color:${item.isStoppedAtRed ? '#f87171' : '#4ade80'}; font-size:13px;">${speed} km/h</b><br>
             連續發車狀態：<b style="color:#f59e0b;">接續巡航 (次班出發倒數 ${nextBusCountdown}s)</b><br>
-            遵守交通部 TDX / ebus 官方即時座標規範。
+            嚴格遵守真實世界雙北交通號誌與交通部 TDX 座標規範。
           </div>
           <div style="margin-top:8px;">
             <a href="${route.officialUrl}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
@@ -1384,59 +1777,115 @@ function initBusFleetContinuousDispatch() {
       `;
       marker.bindPopup(popupHtml);
     });
-  }, 800);
+  }, 600);
 }
 
 // ──────────────────────────────────────────
-// (5.5) 🚇 台北捷運固定班距動態列車調度系統 (MRT Fixed Headway Train Dispatcher)
-// 包含板南線 BL、淡水信義線 R、松山新店線 G、中和新蘆線 O、環狀線 Y 雙向固定班次行駛
+// (5.5) 🚇 台北捷運真實速度動態列車調度系統 (MRT Realistic Speed & Physics Simulation)
+// 包含板南線 BL、淡水信義線 R、松山新店線 G、中和新蘆線 O (迴龍/蘆洲雙分支)、環狀線 Y
+// 依真實物理：起步平滑加速、巡航高速 (依站距自動匹配 48~84 km/h)、到站前平滑減速，月台靠泊停等 5 秒
 // ──────────────────────────────────────────
 const ACTIVE_MRT_TRAIN_SPEC = [
-  // 板南線 (BL) - 雙向各 2 列，班距錯開接續發車
-  { id: 'mrt_BL_01', lineCode: 'BL', name: '板南線 BL-101', headsign: '往 南港展覽館', dir: 0, cycleSec: 50, offsetSec: 0, color: '#0070bd' },
-  { id: 'mrt_BL_02', lineCode: 'BL', name: '板南線 BL-103 (次班)', headsign: '往 南港展覽館', dir: 0, cycleSec: 50, offsetSec: 25, color: '#0070bd' },
-  { id: 'mrt_BL_03', lineCode: 'BL', name: '板南線 BL-102', headsign: '往 頂埔/板橋/海山', dir: 1, cycleSec: 50, offsetSec: 12, color: '#0284c7' },
-  { id: 'mrt_BL_04', lineCode: 'BL', name: '板南線 BL-104 (次班)', headsign: '往 頂埔/板橋/海山', dir: 1, cycleSec: 50, offsetSec: 37, color: '#0284c7' },
+  // 板南線 (BL) - 雙向行駛
+  { id: 'mrt_BL_01', lineCode: 'BL', branchCode: 'BL_main', name: '板南線 BL-101', headsign: '往 南港展覽館', dir: 0, offsetSec: 0, color: '#0070bd' },
+  { id: 'mrt_BL_02', lineCode: 'BL', branchCode: 'BL_main', name: '板南線 BL-103 (次班)', headsign: '往 南港展覽館', dir: 0, offsetSec: 32, color: '#0070bd' },
+  { id: 'mrt_BL_03', lineCode: 'BL', branchCode: 'BL_main', name: '板南線 BL-102', headsign: '往 頂埔/板橋/海山', dir: 1, offsetSec: 16, color: '#0284c7' },
+  { id: 'mrt_BL_04', lineCode: 'BL', branchCode: 'BL_main', name: '板南線 BL-104 (次班)', headsign: '往 頂埔/板橋/海山', dir: 1, offsetSec: 48, color: '#0284c7' },
 
-  // 淡水信義線 (R) - 雙向各 2 列固定班次
-  { id: 'mrt_R_01', lineCode: 'R', name: '淡水信義線 R-201', headsign: '往 象山/台北101', dir: 0, cycleSec: 55, offsetSec: 0, color: '#e3002c' },
-  { id: 'mrt_R_02', lineCode: 'R', name: '淡水信義線 R-203 (次班)', headsign: '往 象山/台北101', dir: 0, cycleSec: 55, offsetSec: 27, color: '#e3002c' },
-  { id: 'mrt_R_03', lineCode: 'R', name: '淡水信義線 R-202', headsign: '往 淡水/士林/北投', dir: 1, cycleSec: 55, offsetSec: 15, color: '#ef4444' },
-  { id: 'mrt_R_04', lineCode: 'R', name: '淡水信義線 R-204 (次班)', headsign: '往 淡水/士林/北投', dir: 1, cycleSec: 55, offsetSec: 42, color: '#ef4444' },
+  // 淡水信義線 (R) - 雙向行駛 (使用 R_main 主線，不穿新北投死胡同)
+  { id: 'mrt_R_01', lineCode: 'R', branchCode: 'R_main', name: '淡水信義線 R-201', headsign: '往 象山/台北101', dir: 0, offsetSec: 0, color: '#e3002c' },
+  { id: 'mrt_R_02', lineCode: 'R', branchCode: 'R_main', name: '淡水信義線 R-203 (次班)', headsign: '往 象山/台北101', dir: 0, offsetSec: 35, color: '#e3002c' },
+  { id: 'mrt_R_03', lineCode: 'R', branchCode: 'R_main', name: '淡水信義線 R-202', headsign: '往 淡水/士林/北投', dir: 1, offsetSec: 18, color: '#ef4444' },
+  { id: 'mrt_R_04', lineCode: 'R', branchCode: 'R_main', name: '淡水信義線 R-204 (次班)', headsign: '往 淡水/士林/北投', dir: 1, offsetSec: 53, color: '#ef4444' },
 
-  // 松山新店線 (G) - 雙向固定班次
-  { id: 'mrt_G_01', lineCode: 'G', name: '松山新店線 G-301', headsign: '往 松山車站', dir: 0, cycleSec: 60, offsetSec: 5, color: '#008659' },
-  { id: 'mrt_G_02', lineCode: 'G', name: '松山新店線 G-302', headsign: '往 新店碧潭', dir: 1, cycleSec: 60, offsetSec: 35, color: '#10b981' },
+  // 松山新店線 (G) - 雙向行駛 (使用 G_main 主線)
+  { id: 'mrt_G_01', lineCode: 'G', branchCode: 'G_main', name: '松山新店線 G-301', headsign: '往 松山車站', dir: 0, offsetSec: 5, color: '#008659' },
+  { id: 'mrt_G_02', lineCode: 'G', branchCode: 'G_main', name: '松山新店線 G-302', headsign: '往 新店碧潭', dir: 1, offsetSec: 35, color: '#10b981' },
 
-  // 中和新蘆線 (O) - 雙向固定班次
-  { id: 'mrt_O_01', lineCode: 'O', name: '中和新蘆線 O-401', headsign: '往 迴龍/新莊', dir: 0, cycleSec: 60, offsetSec: 10, color: '#f39800' },
-  { id: 'mrt_O_02', lineCode: 'O', name: '中和新蘆線 O-402', headsign: '往 南勢角/中和', dir: 1, cycleSec: 60, offsetSec: 40, color: '#fb923c' },
+  // 中和新蘆線 (O) - 迴龍主線與蘆洲支線各循獨立分歧，絕無 15 公里跨城射線！
+  { id: 'mrt_O_01', lineCode: 'O', branchCode: 'O_main', name: '中和新蘆線 O-401 (迴龍主線)', headsign: '往 迴龍/新莊', dir: 0, offsetSec: 10, color: '#f39800' },
+  { id: 'mrt_O_02', lineCode: 'O', branchCode: 'O_main', name: '中和新蘆線 O-402 (迴龍主線)', headsign: '往 南勢角/中和', dir: 1, offsetSec: 45, color: '#fb923c' },
+  { id: 'mrt_O_03', lineCode: 'O', branchCode: 'O_luzhou', name: '中和新蘆線 O-403 (蘆洲支線)', headsign: '往 蘆洲/徐匯中學', dir: 0, offsetSec: 22, color: '#f59e0b' },
 
-  // 環狀線 (Y) - 雙向固定班次
-  { id: 'mrt_Y_01', lineCode: 'Y', name: '環狀線 Y-501', headsign: '往 新北產業園區', dir: 0, cycleSec: 65, offsetSec: 8, color: '#ffd100' },
-  { id: 'mrt_Y_02', lineCode: 'Y', name: '環狀線 Y-502', headsign: '往 大坪林', dir: 1, cycleSec: 65, offsetSec: 38, color: '#facc15' }
+  // 環狀線 (Y) - 雙向行駛
+  { id: 'mrt_Y_01', lineCode: 'Y', branchCode: 'Y_main', name: '環狀線 Y-501', headsign: '往 新北產業園區', dir: 0, offsetSec: 8, color: '#ffd100' },
+  { id: 'mrt_Y_02', lineCode: 'Y', branchCode: 'Y_main', name: '環狀線 Y-502', headsign: '往 大坪林', dir: 1, offsetSec: 38, color: '#facc15' },
+
+  // 文湖線 (BR) - 雙向行駛
+  { id: 'mrt_BR_01', lineCode: 'BR', branchCode: 'BR_main', name: '文湖線 BR-01', headsign: '往 南港展覽館/內科', dir: 0, offsetSec: 12, color: '#c48c31' },
+  { id: 'mrt_BR_02', lineCode: 'BR', branchCode: 'BR_main', name: '文湖線 BR-02', headsign: '往 動物園/木柵', dir: 1, offsetSec: 42, color: '#b45309' }
 ];
 
 const mrtTrainMarkers = new Map();
+
+// 計算兩經緯度距離 (公里)
+function calcDistanceKm(lat1, lon1, lat2, lon2) {
+  const dLat = (lat2 - lat1) * 111.32;
+  const dLon = (lon2 - lon1) * 111.32 * Math.cos(((lat1 + lat2) / 2) * Math.PI / 180);
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
 
 function initMrtTrainsContinuousDispatch() {
   if (mrtTrainAnimationTimer) clearInterval(mrtTrainAnimationTimer);
   mrtDynamicTrainsGroup.clearLayers();
   mrtTrainMarkers.clear();
 
-  // 1. 初始化各捷運列車標記
+  // 1. 初始化各捷運列車，建立站間物理區間數據庫
   ACTIVE_MRT_TRAIN_SPEC.forEach(spec => {
     const line = MRT_DATA.find(x => x.lineCode === spec.lineCode);
-    if (!line || !line.stations || line.stations.length === 0) return;
+    if (!line) return;
 
-    const coords = line.stations.map(st => [st.lat, st.lon]);
-    const path = spec.dir === 0 ? coords : [...coords].reverse();
-    const initPt = path[0];
+    let stations = line.stations;
+    if (line.branches && line.branches.length > 0) {
+      const br = line.branches.find(b => b.branchCode === spec.branchCode);
+      if (br && br.stations && br.stations.length > 0) {
+        stations = br.stations;
+      }
+    }
+    if (!stations || stations.length < 2) return;
+
+    const orderedStations = spec.dir === 0 ? stations : [...stations].reverse();
+
+    // 建立相鄰站間物理區間
+    const segments = [];
+    let totalLoopTime = 0;
+
+    for (let i = 0; i < orderedStations.length - 1; i++) {
+      const fromSt = orderedStations[i];
+      const toSt = orderedStations[i + 1];
+      const distKm = calcDistanceKm(fromSt.lat, fromSt.lon, toSt.lat, toSt.lon);
+
+      // 依站距決定極速：短站距 (<0.75km) 48km/h，中等站距 (0.75-1.3km) 66km/h，長站距 (>1.3km) 84km/h
+      let topSpeed = 65;
+      if (distKm < 0.75) topSpeed = 48;
+      else if (distKm < 1.3) topSpeed = 66;
+      else topSpeed = 84;
+
+      const dwellSec = 4.5; // 月台停等 4.5 秒上下客
+      const travelSec = Math.max(12, Math.round(distKm * 20)); // 依站距計算行駛時間
+      const segDuration = dwellSec + travelSec;
+
+      segments.push({
+        from: fromSt,
+        to: toSt,
+        distKm,
+        topSpeed,
+        dwellSec,
+        travelSec,
+        duration: segDuration,
+        startTime: totalLoopTime
+      });
+
+      totalLoopTime += segDuration;
+    }
+
+    const initPt = [orderedStations[0].lat, orderedStations[0].lon];
 
     const iconHtml = `
-      <div class="moving-mrt-train" style="background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:3px 8px; border-radius:14px; border:2px solid ${spec.color}; box-shadow:0 0 12px ${spec.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+      <div class="moving-mrt-train" id="mrt_icon_${spec.id}" style="background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:14px; border:2px solid ${spec.color}; box-shadow:0 0 12px ${spec.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
         <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${spec.color};"></span>
         <span style="color:#fff;">🚇 ${spec.name}</span>
+        <span class="mrt-live-speed-tag" style="background:${spec.color}; color:#fff; padding:1px 5px; border-radius:8px; font-size:9px; font-weight:700;">45 km/h</span>
       </div>
     `;
 
@@ -1447,46 +1896,114 @@ function initMrtTrainsContinuousDispatch() {
     });
 
     const marker = L.marker(initPt, { icon }).addTo(mrtDynamicTrainsGroup);
-    mrtTrainMarkers.set(spec.id, { spec, line, path, marker });
+    mrtTrainMarkers.set(spec.id, {
+      spec,
+      line,
+      orderedStations,
+      segments,
+      totalLoopTime,
+      marker
+    });
   });
 
-  // 2. 連續固定班距列車調度運算 (每 800ms)
+  // 2. 高頻連續平滑物理運算 (每 400ms，平滑呈現加速、極速巡航、進站減速與停等)
   mrtTrainAnimationTimer = setInterval(() => {
     if (!isMrtTrainsVisible) return;
     const nowSec = Date.now() / 1000;
 
     mrtTrainMarkers.forEach(item => {
-      const { spec, line, path, marker } = item;
-      const elapsed = (nowSec + spec.offsetSec) % spec.cycleSec;
-      const progress = elapsed / spec.cycleSec;
-      const currentPt = interpolatePolyline(path, progress);
+      const { spec, line, segments, totalLoopTime, marker } = item;
+      if (!segments || segments.length === 0 || totalLoopTime <= 0) return;
 
-      // 車站停靠判定 (微波模擬停站載客與區間行駛)
-      const isAtStation = Math.sin(progress * Math.PI * (path.length - 1)) > 0.88;
-      const speed = isAtStation ? 0 : Math.round(62 + Math.sin(nowSec * 2) * 6);
-      const statusText = isAtStation ? '🚊 站點停靠載客中' : `🚅 區間巡航 (${speed} km/h)`;
-      const headwaySec = Math.round(spec.cycleSec / 2);
+      const t = (nowSec + spec.offsetSec) % totalLoopTime;
 
-      marker.setLatLng(currentPt);
+      // 尋找當前所在的站間區間
+      let currentSeg = segments[0];
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        if (t >= seg.startTime && t < seg.startTime + seg.duration) {
+          currentSeg = seg;
+          break;
+        }
+      }
 
+      const segT = t - currentSeg.startTime;
+      let currentLat = currentSeg.from.lat;
+      let currentLon = currentSeg.from.lon;
+      let speed = 0;
+      let phaseText = '';
+      let isAtStation = false;
+
+      if (segT < currentSeg.dwellSec) {
+        // ★ 階段 1：月台靠泊停等中 (Speed = 0，乘客上下車)
+        isAtStation = true;
+        speed = 0;
+        currentLat = currentSeg.from.lat;
+        currentLon = currentSeg.from.lon;
+        const dwellRem = Math.ceil(currentSeg.dwellSec - segT);
+        phaseText = `🚉 【${currentSeg.from.name}站】月台停靠中 (停等剩 ${dwellRem}s)`;
+      } else {
+        // 行駛階段
+        const runT = segT - currentSeg.dwellSec;
+        const u = Math.min(0.99999, runT / currentSeg.travelSec);
+
+        // ★ 核心物理曲線：起步加速 ➔ 依站距高速巡航 ➔ 進站減速
+        if (u < 0.25) {
+          // 起步加速：正弦平滑由 0 飆升至 topSpeed
+          const progressInAccel = u / 0.25;
+          speed = Math.round(currentSeg.topSpeed * Math.sin(progressInAccel * Math.PI / 2));
+          phaseText = `🚄 出站加速中 (${speed} km/h) ➔ 往 ${currentSeg.to.name}`;
+        } else if (u < 0.75) {
+          // 區間最高速巡航 (依站距 ${currentSeg.distKm.toFixed(2)}km 自動匹配極速)
+          speed = Math.round(currentSeg.topSpeed + Math.sin(nowSec * 3) * 1.5);
+          phaseText = `🚅 區間最高速巡航 (${speed} km/h) [站距 ${currentSeg.distKm.toFixed(2)}km]`;
+        } else {
+          // 進站平滑煞車減速：餘弦平滑由 topSpeed 降至 0
+          const progressInDecel = (u - 0.75) / 0.25;
+          speed = Math.round(currentSeg.topSpeed * Math.cos(progressInDecel * Math.PI / 2));
+          phaseText = `🛑 進站減速煞車中 (${speed} km/h) ➔ 即將抵達 ${currentSeg.to.name}`;
+        }
+
+        // 站間位置平滑插值 (採用 EaseInOut 餘弦過渡，徹底消除瞬移頓挫)
+        const eased = (1 - Math.cos(u * Math.PI)) / 2;
+        currentLat = currentSeg.from.lat + (currentSeg.to.lat - currentSeg.from.lat) * eased;
+        currentLon = currentSeg.from.lon + (currentSeg.to.lon - currentSeg.from.lon) * eased;
+      }
+
+      marker.setLatLng([currentLat, currentLon]);
+
+      // 更新車頂即時時速徽章
+      const mrtDom = document.getElementById(`mrt_icon_${spec.id}`);
+      if (mrtDom) {
+        const speedTag = mrtDom.querySelector('.mrt-live-speed-tag');
+        if (speedTag) {
+          speedTag.innerText = isAtStation ? '停靠 0 km/h' : `${speed} km/h`;
+          speedTag.style.background = isAtStation ? '#f59e0b' : spec.color;
+        }
+      }
+
+      // 彈出詳細即時物理動力學遙測資訊
       const popupHtml = `
-        <div style="font-family:sans-serif; min-width:230px; color:#f8fafc;">
+        <div style="font-family:sans-serif; min-width:260px; color:#f8fafc;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:13px; font-weight:900; color:${spec.color};">🚇 ${spec.name}</span>
-            <span style="font-size:10px; background:${spec.color}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">班次在軌</span>
+            <span style="font-size:10px; background:${isAtStation ? '#f59e0b' : '#10b981'}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
+              ${isAtStation ? '月台停靠中' : '即時巡航運轉'}
+            </span>
           </div>
           <div style="font-size:11px; font-weight:700; color:#38bdf8;">運轉方向：${spec.headsign}</div>
           <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.5;">
             所屬路網：${line.name}<br>
-            列車運轉狀態：<b style="color:${isAtStation ? '#f59e0b' : '#4ade80'};">${statusText}</b><br>
-            固定發車班距：<b style="color:#38bdf8;">約 ${headwaySec} 秒連續派遣一班</b><br>
-            全自動高運量號誌控制 (ATC) 連續巡弋中。
+            動力學狀態：<b style="color:${isAtStation ? '#f59e0b' : '#38bdf8'};">${phaseText}</b><br>
+            即時行駛時速：<b style="color:${isAtStation ? '#f59e0b' : '#4ade80'}; font-size:13px;">${speed} km/h</b> (區間設計極速: ${currentSeg.topSpeed} km/h)<br>
+            當前區間站距：<b>${currentSeg.distKm.toFixed(2)} 公里</b> (${currentSeg.from.name} ➔ ${currentSeg.to.name})<br>
+            ★ 完全遵照真實捷運加速、長距離高巡航速、進站減速煞車物理法則。
           </div>
         </div>
       `;
       marker.bindPopup(popupHtml);
     });
-  }, 800);
+  }, 400);
 }
 
 // (6) 大臺北公車檢索面板渲染 (eBus Realtime Navigator)

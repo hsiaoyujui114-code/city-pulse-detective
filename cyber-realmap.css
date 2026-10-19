@@ -1459,5 +1459,160 @@ html, body {
   margin-top: 4px;
 }
 
+/* ──────────────────────────────────────────
+   🚦 台灣標準三色交通號誌樣式 (Traffic Light Signals)
+   ────────────────────────────────────────── */
+.traffic-light-signal-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid #38bdf8;
+  border-radius: 16px;
+  padding: 3px 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.tl-housing {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #020617;
+  padding: 2px 4px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+}
+
+.tl-lamp {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.22;
+  transition: all 0.25s ease;
+}
+
+.tl-lamp.tl-red { background: #ef4444; }
+.tl-lamp.tl-yellow { background: #eab308; }
+.tl-lamp.tl-green { background: #22c55e; }
+
+.tl-lamp.tl-red.active {
+  opacity: 1;
+  box-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
+}
+
+.tl-lamp.tl-yellow.active {
+  opacity: 1;
+  box-shadow: 0 0 10px #eab308, 0 0 16px #eab308;
+}
+
+.tl-lamp.tl-green.active {
+  opacity: 1;
+  box-shadow: 0 0 10px #22c55e, 0 0 16px #22c55e;
+}
+
+.tl-countdown-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  font-family: monospace;
+}
+
+/* ──────────────────────────────────────────
+   🚧 興建中捷運站點標籤
+   ────────────────────────────────────────── */
+.pin-uc-station {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #67e8f9;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1.5px dashed #06b6d4;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ──────────────────────────────────────────
+   🛣️ 國道高速公路編號盾牌
+   ────────────────────────────────────────── */
+.hwy-shield-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #1e3a8a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1.5px solid #60a5fa;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────
+   🏢 國道客運轉運中樞標籤
+   ────────────────────────────────────────── */
+.coach-hub-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #f59e0b;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────
+   ⚡ 零延遲捷運站點雙層級 LOD (CSS GPU 加速切換)
+   ────────────────────────────────────────── */
+.mrt-pin-hybrid {
+  display: inline-flex;
+  align-items: center;
+}
+
+body.map-zoom-near .mrt-pin-hybrid .pin-mrt-vector {
+  display: inline-flex;
+}
+body.map-zoom-near .mrt-pin-hybrid .pin-mrt-compact-dot {
+  display: none;
+}
+
+body:not(.map-zoom-near) .mrt-pin-hybrid:not(.is-hub) .pin-mrt-vector {
+  display: none;
+}
+body:not(.map-zoom-near) .mrt-pin-hybrid:not(.is-hub) .pin-mrt-compact-dot {
+  display: block;
+}
+
+body:not(.map-zoom-near) .mrt-pin-hybrid.is-hub .pin-mrt-vector {
+  display: inline-flex;
+}
+body:not(.map-zoom-near) .mrt-pin-hybrid.is-hub .pin-mrt-compact-dot {
+  display: none;
+}
+
+/* ──────────────────────────────────────────
+   🚀 硬體加速列車與公車移動平滑化
+   ────────────────────────────────────────── */
+.mrt-train-div-icon, .bus-fleet-div-icon {
+  will-change: transform;
+  transition: transform 0.4s linear;
+}
+
 
 
