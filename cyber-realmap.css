@@ -789,14 +789,13 @@ html, body {
 }
 
 .leaflet-tile {
-  /* 徹底解決地圖放大後背景瓦片模糊問題 (Anti-Blur & Sharp Retina Tile Rendering) */
-  image-rendering: -webkit-optimize-contrast !important;
-  image-rendering: crisp-edges !important;
-  -ms-interpolation-mode: nearest-neighbor !important;
+  /* 高畫質抗鋸齒街道渲染：保證在任何螢幕縮放與高解析度下，街道、巷弄與門牌線條平滑完整不消失 */
+  image-rendering: auto;
 }
 
 .leaflet-tile-pane {
-  filter: contrast(105%) saturate(104%);
+  /* 高對比飽和增強：使道路網、街廓輪廓與繁體中文路名更加鮮明醒目 */
+  filter: contrast(108%) saturate(110%);
   transform: translateZ(0);
 }
 

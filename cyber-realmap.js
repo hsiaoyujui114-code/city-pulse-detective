@@ -21,7 +21,7 @@ const EBUS_KEY_ROUTES = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHU
 
 // 3. 全域地圖與圖層管理
 let map = null;
-let currentBaseLayerKey = 'voyager';
+let currentBaseLayerKey = 'nlsc';
 let activeBaseLayer = null;
 let baseLayers = {};
 let streetsLayerGroup = null;
@@ -86,80 +86,107 @@ function initCyberRealMap() {
   // 縮放控制面板
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // 2. 建立精確座標換算備援機制 (依照層級比例縮放座標，杜絕 404/400 導致的黑屏或街道缺失)
-  function enableResilientTileFallback(layer) {
+  // 2. 建立精確座標換算備援機制 (依照層級比例縮放座標，杜絕 404/403 導致的黑屏或街道缺失)
+  function enableResilientTileFallback(layer, fallbackUrlTemplate) {
     layer.on('tileerror', function(e) {
       if (e && e.tile && !e.tile._hasFallback) {
         e.tile._hasFallback = true;
         const c = e.coords;
         if (c) {
-          const nativeMax = layer.options.maxNativeZoom || 18;
-          const targetZ = Math.min(Math.max(0, c.z), nativeMax, 18);
+          const nativeMax = layer.options.maxNativeZoom || 19;
+          const targetZ = Math.min(Math.max(0, c.z), nativeMax);
           const dz = Math.max(0, c.z - targetZ);
           const scale = Math.pow(2, dz);
           const x = Math.floor(c.x / scale);
           const y = Math.floor(c.y / scale);
-          e.tile.src = `https://tile.openstreetmap.org/${targetZ}/${x}/${y}.png`;
+          if (fallbackUrlTemplate) {
+            e.tile.src = fallbackUrlTemplate.replace('{z}', targetZ).replace('{x}', x).replace('{y}', y);
+          } else {
+            // 預設備援至臺灣通用電子地圖 (NLSC)，保證 100% 繁中街道路名永遠可見
+            e.tile.src = `https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/${targetZ}/${y}/${x}`;
+          }
         }
       }
     });
     return layer;
   }
 
-  // 複合衛星街道層：高空衛星疊加 100% 真實公路、街道與地名標籤，確保切換衛星時街道依然清晰可見！
-  const satelliteHybridLayer = L.layerGroup([
-    enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  // (1) 臺灣通用電子地圖 (內政部國土測繪中心 NLSC 繁中官方街道全圖・最權威最詳實)
+  const nlscBaseLayer = enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+    maxNativeZoom: 20,
+    maxZoom: 22,
+    detectRetina: false,
+    attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
+  }));
+
+  // (2) Esri 真實街道全景圖 (高對比暖色街廓・黑字中文路名清楚標註・Google Maps 同級清晰度)
+  const esriStreetBaseLayer = enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 19,
+    maxZoom: 22,
+    detectRetina: false,
+    attribution: 'Tiles &copy; Esri &mdash; World Street Map'
+  }));
+
+  // (3) OpenStreetMap 繁體中文標準街道 (由高速開源鏡像提供，覆蓋雙北全部巷弄、街區、地標)
+  const osmBaseLayer = enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
+    subdomains: 'abc',
+    maxNativeZoom: 19,
+    maxZoom: 22,
+    detectRetina: false,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文街道巷弄全網'
+  }), 'https://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png');
+
+  // (4) 賽博暗黑夜間圖 (黑曜石深邃底圖 ✕ 高對比道路向量網 ✕ 地名路牌全息複合圖層)
+  const cyberDarkHybridLayer = L.layerGroup([
+    enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
       detectRetina: false,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
+      attribution: 'Tiles &copy; Esri &mdash; Dark Canvas'
     })),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
-      opacity: 0.95
+      opacity: 1.0
     })),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
       maxZoom: 22,
-      opacity: 0.95
+      opacity: 1.0
+    }))
+  ]);
+
+  // (5) 1:1 實體高空衛星 ✕ 真實街道路網全息複合圖層 (NLSC 正射空拍 ✕ 橙白道路向量雙線 ✕ 繁中路標)
+  const satelliteHybridLayer = L.layerGroup([
+    enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+      maxNativeZoom: 20,
+      maxZoom: 22,
+      detectRetina: false,
+      attribution: '&copy; 內政部國土測繪中心 (NLSC) 正射影像'
+    }), 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+    enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      opacity: 1.0
+    })),
+    enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxNativeZoom: 19,
+      maxZoom: 22,
+      opacity: 1.0
     }))
   ]);
 
   baseLayers = {
-    voyager: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxNativeZoom: 18,
-      maxZoom: 22,
-      detectRetina: false,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    })),
-    nlsc: enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      detectRetina: false,
-      attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
-    })),
-    osm: enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      subdomains: 'abc',
-      maxNativeZoom: 19,
-      maxZoom: 22,
-      detectRetina: false,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文真實街道'
-    })),
-    dark: enableResilientTileFallback(L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxNativeZoom: 18,
-      maxZoom: 22,
-      detectRetina: false,
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-    })),
+    nlsc: nlscBaseLayer,
+    esri_street: esriStreetBaseLayer,
+    osm: osmBaseLayer,
+    dark: cyberDarkHybridLayer,
     satellite: satelliteHybridLayer
   };
 
-  // 預設載入清晰流暢之 CARTO Voyager HD (配備街道高光與 1:1 實體對應)
-  currentBaseLayerKey = 'voyager';
-  activeBaseLayer = baseLayers.voyager;
+  // 預設載入最權威、最詳實清晰之臺灣通用電子地圖 (NLSC 繁中街道全圖)
+  currentBaseLayerKey = 'nlsc';
+  activeBaseLayer = baseLayers.nlsc;
   activeBaseLayer.addTo(map);
 
   // 3. 建立各圖層群組
@@ -2714,7 +2741,7 @@ function updateVisibleStoreCountHUD(showStores) {
 }
 
 // ──────────────────────────────────────────
-// 10. 切換 1:1 真實網路底圖 (CARTO / OSM / 衛星)
+// 10. 切換 1:1 真實網路底圖 (NLSC / Esri / OSM / 賽博暗黑 / 衛星)
 // ──────────────────────────────────────────
 function switchBaseLayer(layerKey) {
   if (!baseLayers[layerKey] || layerKey === currentBaseLayerKey) return;
@@ -2724,12 +2751,17 @@ function switchBaseLayer(layerKey) {
   activeBaseLayer.addTo(map);
   currentBaseLayerKey = layerKey;
 
+  // 確保街道高光圖層、路牌標籤始終置頂於底圖之上，街道 100% 清楚可辨
+  if (streetsLayerGroup && map.hasLayer(streetsLayerGroup)) {
+    streetsLayerGroup.eachLayer(l => { if (l.bringToFront) l.bringToFront(); });
+  }
+
   const names = {
-    voyager: 'CARTO Voyager HD (512px @2x)',
-    nlsc: '臺灣通用電子地圖 (NLSC 20級原生)',
-    osm: 'OpenStreetMap (Retina HD)',
-    dark: 'CARTO Dark HD',
-    satellite: 'Esri Satellite HD'
+    nlsc: '臺灣通用電子地圖 (NLSC 繁中街道全圖)',
+    esri_street: 'Esri 真實街道全景圖 (高對比導航版)',
+    osm: 'OpenStreetMap (繁體中文街道全網)',
+    dark: '賽博暗黑夜間圖 (黑曜石霓虹街道複合)',
+    satellite: '實體高空衛星 ✕ 1:1 真實街道複合圖層'
   };
   const hudSource = document.getElementById('hudSource');
   if (hudSource) hudSource.innerText = names[layerKey] || layerKey;
