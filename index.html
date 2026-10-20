@@ -165,6 +165,7 @@
     <div class="zoom-btn" onclick="setCloseUpMode()" title="👤 超大微觀人物特寫 (RPG Close-Up Mode)">👤</div>
     <div class="zoom-btn" onclick="lockCameraToPlayer()" title="🎯 視角居中鎖定人物正上方">🎯</div>
     <div class="zoom-btn" onclick="setStreetViewMode()" title="🏙️ 都會街區標準巡航視角">🏙️</div>
+    <div class="zoom-btn" id="btnToggleGameRoadSigns" onclick="toggleGameRoadSigns()" title="🛣️ 道路名稱看板 (預設隱藏，按鈕按需啟用)">🛣️</div>
     <div class="zoom-btn" onclick="resetCameraOverview()" title="🗺️ 雙北全景總覽">🗺️</div>
   </div>
 
@@ -334,32 +335,32 @@
     </div>
   </div>
 
-  <!-- 3c. 家樂福旗艦量販 ✕ 家樂福便利購超市 (Carrefour Nexus Supply) -->
+  <!-- 3c. 萬家福旗艦量販 ✕ 樂家康生鮮超市 (WanJiaFu / LeJiaKang Nexus Supply) -->
   <div class="modal-overlay" id="wanjiafuModal">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title"><span>🛒</span> 家樂福 Carrefour 旗艦量販 ✕ 便利購超市</div>
+        <div class="modal-title"><span>🛒</span> 萬家福 WanJiaFu 旗艦量販 ✕ 樂家康 LeJiaKang 生鮮超市</div>
         <button class="modal-close" onclick="closeModal('wanjiafuModal')">×</button>
       </div>
       <div style="background:#0284c718; border:1px solid #38bdf8; padding:12px; border-radius:10px; margin-bottom:14px;">
-        <p style="color:#38bdf8; font-weight:800; font-size:14px;" id="wanjiafuBranchGreeting">店長親切招呼：「天天都便宜，就是家樂福！全雙北真實門市網絡互聯，提供最充足的探索物資與能量補給！」</p>
+        <p style="color:#38bdf8; font-weight:800; font-size:14px;" id="wanjiafuBranchGreeting">店長親切招呼：「天天都便宜，就是萬家福！全雙北真實門市網絡互聯，提供最充足的探索物資與能量補給！」</p>
       </div>
       <div style="background:#0f172a; padding:10px 14px; border-radius:8px; border-left:4px solid #00f0ff; margin-bottom:12px; font-size:12px; color:#cbd5e1;">
-        🌐 <strong>【都會量販物流網絡】</strong>：已對齊現實雙北門市（家樂福桂林旗艦店 24H、家樂福重慶旗艦店、家樂福新店店、家樂福便利購站前開封店等），享有全城充沛民生物資！
+        🌐 <strong>【都會量販物流網絡】</strong>：已對齊現實雙北門市（萬家福桂林旗艦店 24H、萬家福重慶旗艦店、萬家福新店店、樂家康生鮮站前開封店等），享有全城充沛民生物資！
       </div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#fca5a5; margin-bottom:4px;">🍞 家樂福經典烘焙能量餐包 ($40)</h4>
-          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">家樂福烘焙坊新鮮出爐特製柔軟餐包，快速補充體力！</p>
+          <h4 style="color:#fca5a5; margin-bottom:4px;">🍞 萬家福經典烘焙能量餐包 ($40)</h4>
+          <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">萬家福烘焙坊新鮮出爐特製柔軟餐包，快速補充體力！</p>
           <button class="chat-send-btn" style="background:#2563eb; width:100%; padding:8px;" onclick="buyWanjiafuToast()">購買 $40 (+45 體力)</button>
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#93c5fd; margin-bottom:4px;">💧 家樂福 1500ml 離子電解水 ($30)</h4>
+          <h4 style="color:#93c5fd; margin-bottom:4px;">💧 萬家福 1500ml 離子電解水 ($30)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">1500ml 量販大容量純淨好水，探索全城不怕缺水！</p>
           <button class="chat-send-btn" style="background:#0284c7; width:100%; padding:8px;" onclick="buyWanjiafuWater()">購買 $30 (+35 心情)</button>
         </div>
         <div style="background:#1e293b; padding:14px; border-radius:10px; border:1px solid #334155;">
-          <h4 style="color:#fde047; margin-bottom:4px;">🧰 家樂福旗艦超值補給箱 ($120)</h4>
+          <h4 style="color:#fde047; margin-bottom:4px;">🧰 萬家福旗艦超值補給箱 ($120)</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:10px;">量販大補給：高能口糧、離子能量棒與全方位應急套件！</p>
           <button class="chat-send-btn" style="background:#ca8a04; width:100%; padding:8px;" onclick="buyWanjiafuBox()">購買 $120 (+60 體力/+50 心情)</button>
         </div>

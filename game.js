@@ -142,6 +142,20 @@ const camera = {
 };
 let cameraLockToPlayer = true; // 視角嚴密鎖定於主角正上方，移動時無縫同步推進
 
+// 🛣️ 道路路牌簡潔化控制 (預設隱藏「民權東路」等看板，按鈕按需啟用，符合企劃書視野規範)
+window.showGameRoadSigns = false;
+window.toggleGameRoadSigns = function() {
+  window.showGameRoadSigns = !window.showGameRoadSigns;
+  const btn = document.getElementById('btnToggleGameRoadSigns');
+  if (btn) {
+    btn.style.borderColor = window.showGameRoadSigns ? '#22c55e' : 'rgba(255,255,255,0.2)';
+    btn.style.boxShadow = window.showGameRoadSigns ? '0 0 10px rgba(34, 197, 94, 0.6)' : 'none';
+  }
+  if (typeof addSystemChat === 'function') {
+    addSystemChat(`🛣️ 2.5D沙盤道路名稱看板已【${window.showGameRoadSigns ? '開啟顯示' : '設為簡潔隱藏'}】`);
+  }
+};
+
 // 奔跑腳底塵土/氣流粒子系統
 const sprintParticles = [];
 
@@ -2837,7 +2851,9 @@ function renderScene() {
   drawGreenZebraCrossing(-192, 154, 6, 28, true);
 
   // 5. 瀝青路面高對比路名與台灣經典綠底路牌標示 (High-Visibility Taiwan Street Signage - 視錐剔除)
+  // 【落實委託人指示：地圖預設極致簡化，預設隱藏「民權東路」等看板，按鈕按需啟用】
   function drawTaiwanRoadSign(text, x, z) {
+    if (!window.showGameRoadSigns) return;
     if (scale > 15.0) return; // 特寫模式下避免路牌放大成巨大色塊擋住人物視線
     if (!isInViewport(x, z, 35)) return;
     const sx = screenX(x);
@@ -3547,7 +3563,7 @@ function renderScene() {
     ctx.restore();
   }
 
-  // 🛒 全球正統家樂福官方向量標誌 (Carrefour Dual-Color Diamond ✕ Negative White 'C')
+  // 🛒 全球正統萬家福/樂家康官方向量標誌 (WanJiaFu / LeJiaKang Dual-Color Diamond ✕ Negative White 'C')
   let carrefourRedPath2D = null;
   let carrefourBluePath2D = null;
   if (typeof Path2D !== 'undefined') {
@@ -3984,7 +4000,7 @@ function renderScene() {
     drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'cosmed', '#f57200');
   }
 
-  // (4) 🛒 家樂福 Carrefour (旗艦量販 ✕ 便利購超市)
+  // (4) 🛒 萬家福 WanJiaFu ✕ 樂家康 LeJiaKang (旗艦量販 ✕ 便利購超市)
   function drawWanjiafuStore(x, z, branchName, isFlagship) {
     const storeW = isFlagship ? 34 : 24;
     const storeH = isFlagship ? 24 : 20;
@@ -3998,11 +4014,11 @@ function renderScene() {
     ctx.lineWidth = 2.2;
     ctx.stroke();
 
-    // 招牌頂條 (家樂福深藍底色)
+    // 招牌頂條 (萬家福深藍底色)
     ctx.fillStyle = isFlagship ? '#1e3a8a' : '#0369a1';
     ctx.fillRect(bx, bz, storeW * scale, 5 * scale);
 
-    // 門面正統家樂福紅白藍雙箭頭白 C 標誌 (純粹樣式，無多餘文字)
+    // 門面正統萬家福/樂家康紅白藍雙箭頭白 C 標誌 (純粹樣式，無多餘文字)
     const logoSize = Math.max(12, scale * 1.8);
     drawCarrefourLogo(ctx, bx + (storeW * scale) / 2, bz + 2.5 * scale, logoSize, logoSize * 40 / 61);
 
@@ -4019,9 +4035,7 @@ function renderScene() {
     drawSafeRoundRect(ctx, bx + 2 * scale, bz + (storeH - 4.5) * scale, 4 * scale, 3.5 * scale, 1);
     ctx.fill();
 
-    // 🌟 委託人指示重要鐵令：
-    // 「如果這邊有什麼家樂福的標示，縮小的時候不要看到，要放大到一定的大小，上面才顯示一個小小的家樂福標示。我不要一個圈圈下面寫「家」，我要一個家樂福的標示。」
-    // 嚴格落實 LOD (scale >= 4.8) 與純樣式無文字
+    // 🌟 委託人指示重要鐵令：嚴格落實 LOD (scale >= 4.8) 與純樣式無文字
     drawFloatingStoreBrandBadge(ctx, bx, bz, storeW, 'carrefour', isFlagship ? '#254F9B' : '#0284c7');
   }
 

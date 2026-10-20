@@ -14,6 +14,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer, WebSocket } = require('ws');
+const transitLiveService = require('./transit-live-service');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
@@ -49,10 +50,55 @@ const server = http.createServer((req, res) => {
         project: 'Taipei Metro Detective RPG / City Pulse Detective',
         version: '1.0.0',
         onlinePlayers: players ? players.size : 0,
-        storesCount: 65,
+        storesCount: 377,
         sectorsCount: 41,
         casesCount: 10,
-        mapEngine: 'Leaflet 1.9.4 Real Slippy Map (CARTO/OSM/Esri)'
+        mapEngine: 'Leaflet 1.9.4 Real Slippy Map (NLSC/Esri/OSM)',
+        transitLiveSync: true
+      }));
+      return;
+    }
+
+    // 1. 大眾運輸即時同步 API (公車真實 GPS 與行止狀態 + 捷運/高鐵/臺鐵即時營運時刻表)
+    if (reqPath === '/api/transit/live') {
+      transitLiveService.getLiveBusFleet().then(fleet => {
+        const rail = transitLiveService.getRealtimeRailSchedule();
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          timestamp: new Date().toISOString(),
+          activeBusCount: fleet.length,
+          buses: fleet,
+          railSchedule: rail
+        }));
+      }).catch(err => {
+        res.writeHead(500);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      });
+      return;
+    }
+
+    // 2. 施工狀態即時同步 API (支援即時查詢與真實世界停止施工開放通行機制)
+    if (reqPath === '/api/construction/status') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        timestamp: new Date().toISOString(),
+        sites: transitLiveService.getConstructionStatus()
+      }));
+      return;
+    }
+
+    if (reqPath === '/api/construction/toggle') {
+      const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost:3000'}`);
+      const siteId = urlObj.searchParams.get('id');
+      const newStatus = urlObj.searchParams.get('status');
+      const updated = transitLiveService.toggleConstructionStatus(siteId, newStatus);
+      res.writeHead(updated ? 200 : 404);
+      res.end(JSON.stringify({
+        success: !!updated,
+        updatedSite: updated,
+        sites: transitLiveService.getConstructionStatus()
       }));
       return;
     }

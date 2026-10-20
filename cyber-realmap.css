@@ -1577,32 +1577,80 @@ html, body {
 }
 
 /* ──────────────────────────────────────────
-   ⚡ 零延遲捷運站點雙層級 LOD (CSS GPU 加速切換)
+   ⚡ 地圖介面極致簡化 ✕ 依按鈕按需啟用站名與路名標籤
    ────────────────────────────────────────── */
 .mrt-pin-hybrid {
   display: inline-flex;
   align-items: center;
 }
 
-body.map-zoom-near .mrt-pin-hybrid .pin-mrt-vector {
-  display: inline-flex;
+/* 預設狀態 (未開按鈕)：全圖絕對簡潔！全面隱藏「中山國小」等冗長站名，僅顯示精緻微光點 */
+body:not(.show-station-labels) .mrt-pin-hybrid .pin-mrt-vector {
+  display: none !important;
 }
-body.map-zoom-near .mrt-pin-hybrid .pin-mrt-compact-dot {
-  display: none;
+body:not(.show-station-labels) .mrt-pin-hybrid .pin-mrt-compact-dot {
+  display: block !important;
 }
-
-body:not(.map-zoom-near) .mrt-pin-hybrid:not(.is-hub) .pin-mrt-vector {
-  display: none;
-}
-body:not(.map-zoom-near) .mrt-pin-hybrid:not(.is-hub) .pin-mrt-compact-dot {
-  display: block;
+body:not(.show-station-labels) .transit-badge-pin {
+  display: none !important;
 }
 
-body:not(.map-zoom-near) .mrt-pin-hybrid.is-hub .pin-mrt-vector {
-  display: inline-flex;
+/* 按下按鈕啟用：顯露捷運雙色標誌、路線膠囊與站名 */
+body.show-station-labels .mrt-pin-hybrid .pin-mrt-vector {
+  display: inline-flex !important;
 }
-body:not(.map-zoom-near) .mrt-pin-hybrid.is-hub .pin-mrt-compact-dot {
-  display: none;
+body.show-station-labels .mrt-pin-hybrid .pin-mrt-compact-dot {
+  display: none !important;
+}
+body.show-station-labels .transit-badge-pin {
+  display: inline-flex !important;
+}
+
+/* 道路名稱標牌：預設簡潔隱藏，按下按鈕才顯露「民權東路」等綠底白字路牌 */
+body:not(.show-road-names) .road-badge-wrap {
+  display: none !important;
+}
+body.show-road-names .road-badge-wrap {
+  display: block !important;
+}
+
+/* ──────────────────────────────────────────
+   🔭 局部導航視野限制 (Local Navigation FoV Radar)
+   ────────────────────────────────────────── */
+.radar-fov-circle {
+  stroke: #00f0ff;
+  stroke-width: 1.5px;
+  stroke-dasharray: 6, 6;
+  animation: radarScanRotate 16s linear infinite;
+}
+@keyframes radarScanRotate {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 72; }
+}
+
+/* ──────────────────────────────────────────
+   🏪 商圈密集門市聚類標籤 (MarkerCluster)
+   ────────────────────────────────────────── */
+.store-cluster-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 2px solid #38bdf8;
+  border-radius: 18px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.store-cluster-badge:hover {
+  transform: scale(1.1);
+  border-color: #facc15;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.8);
 }
 
 /* ──────────────────────────────────────────
@@ -1611,6 +1659,47 @@ body:not(.map-zoom-near) .mrt-pin-hybrid.is-hub .pin-mrt-compact-dot {
 .mrt-train-div-icon, .bus-fleet-div-icon {
   will-change: transform;
   transition: transform 0.4s linear;
+}
+
+/* ──────────────────────────────────────────
+   🚍 即時公車行止狀態微光樣式
+   ────────────────────────────────────────── */
+.moving-fleet-bus.bus-stopped {
+  animation: busStoppedPulse 1.8s infinite ease-in-out;
+}
+@keyframes busStoppedPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.7); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 1.0); }
+}
+
+.moving-fleet-bus.bus-cruising {
+  animation: busCruisingPulse 2.2s infinite ease-in-out;
+}
+@keyframes busCruisingPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(2, 132, 199, 0.6); }
+  50% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.9); }
+}
+
+/* ──────────────────────────────────────────
+   🚧 施工狀態即時同步標籤樣式
+   ────────────────────────────────────────── */
+.construction-hazard-badge {
+  animation: hazardFlicker 2s infinite ease-in-out;
+  transition: transform 0.2s ease;
+}
+.construction-hazard-badge:hover {
+  transform: scale(1.12);
+}
+@keyframes hazardFlicker {
+  0%, 100% { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+  50% { border-color: #ef4444; box-shadow: 0 0 18px rgba(239, 68, 68, 0.9); }
+}
+
+.construction-clear-badge {
+  transition: transform 0.2s ease;
+}
+.construction-clear-badge:hover {
+  transform: scale(1.12);
 }
 
 

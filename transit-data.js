@@ -1422,41 +1422,47 @@ const SHUANGBEI_TRAFFIC_LIGHTS = [
   }
 ];
 
-// 計算即時號誌狀態演算法
-function getTrafficLightState(tl, nowSec) {
-  const cycle = tl.greenSec + tl.yellowSec + tl.redSec;
-  const t = (nowSec + tl.offsetSec) % cycle;
-  if (t < tl.greenSec) {
-    const remaining = Math.ceil(tl.greenSec - t);
-    return {
-      state: 'GREEN',
-      color: '#22c55e',
-      icon: '🟢',
-      label: '綠燈通行',
-      remaining: remaining,
-      total: tl.greenSec
-    };
-  } else if (t < tl.greenSec + tl.yellowSec) {
-    const remaining = Math.ceil(tl.greenSec + tl.yellowSec - t);
-    return {
-      state: 'YELLOW',
-      color: '#eab308',
-      icon: '🟡',
-      label: '黃燈注意',
-      remaining: remaining,
-      total: tl.yellowSec
-    };
+// 計算即時號誌狀態演算法 (支援雙向交替相位差：東西向綠燈／南北向紅燈，閉環 V2-06)
+function getTrafficLightDualPhaseState(tl, nowSec, direction = 'EW') {
+  const ewGreen = tl.greenSec || 20;
+  const yellow = tl.yellowSec || 3;
+  const nsGreen = Math.max(12, (tl.redSec || 18) - yellow);
+  const totalCycle = ewGreen + yellow + nsGreen + yellow;
+
+  const t = ((nowSec + (tl.offsetSec || 0)) % totalCycle + totalCycle) % totalCycle;
+
+  // 1. 計算東西向 (EW) 狀態
+  let ewState = null;
+  if (t < ewGreen) {
+    ewState = { state: 'GREEN', color: '#22c55e', icon: '🟢', label: '東西向綠燈通行', remaining: Math.ceil(ewGreen - t), total: ewGreen };
+  } else if (t < ewGreen + yellow) {
+    ewState = { state: 'YELLOW', color: '#eab308', icon: '🟡', label: '東西向黃燈注意', remaining: Math.ceil(ewGreen + yellow - t), total: yellow };
   } else {
-    const remaining = Math.ceil(cycle - t);
-    return {
-      state: 'RED',
-      color: '#ef4444',
-      icon: '🔴',
-      label: '紅燈停等',
-      remaining: remaining,
-      total: tl.redSec
-    };
+    ewState = { state: 'RED', color: '#ef4444', icon: '🔴', label: '東西向紅燈停等', remaining: Math.ceil(totalCycle - t), total: nsGreen + yellow };
   }
+
+  // 2. 計算南北向 (NS) 狀態 (與東西向嚴格交替：東西綠黃時南北紅，東西紅時南北綠黃)
+  let nsState = null;
+  const nsGreenStart = ewGreen + yellow;
+  const nsYellowStart = nsGreenStart + nsGreen;
+
+  if (t < nsGreenStart) {
+    nsState = { state: 'RED', color: '#ef4444', icon: '🔴', label: '南北向紅燈停等', remaining: Math.ceil(nsGreenStart - t), total: nsGreenStart };
+  } else if (t < nsYellowStart) {
+    nsState = { state: 'GREEN', color: '#22c55e', icon: '🟢', label: '南北向綠燈通行', remaining: Math.ceil(nsYellowStart - t), total: nsGreen };
+  } else {
+    nsState = { state: 'YELLOW', color: '#eab308', icon: '🟡', label: '南北向黃燈注意', remaining: Math.ceil(totalCycle - t), total: yellow };
+  }
+
+  const isNS = direction === 'NS';
+  const activeState = isNS ? nsState : ewState;
+  activeState.dual = { ew: ewState, ns: nsState, currentT: t, totalCycle };
+  return activeState;
+}
+
+// 向上相容原函式簽章
+function getTrafficLightState(tl, nowSec, direction = 'EW') {
+  return getTrafficLightDualPhaseState(tl, nowSec, direction);
 }
 
 // 供 Node.js 環境匯出
@@ -1472,6 +1478,7 @@ if (typeof module !== 'undefined' && module.exports) {
     SHUANGBEI_HIGHWAY_COACH_HUBS,
     SHUANGBEI_TRAFFIC_LIGHTS,
     getTrafficLightState,
+    getTrafficLightDualPhaseState,
     searchEBusDirectory
   };
 }

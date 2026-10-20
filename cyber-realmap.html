@@ -100,7 +100,11 @@
     </div>
     <div class="telemetry-row">
       <span class="telemetry-label">可視門市數 STORES:</span>
-      <span class="telemetry-val highlight" id="hudStoreCount">65 處</span>
+      <span class="telemetry-val highlight" id="hudStoreCount">380+ 處</span>
+    </div>
+    <div class="telemetry-row">
+      <span class="telemetry-label">即時在線車機 LIVE:</span>
+      <span class="telemetry-val highlight" id="hudLiveBusCount" style="color:#22c55e;">連線同步中</span>
     </div>
 
     <!-- 特區探測器 -->
@@ -128,6 +132,34 @@
 
     <div style="font-size:10px; color:#34d399; font-weight:800; margin:8px 0 4px 0;">🚊 雙北大眾運輸四軌與實時交通圖層:</div>
     <div class="tool-btn-grid">
+      <!-- 🌟 大眾運輸即時同步 (車機停則停、到站則到站) -->
+      <button class="tactical-tool-btn active" id="btnLiveTransitSync" onclick="toggleTransitLiveSync()">
+        <span>📡 大眾運輸即時同步 (TDX/eBus)</span>
+        <span style="color:#22c55e;">LIVE ON</span>
+      </button>
+
+      <!-- 🌟 地圖介面極致簡化 (預設隱藏冗贅文字標牌，按鈕按需啟用) -->
+      <button class="tactical-tool-btn" id="btnToggleStationLabels" onclick="toggleStationLabels()">
+        <span>🏷️ 捷運站名標籤</span>
+        <span style="color:#94a3b8;">預設隱藏</span>
+      </button>
+      <button class="tactical-tool-btn" id="btnToggleRoadNames" onclick="toggleRoadNames()">
+        <span>🛣️ 道路名稱標牌</span>
+        <span style="color:#94a3b8;">預設隱藏</span>
+      </button>
+
+      <!-- 🌟 施工狀態即時同步 (真實世界停止施工則遊戲跟著停止施工) -->
+      <button class="tactical-tool-btn active" id="btnToggleConstructionSync" onclick="toggleConstructionSync()">
+        <span>🚧 施工狀態即時同步</span>
+        <span style="color:#06b6d4;">SYNC ON</span>
+      </button>
+
+      <!-- 🌟 視野限制與局部導航 (防止一次放太大，專注周遭認路) -->
+      <button class="tactical-tool-btn active" id="btnToggleFoV" onclick="toggleLocalFoV()">
+        <span>🔭 局部導航視野 (認路模式)</span>
+        <span style="color:#38bdf8;">LOCKED</span>
+      </button>
+
       <button class="tactical-tool-btn active" id="btnToggleTrafficLights" onclick="toggleTrafficLightsLayer()">
         <span>🚦 規律交通號誌 (紅黃綠)</span>
         <span style="color:#22c55e;">ON</span>
@@ -172,9 +204,9 @@
         <span>🔍 搜尋 1037 條公車</span>
         <span style="color:#f59e0b;">OPEN</span>
       </button>
-      <button class="tactical-tool-btn active" id="btnToggleStreets" onclick="toggleStreetsLayer()">
+      <button class="tactical-tool-btn" id="btnToggleStreets" onclick="toggleStreetsLayer()">
         <span>🛣️ 雙北真實街道高光</span>
-        <span style="color:#4ade80;">ON</span>
+        <span style="color:#94a3b8;">OFF</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleParks" onclick="toggleParksLayer()">
         <span>🌲 雙北真實公園綠地</span>
@@ -227,7 +259,7 @@
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#254F9B; border:1px solid #C20016;"></span>
-        <span>家樂福大賣場旗艦 / 家樂福便利購 (放大顯示)</span>
+        <span>萬家福大賣場旗艦 / 樂家康生鮮超市 (放大顯示)</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px;">
         <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ea580c;"></span>
