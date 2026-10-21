@@ -364,15 +364,16 @@ function togglePlayerFocusMode() {
 }
 
 // ──────────────────────────────────────────
-// 4.2 生活圈焦點暗角聚光機制 (Tactical Vignette Spotlight - Google Maps 聚光專注)
+// 4.2 生活圈焦點暗角聚光機制 (Tactical Vignette Spotlight - 預設關閉無暗角)
 // ──────────────────────────────────────────
-let isSpotlightActive = true;
+let isSpotlightActive = false;
 
 function updateSpotlightVignette() {
   const el = document.getElementById('vignetteSpotlight');
   if (!el) return;
   if (!isSpotlightActive) {
     el.style.opacity = '0';
+    el.style.background = 'none';
     return;
   }
   el.style.opacity = '1';
@@ -391,25 +392,9 @@ function updateSpotlightVignette() {
     }
   }
 
-  let radius = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.46);
-  if (radius < 260) radius = 260;
-
-  // 根據底圖環境光自適應動態調整暗角漸層
-  let edgeColor = 'rgba(15, 23, 42, 0.72)';
-  let midColor = 'rgba(15, 23, 42, 0.22)';
-
-  if (currentBaseLayerKey === 'dark') {
-    edgeColor = 'rgba(2, 6, 23, 0.85)';
-    midColor = 'rgba(2, 6, 23, 0.32)';
-  } else if (currentBaseLayerKey === 'satellite') {
-    edgeColor = 'rgba(0, 0, 0, 0.78)';
-    midColor = 'rgba(0, 0, 0, 0.28)';
-  } else if (currentBaseLayerKey === 'esri_street' || currentBaseLayerKey === 'nlsc') {
-    edgeColor = 'rgba(15, 23, 42, 0.45)';
-    midColor = 'rgba(15, 23, 42, 0.12)';
-  }
-
-  el.style.background = `radial-gradient(circle ${radius}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 45%, ${midColor} 72%, ${edgeColor} 100%)`;
+  // 即使手動開啟聚光，也僅在最外圍螢幕 85% 以外產生極微弱半透明陰影，絕不遮蔽主要地圖與街道
+  const radius = Math.round(Math.max(window.innerWidth, window.innerHeight) * 0.72);
+  el.style.background = `radial-gradient(circle ${radius}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 82%, rgba(15, 23, 42, 0.10) 95%, rgba(15, 23, 42, 0.20) 100%)`;
 }
 
 function toggleSpotlight() {
@@ -421,7 +406,7 @@ function toggleSpotlight() {
     const badge = btn.querySelector('span:last-child');
     if (badge) badge.innerText = isSpotlightActive ? 'ON' : 'OFF';
   }
-  showNavToast(isSpotlightActive ? '🎯 生活圈聚光暗角已開啟 (聚焦當前 850m 生活圈)' : '🎯 生活圈聚光暗角已關閉 (全域光照)');
+  showNavToast(isSpotlightActive ? '🎯 生活圈聚光暗角已開啟 (柔和邊緣聚焦)' : '🎯 生活圈聚光暗角已關閉 (全域明亮透徹)');
 }
 
 // ──────────────────────────────────────────
@@ -442,14 +427,14 @@ function harmonizeMapTheme(themeKey) {
   // 自適應暗角
   updateSpotlightVignette();
 
-  // 自適應雷達視野圈色調 (850m 生活圈)
-  if (localRadarCircle) {
+  // 自適應雷達視野圈色調 (850m 生活圈保持無填色全透明，絕不覆蓋暗色)
+  if (localFoVRadarCircle) {
     if (themeKey === 'esri_street' || themeKey === 'nlsc') {
-      localRadarCircle.setStyle({ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.08 });
+      localFoVRadarCircle.setStyle({ color: '#2563eb', fillColor: 'transparent', fillOpacity: 0 });
     } else if (themeKey === 'satellite') {
-      localRadarCircle.setStyle({ color: '#facc15', fillColor: '#facc15', fillOpacity: 0.12 });
+      localFoVRadarCircle.setStyle({ color: '#facc15', fillColor: 'transparent', fillOpacity: 0 });
     } else {
-      localRadarCircle.setStyle({ color: '#00f0ff', fillColor: '#00f0ff', fillOpacity: 0.08 });
+      localFoVRadarCircle.setStyle({ color: '#00f0ff', fillColor: 'transparent', fillOpacity: 0 });
     }
   }
 }
@@ -1325,8 +1310,8 @@ function updateLocalRadarHalo(latlng) {
       color: '#00f0ff',
       weight: 1.5,
       dashArray: '6, 6',
-      fillColor: '#00f0ff',
-      fillOpacity: 0.04,
+      fillColor: 'transparent',
+      fillOpacity: 0,
       className: 'radar-fov-circle',
       interactive: false
     }).addTo(map);

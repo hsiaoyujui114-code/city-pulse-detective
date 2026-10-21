@@ -794,9 +794,41 @@ html, body {
 }
 
 .leaflet-tile-pane {
-  /* 高對比飽和增強：使道路網、街廓輪廓與繁體中文路名更加鮮明醒目 */
-  filter: contrast(108%) saturate(110%);
+  /* 全彩高透亮街道渲染：提升全域明亮度與透光感，徹底消除暗沉感 */
+  filter: brightness(105%) saturate(106%);
   transform: translateZ(0);
+}
+
+/* ──────────────────────────────────────────
+   ☀️ 各風格底圖全域高亮透徹化 (Map Tile Brightness Enhancements)
+   ────────────────────────────────────────── */
+body[data-map-theme="nlsc"] .leaflet-tile-pane,
+body[data-map-theme="esri_street"] .leaflet-tile-pane,
+body[data-map-theme="osm"] .leaflet-tile-pane {
+  filter: brightness(107%) contrast(102%) saturate(105%);
+}
+
+body[data-map-theme="satellite"] .leaflet-tile-pane {
+  filter: brightness(108%) contrast(104%) saturate(106%);
+}
+
+body[data-map-theme="dark"] .leaflet-tile-pane {
+  filter: brightness(112%) contrast(106%) saturate(110%);
+}
+
+/* 底層畫布自適應亮色，防止深色底透過切換與縫隙使地圖顯暗 */
+body[data-map-theme="nlsc"] #map,
+body[data-map-theme="esri_street"] #map,
+body[data-map-theme="osm"] #map {
+  background-color: #f8fafc !important;
+}
+
+body[data-map-theme="satellite"] #map {
+  background-color: #0f172a !important;
+}
+
+body[data-map-theme="dark"] #map {
+  background-color: #070d24 !important;
 }
 
 .leaflet-overlay-pane canvas {
@@ -1770,14 +1802,16 @@ body.show-road-names .road-badge-wrap {
 }
 
 /* ──────────────────────────────────────────
-   🎯 生活圈聚光暗角層 (Spotlight Vignette Overlay)
+   🎯 生活圈聚光暗角層 (Spotlight Vignette Overlay - 預設關閉無暗角)
    ────────────────────────────────────────── */
 .vignette-spotlight-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 450;
-  transition: background 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
+  background: none;
+  transition: opacity 0.35s ease;
 }
 
 /* ──────────────────────────────────────────
