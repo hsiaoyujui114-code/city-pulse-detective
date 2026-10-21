@@ -3423,3 +3423,52 @@ flowchart TD
 
 ---
 
+## 第 95 回合：開闢獨立 GitHub 偵探系統核心倉庫 ✕ 非寫死劇情資料驅動 ✕ 伺服器雙軌並行 ✕ 完整 Claude 開發交接指引
+
+### 📅 對話時序與委託人核心指示
+- **時間戳**：2026-10-21 20:20
+- **委託人原始指令**：
+  > 「幫我把你現在擁有的所有資料交給 Claude，請他幫忙做偵探的程式碼。
+  > 因為我們這個遊戲有分「偵探」跟「地圖」，請他先做偵探的程式碼，並且先不要放到這個地圖上面，幫我另外開一個 GitHub 放上去。請你告訴他我們做的所有東西，讓他有一些方向來製作這個 code。
+  > 規格部分：
+  > • 不要先做簡單版本，請他直接依照企劃書上面寫的方法做出來。
+  > • 劇情部分他可以先做，但之後我可能還會改，所以劇情的程式碼先不要寫死。
+  > • 請先幫我做 GitHub 跟伺服器版本並行。因為我希望最後是以伺服器版本呈現，但現在伺服器沒辦法讓其他地方看到，所以兩個都要做，並且隨時更新起來，這樣我們最後整合比較順。
+  > 最後我會把你做的地圖跟他做的偵探程式碼合併在一起，所以協同的部分：
+  > • 你每做完一件事就要跟他確認一下，讓他知道你有新增東西，他才能去改他的 code。
+  > • 他做完也一樣，你這邊也要跟著修改。
+  > 如果有問題先跟我講，不要傳訊息給他」
+
+---
+
+### 🌟 核心成果與落實架構
+
+#### 1. 🚀 建立全新獨立 GitHub 倉庫 (`taipei-detective-core`)
+- **倉庫網址**：`https://github.com/hsiaoyujui114-code/taipei-detective-core`
+- **架構定位**：專為 Claude 研發「偵探推理系統核心」設立之獨立程式庫，包含完整的物件模型、事件匯流排、單元測試、可視化測試台與 API 伺服器。
+
+#### 2. 🧩 拒絕做簡單版本，完整依照企劃書實裝核心架構
+- **生活科學物證鑑識引擎 (`EvidenceEngine.js`)**：對齊 108 課綱自然科學，實裝廣用 pH 試紙酸鹼反應、365nm UV 紫外光防偽與螢光激發、多倍率光學放大鏡微痕檢驗。
+- **思維推理板與指控判定 (`DeductionBoard.js`)**：支援將物證與嫌疑人關聯，結案時自動檢驗證據鏈完整度、科學化驗完成度與犯案動機，給予 S / A / B 評等。
+- **三軌道具背包 (`Inventory.js`)**：分流日常道具、鑑識器材與案件物證。
+- **悠遊卡 ✕ TPASS 1200 ✕ 環保減塑積分錢包 (`EcoWallet.js`)**：結合自備環保杯省 5 元、自備購物袋、無紙化發票之綠色生活獎勵。
+- **社區與 NPC 信賴度系統 (`TrustSystem.js`)**：落實 Lv.1~Lv.5 社區信賴度分級。
+
+#### 3. 📜 模組化非寫死劇情資料驅動 (`StoryLoader.js` & `DialogueEngine.js`)
+- **完全解耦劇情與核心代碼**：所有案件 (`cases/demo_cases.json`)、多輪詰問樹 (`dialogues/sample_dialogues.json`)、嫌疑人檔案 (`npcs/suspects.json`) 與證物配置 (`items/evidence_items.json`) 均抽離為外部 JSON。
+- 委託人之後隨時增修劇情，只需修改 JSON，偵探核心自動熱載入，絕無任何寫死的硬編碼台詞。
+
+#### 4. 🌐 伺服器版本與 GitHub 雙軌並行
+- **獨立伺服器模式**：`taipei-detective-core` 內建 `server.js`，執行 `npm start` 即可於 `http://localhost:3001` 開啟可視化測試台與完整 REST API。
+- **主伺服器反向整合**：主伺服器 (`taipei-metro-detective-rpg/server.js`) 同步載入偵探核心，於 `http://localhost:3000/detective` 供應 Web GUI，並支援 `/api/detective/*` 完整 API 路由，實現無縫雙軌並行。
+
+#### 5. 🔌 地圖 ✕ 偵探雙向協同對接合約 (`EventContracts.js` & `MapBridge.js`)
+- 規範標準 Pub/Sub 事件協議（`map:player_moved`、`map:station_arrived`、`map:store_entered` ⇄ `detective:case_accepted`、`detective:marker_spawn_request`、`detective:fare_deduct_request`、`detective:case_resolved`）。
+
+#### 6. 📖 產出 Claude 專屬交接手冊與驗證
+- 撰寫 [`CLAUDE_DEVELOPER_GUIDE.md`](https://github.com/hsiaoyujui114-code/taipei-detective-core/blob/main/CLAUDE_DEVELOPER_GUIDE.md)。
+- 執行自動化測試 `npm test`，6 大階段單元驗證 100% 通過。
+- 嚴守三大憲法級禁忌（全域無「少年偵探」、無「藝碩/益碩」、無歷史廢除職稱）。
+
+---
+

@@ -16,6 +16,15 @@ const path = require('path');
 const { WebSocketServer, WebSocket } = require('ws');
 const transitLiveService = require('./transit-live-service');
 
+// 載入獨立都會調查員偵探核心引擎 (落實伺服器版本雙軌並行)
+let detectiveEngine = null;
+try {
+  const detectiveModule = require('../taipei-detective-core/src/index');
+  detectiveEngine = detectiveModule.createDetectiveEngine();
+} catch (e) {
+  console.warn('⚠️ Detective core module not loaded in server:', e.message);
+}
+
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
 
@@ -38,6 +47,115 @@ const server = http.createServer((req, res) => {
   let reqPath = req.url.split('?')[0];
   if (reqPath === '/') reqPath = '/index.html';
   if (reqPath === '/map' || reqPath === '/realmap' || reqPath === '/cyber-map') reqPath = '/cyber-realmap.html';
+
+  // 獨立都會調查員偵探測試工作台與伺服器版本支援
+  if (reqPath === '/detective' || reqPath === '/detective/') {
+    const detectiveHtml = path.join(__dirname, '../taipei-detective-core/public/index.html');
+    if (fs.existsSync(detectiveHtml)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(detectiveHtml).pipe(res);
+      return;
+    }
+  }
+
+  // 偵探核心 REST API 路由
+  if (reqPath.startsWith('/api/detective/') && detectiveEngine) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+    function parseBody(request) {
+      return new Promise((resolve) => {
+        let b = '';
+        request.on('data', c => { b += c; });
+        request.on('end', () => {
+          try { resolve(b ? JSON.parse(b) : {}); } catch (err) { resolve({}); }
+        });
+      });
+    }
+
+    if (reqPath === '/api/detective/status' && req.method === 'GET') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        investigator: detectiveEngine.investigator.getStatus(),
+        inventory: detectiveEngine.investigator.inventory.listAll(),
+        activeCase: detectiveEngine.caseManager.getActiveCaseState()
+      }));
+      return;
+    }
+
+    if (reqPath === '/api/detective/cases' && req.method === 'GET') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        cases: detectiveEngine.loader.listCases()
+      }));
+      return;
+    }
+
+    if (reqPath === '/api/detective/case/accept' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.caseManager.acceptCase(body.caseId, detectiveEngine.investigator);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/evidence/examine' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.evidenceEngine.examineEvidence(body.evidenceId, body.toolId, detectiveEngine.investigator);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/dialogue/start' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.dialogueEngine.startDialogue(body.sessionId || 'session_web', body.npcId);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/dialogue/select' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.dialogueEngine.selectOption(body.sessionId || 'session_web', body.optionIndex, detectiveEngine.investigator);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/deduction/solve' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.caseManager.resolveCase(body.caseId, body.suspectId, body.evidenceIds || [], detectiveEngine.investigator);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/bridge/events' && req.method === 'GET') {
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        events: detectiveEngine.bridge.getRecentEvents(30)
+      }));
+      return;
+    }
+
+    if (reqPath === '/api/detective/bridge/event' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const entry = detectiveEngine.bridge.dispatch(body.event, body.payload);
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true, dispatched: entry }));
+      });
+      return;
+    }
+  }
 
   // REST API 路由支援 (落實委託人指示：真實網路地圖圖資與伺服器雙軌同步)
   if (reqPath.startsWith('/api/')) {
