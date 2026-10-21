@@ -1702,5 +1702,190 @@ body.show-road-names .road-badge-wrap {
   transform: scale(1.12);
 }
 
+/* ──────────────────────────────────────────
+   🧭 Google Maps 風格導航方位羅盤 (Compass HUD)
+   ────────────────────────────────────────── */
+.compass-rose-hud {
+  position: absolute;
+  top: 114px;
+  right: 18px;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid #38bdf8;
+  border-radius: 24px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.45);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.compass-rose-hud:hover {
+  transform: scale(1.08);
+  border-color: #facc15;
+  box-shadow: 0 4px 20px rgba(250, 204, 21, 0.65);
+}
+.compass-dial {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.compass-needle-n {
+  position: absolute;
+  top: 1px;
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-bottom: 9px solid #ef4444;
+}
+.compass-needle-s {
+  position: absolute;
+  bottom: 1px;
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 9px solid #94a3b8;
+}
+.compass-pivot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffffff;
+  z-index: 3;
+  box-shadow: 0 0 3px rgba(0,0,0,0.8);
+}
+.compass-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────
+   🎯 生活圈聚光暗角層 (Spotlight Vignette Overlay)
+   ────────────────────────────────────────── */
+.vignette-spotlight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 450;
+  transition: background 0.35s ease, opacity 0.35s ease;
+}
+
+/* ──────────────────────────────────────────
+   🏛️ 捷運轉乘樞紐大站「同心多色光環」 (Interchange Multi-Ring)
+   ────────────────────────────────────────── */
+.mrt-hub-concentric-dot {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mrt-hub-concentric-dot:hover {
+  transform: scale(1.6);
+  z-index: 1000;
+}
+.mrt-hub-concentric-dot .hub-ring-outer {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border-width: 2.5px;
+  border-style: solid;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  animation: hubRingPulse 2.4s infinite ease-in-out;
+}
+.mrt-hub-concentric-dot .hub-ring-inner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border-width: 2px;
+  border-style: solid;
+  background: rgba(15, 23, 42, 0.85);
+}
+.mrt-hub-concentric-dot .hub-dot-core {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ffffff;
+}
+@keyframes hubRingPulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.22); opacity: 1; }
+}
+
+/* ──────────────────────────────────────────
+   🌊 大眾運輸微動態流向光條 (Transit Flow Ribbons)
+   ────────────────────────────────────────── */
+.transit-flow-line {
+  stroke-dasharray: 10, 16;
+  animation: transitFlowAnim 16s linear infinite;
+}
+@keyframes transitFlowAnim {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -320; }
+}
+
+.bus-flow-line {
+  stroke-dasharray: 8, 14;
+  animation: busFlowAnim 14s linear infinite;
+}
+@keyframes busFlowAnim {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -260; }
+}
+
+/* ──────────────────────────────────────────
+   🎨 各風格底圖之道路與標籤環境光動態適應 (Dynamic Theme Adaptations)
+   ────────────────────────────────────────── */
+body[data-map-theme="dark"] .road-badge-marker {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+body[data-map-theme="esri_street"] .road-badge-marker {
+  background: #ffffff;
+  border: 1.5px solid #059669;
+  color: #065f46;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-weight: 900;
+}
+
+body[data-map-theme="satellite"] .road-badge-marker {
+  background: #000000;
+  border: 2px solid #facc15;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.8), 0 4px 10px rgba(0,0,0,0.9);
+}
+
+body[data-map-theme="osm"] .road-badge-marker {
+  background: #f8fafc;
+  border: 1.5px solid #2563eb;
+  color: #1e3a8a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body[data-map-theme="nlsc"] .road-badge-marker {
+  background: #065f46;
+  border: 1.5px solid #a7f3d0;
+  color: #ffffff;
+}
+
 
 

@@ -4712,9 +4712,32 @@ function renderScene() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
         ctx.fill();
 
-        // (2) 戰術全息地面光環與朝向指針 (當放大特寫時展現高科技儀表感)
-        if (scale >= 8.0) {
+        // (2) 戰術全息地面光環與 Google Maps 風格 60° 扇形視線探照光錐 (Vision Cone)
+        if (scale >= 6.0) {
           ctx.save();
+          const facingAngle = playerPos.facing === 'down' ? Math.PI / 2 :
+                             (playerPos.facing === 'up' ? -Math.PI / 2 :
+                             (playerPos.facing === 'left' ? Math.PI : 0));
+
+          // 繪製 60° (Math.PI / 3) 扇形漸層探照光 (Google Maps Vision Cone)
+          const coneRadius = 38 * pScale;
+          const halfAngle = Math.PI / 6; // 30度
+          const startAngle = facingAngle - halfAngle;
+          const endAngle = facingAngle + halfAngle;
+
+          const grad = ctx.createRadialGradient(px, pz + 2 * pScale, 2, px, pz + 2 * pScale, coneRadius);
+          grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+          grad.addColorStop(0.5, 'rgba(2, 132, 199, 0.20)');
+          grad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+
+          ctx.beginPath();
+          ctx.moveTo(px, pz + 2 * pScale);
+          ctx.arc(px, pz + 2 * pScale, coneRadius, startAngle, endAngle);
+          ctx.closePath();
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // 戰術全息地面光環
           ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
           ctx.lineWidth = Math.max(1.2, pScale * 0.25);
           ctx.beginPath();
@@ -4722,13 +4745,10 @@ function renderScene() {
           ctx.stroke();
 
           // 朝向指針
-          const facingAngle = playerPos.facing === 'down' ? Math.PI / 2 :
-                             (playerPos.facing === 'up' ? -Math.PI / 2 :
-                             (playerPos.facing === 'left' ? Math.PI : 0));
           const arrowDist = 14 * pScale;
           const ax = px + Math.cos(facingAngle) * arrowDist;
           const az = pz + 2 * pScale + Math.sin(facingAngle) * arrowDist;
-          ctx.fillStyle = '#00f0ff';
+          ctx.fillStyle = '#38bdf8';
           ctx.beginPath();
           ctx.arc(ax, az, Math.max(2, 2.5 * pScale * 0.35), 0, Math.PI * 2);
           ctx.fill();

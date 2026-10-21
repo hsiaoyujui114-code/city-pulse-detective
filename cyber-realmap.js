@@ -263,7 +263,15 @@ function initCyberRealMap() {
   }
   map.on('move', () => {
     if (isLocalFoVLocked) updateLocalRadarHalo(map.getCenter());
+    updateSpotlightVignette();
   });
+  map.on('zoomend', () => {
+    updateSpotlightVignette();
+  });
+  window.addEventListener('resize', updateSpotlightVignette);
+
+  // 初始化環境風格自適應換裝 (Google Maps 階層道路包邊、聚光暗角調適)
+  harmonizeMapTheme(currentBaseLayerKey);
 
   // 啟動真實大眾運輸即時同步 (TDX/eBus 官方車機 GPS)
   startLiveTransitSync();
@@ -278,15 +286,31 @@ function initCyberRealMap() {
 // 4.1 超微觀角色特寫與巡航鎖定模式 (Close-Up Character Avatar & Focus)
 // ──────────────────────────────────────────
 let playerAvatarMarker = null;
+let playerHeading = 0; // 0 = 正北 (N), 90 = 正東 (E), 180 = 正南 (S), 270 = 正西 (W)
 
 function initPlayerAvatarMarker() {
   const avatarHtml = `
     <div style="position:relative; width:48px; height:48px; display:flex; align-items:center; justify-content:center;">
-      <div style="position:absolute; width:48px; height:48px; border-radius:50%; border:2px solid #00f0ff; opacity:0.6; animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;"></div>
-      <div style="position:relative; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle, #0284c7 0%, #0f172a 100%); border:2px solid #38bdf8; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(0,240,255,0.7);">
+      <!-- Google Maps 風格前方 60度扇形視線探照光錐 (Vision Cone) -->
+      <div class="player-vision-cone" id="playerVisionCone" style="position:absolute; width:160px; height:160px; top:-56px; left:-56px; pointer-events:none; transform-origin:center center; transform:rotate(${playerHeading}deg); z-index:1;">
+        <svg viewBox="0 0 160 160" width="160" height="160" style="display:block; overflow:visible;">
+          <defs>
+            <radialGradient id="playerBeamGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.75" />
+              <stop offset="50%" stop-color="#0284c7" stop-opacity="0.30" />
+              <stop offset="100%" stop-color="#00f0ff" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <path d="M 80 80 L 40 10 A 80 80 0 0 1 120 10 Z" fill="url(#playerBeamGrad)" />
+        </svg>
+      </div>
+
+      <!-- 脈衝光環與核心頭像 -->
+      <div style="position:absolute; width:48px; height:48px; border-radius:50%; border:2px solid #00f0ff; opacity:0.6; animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite; z-index:2;"></div>
+      <div style="position:relative; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle, #0284c7 0%, #0f172a 100%); border:2px solid #38bdf8; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(0,240,255,0.8); z-index:3;">
         <span style="font-size:18px;">🕵️</span>
       </div>
-      <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.92); border:1px solid #00f0ff; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; white-space:nowrap;">
+      <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.92); border:1px solid #00f0ff; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; white-space:nowrap; z-index:4;">
         雙北全息巡航者
       </div>
     </div>
@@ -300,17 +324,163 @@ function initPlayerAvatarMarker() {
   playerAvatarMarker = L.marker([25.0465, 121.5170], { icon: icon, zIndexOffset: 2000 }).addTo(map);
   playerAvatarMarker.bindPopup(`
     <div style="font-size:12px; color:#f8fafc; padding:4px;">
-      <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 雙北全息巡航者 (即時定位)</div>
+      <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 雙北全息巡航者 (即時定位 ✕ 扇形探照)</div>
       <div>當前位置：台北車站 忠孝西路一段核心</div>
-      <div style="font-size:11px; color:#94a3b8; margin-top:4px;">點擊【超微觀角色特寫 20x】將鏡頭鎖定至人物正上方！</div>
+      <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">配備 Google Maps 藍光視線錐，指針與方位羅盤 100% 同步！</div>
     </div>
   `);
+}
+
+function setPlayerHeading(deg) {
+  playerHeading = ((deg % 360) + 360) % 360;
+  const cone = document.getElementById('playerVisionCone');
+  if (cone) {
+    cone.style.transform = `rotate(${playerHeading}deg)`;
+  }
+  updateCompassWidget(playerHeading);
+}
+
+function updateCompassWidget(deg) {
+  const dial = document.getElementById('compassDial');
+  const txt = document.getElementById('compassDegreeText');
+  if (dial) dial.style.transform = `rotate(${-deg}deg)`;
+  if (txt) {
+    const cardinal = deg === 0 ? '正北 (N)' : (deg === 90 ? '正東 (E)' : (deg === 180 ? '正南 (S)' : (deg === 270 ? '正西 (W)' : `${Math.round(deg)}°`)));
+    txt.innerText = cardinal;
+  }
+}
+
+function resetMapOrientation() {
+  setPlayerHeading(0);
+  if (map) {
+    map.panBy([0, 0], { animate: true });
+  }
+  showNavToast('🧭 方位羅盤已校準為正北方向 (0° N)');
 }
 
 function togglePlayerFocusMode() {
   if (!map) return;
   map.flyTo([25.0465, 121.5170], 20.2, { duration: 1.2 });
 }
+
+// ──────────────────────────────────────────
+// 4.2 生活圈焦點暗角聚光機制 (Tactical Vignette Spotlight - Google Maps 聚光專注)
+// ──────────────────────────────────────────
+let isSpotlightActive = true;
+
+function updateSpotlightVignette() {
+  const el = document.getElementById('vignetteSpotlight');
+  if (!el) return;
+  if (!isSpotlightActive) {
+    el.style.opacity = '0';
+    return;
+  }
+  el.style.opacity = '1';
+
+  let cx = window.innerWidth / 2;
+  let cy = window.innerHeight / 2;
+  if (typeof map !== 'undefined' && map) {
+    let focusLatLng = map.getCenter();
+    if (isLocalFoVLocked && playerAvatarMarker) {
+      focusLatLng = playerAvatarMarker.getLatLng();
+    }
+    const pt = map.latLngToContainerPoint(focusLatLng);
+    if (pt && !isNaN(pt.x) && !isNaN(pt.y)) {
+      cx = Math.round(pt.x);
+      cy = Math.round(pt.y);
+    }
+  }
+
+  let radius = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.46);
+  if (radius < 260) radius = 260;
+
+  // 根據底圖環境光自適應動態調整暗角漸層
+  let edgeColor = 'rgba(15, 23, 42, 0.72)';
+  let midColor = 'rgba(15, 23, 42, 0.22)';
+
+  if (currentBaseLayerKey === 'dark') {
+    edgeColor = 'rgba(2, 6, 23, 0.85)';
+    midColor = 'rgba(2, 6, 23, 0.32)';
+  } else if (currentBaseLayerKey === 'satellite') {
+    edgeColor = 'rgba(0, 0, 0, 0.78)';
+    midColor = 'rgba(0, 0, 0, 0.28)';
+  } else if (currentBaseLayerKey === 'esri_street' || currentBaseLayerKey === 'nlsc') {
+    edgeColor = 'rgba(15, 23, 42, 0.45)';
+    midColor = 'rgba(15, 23, 42, 0.12)';
+  }
+
+  el.style.background = `radial-gradient(circle ${radius}px at ${cx}px ${cy}px, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 45%, ${midColor} 72%, ${edgeColor} 100%)`;
+}
+
+function toggleSpotlight() {
+  isSpotlightActive = !isSpotlightActive;
+  updateSpotlightVignette();
+  const btn = document.getElementById('btnToggleSpotlight');
+  if (btn) {
+    btn.classList.toggle('active', isSpotlightActive);
+    const badge = btn.querySelector('span:last-child');
+    if (badge) badge.innerText = isSpotlightActive ? 'ON' : 'OFF';
+  }
+  showNavToast(isSpotlightActive ? '🎯 生活圈聚光暗角已開啟 (聚焦當前 850m 生活圈)' : '🎯 生活圈聚光暗角已關閉 (全域光照)');
+}
+
+// ──────────────────────────────────────────
+// 4.3 底圖風格自適應動態換裝機制 (Dynamic Theme Harmonization)
+// ──────────────────────────────────────────
+function harmonizeMapTheme(themeKey) {
+  currentBaseLayerKey = themeKey;
+  document.body.setAttribute('data-map-theme', themeKey);
+
+  // 重新渲染街道與高架路線，套用與底圖相符的高反差 Google Maps 色階與包邊
+  if (streetsLayerGroup && map && map.hasLayer(streetsLayerGroup)) {
+    addMajorStreetsLayer();
+  }
+  if (expresswaysLayerGroup && map && map.hasLayer(expresswaysLayerGroup)) {
+    addExpresswaysLayer();
+  }
+
+  // 自適應暗角
+  updateSpotlightVignette();
+
+  // 自適應雷達視野圈色調 (850m 生活圈)
+  if (localRadarCircle) {
+    if (themeKey === 'esri_street' || themeKey === 'nlsc') {
+      localRadarCircle.setStyle({ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.08 });
+    } else if (themeKey === 'satellite') {
+      localRadarCircle.setStyle({ color: '#facc15', fillColor: '#facc15', fillOpacity: 0.12 });
+    } else {
+      localRadarCircle.setStyle({ color: '#00f0ff', fillColor: '#00f0ff', fillOpacity: 0.08 });
+    }
+  }
+}
+
+// 鍵盤 WASD / 方向鍵巡航偵探角色，動態計算朝向與扇形光錐
+window.addEventListener('keydown', (e) => {
+  if (['ArrowUp', 'KeyW', 'ArrowDown', 'KeyS', 'ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (!playerAvatarMarker || !map) return;
+    const curPos = playerAvatarMarker.getLatLng();
+    const step = 0.00035; // 約 35-40 公尺
+    let dLat = 0, dLng = 0;
+    let heading = playerHeading;
+
+    if (e.code === 'ArrowUp' || e.code === 'KeyW') { dLat += step; heading = 0; }
+    else if (e.code === 'ArrowDown' || e.code === 'KeyS') { dLat -= step; heading = 180; }
+    else if (e.code === 'ArrowLeft' || e.code === 'KeyA') { dLng -= step; heading = 270; }
+    else if (e.code === 'ArrowRight' || e.code === 'KeyD') { dLng += step; heading = 90; }
+
+    const newLat = curPos.lat + dLat;
+    const newLng = curPos.lng + dLng;
+    playerAvatarMarker.setLatLng([newLat, newLng]);
+    setPlayerHeading(heading);
+
+    if (isLocalFoVLocked) {
+      updateLocalRadarHalo([newLat, newLng]);
+      map.panTo([newLat, newLng], { animate: true, duration: 0.2 });
+    }
+    updateSpotlightVignette();
+  }
+});
 
 // ──────────────────────────────────────────
 // 4.5 雙北核心真實路網與街道高光圖層 (Major Real Streets & Avenues Layer)
@@ -981,24 +1151,73 @@ const SHUANGBEI_MAJOR_STREETS = [
   }
 ];
 
+// ──────────────────────────────────────────
+// 🎨 Google Maps 風格道路階層與底圖風格自適應引擎 (Dynamic Road Styling Engine)
+// 【落實委託人指示：配合後面背景用的地圖去做各種風格的變化，參考 Google Maps 分層方法】
+// ──────────────────────────────────────────
+function getThemedStreetColors(st, themeKey) {
+  const isHwy = st.name.includes('高架') || st.name.includes('快速') || st.name.includes('國道') || st.name.includes('高速公路') || st.name.includes('環河');
+
+  if (themeKey === 'esri_street') {
+    // 🗺️ Esri / Google Maps 經典暖色導航風格 (Google Maps 標誌性白底幹道 ✕ 鮮橙高速公路)
+    if (isHwy) {
+      return { casing: '#c2410c', core: '#f97316', width: 9.0, coreWidth: 5.5, opacity: 0.98, casingOpacity: 0.85 };
+    } else {
+      return { casing: '#94a3b8', core: '#ffffff', width: 6.5, coreWidth: 4.5, opacity: 0.98, casingOpacity: 0.55 };
+    }
+  } else if (themeKey === 'satellite') {
+    // 🌍 1:1 高空衛星空拍高對比防遮蔽模式 (黑包邊 ✕ 純白主幹道 ✕ 反光亮黃高架)
+    if (isHwy) {
+      return { casing: '#000000', core: '#facc15', width: 9.5, coreWidth: 6.0, opacity: 1.0, casingOpacity: 0.95 };
+    } else {
+      return { casing: '#000000', core: '#ffffff', width: 7.0, coreWidth: 4.8, opacity: 1.0, casingOpacity: 0.95 };
+    }
+  } else if (themeKey === 'dark') {
+    // 🛰️ 賽博暗黑夜間圖 (黑曜石霓虹激光 ✕ 脈衝青藍與紫紅高架)
+    if (isHwy) {
+      return { casing: '#9333ea', core: '#c084fc', width: 8.5, coreWidth: 5.0, opacity: 0.95, casingOpacity: 0.45 };
+    } else {
+      return { casing: '#0891b2', core: '#00f0ff', width: 6.5, coreWidth: 4.0, opacity: 0.95, casingOpacity: 0.45 };
+    }
+  } else if (themeKey === 'osm') {
+    // 🌐 OpenStreetMap 歐洲經典路網
+    if (isHwy) {
+      return { casing: '#b91c1c', core: '#ef4444', width: 8.5, coreWidth: 5.0, opacity: 0.92, casingOpacity: 0.55 };
+    } else {
+      return { casing: '#b45309', core: '#f59e0b', width: 6.5, coreWidth: 4.2, opacity: 0.92, casingOpacity: 0.55 };
+    }
+  } else {
+    // 🇹🇼 預設 NLSC 臺灣通用電子地圖 (官方清晰典雅海軍藍 ✕ 翠綠高架)
+    if (isHwy) {
+      return { casing: '#065f46', core: '#10b981', width: 8.5, coreWidth: 5.2, opacity: 0.92, casingOpacity: 0.55 };
+    } else {
+      return { casing: '#1e3a8a', core: '#3b82f6', width: 6.5, coreWidth: 4.2, opacity: 0.92, casingOpacity: 0.55 };
+    }
+  }
+}
+
 function addMajorStreetsLayer() {
   streetsLayerGroup.clearLayers();
 
   SHUANGBEI_MAJOR_STREETS.forEach(st => {
-    // 外層光暈底線
+    const themed = getThemedStreetColors(st, currentBaseLayerKey);
+
+    // 外層光暈包邊 (Casing)
     L.polyline(st.coords, {
-      color: st.color,
-      weight: st.width + 3,
-      opacity: 0.45,
+      color: themed.casing,
+      weight: themed.width,
+      opacity: themed.casingOpacity,
       lineCap: 'round',
       lineJoin: 'round'
     }).addTo(streetsLayerGroup);
 
-    // 核心街道亮線
+    // 核心亮線 (Core Line - Google Maps 階層層次)
     const line = L.polyline(st.coords, {
-      color: st.coreColor,
-      weight: st.width - 2,
-      opacity: 0.95
+      color: themed.core,
+      weight: themed.coreWidth,
+      opacity: themed.opacity,
+      lineCap: 'round',
+      lineJoin: 'round'
     }).addTo(streetsLayerGroup);
 
     line.bindTooltip(`🛣️ ${st.name}`, { sticky: true, className: 'street-name-tooltip' });
@@ -1614,6 +1833,26 @@ function addTraLayer() {
 
 // (3) 🚇 大台北捷運 9 大完整路網 (Taipei Metro & New Taipei Metro)
 // 包含 9 大路線全線 131+ 站點 (無閹割 1:1 實裝)
+// ──────────────────────────────────────────
+// 🏛️ 雙北三鐵共構與捷運轉乘核心大站配置 (Interchange Multi-Ring Hubs)
+// ──────────────────────────────────────────
+const MRT_TRANSFER_HUBS = {
+  '台北車站': { outer: '#e3002c', inner: '#0070bd', core: '#f59e0b', desc: '四鐵共構都會心臟 (台鐵✕高鐵✕板南線✕淡水信義線)' },
+  '板橋': { outer: '#0070bd', inner: '#ffd300', core: '#f59e0b', desc: '新北新板特區四鐵核心 (台鐵✕高鐵✕板南線✕環狀線)' },
+  '西門': { outer: '#0070bd', inner: '#008659', core: '#ffffff', desc: '西區雙線樞紐 (板南線✕松山新店線)' },
+  '中正紀念堂': { outer: '#e3002c', inner: '#008659', core: '#ffffff', desc: '紅綠雙核心轉乘站 (淡水信義線✕松山新店線)' },
+  '忠孝復興': { outer: '#0070bd', inner: '#c48c31', core: '#ffffff', desc: '東區雙核心樞紐 (板南線✕文湖線)' },
+  '忠孝新生': { outer: '#0070bd', inner: '#f8991d', core: '#ffffff', desc: '光華三創科技軸心 (板南線✕中和新蘆線)' },
+  '南京復興': { outer: '#008659', inner: '#c48c31', core: '#ffffff', desc: '松山文湖十字交匯 (松山新店線✕文湖線)' },
+  '松江南京': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南京金融街角 (松山新店線✕中和新蘆線)' },
+  '大安': { outer: '#e3002c', inner: '#c48c31', core: '#ffffff', desc: '大安生活圈雙軌 (淡水信義線✕文湖線)' },
+  '東門': { outer: '#e3002c', inner: '#f8991d', core: '#ffffff', desc: '永康商圈雙線交會 (淡水信義線✕中和新蘆線)' },
+  '古亭': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南區轉乘咽喉 (松山新店線✕中和新蘆線)' },
+  '南港': { outer: '#0070bd', inner: '#3b82f6', core: '#ea580c', desc: '東區門戶三鐵共構 (台鐵✕高鐵✕板南線)' },
+  '大坪林': { outer: '#008659', inner: '#ffd300', core: '#ffffff', desc: '新店環狀交匯 (松山新店線✕環狀線)' },
+  '景安': { outer: '#f8991d', inner: '#ffd300', core: '#ffffff', desc: '中和雙捷十字 (中和新蘆線✕環狀線)' }
+};
+
 function addMrtLayer() {
   mrtLayerGroup.clearLayers();
   if (!MRT_DATA || MRT_DATA.length === 0) return;
@@ -1635,11 +1874,12 @@ function addMrtLayer() {
           lineJoin: 'round'
         }).addTo(mrtLayerGroup);
 
-        // 核心發光亮線
+        // 核心發光亮線 ✕ 微動態流光 (Transit Flow Ribbon)
         const poly = L.polyline(branchCoords, {
           color: line.glowColor || line.color,
           weight: 3.5,
-          opacity: 0.95
+          opacity: 0.95,
+          className: 'transit-flow-line'
         }).addTo(mrtLayerGroup);
 
         poly.bindTooltip(`🚇 ${line.name} (${branch.name})`, { sticky: true });
@@ -1656,11 +1896,12 @@ function addMrtLayer() {
         lineJoin: 'round'
       }).addTo(mrtLayerGroup);
 
-      // 核心發光亮線
+      // 核心發光亮線 ✕ 微動態流光 (Transit Flow Ribbon)
       const poly = L.polyline(coords, {
         color: line.glowColor || line.color,
         weight: 3.5,
-        opacity: 0.95
+        opacity: 0.95,
+        className: 'transit-flow-line'
       }).addTo(mrtLayerGroup);
 
       poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
@@ -1668,7 +1909,8 @@ function addMrtLayer() {
 
     // 繪製捷運站點標籤 Marker (雙層 DOM 內嵌，縮放切換純靠 CSS，0ms 重繪卡頓)
     line.stations.forEach((st, idx) => {
-      const isHub = (idx === 0 || idx === line.stations.length - 1 || 
+      const hub = MRT_TRANSFER_HUBS[st.name];
+      const isHub = !!hub || (idx === 0 || idx === line.stations.length - 1 || 
                      ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區', '動物園', '南港展覽館', '淡水', '頂埔', '新店', '南勢角', '蘆洲', '迴龍'].includes(st.name));
 
       const metroSvg = `<svg class="metro-official-logo" viewBox="-50 -50 100 100" width="16" height="16">
@@ -1678,6 +1920,16 @@ function addMrtLayer() {
 
       const lineCode = st.code || line.lineCode || 'MRT';
 
+      const dotHtml = hub ? `
+        <div class="mrt-hub-concentric-dot" title="🏛️ 轉乘樞紐：${st.name} (${hub.desc})">
+          <div class="hub-ring-outer" style="border-color:${hub.outer};"></div>
+          <div class="hub-ring-inner" style="border-color:${hub.inner};"></div>
+          <div class="hub-dot-core" style="background:${hub.core};"></div>
+        </div>
+      ` : `
+        <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
+      `;
+
       const html = `
         <div class="mrt-pin-hybrid ${isHub ? 'is-hub' : ''}">
           <div class="pin-mrt-vector" style="border-color:${line.color};">
@@ -1685,7 +1937,7 @@ function addMrtLayer() {
             <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
             <span class="mrt-station-title">${st.name}</span>
           </div>
-          <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
+          ${dotHtml}
         </div>
       `;
 
@@ -1694,6 +1946,8 @@ function addMrtLayer() {
         className: 'transit-pin-wrap station-marker-wrap' + (isHub ? ' is-hub' : ''),
         iconAnchor: [48, 14]
       });
+
+      const hubNotice = hub ? `<div style="font-size:11px; color:#facc15; font-weight:800; margin-top:3px;">🏛️ 轉乘大站同心光環：${hub.desc}</div>` : '';
 
       const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
       marker.bindPopup(`
@@ -1704,6 +1958,7 @@ function addMrtLayer() {
           </div>
           <div style="font-size:11px; color:#38bdf8; font-weight:700;">官方標誌：科技藍 (#0070bc) ✕ 生機綠 (#00a650)</div>
           <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬路線：${line.name} [代表色 ${lineCode}：${line.color}]</div>
+          ${hubNotice}
           <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">雙北都會捷運高運量/中運量主幹道，全線固定班距發車。</div>
         </div>
       `);
@@ -1734,7 +1989,8 @@ function addEBusLayer() {
     const busPoly = L.polyline(r.path, {
       color: r.color,
       weight: 3.5,
-      opacity: 0.95
+      opacity: 0.95,
+      className: 'bus-flow-line'
     }).addTo(ebusLayerGroup);
 
     busPoly.bindTooltip(`🚌 ${r.name} (${r.headsign})`, { sticky: true });
@@ -1989,20 +2245,24 @@ function addExpresswaysLayer() {
   const expressways = (typeof SHUANGBEI_EXPRESSWAYS !== 'undefined') ? SHUANGBEI_EXPRESSWAYS : [];
 
   expressways.forEach(hwy => {
-    // 外層光暈底線
+    const themed = getThemedStreetColors(hwy, currentBaseLayerKey);
+
+    // 外層光暈包邊 (Casing)
     L.polyline(hwy.coords, {
-      color: hwy.color,
-      weight: hwy.width + 4,
-      opacity: 0.40,
+      color: themed.casing,
+      weight: themed.width + 1.5,
+      opacity: themed.casingOpacity,
       lineCap: 'round',
       lineJoin: 'round'
     }).addTo(expresswaysLayerGroup);
 
-    // 核心高速公路亮線
+    // 核心高速公路亮線 (Google Maps 標誌性鮮橙/高對比亮線)
     const line = L.polyline(hwy.coords, {
-      color: hwy.glowColor || hwy.color,
-      weight: hwy.width,
-      opacity: 0.95
+      color: themed.core,
+      weight: themed.coreWidth + 1.0,
+      opacity: themed.opacity,
+      lineCap: 'round',
+      lineJoin: 'round'
     }).addTo(expresswaysLayerGroup);
 
     line.bindTooltip(`🛣️ ${hwy.name}`, { sticky: true });
@@ -2012,7 +2272,7 @@ function addExpresswaysLayer() {
       const midIdx = Math.floor(hwy.coords.length / 2);
       const centerPt = hwy.coords[midIdx];
       const icon = L.divIcon({
-        html: `<div class="hwy-shield-badge" style="border-color:${hwy.color};">🛣️ ${hwy.shortName}</div>`,
+        html: `<div class="hwy-shield-badge" style="border-color:${themed.core};">🛣️ ${hwy.shortName}</div>`,
         className: 'hwy-badge-wrap',
         iconAnchor: [35, 10]
       });
@@ -3417,11 +3677,16 @@ function switchBaseLayer(layerKey) {
   map.removeLayer(activeBaseLayer);
   activeBaseLayer = baseLayers[layerKey];
   activeBaseLayer.addTo(map);
-  currentBaseLayerKey = layerKey;
 
-  // 確保街道高光圖層、路牌標籤始終置頂於底圖之上，街道 100% 清楚可辨
+  // 動態主題換裝 (自適應切換道路色系、包邊厚度與聚光暗角)
+  harmonizeMapTheme(layerKey);
+
+  // 確保街道高光圖層、高速公路與路牌標籤始終置頂於底圖之上，街道 100% 清楚可辨
   if (streetsLayerGroup && map.hasLayer(streetsLayerGroup)) {
     streetsLayerGroup.eachLayer(l => { if (l.bringToFront) l.bringToFront(); });
+  }
+  if (expresswaysLayerGroup && map.hasLayer(expresswaysLayerGroup)) {
+    expresswaysLayerGroup.eachLayer(l => { if (l.bringToFront) l.bringToFront(); });
   }
 
   const names = {

@@ -20,6 +20,17 @@
 
   <!-- 1:1 真實網路圖資畫布 (Leaflet 支援 OSM / CARTO / 衛星 / 巷弄門牌) -->
   <div id="map"></div>
+  <div id="vignetteSpotlight" class="vignette-spotlight-layer"></div>
+
+  <!-- 🧭 Google Maps 風格導航方位羅盤 (Compass HUD) -->
+  <div class="compass-rose-hud" id="compassRoseHud" onclick="resetMapOrientation()" title="🧭 點擊校準重置為正北方向 (0° N)">
+    <div class="compass-dial" id="compassDial">
+      <div class="compass-needle-n"></div>
+      <div class="compass-needle-s"></div>
+      <div class="compass-pivot"></div>
+    </div>
+    <div class="compass-text" id="compassDegreeText">正北 (N)</div>
+  </div>
 
   <!-- 頂部全息戰術導航條 (Top Tactical Navigation Bar) -->
   <header class="holo-top-bar">
@@ -158,6 +169,12 @@
       <button class="tactical-tool-btn active" id="btnToggleFoV" onclick="toggleLocalFoV()">
         <span>🔭 局部導航視野 (認路模式)</span>
         <span style="color:#38bdf8;">LOCKED</span>
+      </button>
+
+      <!-- 🌟 生活圈聚光暗角 (Google Maps 聚光專注，排除邊緣干擾) -->
+      <button class="tactical-tool-btn active" id="btnToggleSpotlight" onclick="toggleSpotlight()">
+        <span>🎯 生活圈聚光暗角</span>
+        <span style="color:#38bdf8;">ON</span>
       </button>
 
       <button class="tactical-tool-btn active" id="btnToggleTrafficLights" onclick="toggleTrafficLightsLayer()">
