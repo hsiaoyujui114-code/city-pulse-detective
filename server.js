@@ -44,7 +44,8 @@ const MIME_TYPES = {
 
 // 1. 建立 HTTP 伺服器
 const server = http.createServer((req, res) => {
-  let reqPath = req.url.split('?')[0];
+  const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  let reqPath = urlObj.pathname;
   if (reqPath === '/') reqPath = '/index.html';
   if (reqPath === '/map' || reqPath === '/realmap' || reqPath === '/cyber-map') reqPath = '/cyber-realmap.html';
 
@@ -152,6 +153,44 @@ const server = http.createServer((req, res) => {
         const entry = detectiveEngine.bridge.dispatch(body.event, body.payload);
         res.writeHead(200);
         res.end(JSON.stringify({ success: true, dispatched: entry }));
+      });
+      return;
+    }
+
+    // ─── 地圖搭配專屬端點 (Map Pairing APIs) ───
+    if (reqPath === '/api/detective/map/pairing-status' && req.method === 'GET') {
+      const caseId = urlObj.searchParams.get('caseId');
+      res.writeHead(200);
+      res.end(JSON.stringify(detectiveEngine.mapCoordinator.getCaseMapOverlays(caseId)));
+      return;
+    }
+
+    if (reqPath === '/api/detective/map/geojson' && req.method === 'GET') {
+      const caseId = urlObj.searchParams.get('caseId');
+      res.writeHead(200);
+      res.end(JSON.stringify(detectiveEngine.mapCoordinator.exportGeoJson(caseId)));
+      return;
+    }
+
+    if (reqPath === '/api/detective/map/sync-location' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const coords = body.coords || [body.lat, body.lon];
+        const result = detectiveEngine.mapCoordinator.syncLocationFromMap(
+          coords,
+          body.locationName || '雙北街區',
+          body.isWalk !== false
+        );
+        res.writeHead(result.success ? 200 : (result.isForbidden ? 403 : 400));
+        res.end(JSON.stringify(result));
+      });
+      return;
+    }
+
+    if (reqPath === '/api/detective/map/mode' && req.method === 'POST') {
+      parseBody(req).then(body => {
+        const result = detectiveEngine.mapCoordinator.setPairingMode(body.mode);
+        res.writeHead(result.success ? 200 : 400);
+        res.end(JSON.stringify(result));
       });
       return;
     }
