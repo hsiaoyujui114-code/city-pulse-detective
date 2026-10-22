@@ -901,14 +901,17 @@ const mrtTamsuiTrack = [
   { x: 68, z: -180, stopName: '捷運圓山站 (回場整備)', line: '淡水信義線' }
 ];
 
-// 雙北捷運固定班距動態列車車隊 (Fixed Headway Fleet)
+// 雙北捷運固定班距動態列車車隊 (Fixed Headway Fleet - 含車次編號與這班收班時間)
 const mrtTrains = [
   // 板南線 (BL)
   {
     id: 'mrt_BL_01',
     lineCode: 'BL',
+    trainNo: 'BL-101',
+    closingTime: '00:52',
+    lastTrainTime: '00:52',
     lineName: '板南線 BL-101',
-    ledText: '🚇 板南線 ➔ 南港展覽館',
+    ledText: '🚇 [車次 BL-101] 板南線 ➔ 南港展覽館｜收班: 00:52',
     themeColor: '#0070bd',
     track: mrtBannanTrack,
     currentWaypointIndex: 0,
@@ -925,8 +928,11 @@ const mrtTrains = [
   {
     id: 'mrt_BL_02',
     lineCode: 'BL',
+    trainNo: 'BL-103',
+    closingTime: '00:52',
+    lastTrainTime: '00:52',
     lineName: '板南線 BL-103 (次班接續)',
-    ledText: '🚇 板南線 ➔ 南港展覽館',
+    ledText: '🚇 [車次 BL-103] 板南線 ➔ 南港展覽館｜收班: 00:52',
     themeColor: '#0284c7',
     track: mrtBannanTrack,
     currentWaypointIndex: 3, // 錯開班距
@@ -943,8 +949,11 @@ const mrtTrains = [
   {
     id: 'mrt_BL_03',
     lineCode: 'BL',
+    trainNo: 'BL-102',
+    closingTime: '00:52',
+    lastTrainTime: '00:52',
     lineName: '板南線 BL-102 (返程)',
-    ledText: '🚇 板南線 ➔ 板橋府中 ➔ 頂埔',
+    ledText: '🚇 [車次 BL-102] 板南線 ➔ 板橋府中 ➔ 頂埔｜收班: 00:52',
     themeColor: '#0070bd',
     track: mrtBannanTrack,
     currentWaypointIndex: 8, // 西行返程
@@ -963,8 +972,11 @@ const mrtTrains = [
   {
     id: 'mrt_R_01',
     lineCode: 'R',
+    trainNo: 'R-201',
+    closingTime: '00:48',
+    lastTrainTime: '00:48',
     lineName: '淡水信義線 R-201',
-    ledText: '🚇 淡水信義線 ➔ 象山',
+    ledText: '🚇 [車次 R-201] 淡水信義線 ➔ 象山｜收班: 00:48',
     themeColor: '#e3002c',
     track: mrtTamsuiTrack,
     currentWaypointIndex: 0,
@@ -981,8 +993,11 @@ const mrtTrains = [
   {
     id: 'mrt_R_02',
     lineCode: 'R',
+    trainNo: 'R-202',
+    closingTime: '00:48',
+    lastTrainTime: '00:48',
     lineName: '淡水信義線 R-202 (返程)',
-    ledText: '🚇 淡水信義線 ➔ 圓山 ➔ 淡水',
+    ledText: '🚇 [車次 R-202] 淡水信義線 ➔ 圓山 ➔ 淡水｜收班: 00:48',
     themeColor: '#ef4444',
     track: mrtTamsuiTrack,
     currentWaypointIndex: 7, // 北行返程
@@ -6246,10 +6261,14 @@ async function syncSandpitLiveTransit() {
         });
       }
       if (Array.isArray(data.mrtTrains) && data.mrtTrains.length > 0) {
+        // 過濾專車 (專車不須顯示)
+        const regularMrt = data.mrtTrains.filter(mt => !String(mt.name || '').includes('專車') && !String(mt.headsign || '').includes('專車'));
         mrtTrains.forEach((t, idx) => {
-          const match = data.mrtTrains.find(mt => mt.lineCode === t.lineCode) || data.mrtTrains[idx % data.mrtTrains.length];
+          const match = regularMrt.find(mt => mt.lineCode === t.lineCode) || regularMrt[idx % regularMrt.length];
           if (match) {
-            t.ledText = `🚇 ${match.name}｜${match.status}`;
+            t.trainNo = match.trainNo || t.trainNo;
+            t.closingTime = match.closingTime || match.thisTrainClosingTime || t.closingTime;
+            t.ledText = `🚇 [車次 ${t.trainNo}] ${match.name} ➔ 收班: ${t.closingTime}｜${match.status}`;
           }
         });
       }
@@ -6271,11 +6290,13 @@ async function syncSandpitLiveTransit() {
       fetch('https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/LiveBoard?%24format=JSON', { cache: 'no-store' }).then(r => r.ok ? r.json() : []).catch(() => [])
     ]);
     if (Array.isArray(trtcRes) && trtcRes.length > 0) {
+      // 專車不須顯示
+      const regularTrtc = trtcRes.filter(x => !String(x.TripHeadSign || '').includes('專車') && !String(x.TripHeadSign || '').includes('回送'));
       mrtTrains.forEach((t, idx) => {
-        const m = trtcRes.find(x => (x.LineNo || x.LineID) === t.lineCode) || trtcRes[idx % trtcRes.length];
+        const m = regularTrtc.find(x => (x.LineNo || x.LineID) === t.lineCode) || regularTrtc[idx % regularTrtc.length];
         if (m && m.StationName && m.StationName.Zh_tw) {
           const dest = (m.DestinationStationName && m.DestinationStationName.Zh_tw) || '';
-          t.ledText = `🚇 ${t.lineCode}線 [${m.StationName.Zh_tw}站] ➔ 往${dest}`;
+          t.ledText = `🚇 [車次 ${t.trainNo}] ${t.lineCode}線 [${m.StationName.Zh_tw}站] ➔ 往${dest}｜收班: ${t.closingTime || '24:00'}`;
         }
       });
     }

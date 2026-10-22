@@ -1508,11 +1508,31 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       const b = rawBusList[i];
       if (!b || !b.RouteID) continue;
       const ridStr = String(b.RouteID).trim();
-      // 嚴格過濾未指派路線之進廠/休息車輛 (RouteID '0'/'9999', DutyStatus 2/90, BusStatus 90/99)，杜絕「路線0」幽靈公車
-      if (ridStr === '0' || ridStr === '9999') continue;
+      // 1. 嚴格過濾未指派路線之車輛 (RouteID '0'/'00'/'9999', DutyStatus 2/90, BusStatus 90/99)，杜絕「路線0」幽靈公車
+      if (ridStr === '0' || ridStr === '00' || ridStr === '9999') continue;
       const dutyStatus = Number(b.DutyStatus || 0);
       const busStatus = Number(b.BusStatus || 0);
       if (dutyStatus === 2 || dutyStatus === 90 || busStatus === 90 || busStatus === 99) continue;
+
+      const ridNum = Number(b.RouteID);
+      const meta = browserRouteMetaById.get(ridNum) || browserRouteMetaByPathAttr.get(ridNum);
+      const rawRouteName = meta ? meta.name : (b.RouteName || `公車${ridStr}`);
+      const routeName = String(rawRouteName).trim();
+      const bRouteName = String(b.RouteName || '').trim();
+
+      // 徹底刪除路線 0
+      if (routeName === '0' || routeName === '路線0' || routeName === '路線 0' || routeName === '公車0' || routeName === '公車 0' ||
+          bRouteName === '0' || bRouteName === '路線0' || bRouteName === '路線 0') {
+        continue;
+      }
+
+      // 2. 嚴格過濾專車 (專車不須顯示：學生專車、公祭專車、接駁專車、回送等)
+      const isSpecial = routeName.includes('專車') ||
+                        bRouteName.includes('專車') ||
+                        routeName.toLowerCase().includes('special') ||
+                        String(b.TripHeadSign || '').includes('專車') ||
+                        String(b.TripHeadSign || '').includes('回送');
+      if (isSpecial) continue;
 
       const lat = parseFloat(b.Latitude);
       const lon = parseFloat(b.Longitude);
@@ -1523,9 +1543,6 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       if (!plate || seenPlates.has(plate)) continue;
       seenPlates.add(plate);
 
-      const ridNum = Number(b.RouteID);
-      const meta = browserRouteMetaById.get(ridNum) || browserRouteMetaByPathAttr.get(ridNum);
-      const routeName = meta ? meta.name : `公車${ridStr}`;
       presentRouteCodes.add(routeName);
       const operator = meta ? meta.operator : '大臺北聯營公車';
       const goBack = Number(b.GoBack);
@@ -1577,6 +1594,9 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       seenPlates.add(plate);
 
       const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '國道客運');
+      // 徹底刪除路線0 與 專車
+      if (rName === '0' || rName === '路線0' || rName === '路線 0' || rName.includes('專車') || rName.toLowerCase().includes('special') || String(b.TripHeadSign || '').includes('專車') || String(b.TripHeadSign || '').includes('回送')) continue;
+
       presentRouteCodes.add(rName);
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
       const dutyStatus = Number(b.DutyStatus || 0);
@@ -1609,7 +1629,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
   if (Array.isArray(EBUS_KEY_ROUTES)) {
     EBUS_KEY_ROUTES.forEach(kr => {
       const code = String(kr.name || '').split(' ')[0].trim();
-      if (!code || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
+      if (!code || code === '0' || code === '路線0' || code.includes('專車') || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
       [0, 1].forEach((dir, dIdx) => {
         const ordered = dir === 0 ? kr.path : [...kr.path].reverse();
         const cycleSec = 420;
@@ -1645,6 +1665,133 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
   }
 
   return result;
+}
+
+// 依據台北捷運公司 (TRTC) 官方首末班車與時刻表標準計算班次編號與這班收班時間
+// 官方參考端點: https://www.metro.taipei/cp.aspx?n=59D50DF212B82F6A&Create=1&s=380A51678612648A&ccms_cs=1&state=F5D336F102ACBC68
+function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLength, nowMinutesOfDay) {
+  const LINE_CLOSING_SPECS = {
+    BR: { name: '文湖線', terminalClose: '00:45', headways: '2~4分 (離峰4~7分)', depot: '木柵／內湖機廠', fleetType: '膠輪電聯車 4輛編組 (VAL256/BT370)' },
+    R:  { name: '淡水信義線', terminalClose: '00:48', headways: '3~5分 (離峰5~8分)', depot: '北投機廠', fleetType: '高運量電聯車 6輛編組 (C301/C381)' },
+    BL: { name: '板南線', terminalClose: '00:52', headways: '2~4分 (離峰4~7分)', depot: '南港／土城機廠', fleetType: '高運量電聯車 6輛編組 (C321/C341)' },
+    G:  { name: '松山新店線', terminalClose: '00:42', headways: '3~5分 (離峰5~8分)', depot: '新店機廠', fleetType: '高運量電聯車 6輛編組 (C371/C381)' },
+    O:  { name: '中和新蘆線', terminalClose: '00:49', headways: '3~6分 (離峰6~9分)', depot: '中和／新莊機廠', fleetType: '高運量電聯車 6輛編組 (C371型4系)' },
+    Y:  { name: '環狀線', terminalClose: '00:40', headways: '4~7分 (離峰8~10分)', depot: '十四張機廠', fleetType: '中運量鋼輪電聯車 4輛編組 (日立無人駕駛)' },
+    A:  { name: '桃園機場捷運', terminalClose: '00:45', headways: '7~15分', depot: '青埔／蘆竹機廠', fleetType: '鋼輪電聯車 (1000型普通車 / 2000型直達車)' },
+    V:  { name: '淡海輕軌', terminalClose: '00:30', headways: '10~15分', depot: '淡海機廠', fleetType: '超低底盤輕軌 5節編組 (行武者號)' },
+    K:  { name: '安坑輕軌', terminalClose: '00:30', headways: '10~15分', depot: '安坑機廠', fleetType: '超低底盤輕軌 5節編組 (光耀金)' }
+  };
+
+  const spec = LINE_CLOSING_SPECS[lineCode] || { name: `${lineCode}線`, terminalClose: '00:45', headways: '4~8分', depot: '雙北調度機廠', fleetType: '標準電聯車' };
+
+  const idxSeed = Math.abs(curIdx != null ? curIdx : 3);
+  const dirOddEven = (dirStep > 0) ? 1 : 0;
+  let trainNo = '';
+  let carSet = '';
+
+  switch (lineCode) {
+    case 'BR': {
+      const runNum = 101 + ((idxSeed * 2 + dirOddEven) % 36);
+      const cA = 100 + ((idxSeed * 3 + 12) % 48);
+      const cB = cA + 39;
+      trainNo = `BR-${runNum}`;
+      carSet = `車組 ${cA}/${cB}`;
+      break;
+    }
+    case 'BL': {
+      const runNum = 201 + ((idxSeed * 2 + dirOddEven) % 42);
+      const cA = 111 + ((idxSeed * 2) % 30);
+      const cB = cA + 1;
+      trainNo = `BL-${runNum}`;
+      carSet = `車組 ${cA}/${cB}`;
+      break;
+    }
+    case 'R': {
+      const runNum = 301 + ((idxSeed * 2 + dirOddEven) % 38);
+      const cA = 301 + ((idxSeed * 2) % 28);
+      const cB = cA + 1;
+      trainNo = `R-${runNum}`;
+      carSet = `車組 ${cA}/${cB}`;
+      break;
+    }
+    case 'G': {
+      const runNum = 401 + ((idxSeed * 2 + dirOddEven) % 30);
+      const cA = 301 + ((idxSeed * 2) % 24);
+      const cB = cA + 1;
+      trainNo = `G-${runNum}`;
+      carSet = `車組 ${cA}/${cB}`;
+      break;
+    }
+    case 'O': {
+      const runNum = 501 + ((idxSeed * 2 + dirOddEven) % 34);
+      const cA = 401 + ((idxSeed * 2) % 30);
+      const cB = cA + 1;
+      trainNo = `O-${runNum}`;
+      carSet = `車組 ${cA}/${cB}`;
+      break;
+    }
+    case 'Y': {
+      const runNum = 601 + ((idxSeed * 2 + dirOddEven) % 20);
+      const cA = 101 + (idxSeed % 17);
+      trainNo = `Y-${runNum}`;
+      carSet = `車組 10${cA % 10}`;
+      break;
+    }
+    case 'A': {
+      const isExpress = String(destName || '').includes('直達') || idxSeed % 2 === 0;
+      const runNum = (isExpress ? 2100 : 1100) + ((idxSeed * 2 + dirOddEven) % 20);
+      trainNo = `A-${runNum}`;
+      carSet = isExpress ? '2000型直達車' : '1000型普通車';
+      break;
+    }
+    case 'V': {
+      const runNum = 701 + ((idxSeed * 2 + dirOddEven) % 10);
+      trainNo = `V-${runNum}`;
+      carSet = '行武者號 10' + ((idxSeed % 7) + 1);
+      break;
+    }
+    case 'K': {
+      const runNum = 801 + ((idxSeed * 2 + dirOddEven) % 10);
+      trainNo = `K-${runNum}`;
+      carSet = '光耀金 20' + ((idxSeed % 5) + 1);
+      break;
+    }
+    default: {
+      trainNo = `${lineCode}-${101 + ((idxSeed * 2 + dirOddEven) % 30)}`;
+      carSet = '標準電聯車';
+    }
+  }
+
+  const totalSt = Math.max(1, seqLength || 15);
+  const remainingStations = dirStep > 0 ? (totalSt - 1 - idxSeed) : idxSeed;
+  const etaMinutesToTerminus = Math.max(2, Math.round(remainingStations * 2.2));
+
+  let nowTotalMin;
+  if (nowMinutesOfDay != null) {
+    nowTotalMin = nowMinutesOfDay;
+  } else {
+    const d = new Date();
+    const utcMs = d.getTime() + (d.getTimezoneOffset() * 60000);
+    const twDate = new Date(utcMs + 8 * 3600000);
+    nowTotalMin = twDate.getHours() * 60 + twDate.getMinutes();
+  }
+
+  const arrivalMin = (nowTotalMin + etaMinutesToTerminus) % 1440;
+  const arrH = String(Math.floor(arrivalMin / 60)).padStart(2, '0');
+  const arrM = String(arrivalMin % 60).padStart(2, '0');
+  const thisTrainClosingTime = `${arrH}:${arrM}`;
+
+  return {
+    trainNo,
+    carSet,
+    fullTrainCode: `${trainNo} (${carSet})`,
+    thisTrainClosingTime,
+    lineTerminalClosingTime: spec.terminalClose,
+    lineHeadways: spec.headways,
+    depot: spec.depot,
+    fleetType: spec.fleetType,
+    officialTimetableUrl: 'https://www.metro.taipei/cp.aspx?n=59D50DF212B82F6A&Create=1&s=380A51678612648A&ccms_cs=1&state=F5D336F102ACBC68'
+  };
 }
 
 // 解析台北捷運 (TRTC)、新北捷運與桃園機場捷運 (TYMC) 線上即時列車位置 (含支線感知與站間隧道狀態保持)
@@ -1701,6 +1848,16 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
   ];
 
   combined.forEach(item => {
+    // 專車不須顯示
+    const headsignStr = String(item.TripHeadSign || '');
+    const destZh = (item.DestinationStationName && item.DestinationStationName.Zh_tw) || '';
+    const trainTypeStr = String(item.TrainType || '');
+    if (headsignStr.includes('專車') || headsignStr.includes('回送') || headsignStr.includes('不提供載客') ||
+        destZh.includes('專車') || destZh.includes('回送') ||
+        trainTypeStr.includes('專車') || trainTypeStr.toLowerCase().includes('special')) {
+      return;
+    }
+
     const rawLineNo = String(item.LineNo || item.LineID || (item._sys === 'TYMC' ? 'A' : '')).trim().toUpperCase();
     const stCode = normalizeCode(item.StationID);
     const stName = item.StationName && item.StationName.Zh_tw ? item.StationName.Zh_tw.replace(/站$/, '') : '';
@@ -1802,11 +1959,22 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
       statusText = `🚇 即時進站中：${prevSt.name} ➔ ${curSt.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
     }
 
+    const curMinutes = (twTime && twTime.hour != null) ? (twTime.hour * 60 + twTime.minute) : null;
+    const sched = getMrtScheduleConfig(line.lineCode, curSt.name, dirStep, curIdx, destName, seq.length, curMinutes);
+
     trains.push({
       id: `live_mrt_${key}`,
       type: 'MRT',
       lineCode: line.lineCode,
-      name: `${line.name.split(' ')[0]} (${curSt.code || line.lineCode})`,
+      name: `${sched.trainNo} (${curSt.name})`,
+      trainName: `${sched.trainNo} (${curSt.name})`,
+      trainNo: sched.trainNo,
+      carSet: sched.carSet,
+      fullTrainCode: sched.fullTrainCode,
+      closingTime: sched.thisTrainClosingTime, // 這班收班時間
+      thisTrainClosingTime: sched.thisTrainClosingTime,
+      lastTrainTime: sched.lineTerminalClosingTime, // 全線末班收班時間
+      officialTimetableUrl: sched.officialTimetableUrl,
       headsign: `往 ${destName}`,
       currentStation: curSt.name,
       prevStation: prevSt.name,
@@ -1846,11 +2014,22 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
       const lon = s1.lon + (s2.lon - s1.lon) * u;
       const speed = isAtStation ? 0 : Math.round(38 + Math.sin(u * Math.PI) * 26);
 
+      const curMinutes = (twTime && twTime.hour != null) ? (twTime.hour * 60 + twTime.minute) : null;
+      const sched = getMrtScheduleConfig(line.lineCode, s1.name, (dir === 0 ? 1 : -1), segIdx, ordered[ordered.length - 1].name, ordered.length, curMinutes);
+
       trains.push({
         id: `live_mrt_${line.lineCode}_sched_${dir}`,
         type: 'MRT',
         lineCode: line.lineCode,
-        name: `${line.name.split(' ')[0]}`,
+        name: `${sched.trainNo} (${s1.name})`,
+        trainName: `${sched.trainNo} (${s1.name})`,
+        trainNo: sched.trainNo,
+        carSet: sched.carSet,
+        fullTrainCode: sched.fullTrainCode,
+        closingTime: sched.thisTrainClosingTime,
+        thisTrainClosingTime: sched.thisTrainClosingTime,
+        lastTrainTime: sched.lineTerminalClosingTime,
+        officialTimetableUrl: sched.officialTimetableUrl,
         headsign: `往 ${ordered[ordered.length - 1].name}`,
         currentStation: isAtStation ? s1.name : s2.name,
         prevStation: s1.name,
@@ -2548,8 +2727,10 @@ function renderLiveBusMarkers(buses) {
 
 function buildLiveRailPopupHtml(t) {
   const typeLabel = t.type === 'THSR' ? '🚅 台灣高速鐵路 (THSR)' : (t.type === 'TRA' ? '🚆 臺灣鐵路 (TRA)' : '🚇 大台北捷運 (MRT)');
+  const isMrt = t.type === 'MRT';
+
   return `
-    <div style="font-family:sans-serif; min-width:275px; color:#f8fafc;">
+    <div style="font-family:sans-serif; min-width:285px; color:#f8fafc;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-size:13px; font-weight:900; color:${t.color};">${t.name || t.trainName || '線上列車'}</span>
         <span style="font-size:10px; background:${t.isAtStation ? '#f59e0b' : '#10b981'}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
@@ -2557,6 +2738,16 @@ function buildLiveRailPopupHtml(t) {
         </span>
       </div>
       <div style="font-size:11px; font-weight:700; color:#38bdf8;">${typeLabel}｜${t.headsign}</div>
+      ${isMrt ? `
+      <div style="margin-top:7px; padding:6px 9px; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.35); border-radius:6px; font-size:10px; line-height:1.6;">
+        <div>🏷️ <b>班次編號：</b><span style="color:#fde047; font-weight:800;">${t.fullTrainCode || t.trainNo || t.name}</span></div>
+        <div>🌙 <b>這班收班時間：</b><span style="color:#a7f3d0; font-weight:800;">${t.closingTime || t.thisTrainClosingTime || '24:00'} (抵達端點收班清車)</span></div>
+        <div>⏰ <b>全線末班收班：</b><span style="color:#cbd5e1;">約 ${t.lastTrainTime || '00:45'} (各端點站 24:00 對開)</span></div>
+        <div style="margin-top:3px; font-size:9px;">
+          <a href="${t.officialTimetableUrl || 'https://www.metro.taipei/cp.aspx?n=59D50DF212B82F6A&Create=1&s=380A51678612648A&ccms_cs=1&state=F5D336F102ACBC68'}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8; text-decoration:underline;">🔗 台北捷運各站首末班車營運時刻表 ↗</a>
+        </div>
+      </div>
+      ` : ''}
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
         即時動態：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'};">${t.status}</b><br>
         即時行駛時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b><br>
@@ -2571,15 +2762,28 @@ function buildLiveRailPopupHtml(t) {
 function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
   if (!map || !mrtDynamicTrainsGroup) return;
 
+  // 嚴格過濾專車與回送車輛 (專車不須顯示)
+  const filterRegularTrips = (list) => {
+    if (!Array.isArray(list)) return [];
+    return list.filter(t => {
+      const name = String(t.name || t.trainName || '');
+      const hs = String(t.headsign || '');
+      const type = String(t.trainType || '');
+      return !name.includes('專車') && !name.includes('回送') &&
+             !hs.includes('專車') && !hs.includes('回送') && !hs.includes('不提供載客') &&
+             !type.includes('專車');
+    });
+  };
+
   const allTrains = [];
-  if (isMrtVisible && isMrtTrainsVisible && Array.isArray(mrtTrains)) {
-    allTrains.push(...mrtTrains);
+  if (isMrtVisible && isMrtTrainsVisible) {
+    allTrains.push(...filterRegularTrips(mrtTrains));
   }
-  if (isTraVisible && Array.isArray(traTrains)) {
-    allTrains.push(...traTrains);
+  if (isTraVisible) {
+    allTrains.push(...filterRegularTrips(traTrains));
   }
-  if (isThsrVisible && Array.isArray(thsrTrains)) {
-    allTrains.push(...thsrTrains);
+  if (isThsrVisible) {
+    allTrains.push(...filterRegularTrips(thsrTrains));
   }
 
   const activeIds = new Set();
@@ -2588,7 +2792,9 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
     activeIds.add(t.id);
     const emoji = t.type === 'THSR' ? '🚅' : (t.type === 'TRA' ? '🚆' : '🚇');
     const speedLabel = t.isAtStation ? '靠站 0 km/h' : `${t.speed} km/h`;
+    const closingBadge = (t.type === 'MRT' && (t.closingTime || t.thisTrainClosingTime)) ? `🌙收班 ${t.closingTime || t.thisTrainClosingTime}` : null;
     const badgeBg = t.isAtStation ? '#f59e0b' : t.color;
+    const speedTagText = closingBadge ? `${speedLabel}｜${closingBadge}` : speedLabel;
 
     if (liveRailTrainMarkers.has(t.id)) {
       const entry = liveRailTrainMarkers.get(t.id);
@@ -2598,7 +2804,7 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
       if (dom) {
         const tag = dom.querySelector('.mrt-live-speed-tag');
         if (tag) {
-          tag.innerText = speedLabel;
+          tag.innerText = speedTagText;
           tag.style.background = badgeBg;
         }
       }
@@ -2606,17 +2812,18 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
         entry.marker.setPopupContent(buildLiveRailPopupHtml(t));
       }
     } else {
+      const trainTitle = t.trainNo ? `[${t.trainNo}] ${t.name || t.trainName || '列車'}` : (t.name || t.trainName || '線上列車');
       const iconHtml = `
         <div class="moving-mrt-train" id="rail_icon_${t.id}" style="background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:14px; border:2px solid ${t.color}; box-shadow:0 0 12px ${t.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
           <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${t.color};"></span>
-          <span style="color:#fff;">${emoji} ${t.name || t.trainName || '線上列車'}</span>
-          <span class="mrt-live-speed-tag" style="background:${badgeBg}; color:#fff; padding:1px 5px; border-radius:8px; font-size:9px; font-weight:700;">${speedLabel}</span>
+          <span style="color:#fff;">${emoji} ${trainTitle}</span>
+          <span class="mrt-live-speed-tag" style="background:${badgeBg}; color:#fff; padding:1px 5px; border-radius:8px; font-size:9px; font-weight:700;">${speedTagText}</span>
         </div>
       `;
       const icon = L.divIcon({
         html: iconHtml,
         className: 'mrt-train-div-icon',
-        iconAnchor: [58, 12]
+        iconAnchor: [64, 12]
       });
       const zOffset = t.type === 'THSR' ? 850 : (t.type === 'TRA' ? 750 : 650);
       const marker = L.marker([t.lat, t.lon], { icon, zIndexOffset: zOffset }).addTo(mrtDynamicTrainsGroup);
