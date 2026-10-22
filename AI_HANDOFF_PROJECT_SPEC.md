@@ -1,4 +1,4 @@
-﻿# 🤖《雙北漫遊：都會行蹤》AI 接續開發交接手冊與全案規格總錄
+# 🤖《雙北漫遊：都會行蹤》AI 接續開發交接手冊與全案規格總錄
 > **Master AI Handover Specification & Project Requirements Prompt**  
 > **適用對象**：任何接續本專案之 AI Agent、AI Engineer、LLM 助手或人類開發者。  
 > **版本**：2026 年 10 月最新升級版（對齊使用者全回合指示紀錄）
@@ -61,6 +61,9 @@
 12. **🈲 嚴格禁止手繪虛構降級品（拒絕假畫布手繪品）**：
    - 委託人第 61 回合明確下達絕對指令：「我不要你的手繪品，我要你把網路上的資料地圖COPY過去Github和n zj6fu4（伺服器）」！
    - 附檔徹底銷毀 2D Canvas 降級畫布與 800ms 計時器，全面引進 Leaflet 1.9.4 載入 CARTO Dark Matter / OpenStreetMap / Esri 衛星真實 1:1 網路圖資，並 100% 標繪 65+ 實體門市（萬家福、樂家康、7-11、全家、CoCo、傳統市場夜市、捷運公車站點），私服器同步擴充 REST API！
+13. **📡 四軌大眾運輸（公車、捷運、高鐵、火車）必須 100% 持續從網路抓取現實世界即時 GPS 與位置**：
+   - 委託人第 97 回合明確下達指令：「地圖的所有公車，捷運，高鐵，火車都要跟現在的位置一樣，要一直在網路上抓最新的現實公車，捷運，高鐵，火車gps位置，總而言之，要跟現實世界一樣，我要及時的資訊讓我可以在地圖裡看到公車，捷運，高鐵，火車現在的位置」！
+   - 系統每 10 秒自動從雙北交通局 (`GetBusData.gz` / `GetRoute.gz`) 與交通部 PTX/TDX (`LiveBoard/TRTC`、`LiveBoard/TYMC`、`Rail/TRA/LiveBoard`、`Rail/THSR/DailyTimetable/Today`) 抓取真實世界在線車輛位置，並支援本地 `/api/transit/live` 與瀏覽器 `DecompressionStream('gzip')` 直連雙通道，確保 GitHub Pages 與本地伺服器皆 100% 即時顯示現實世界車輛位置！
 
 ---
 

@@ -218,16 +218,9 @@ const server = http.createServer((req, res) => {
 
     // 1. 大眾運輸即時同步 API (公車真實 GPS 與行止狀態 + 捷運/高鐵/臺鐵即時營運時刻表)
     if (reqPath === '/api/transit/live') {
-      transitLiveService.getLiveBusFleet().then(fleet => {
-        const rail = transitLiveService.getRealtimeRailSchedule();
+      transitLiveService.getFullLiveTransitSnapshot().then(snapshot => {
         res.writeHead(200);
-        res.end(JSON.stringify({
-          success: true,
-          timestamp: new Date().toISOString(),
-          activeBusCount: fleet.length,
-          buses: fleet,
-          railSchedule: rail
-        }));
+        res.end(JSON.stringify(snapshot));
       }).catch(err => {
         res.writeHead(500);
         res.end(JSON.stringify({ success: false, error: err.message }));

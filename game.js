@@ -6225,3 +6225,47 @@ gameLoop();
 initPrivateServerConnection();
 initDemonstrationCasesUI();
 
+/* ─── 14. 2.5D 主檔四軌大眾運輸真實世界即時 GPS 網路同步 (Live Internet Sync) ─── */
+async function syncSandpitLiveTransit() {
+  try {
+    let data = null;
+    try {
+      const res = await fetch('/api/transit/live', { cache: 'no-store' });
+      if (res.ok) data = await res.json();
+    } catch (e) {}
+
+    if (data && data.success) {
+      if (Array.isArray(data.buses) && data.buses.length > 0) {
+        cityBuses.forEach((b, idx) => {
+          const rKey = b.lineName.split(' ')[0];
+          const match = data.buses.find(lb => String(lb.routeName).includes(rKey)) || data.buses[idx % data.buses.length];
+          if (match) {
+            b.livePlate = match.busId;
+            b.liveSpeedKmH = Math.round(match.speed || 0);
+            b.ledText = `${match.routeName} (${match.busId})｜${match.speed <= 1 ? '靠站/停等 0km/h' : Math.round(match.speed) + 'km/h'}`;
+          }
+        });
+      }
+      if (Array.isArray(data.mrtTrains) && data.mrtTrains.length > 0) {
+        mrtTrains.forEach((t, idx) => {
+          const match = data.mrtTrains.find(mt => mt.lineCode === t.lineCode) || data.mrtTrains[idx % data.mrtTrains.length];
+          if (match) {
+            t.ledText = `🚇 ${match.name}｜${match.status}`;
+          }
+        });
+      }
+      if (Array.isArray(data.traTrains) && data.traTrains.length > 0) {
+        traTrains.forEach((t, idx) => {
+          const match = data.traTrains[idx % data.traTrains.length];
+          if (match) {
+            t.lineName = match.name;
+            t.ledText = `${match.name}｜${match.status}`;
+          }
+        });
+      }
+    }
+  } catch (err) {}
+}
+syncSandpitLiveTransit();
+setInterval(syncSandpitLiveTransit, 10000);
+
