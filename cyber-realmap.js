@@ -36,6 +36,62 @@ let highlightedBusRouteGroup = null;
 let storeMarkerGroups = {};
 let casesLayerGroup = null;
 let sectorsLayerGroup = null;
+let learningVenuesLayerGroup = null;
+let buildingEntranceGlowGroup = null;
+let streetFogOfWarLayerGroup = null;
+let isStreetFogEnabled = false;
+
+// 🏛️ 4 大微型科普學習場館 (企劃書 05 節核心規範)
+const SHUANGBEI_LEARNING_VENUES = [
+  {
+    id: 'venue_shilin_science',
+    name: '國立臺灣科學教育館微型實驗台',
+    sector: '士林特區 (科教館自然科學體驗區)',
+    lat: 25.0958,
+    lon: 121.5165,
+    toolId: 'tool_shadow_rod',
+    toolName: '日影幾何標竿與壓強板',
+    task: '1~3分鐘光影幾何動手做：利用垂直標竿投影比例推算太陽仰角，換算物體受力面積與壓強。',
+    addr: '士林區士商路 189 號',
+    icon: '🏛️'
+  },
+  {
+    id: 'venue_tpl_library',
+    name: '台北市立圖書館總館知識中心',
+    sector: '大安特區 (建國南路文獻典藏區)',
+    lat: 25.0298,
+    lon: 121.5368,
+    toolId: 'tool_cipher_dict',
+    toolName: '密碼破譯字典與歷史地籍圖',
+    task: '1~3分鐘文獻解讀：字頻統計（E-T-A-O-I-N）與日治時期開港地籍編碼比對。',
+    addr: '大安區建國南路二段 125 號',
+    icon: '📚'
+  },
+  {
+    id: 'venue_tamsui_customs',
+    name: '淡水海關碼頭故事館開港歷史館',
+    sector: '淡水特區 (紅磚倉庫開港歷史聚落)',
+    lat: 25.1724,
+    lon: 121.4371,
+    toolId: 'tool_cylinder',
+    toolName: '阿基米德排水量筒與開港日誌',
+    task: '1~3分鐘浮力量測：排水法測量不規則航海石磚密度 ρ = m/V，辨識原產地岩性。',
+    addr: '淡水區中正路 259 號',
+    icon: '⚓'
+  },
+  {
+    id: 'venue_dadaocheng_herb',
+    name: '大稻埕迪化街中藥博物館微型工坊',
+    sector: '大同特區 (迪化街百年南北貨藥材街區)',
+    lat: 25.0558,
+    lon: 121.5098,
+    toolId: 'tool_scale',
+    toolName: '高精度分析天平與TLC薄層展開槽',
+    task: '1~3分鐘微量秤量：有機生物鹼顯色與微量天平校正，分辨苦杏仁苷與天然草本。',
+    addr: '大同區迪化街一段 120 號',
+    icon: '🌿'
+  }
+];
 
 let isStreetsVisible = false; // 預設簡潔化：地圖不漂浮混亂道路標牌，依委託人指示改為按鈕按需啟用
 let showStationLabels = false; // 預設簡潔化：不漂浮「中山國小」等冗贅站名文字，僅顯示微光點，按鈕按需啟用
@@ -215,6 +271,9 @@ function initCyberRealMap() {
   highlightedBusRouteGroup = L.layerGroup().addTo(map);
   casesLayerGroup = L.layerGroup().addTo(map);
   sectorsLayerGroup = L.layerGroup().addTo(map);
+  learningVenuesLayerGroup = L.layerGroup().addTo(map);
+  buildingEntranceGlowGroup = L.layerGroup().addTo(map);
+  streetFogOfWarLayerGroup = L.layerGroup();
   trafficLightsLayerGroup = L.layerGroup().addTo(map);
   underConstructionLayerGroup = L.layerGroup().addTo(map);
   expresswaysLayerGroup = L.layerGroup().addTo(map);
@@ -239,6 +298,8 @@ function initCyberRealMap() {
   addTraLayer();
   addMrtLayer();
   addEBusLayer();
+  addLearningVenuesLayer();
+  addBuildingEntranceGlowLayer();
   addTrafficLightsLayer();
   addUnderConstructionLayer();
   addExpresswaysLayer();
@@ -4844,8 +4905,9 @@ function buildStorePopupContent(store) {
         <div style="color:#38bdf8; font-weight:800; margin-bottom:4px; font-size:10px;">📦 即時物資與調查教具庫存：</div>
         <div>${supplies}</div>
       </div>
-      <div style="margin-top:8px; display:flex; justify-content:flex-end;">
-        <button onclick="setAsInvestigationTarget(${store.lat}, ${store.lon}, '${store.name}')" style="background:linear-gradient(135deg, #0284c7, #00f0ff); border:none; color:#030712; font-weight:800; font-size:10px; padding:4px 10px; border-radius:4px; cursor:pointer;">🎯 設為巡航目標</button>
+      <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
+        <button onclick="setAsInvestigationTarget(${store.lat}, ${store.lon}, '${store.name}')" style="background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-weight:700; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer;">🎯 設為巡航目標</button>
+        <button onclick="attemptStorePurchase(${store.lat}, ${store.lon}, '${store.name}', '${store.supply ? store.supply.split('、')[0].trim() : '專業調查耗材'}', 25)" style="background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; font-weight:800; font-size:10px; padding:4px 10px; border-radius:4px; cursor:pointer; box-shadow:0 0 10px rgba(16,185,129,0.4);">🛍️ 實體到店購買 (85折)</button>
       </div>
     </div>
   `;
@@ -4854,6 +4916,267 @@ function buildStorePopupContent(store) {
 function setAsInvestigationTarget(lat, lon, name) {
   map.flyTo([lat, lon], 16.5, { duration: 1.2 });
   console.log(`🎯 已設定調查目標：${name} (${lat}, ${lon})`);
+}
+
+// ──────────────────────────────────────────
+// 7.1 親赴距離感測彈窗 (落實企劃書：非直接顯示，而是親赴現場才能發現；遠端發現不能，到了才發現可以)
+// ──────────────────────────────────────────
+function showProximityModal(options) {
+  let modal = document.getElementById('proximityInteractionModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'proximityInteractionModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(3,7,18,0.75); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:99999;';
+    document.body.appendChild(modal);
+  }
+
+  const color = options.color || '#38bdf8';
+  const badge = options.badge || '企劃書空間交互規範';
+  const actionLabel = options.actionLabel || '確定';
+
+  modal.innerHTML = `
+    <div style="background:#0f172a; border:2px solid ${color}; box-shadow:0 0 25px ${color}; border-radius:12px; width:90%; max-width:440px; padding:20px; color:#f8fafc; font-family:sans-serif; animation:modalPopIn 0.25s ease-out;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
+        <span style="font-size:11px; background:${color}; color:#fff; font-weight:800; padding:2px 8px; border-radius:4px;">${badge}</span>
+        <button onclick="document.getElementById('proximityInteractionModal').style.display='none'" style="background:none; border:none; color:#cbd5e1; font-size:18px; cursor:pointer; font-weight:700;">×</button>
+      </div>
+      <div style="font-size:16px; font-weight:900; color:${color}; margin-bottom:10px;">${options.title}</div>
+      <div style="font-size:12px; line-height:1.65; color:#cbd5e1; margin-bottom:16px;">${options.message}</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button onclick="document.getElementById('proximityInteractionModal').style.display='none'" style="background:rgba(30,41,59,0.9); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; font-size:11px; font-weight:700; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉</button>
+        <button id="proximityModalActionBtn" style="background:linear-gradient(135deg, ${color}, #0284c7); border:none; color:#fff; font-size:11px; font-weight:900; padding:6px 16px; border-radius:6px; cursor:pointer;">${actionLabel}</button>
+      </div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+
+  const actionBtn = document.getElementById('proximityModalActionBtn');
+  if (actionBtn) {
+    actionBtn.onclick = () => {
+      modal.style.display = 'none';
+      if (typeof options.onAction === 'function') options.onAction();
+    };
+  }
+}
+
+// 7.2 實體門市親赴購買判定 (企劃書 06 條：實體到店享 85 折，非親自前往不可)
+function attemptStorePurchase(lat, lon, storeName, itemName, price) {
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, lat, lon) * 1000);
+
+  if (distMeters > 60) {
+    showProximityModal({
+      title: '❌ 不能購買！尚未抵達實體門市',
+      color: '#ef4444',
+      badge: '企劃書 06 條：實體到店 85 折規範',
+      message: `您目前距離【${storeName}】還有 <b style="color:#f87171; font-size:14px;">${distMeters} 公尺</b>！<br><br>
+        ⚠️ <b>企劃書嚴格規範</b>：不可直接隔空購買！必須親自前往實體門市才能享有 <b style="color:#fde047;">85 折專屬到店折扣</b>！若在遠端只能使用手機無人機配送（需加收 10 點外送費）。<br><br>
+        💡 <b>行動指引</b>：請親自步行（WASD）或搭乘大眾運輸前往【${storeName}】。`,
+      actionLabel: `🚀 導航至該門市 (${distMeters}m)`,
+      onAction: () => map.flyTo([lat, lon], 17, { duration: 1.2 })
+    });
+  } else {
+    const discounted = Math.round(price * 0.85);
+    showProximityModal({
+      title: '🛍️ 實體到店購買成功！(85折優惠)',
+      color: '#10b981',
+      badge: '企劃書 06 條：實體到店享 85 折',
+      message: `您已親自抵達【${storeName}】（距門市僅 ${distMeters}m）！<br><br>
+        💳 <b>結帳明細</b>：【${itemName}】原價 $${price} ➔ 實體到店 85 折實付 <b style="color:#a7f3d0; font-size:14px;">$${discounted}</b><br>
+        🌱 <b>環保回饋</b>：自備環保袋現省塑膠袋，累計綠色減塑積分！<br><br>
+        物資已放入都會調查員背包！`,
+      actionLabel: '確定',
+      onAction: () => {}
+    });
+  }
+}
+
+// 7.3 4 大微型科普學習場館圖層與親赴借用互動 (企劃書 05 節核心規範)
+function addLearningVenuesLayer() {
+  if (!map || !learningVenuesLayerGroup) return;
+  learningVenuesLayerGroup.clearLayers();
+
+  SHUANGBEI_LEARNING_VENUES.forEach(venue => {
+    const iconHtml = `
+      <div class="venue-holo-pin" title="${venue.name}" style="background:#0f172a; border:2px solid #38bdf8; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(56,189,248,0.7); cursor:pointer;">
+        <span style="font-size:18px;">${venue.icon}</span>
+      </div>
+    `;
+    const customIcon = L.divIcon({
+      html: iconHtml,
+      className: 'venue-div-icon',
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -18]
+    });
+
+    const marker = L.marker([venue.lat, venue.lon], { icon: customIcon });
+
+    const popupHtml = `
+      <div style="font-family:sans-serif; min-width:280px; color:#f8fafc; padding:2px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:10px; background:#0284c7; color:#fff; padding:1px 6px; border-radius:4px; font-weight:800;">🏛️ 微型科普學習場館</span>
+          <span style="font-size:9.5px; color:#94a3b8;">${venue.sector}</span>
+        </div>
+        <div style="font-size:13px; font-weight:900; color:#38bdf8; margin-bottom:4px;">${venue.name}</div>
+        <div style="font-size:10.5px; color:#cbd5e1; margin-bottom:6px;">📍 ${venue.addr}</div>
+        <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(56,189,248,0.3); border-radius:6px; padding:6px 8px; font-size:10px; line-height:1.55; margin-bottom:8px;">
+          <div style="color:#fde047; font-weight:800;">🔬 可借用專業儀器：${venue.toolName}</div>
+          <div style="color:#cbd5e1; margin-top:3px;">📋 <b>微型動手任務：</b>${venue.task}</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+          <button onclick="setAsInvestigationTarget(${venue.lat}, ${venue.lon}, '${venue.name}')" style="background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.25); color:#cbd5e1; font-size:10px; font-weight:700; padding:4px 8px; border-radius:4px; cursor:pointer;">🎯 設為巡航目標</button>
+          <button onclick="attemptBorrowVenueTool('${venue.id}')" style="background:linear-gradient(135deg, #0284c7, #00f0ff); border:none; color:#030712; font-size:10.5px; font-weight:900; padding:5px 12px; border-radius:5px; cursor:pointer; box-shadow:0 0 10px rgba(0,240,255,0.4);">🔬 親赴場館借用儀器</button>
+        </div>
+      </div>
+    `;
+
+    marker.bindPopup(popupHtml, { maxWidth: 320 });
+    marker.addTo(learningVenuesLayerGroup);
+  });
+}
+
+function attemptBorrowVenueTool(venueId) {
+  const venue = SHUANGBEI_LEARNING_VENUES.find(v => v.id === venueId);
+  if (!venue) return;
+
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, venue.lat, venue.lon) * 1000);
+
+  if (distMeters > 60) {
+    showProximityModal({
+      title: '❌ 不能借用！尚未抵達場館現場',
+      color: '#ef4444',
+      badge: '企劃書 05 節：親赴場館微任務規範',
+      message: `您目前距離【${venue.name}】還有 <b style="color:#f87171; font-size:14px;">${distMeters} 公尺</b>！<br><br>
+        ⚠️ <b>企劃書嚴格規範</b>：不能在遠處隔空獲取！必須親自前往該場館現場完成 1~3 分鐘科普互動微任務，才能免費借用【${venue.toolName}】。<br><br>
+        💡 <b>行動指引</b>：請使用 WASD 步行或搭乘捷運/公車前往【${venue.addr}】。`,
+      actionLabel: `🚀 導航至該場館 (${distMeters}m)`,
+      onAction: () => map.flyTo([venue.lat, venue.lon], 16.5, { duration: 1.2 })
+    });
+  } else {
+    showProximityModal({
+      title: '🎉 親赴場館成功！已借得專業儀器',
+      color: '#10b981',
+      badge: '企劃書 05 節：科普微任務完成',
+      message: `您已親自抵達【${venue.name}】（目前距離僅 ${distMeters}m）！<br><br>
+        🔬 <b>動手實驗完成</b>：已在現場完成「${venue.task}」！<br>
+        📦 <b>獲得借用儀器</b>：<b style="color:#34d399; font-size:13px;">[${venue.toolName}]</b><br><br>
+        已正式加入都會調查員背包器材欄位，可用於案件現場微量分析！`,
+      actionLabel: '🎒 收納入背包',
+      onAction: () => {}
+    });
+  }
+}
+
+// 7.4 案發周圍 50~100 公尺巷弄彩蛋拾獲判定 (企劃書第 10 條規範)
+function attemptCaseEasterEgg(caseId) {
+  const c = CASES_DATA.find(item => item.id === caseId);
+  if (!c) return;
+
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, c.lat, c.lon) * 1000);
+
+  if (distMeters < 50) {
+    showProximityModal({
+      title: '🔍 您位於案發現場核心封鎖線內',
+      color: '#f59e0b',
+      badge: '企劃書第 10 條：50~100m 生活圈規範',
+      message: `您目前位於案發核心內部（距中心僅 <b style="color:#fbbf24;">${distMeters} 公尺</b>）。<br><br>
+        ⚠️ <b>企劃書第 10 條嚴格規範</b>：破案輔助彩蛋嚴格鎖定於案發周圍 <b style="color:#fde047;">50~100 公尺</b> 生活圈巷弄！請自警戒核心向周遭生活街廓探索。`,
+      actionLabel: '往周圍生活圈探索',
+      onAction: () => {}
+    });
+  } else if (distMeters > 100) {
+    showProximityModal({
+      title: '❌ 不能拾獲彩蛋！不在案發生活圈內',
+      color: '#ef4444',
+      badge: '企劃書第 10 條：嚴禁遠程跑圖規範',
+      message: `您目前距離案發現場還有 <b style="color:#f87171; font-size:14px;">${distMeters} 公尺</b>！<br><br>
+        ⚠️ <b>企劃書第 10 條嚴格規範</b>：平常絕不直接劇透真相！彩蛋必須位於案發現場周圍 <b style="color:#fde047;">50~100 公尺</b> 生活圈，嚴禁遠程盲目跑圖！<br><br>
+        💡 <b>行動指引</b>：請先搭乘公車或捷運抵達【${c.location}】周邊 50~100 公尺生活圈。`,
+      actionLabel: `🚀 俯衝案發生活圈 (${distMeters}m)`,
+      onAction: () => map.flyTo([c.lat, c.lon], 16.5, { duration: 1.2 })
+    });
+  } else {
+    showProximityModal({
+      title: '🥚 發現案發鄰近生活圈彩蛋！',
+      color: '#10b981',
+      badge: '企劃書第 10 條：50~100m 彩蛋拾獲',
+      message: `您已親自抵達案發現場周圍 <b style="color:#a7f3d0; font-size:14px;">${distMeters} 公尺</b> 生活圈！<br><br>
+        ✨ <b>巷弄角落驚喜</b>：在周邊騎樓花圃旁發現了嫌疑人遺落的微量線索與生活彩蛋！<br>
+        📦 <b>免費拾獲</b>：<b style="color:#38bdf8;">【${c.title}・生活圈輔助破案彩蛋物證】</b><br><br>
+        已免費收納入背包，並解鎖「都會巷弄敏銳觀察」探索成就！`,
+      actionLabel: '收納彩蛋物證',
+      onAction: () => {}
+    });
+  }
+}
+
+// 7.5 建築進出視覺標記系統 (企劃書 02.2 節規範：可進建築常駐發光圖案，不可進建築不顯示圖案)
+const ACCESSIBLE_BUILDINGS = [
+  { id: 'b_office', name: '都會調查員重慶南路事務所', type: 'office', icon: '🚪', lat: 25.0425, lon: 121.5072 },
+  { id: 'b_shilin_sci', name: '士林國立臺灣科學教育館微型實驗台', type: 'venue', icon: '🏛️', lat: 25.0958, lon: 121.5165 },
+  { id: 'b_tpl_lib', name: '台北市立圖書館總館微型文獻中心', type: 'venue', icon: '🏛️', lat: 25.0298, lon: 121.5368 },
+  { id: 'b_tamsui_customs', name: '淡水海關碼頭故事館開港歷史館', type: 'venue', icon: '🏛️', lat: 25.1724, lon: 121.4371 },
+  { id: 'b_dadaocheng_herb', name: '大稻埕迪化街中藥博物館微型工坊', type: 'venue', icon: '🏛️', lat: 25.0558, lon: 121.5098 },
+  { id: 'b_fongda_cafe', name: '蜂大咖啡 西門老牌門市', type: 'cafe', icon: '☕', lat: 25.0430, lon: 121.5070 },
+  { id: 'b_starbucks_cq', name: '星巴克 重慶漢口門市', type: 'cafe', icon: '☕', lat: 25.0440, lon: 121.5140 },
+  { id: 'b_seven_main', name: '7-Eleven 站前旗艦門市', type: 'cvs', icon: '🏪', lat: 25.0468, lon: 121.5162 },
+  { id: 'b_fm_ximen', name: '全家 FamilyMart 西門成都店', type: 'cvs', icon: '🏪', lat: 25.0422, lon: 121.5065 }
+];
+
+function addBuildingEntranceGlowLayer() {
+  if (!map || !buildingEntranceGlowGroup) return;
+  buildingEntranceGlowGroup.clearLayers();
+
+  ACCESSIBLE_BUILDINGS.forEach(b => {
+    const iconHtml = `
+      <div class="building-entrance-glow" title="${b.name}" style="background:#0f172a; border:2px solid #a855f7; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(168,85,247,0.8); cursor:pointer;">
+        <span style="font-size:15px;">${b.icon}</span>
+      </div>
+    `;
+    const icon = L.divIcon({
+      html: iconHtml,
+      className: 'building-glow-icon',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    const marker = L.marker([b.lat, b.lon], { icon, zIndexOffset: 450 });
+    marker.on('click', () => attemptEnterBuilding(b.id, b.name, b.lat, b.lon));
+    marker.addTo(buildingEntranceGlowGroup);
+  });
+}
+
+function attemptEnterBuilding(bId, bName, lat, lon) {
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, lat, lon) * 1000);
+
+  if (distMeters > 45) {
+    showProximityModal({
+      title: '❌ 不能進入！尚未抵達建築正門',
+      color: '#ef4444',
+      badge: '企劃書 02.2 節：建築進出發光標記規範',
+      message: `您目前距離【${bName}】入口還有 <b style="color:#f87171; font-size:14px;">${distMeters} 公尺</b>！<br><br>
+        ⚠️ <b>企劃書規範</b>：帶有發光標記的建築（超商、咖啡廳、學習場館、事務所）必須親自走到門口（<= 45m）才能開門進入切換室內！<br><br>
+        💡 <b>行動指引</b>：請使用 WASD 步行走向發光標記。`,
+      actionLabel: `🚀 走到門口 (${distMeters}m)`,
+      onAction: () => map.flyTo([lat, lon], 17.5, { duration: 1.2 })
+    });
+  } else {
+    showProximityModal({
+      title: '🚪 已親自走進入口！切換精緻室內',
+      color: '#a855f7',
+      badge: '企劃書 02.2 節：進出室內切換',
+      message: `您已親自走到【${bName}】大門口（距離 ${distMeters}m）！<br><br>
+        ✨ <b>門口發光標記感應成功</b>，成功開門進入【${bName}】精緻室內空間！<br>
+        可在此進行室內物品互動、查看特產擺設或向店員/館長請益！`,
+      actionLabel: '進入室內',
+      onAction: () => {}
+    });
+  }
 }
 
 // ──────────────────────────────────────────
@@ -5208,6 +5531,7 @@ function openCaseBriefModal(caseId) {
 
     <div class="case-card-footer">
       <button class="case-card-close-btn" onclick="closeCaseModal()" style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉簡報</button>
+      <button class="btn-easter-egg" onclick="attemptCaseEasterEgg('${c.id}')" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; box-shadow:0 0 10px rgba(245,158,11,0.4);">🥚 探勘案發現場周邊彩蛋</button>
       <button class="btn-fly-to-scene" onclick="flyToCaseLocation(${c.lat}, ${c.lon})">🚀 俯衝案發現場門牌</button>
     </div>
   `;
