@@ -209,6 +209,8 @@ html, body {
   padding: 12px 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   font-family: var(--font-mono);
+  max-height: calc(100vh - 184px);
+  overflow-y: auto;
 }
 
 .panel-header {
@@ -284,6 +286,8 @@ html, body {
   border-radius: 8px;
   padding: 12px 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  max-height: calc(100vh - 184px);
+  overflow-y: auto;
 }
 
 .tool-btn-grid {
@@ -1739,8 +1743,8 @@ body.show-road-names .road-badge-wrap {
    ────────────────────────────────────────── */
 .compass-rose-hud {
   position: absolute;
-  top: 114px;
-  right: 18px;
+  top: 168px;
+  right: 244px;
   z-index: 1000;
   background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(8px);

@@ -1074,6 +1074,9 @@ function updateMrtPhysics(train) {
 
 // 繪製 2.5D 高科技捷運列車 (Rotated MRT Train)
 function drawRotatedMrtTrain(train) {
+  const scale = camera.currentScale;
+  const screenX = (val) => (val - camera.x) * scale;
+  const screenZ = (val) => (val - camera.z) * scale;
   const cx = screenX(train.x);
   const cz = screenZ(train.z);
   const trainW = train.w * scale;
@@ -1246,6 +1249,9 @@ function updateTraPhysics(train) {
 }
 
 function drawRotatedTraTrain(train) {
+  const scale = camera.currentScale;
+  const screenX = (val) => (val - camera.x) * scale;
+  const screenZ = (val) => (val - camera.z) * scale;
   const cx = screenX(train.x);
   const cz = screenZ(train.z);
   const trainW = train.w * scale;
@@ -5810,16 +5816,6 @@ function setBrandRadarFilter(brand) {
     } else if (brand === 'market') {
       banner.style.display = "flex";
       icon.innerText = "🏮";
-      playTone(493, 'triangle', 0.15);
-    } else if (brand === 'coco') {
-      banner.style.display = "flex";
-      icon.innerText = "🧋";
-      text.innerText = "CoCo 都可 跨門市雲端寄杯網絡啟動！雙北 14 間手搖飲門市雲端寄杯隨處領！";
-      showNavToast("🧋 CoCo 都可 跨店雲端寄杯雷達啟動！");
-      playTone(698, 'triangle', 0.15);
-    } else if (brand === 'market') {
-      banner.style.display = "flex";
-      icon.innerText = "🏮";
       text.innerText = "雙北傳統市場與觀光夜市網絡連線！10 處在地市場老字號生鮮與夜市小吃互聯！";
       showNavToast("🏮 傳統市場與夜市網絡雷達啟動！在地古早味連線！");
       playTone(622, 'triangle', 0.15);
@@ -6230,7 +6226,10 @@ async function syncSandpitLiveTransit() {
   try {
     let data = null;
     try {
-      const res = await fetch('/api/transit/live', { cache: 'no-store' });
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3000);
+      const res = await fetch('/api/transit/live', { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(timer);
       if (res.ok) data = await res.json();
     } catch (e) {}
 
@@ -6263,6 +6262,32 @@ async function syncSandpitLiveTransit() {
           }
         });
       }
+      return;
+    }
+
+    // 瀏覽器直連官方開放端點備援 (GitHub Pages 靜態環境自動啟用)
+    const [trtcRes, traRes] = await Promise.all([
+      fetch('https://ptx.transportdata.tw/MOTC/v2/Rail/Metro/LiveBoard/TRTC?%24format=JSON', { cache: 'no-store' }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/LiveBoard?%24format=JSON', { cache: 'no-store' }).then(r => r.ok ? r.json() : []).catch(() => [])
+    ]);
+    if (Array.isArray(trtcRes) && trtcRes.length > 0) {
+      mrtTrains.forEach((t, idx) => {
+        const m = trtcRes.find(x => (x.LineNo || x.LineID) === t.lineCode) || trtcRes[idx % trtcRes.length];
+        if (m && m.StationName && m.StationName.Zh_tw) {
+          const dest = (m.DestinationStationName && m.DestinationStationName.Zh_tw) || '';
+          t.ledText = `🚇 ${t.lineCode}線 [${m.StationName.Zh_tw}站] ➔ 往${dest}`;
+        }
+      });
+    }
+    if (Array.isArray(traRes) && traRes.length > 0) {
+      traTrains.forEach((t, idx) => {
+        const m = traRes[idx % traRes.length];
+        if (m && m.StationName && m.StationName.Zh_tw) {
+          const tType = (m.TrainTypeName && m.TrainTypeName.Zh_tw) ? m.TrainTypeName.Zh_tw.slice(0, 3) : '臺鐵';
+          const delay = Number(m.DelayTime) > 0 ? `晚${m.DelayTime}分` : '準點';
+          t.ledText = `🚆 ${m.TrainNo}次 ${tType} [${m.StationName.Zh_tw}] (${delay})`;
+        }
+      });
     }
   } catch (err) {}
 }

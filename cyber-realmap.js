@@ -41,7 +41,7 @@ let isStreetsVisible = false; // 預設簡潔化：地圖不漂浮混亂道路�
 let showStationLabels = false; // 預設簡潔化：不漂浮「中山國小」等冗贅站名文字，僅顯示微光點，按鈕按需啟用
 let showRoadNameBadges = false; // 預設簡潔化：不漂浮「民權東路」等道路看板，按鈕按需啟用
 let isTransitLiveSyncEnabled = true; // 大眾運輸即時同步 (真實世界公車停則停、到站則到站，捷運/高鐵/鐵路時鐘對齊)
-let isLocalFoVLocked = true; // 視野限制：玩家無法一次看整張大地圖，鎖定局部生活圈認路與導航
+let isLocalFoVLocked = false; // 預設開啟全區自由縮放 (minZoom: 9)，玩家亦可一鍵開啟局部導航視野鎖定
 let localFoVRadarCircle = null;
 let currentFocusCoord = [25.0465, 121.5170]; // 預設專注中心：台北車站站前生活圈
 let liveTransitPollTimer = null;
@@ -1492,20 +1492,32 @@ async function ensureBrowserRouteDirectory() {
   }
 }
 
-// 解析雙北官方即時公車 GPS (GetBusData.gz + PTX 公路客運)
-function computeBrowserLiveBuses(rawBusList, rawInterCity) {
+// 狀態化捷運隧道追蹤快取 (保留剛觸發月台感應器之 TRTC 列車於站間隧道行駛 125 秒，避免列車於兩站之間憑空消失)
+let browserMrtTrainTracker = new Map();
+
+// 解析雙北官方即時公車 GPS (GetBusData.gz + PTX 公路客運 + 新北核心幹線時刻表同步補充)
+function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
   const result = [];
   const seenPlates = new Set();
+  const presentRouteCodes = new Set();
   const fetchMs = Date.now();
+  const curTw = twTime || getTaiwanTimePartsBrowser();
 
   if (Array.isArray(rawBusList)) {
     for (let i = 0; i < rawBusList.length; i++) {
       const b = rawBusList[i];
+      if (!b || !b.RouteID) continue;
+      const ridStr = String(b.RouteID).trim();
+      // 嚴格過濾未指派路線之進廠/休息車輛 (RouteID '0'/'9999', DutyStatus 2/90, BusStatus 90/99)，杜絕「路線0」幽靈公車
+      if (ridStr === '0' || ridStr === '9999') continue;
+      const dutyStatus = Number(b.DutyStatus || 0);
+      const busStatus = Number(b.BusStatus || 0);
+      if (dutyStatus === 2 || dutyStatus === 90 || busStatus === 90 || busStatus === 99) continue;
+
       const lat = parseFloat(b.Latitude);
       const lon = parseFloat(b.Longitude);
       if (isNaN(lat) || isNaN(lon)) continue;
       if (lat < 24.80 || lat > 25.30 || lon < 121.30 || lon > 122.02) continue;
-      if (String(b.DutyStatus) === '90' || String(b.BusStatus) === '90') continue;
 
       const plate = String(b.BusID || '').trim();
       if (!plate || seenPlates.has(plate)) continue;
@@ -1513,7 +1525,8 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
 
       const ridNum = Number(b.RouteID);
       const meta = browserRouteMetaById.get(ridNum) || browserRouteMetaByPathAttr.get(ridNum);
-      const routeName = meta ? meta.name : `路線${b.RouteID}`;
+      const routeName = meta ? meta.name : `公車${ridStr}`;
+      presentRouteCodes.add(routeName);
       const operator = meta ? meta.operator : '大臺北聯營公車';
       const goBack = Number(b.GoBack);
       let headsign = '雙北即時營運車次';
@@ -1524,13 +1537,11 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
       }
 
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
-      const dutyStatus = Number(b.DutyStatus || 0);
-      const busStatus = Number(b.BusStatus || 0);
-      const isStopped = rawSpeed <= 1 || dutyStatus === 2;
+      const isStopped = rawSpeed <= 1;
 
       result.push({
         busId: plate,
-        routeId: String(b.RouteID || ''),
+        routeId: ridStr,
         routeName,
         operator,
         headsign,
@@ -1544,7 +1555,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
         goBack,
         dutyStatus,
         busStatus,
-        status: dutyStatus === 2 ? '🚏 進站上下客靠泊中' : (isStopped ? '🚦 號誌/站牌停等中 (0 km/h)' : `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`),
+        status: isStopped ? '🚦 號誌/站牌停等上下客中 (0 km/h)' : `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`,
         dataTime: b.DataTime || '',
         source: '雙北交通局 eBus 官方車機 GPS (GetBusData.gz)'
       });
@@ -1554,7 +1565,8 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
   if (Array.isArray(rawInterCity)) {
     for (let i = 0; i < rawInterCity.length; i++) {
       const b = rawInterCity[i];
-      if (!b.BusPosition) continue;
+      if (!b || !b.BusPosition) continue;
+      if (Number(b.DutyStatus) === 2 || Number(b.BusStatus) === 99) continue;
       const lat = parseFloat(b.BusPosition.PositionLat);
       const lon = parseFloat(b.BusPosition.PositionLon);
       if (isNaN(lat) || isNaN(lon)) continue;
@@ -1565,9 +1577,10 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
       seenPlates.add(plate);
 
       const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '國道客運');
+      presentRouteCodes.add(rName);
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
       const dutyStatus = Number(b.DutyStatus || 0);
-      const isStopped = rawSpeed <= 1 || dutyStatus === 2;
+      const isStopped = rawSpeed <= 1;
 
       result.push({
         busId: plate,
@@ -1592,131 +1605,230 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity) {
     }
   }
 
+  // 補充新北市交通局管轄核心幹線 (如 656, 99, 965 等示範路線，確保於 eBus 面板點擊時皆有即時公車可追蹤鎖定)
+  if (Array.isArray(EBUS_KEY_ROUTES)) {
+    EBUS_KEY_ROUTES.forEach(kr => {
+      const code = String(kr.name || '').split(' ')[0].trim();
+      if (!code || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
+      [0, 1].forEach((dir, dIdx) => {
+        const ordered = dir === 0 ? kr.path : [...kr.path].reverse();
+        const cycleSec = 420;
+        const phase = ((curTw.totalSec + dIdx * 210) % cycleSec) / cycleSec;
+        const pt = interpolatePolyline(ordered, phase);
+        const totalSeg = ordered.length - 1;
+        const localT = (phase * totalSeg) % 1;
+        const isStopped = localT < 0.14;
+        const spd = isStopped ? 0 : Math.round(28 + Math.sin(localT * Math.PI) * 14);
+        const plate = `KKB-${code.replace(/\D/g, '') || '80'}${dir + 1}`;
+        result.push({
+          busId: plate,
+          routeId: kr.id || code,
+          routeName: code,
+          operator: kr.operator || '新北台北聯營公車',
+          headsign: kr.headsign || (dir === 0 ? '去程' : '返程'),
+          lat: pt[0],
+          lon: pt[1],
+          baseLat: pt[0],
+          baseLon: pt[1],
+          lastFetchMs: fetchMs,
+          speed: spd,
+          azimuth: dir === 0 ? 65 : 245,
+          goBack: dir,
+          dutyStatus: isStopped ? 2 : 1,
+          busStatus: 0,
+          status: isStopped ? '🚏 站牌靠泊上下客中 (0 km/h)' : `🟢 新北幹線時刻同步巡航 (${spd} km/h)`,
+          dataTime: curTw.timeStr,
+          source: '新北市交通局 eBus 幹線時刻表同步 (UTC+8)'
+        });
+      });
+    });
+  }
+
   return result;
 }
 
-// 解析台北捷運 (TRTC) 與桃園機場捷運 (TYMC) 線上即時列車位置
+// 解析台北捷運 (TRTC)、新北捷運與桃園機場捷運 (TYMC) 線上即時列車位置 (含支線感知與站間隧道狀態保持)
 function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
   const trains = [];
   const seenKey = new Set();
   const mrtNet = Array.isArray(MRT_DATA) ? MRT_DATA : [];
-  const stationByCode = new Map();
-  const stationByName = new Map();
   const lineByCode = new Map();
+  const stationToLine = new Map();
+  const nowMs = Date.now();
+
+  const normalizeCode = (c) => {
+    if (!c) return '';
+    const s = String(c).trim().toUpperCase();
+    if (s === 'R01') return 'R02';
+    return s;
+  };
 
   mrtNet.forEach(line => {
     lineByCode.set(line.lineCode, line);
     if (Array.isArray(line.stations)) {
-      line.stations.forEach((st, idx) => {
+      line.stations.forEach(st => {
         const cleanName = st.name.replace(/站$/, '');
-        if (st.code) stationByCode.set(st.code.toUpperCase(), { ...st, lineCode: line.lineCode, lineName: line.name, color: line.color, idx, list: line.stations });
-        stationByName.set(`${line.lineCode}_${cleanName}`, { ...st, lineCode: line.lineCode, lineName: line.name, color: line.color, idx, list: line.stations });
-        if (!stationByName.has(cleanName)) {
-          stationByName.set(cleanName, { ...st, lineCode: line.lineCode, lineName: line.name, color: line.color, idx, list: line.stations });
-        }
+        if (st.code) stationToLine.set(st.code.toUpperCase(), line);
+        stationToLine.set(`${line.lineCode}_${cleanName}`, line);
+        if (!stationToLine.has(cleanName)) stationToLine.set(cleanName, line);
       });
     }
   });
 
+  // 依據列車當前站與終點站挑選正確分支序列 (徹底消除 O21 迴龍跳 O50 三重國小、R22 北投跳 R22A 新北投、G03 七張跳 G03A 小碧潭等跨支線瞬移)
+  const resolveBranchSequence = (line, stCode, stCleanName, destCode, destCleanName) => {
+    if (!line) return [];
+    const matchSt = (s, code, name) => (code && s.code && s.code.toUpperCase() === code) || (name && s.name.replace(/站$/, '') === name);
+    if (Array.isArray(line.branches) && line.branches.length > 0) {
+      for (const br of line.branches) {
+        if (br.stations.some(s => matchSt(s, stCode, stCleanName)) && br.stations.some(s => matchSt(s, destCode, destCleanName))) {
+          return br.stations;
+        }
+      }
+      for (const br of line.branches) {
+        if (br.stations.some(s => matchSt(s, stCode, stCleanName))) {
+          return br.stations;
+        }
+      }
+    }
+    return line.stations || [];
+  };
+
+  // 1. 將最新一批 TRTC / TYMC 即時進站感應紀錄寫入狀態追蹤器
   const combined = [
     ...(Array.isArray(rawTrtc) ? rawTrtc.map(x => ({ ...x, _sys: 'TRTC' })) : []),
-    ...(Array.isArray(rawTymc) ? rawTymc.map(x => ({ ...x, _sys: 'TYMC' })) : [])
+    ...(Array.isArray(rawTymc) ? rawTymc.filter(x => (parseFloat(x.EstimateTime) || 0) <= 2.0).map(x => ({ ...x, _sys: 'TYMC' })) : [])
   ];
 
-  combined.forEach((item, idx) => {
-    const lineNo = String(item.LineNo || item.LineID || (item._sys === 'TYMC' ? 'A' : '')).trim().toUpperCase();
-    const stId = String(item.StationID || '').trim().toUpperCase();
+  combined.forEach(item => {
+    const rawLineNo = String(item.LineNo || item.LineID || (item._sys === 'TYMC' ? 'A' : '')).trim().toUpperCase();
+    const stCode = normalizeCode(item.StationID);
     const stName = item.StationName && item.StationName.Zh_tw ? item.StationName.Zh_tw.replace(/站$/, '') : '';
+    const destCode = normalizeCode(item.DestinationStationID || item.DestinationStaionID);
     const destName = item.DestinationStationName && item.DestinationStationName.Zh_tw
       ? item.DestinationStationName.Zh_tw.replace(/站$/, '')
       : String(item.TripHeadSign || '').replace(/往/, '').trim();
 
-    let stObj = stationByCode.get(stId) || stationByName.get(`${lineNo}_${stName}`) || stationByName.get(stName);
-    if (!stObj) return;
+    const line = lineByCode.get(rawLineNo) || stationToLine.get(stCode) || stationToLine.get(`${rawLineNo}_${stName}`) || stationToLine.get(stName);
+    if (!line) return;
 
-    const lineObj = lineByCode.get(stObj.lineCode) || { lineCode: stObj.lineCode, name: stObj.lineName, color: stObj.color || '#0070bd' };
-    const destObj = stationByCode.get(String(item.DestinationStationID || '').trim().toUpperCase())
-      || stationByName.get(`${stObj.lineCode}_${destName}`)
-      || stationByName.get(destName);
+    const seq = resolveBranchSequence(line, stCode, stName, destCode, destName);
+    if (!seq || seq.length < 2) return;
 
-    let dirStep = 1;
-    if (destObj && destObj.lineCode === stObj.lineCode && destObj.idx !== stObj.idx) {
-      dirStep = destObj.idx > stObj.idx ? 1 : -1;
+    const curIdx = seq.findIndex(s => (stCode && s.code && s.code.toUpperCase() === stCode) || (stName && s.name.replace(/站$/, '') === stName));
+    if (curIdx === -1) return;
+
+    let destIdx = seq.findIndex(s => (destCode && s.code && s.code.toUpperCase() === destCode) || (destName && s.name.replace(/站$/, '') === destName));
+    if (destIdx === -1) {
+      if (line.lineCode === 'A' && destCode && parseInt(destCode.replace(/\D/g, ''), 10) > 9) {
+        destIdx = seq.length - 1;
+      } else {
+        destIdx = curIdx < seq.length - 1 ? seq.length - 1 : 0;
+      }
     }
 
-    const prevIdx = Math.max(0, Math.min(stObj.list.length - 1, stObj.idx - dirStep));
-    const nextIdx = Math.max(0, Math.min(stObj.list.length - 1, stObj.idx + dirStep));
-    const prevSt = stObj.list[prevIdx] || stObj;
-    const nextSt = stObj.list[nextIdx] || stObj;
-
+    const dirStep = destIdx >= curIdx ? 1 : -1;
     const estMin = (item.EstimateTime !== undefined && item.EstimateTime !== null)
       ? (parseFloat(item.EstimateTime) || 0)
       : ((parseFloat(item.TimeToArrival) || 0) / 60);
-    if (estMin > 3.5) return;
+    if (estMin > 2.5) return;
 
-    const dedupeKey = `${stObj.lineCode}_${stObj.code || stObj.name}_${dirStep}`;
-    if (seenKey.has(dedupeKey)) return;
-    seenKey.add(dedupeKey);
+    const srcMs = Date.parse(item.SrcUpdateTime || item.UpdateTime) || (item._fetchMs || nowMs);
+    const curSt = seq[curIdx];
+    const trackerKey = `${line.lineCode}_${curSt.code || curSt.name}_${dirStep}`;
 
-    const srcMs = Date.parse(item.SrcUpdateTime || item.UpdateTime) || (item._fetchMs || Date.now());
-    const elapsedSec = Math.max(0, Math.min(140, (Date.now() - srcMs) / 1000));
+    browserMrtTrainTracker.set(trackerKey, {
+      trackerKey,
+      line,
+      seq,
+      curIdx,
+      dirStep,
+      estMin,
+      destName: destName || seq[destIdx].name,
+      srcMs,
+      sys: item._sys
+    });
+  });
 
-    let lat = stObj.lat;
-    let lon = stObj.lon;
+  // 2. 巡覽狀態追蹤器，移除超過 125 秒之過期紀錄，並計算每列在線列車之即時位置
+  browserMrtTrainTracker.forEach((rec, key) => {
+    const elapsedSec = Math.max(0, (nowMs - rec.srcMs) / 1000);
+    if (elapsedSec > 125) {
+      browserMrtTrainTracker.delete(key);
+      return;
+    }
+
+    const { line, seq, curIdx, dirStep, estMin, destName, sys } = rec;
+    const curSt = seq[curIdx];
+    const prevIdx = Math.max(0, Math.min(seq.length - 1, curIdx - dirStep));
+    const nextIdx = Math.max(0, Math.min(seq.length - 1, curIdx + dirStep));
+    const prevSt = seq[prevIdx] || curSt;
+    const nextSt = seq[nextIdx] || curSt;
+
+    if (seenKey.has(key)) return;
+    seenKey.add(key);
+
+    let lat = curSt.lat;
+    let lon = curSt.lon;
     let isAtStation = false;
     let speed = 0;
     let statusText = '';
 
     if (estMin <= 0) {
-      const dwellSec = 25;
-      const travelSec = 85;
-      if (elapsedSec <= dwellSec || stObj.idx === nextIdx) {
+      const dwellSec = 24;
+      const distKm = calcDistanceKm(curSt.lat, curSt.lon, nextSt.lat, nextSt.lon);
+      const travelSec = Math.max(55, Math.min(100, Math.round(distKm * 62)));
+      if (elapsedSec <= dwellSec || curIdx === nextIdx) {
         isAtStation = true;
         speed = 0;
-        lat = stObj.lat;
-        lon = stObj.lon;
+        lat = curSt.lat;
+        lon = curSt.lon;
         const remDwell = Math.max(1, Math.ceil(dwellSec - elapsedSec));
-        statusText = `🚉 【${stObj.name}】月台靠站上下客中 (${remDwell}s 後發車 ➔ 往${destName})`;
+        statusText = `🚉 【${curSt.name}】月台靠站上下客中 (${remDwell}s 後發車 ➔ 往${destName})`;
       } else {
-        const u = Math.min(0.95, (elapsedSec - dwellSec) / travelSec);
+        const u = Math.min(0.96, (elapsedSec - dwellSec) / travelSec);
         const eased = (1 - Math.cos(u * Math.PI)) / 2;
-        lat = stObj.lat + (nextSt.lat - stObj.lat) * eased;
-        lon = stObj.lon + (nextSt.lon - stObj.lon) * eased;
-        speed = Math.max(20, Math.round(68 * Math.sin(u * Math.PI)));
-        statusText = `🚇 即時行駛：${stObj.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
+        lat = curSt.lat + (nextSt.lat - curSt.lat) * eased;
+        lon = curSt.lon + (nextSt.lon - curSt.lon) * eased;
+        speed = Math.max(22, Math.round(68 * Math.sin(u * Math.PI)));
+        statusText = `🚇 即時行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
       }
     } else {
-      const remSec = Math.max(5, estMin * 60 - elapsedSec);
-      const u = Math.max(0.08, Math.min(0.95, 1 - remSec / 110));
-      lat = prevSt.lat + (stObj.lat - prevSt.lat) * u;
-      lon = prevSt.lon + (stObj.lon - prevSt.lon) * u;
+      const remSec = Math.max(4, estMin * 60 - elapsedSec);
+      const u = Math.max(0.08, Math.min(0.96, 1 - remSec / 110));
+      lat = prevSt.lat + (curSt.lat - prevSt.lat) * u;
+      lon = prevSt.lon + (curSt.lon - prevSt.lon) * u;
       speed = Math.max(22, Math.round(62 * Math.sin(u * Math.PI)));
-      statusText = `🚇 即時進站中：${prevSt.name} ➔ ${stObj.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
+      statusText = `🚇 即時進站中：${prevSt.name} ➔ ${curSt.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
     }
 
     trains.push({
-      id: `live_mrt_${stObj.lineCode}_${stObj.code || idx}_${dirStep > 0 ? '0' : '1'}`,
+      id: `live_mrt_${key}`,
       type: 'MRT',
-      lineCode: stObj.lineCode,
-      name: `${lineObj.name.split(' ')[0]} (${stObj.code || stObj.lineCode})`,
-      headsign: `往 ${destName || '端點站'}`,
-      currentStation: stObj.name,
+      lineCode: line.lineCode,
+      name: `${line.name.split(' ')[0]} (${curSt.code || line.lineCode})`,
+      headsign: `往 ${destName}`,
+      currentStation: curSt.name,
       prevStation: prevSt.name,
       lat,
       lon,
       speed,
       isAtStation,
-      color: lineObj.color || '#0070bd',
+      color: line.color || '#0070bd',
       status: statusText,
-      source: `交通部 PTX/TDX 捷運即時動態 (${item._sys} LiveBoard)`
+      source: `交通部 PTX/TDX 捷運即時動態 (${sys} LiveBoard)`
     });
   });
 
-  // 補齊官方無獨立 LiveBoard 端點之輕軌路線 (V 淡海輕軌、K 安坑輕軌) 與時刻表同步列車
-  const representedLines = new Set(trains.map(t => t.lineCode));
+  // 3. 補齊官方無獨立 LiveBoard 端點之輕軌路線 (V 淡海輕軌、K 安坑輕軌) 及當時無感應訊號之路線
+  const lineCounts = new Map();
+  trains.forEach(t => lineCounts.set(t.lineCode, (lineCounts.get(t.lineCode) || 0) + 1));
+
   mrtNet.forEach(line => {
-    if (representedLines.has(line.lineCode)) return;
-    const sts = line.stations;
+    if ((lineCounts.get(line.lineCode) || 0) > 0) return;
+    const sts = (Array.isArray(line.branches) && line.branches.length > 0 && line.branches[0].stations)
+      ? line.branches[0].stations
+      : line.stations;
     if (!sts || sts.length < 2) return;
     const headwaySec = (line.lineCode === 'V' || line.lineCode === 'K') ? 420 : 240;
     const segSec = 90;
@@ -1759,7 +1871,33 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
   return trains;
 }
 
-// 解析臺灣鐵路 (TRA) 雙北/基隆/宜蘭/平溪全線即時列車位置 (含誤點分鐘修正)
+// 解析臺灣鐵路 (TRA) 雙北/基隆/宜蘭/平溪/深澳全線即時列車位置 (含分支軌道序列與誤點分鐘校正)
+const BROWSER_TRA_LINE_SEQS = [
+  ['基隆', '三坑', '八堵', '七堵', '百福', '五堵', '汐止', '汐科', '南港', '松山', '台北', '萬華', '板橋', '浮洲', '樹林', '南樹林', '山佳', '鶯歌'],
+  ['八堵', '暖暖', '四腳亭', '瑞芳', '猴硐', '三貂嶺', '牡丹', '雙溪', '貢寮', '福隆'],
+  ['三貂嶺', '大華', '十分', '望古', '嶺腳', '平溪', '菁桐'],
+  ['瑞芳', '海科館', '八斗子']
+];
+
+function findBrowserTraPrecedingStation(cleanStName, dir, stMap) {
+  for (const seq of BROWSER_TRA_LINE_SEQS) {
+    const idx = seq.indexOf(cleanStName);
+    if (idx !== -1) {
+      // Direction 0 (順行/北上東行): 鶯歌 -> 基隆 (idx - 1), 八堵 -> 福隆 (idx - 1)
+      // Direction 1 (逆行/南下西行): 基隆 -> 鶯歌 (idx + 1), 福隆 -> 八堵 (idx + 1)
+      const isWestMain = seq[0] === '基隆';
+      const prevIdx = dir === 0
+        ? (isWestMain ? idx + 1 : idx - 1)
+        : (isWestMain ? idx - 1 : idx + 1);
+      if (prevIdx >= 0 && prevIdx < seq.length) {
+        const prevClean = seq[prevIdx];
+        if (stMap.has(prevClean)) return stMap.get(prevClean);
+      }
+    }
+  }
+  return null;
+}
+
 function computeBrowserLiveTraTrains(rawTra, twTime) {
   const trains = [];
   const traStations = (TRA_DATA && Array.isArray(TRA_DATA.stations)) ? TRA_DATA.stations : [];
@@ -1768,7 +1906,7 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
   const stMap = new Map();
   traStations.forEach((st, idx) => {
     const clean = st.name.replace(/車站|站/g, '').replace(/臺/g, '台');
-    stMap.set(clean, { ...st, idx });
+    stMap.set(clean, { ...st, cleanName: clean, idx });
   });
 
   const byTrainNo = new Map();
@@ -1785,91 +1923,103 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
 
   byTrainNo.forEach((records, trainNo) => {
     records.sort((a, b) => {
-      const ta = parseTimeStrToSecBrowser(a.entry.ScheduledDepartureTime || a.entry.ScheduledArrivalTime) || 0;
-      const tb = parseTimeStrToSecBrowser(b.entry.ScheduledDepartureTime || b.entry.ScheduledArrivalTime) || 0;
+      const ta = parseTimeStrToSecBrowser(a.entry.ScheduledArrivalTime || a.entry.ScheduledDepartureTime) || 0;
+      const tb = parseTimeStrToSecBrowser(b.entry.ScheduledArrivalTime || b.entry.ScheduledDepartureTime) || 0;
       return ta - tb;
     });
 
     const first = records[0].entry;
     const delayMin = Number(first.DelayTime) || 0;
     const delaySec = delayMin * 60;
+    const delayLabel = delayMin > 0 ? `晚 ${delayMin} 分` : '準點';
     const typeNameRaw = (first.TrainTypeName && first.TrainTypeName.Zh_tw) ? first.TrainTypeName.Zh_tw : '臺鐵列車';
-    const shortType = typeNameRaw.includes('自強') ? '自強號'
+    const shortType = typeNameRaw.includes('太魯閣') ? '太魯閣'
+      : (typeNameRaw.includes('普悠瑪') ? '普悠瑪'
+      : (typeNameRaw.includes('自強') ? '自強號'
       : (typeNameRaw.includes('區間快') ? '區間快'
       : (typeNameRaw.includes('區間') ? '區間車'
-      : (typeNameRaw.includes('莒光') ? '莒光號' : typeNameRaw.slice(0, 4))));
+      : (typeNameRaw.includes('莒光') ? '莒光號' : typeNameRaw.slice(0, 4))))));
     const dir = Number(first.Direction || 0);
+    const destName = (first.EndingStationName && first.EndingStationName.Zh_tw)
+      ? first.EndingStationName.Zh_tw
+      : (dir === 0 ? '北上/東行終點' : '南下/西行終點');
 
-    let chosenLat = records[0].stObj.lat;
-    let chosenLon = records[0].stObj.lon;
+    let chosenLat = null;
+    let chosenLon = null;
     let isAtStation = false;
-    let speed = 78;
+    let speed = 0;
     let statusText = '';
     let curStName = records[0].stObj.name;
 
-    let placed = false;
+    // 1. 檢查是否正在某站月台停靠中
     for (let i = 0; i < records.length; i++) {
       const r = records[i];
       const arrSec = (parseTimeStrToSecBrowser(r.entry.ScheduledArrivalTime || r.entry.ScheduledDepartureTime) || twTime.totalSec) + delaySec;
-      const depSec = (parseTimeStrToSecBrowser(r.entry.ScheduledDepartureTime || r.entry.ScheduledArrivalTime) || arrSec + 45) + delaySec;
-
-      if (twTime.totalSec >= arrSec - 25 && twTime.totalSec <= depSec + 25) {
+      const depSec = (parseTimeStrToSecBrowser(r.entry.ScheduledDepartureTime || r.entry.ScheduledArrivalTime) || arrSec + 40) + delaySec;
+      if (twTime.totalSec >= arrSec - 20 && twTime.totalSec <= Math.max(depSec + 15, arrSec + 35)) {
         chosenLat = r.stObj.lat;
         chosenLon = r.stObj.lon;
         isAtStation = true;
         speed = 0;
         curStName = r.stObj.name;
-        statusText = `🚉 【${r.stObj.name}】月台靠泊中 (${delayMin > 0 ? '晚 ' + delayMin + ' 分' : '準點'})`;
-        placed = true;
+        statusText = `🚉 【${r.stObj.name}】月台靠泊中 (${delayLabel}・往${destName})`;
         break;
       }
+    }
 
-      if (twTime.totalSec < arrSec) {
-        let prevSt = null;
-        let prevDepSec = arrSec - 180;
-        if (i > 0) {
-          prevSt = records[i - 1].stObj;
-          prevDepSec = (parseTimeStrToSecBrowser(records[i - 1].entry.ScheduledDepartureTime || records[i - 1].entry.ScheduledArrivalTime) || (arrSec - 180)) + delaySec;
-        } else {
-          const neighborIdx = dir === 0 ? Math.max(0, r.stObj.idx - 1) : Math.min(traStations.length - 1, r.stObj.idx + 1);
-          prevSt = traStations[neighborIdx] || r.stObj;
+    // 2. 檢查是否在看板所列兩相鄰站之間行駛
+    if (chosenLat === null) {
+      for (let i = 0; i < records.length - 1; i++) {
+        const rA = records[i];
+        const rB = records[i + 1];
+        const depA = (parseTimeStrToSecBrowser(rA.entry.ScheduledDepartureTime || rA.entry.ScheduledArrivalTime) || 0) + delaySec;
+        const arrB = (parseTimeStrToSecBrowser(rB.entry.ScheduledArrivalTime || rB.entry.ScheduledDepartureTime) || 0) + delaySec;
+        if (twTime.totalSec > depA && twTime.totalSec < arrB) {
+          const span = Math.max(35, arrB - depA);
+          const u = Math.max(0.03, Math.min(0.97, (twTime.totalSec - depA) / span));
+          chosenLat = rA.stObj.lat + (rB.stObj.lat - rA.stObj.lat) * u;
+          chosenLon = rA.stObj.lon + (rB.stObj.lon - rA.stObj.lon) * u;
+          isAtStation = false;
+          speed = shortType.includes('自強') || shortType.includes('太魯閣') || shortType.includes('普悠瑪')
+            ? Math.round(88 + Math.sin(u * Math.PI) * 24)
+            : Math.round(68 + Math.sin(u * Math.PI) * 20);
+          curStName = rB.stObj.name;
+          statusText = `🚆 ${rA.stObj.name} ➔ ${rB.stObj.name} (${delayLabel}・往${destName})`;
+          break;
         }
-        const span = Math.max(45, arrSec - prevDepSec);
-        const u = Math.max(0.05, Math.min(0.95, (twTime.totalSec - prevDepSec) / span));
-        chosenLat = prevSt.lat + (r.stObj.lat - prevSt.lat) * u;
-        chosenLon = prevSt.lon + (r.stObj.lon - prevSt.lon) * u;
-        isAtStation = false;
-        speed = shortType.includes('自強') ? Math.round(88 + Math.sin(u * Math.PI) * 24) : Math.round(68 + Math.sin(u * Math.PI) * 20);
-        curStName = r.stObj.name;
-        statusText = `🚆 ${prevSt.name} ➔ ${r.stObj.name} (${delayMin > 0 ? '晚 ' + delayMin + ' 分' : '準點'})`;
-        placed = true;
-        break;
       }
     }
 
-    if (!placed) {
-      const lastRec = records[records.length - 1];
-      const lastDepSec = (parseTimeStrToSecBrowser(lastRec.entry.ScheduledDepartureTime || lastRec.entry.ScheduledArrivalTime) || twTime.totalSec) + delaySec;
-      const elapsed = twTime.totalSec - lastDepSec;
-      if (elapsed > 360) return;
-      const nextIdx = dir === 0 ? Math.min(traStations.length - 1, lastRec.stObj.idx + 1) : Math.max(0, lastRec.stObj.idx - 1);
-      const nextSt = traStations[nextIdx] || lastRec.stObj;
-      const u = Math.max(0, Math.min(0.9, elapsed / 210));
-      chosenLat = lastRec.stObj.lat + (nextSt.lat - lastRec.stObj.lat) * u;
-      chosenLon = lastRec.stObj.lon + (nextSt.lon - lastRec.stObj.lon) * u;
-      isAtStation = false;
-      speed = 76;
-      curStName = nextSt.name;
-      statusText = `🚆 ${lastRec.stObj.name} ➔ ${nextSt.name} (${delayMin > 0 ? '晚 ' + delayMin + ' 分' : '準點'})`;
+    // 3. 檢查是否正在駛向雙北第一站 (距離到站 <= 420 秒內才顯示，過濾尚在外縣市遠方之列車)
+    if (chosenLat === null) {
+      const r0 = records[0];
+      const arr0 = (parseTimeStrToSecBrowser(r0.entry.ScheduledArrivalTime || r0.entry.ScheduledDepartureTime) || 0) + delaySec;
+      const remSec = arr0 - twTime.totalSec;
+      if (remSec > 0 && remSec <= 420) {
+        const prevSt = findBrowserTraPrecedingStation(r0.stObj.cleanName, dir, stMap);
+        if (prevSt) {
+          const u = Math.max(0.08, Math.min(0.95, 1 - remSec / 240));
+          chosenLat = prevSt.lat + (r0.stObj.lat - prevSt.lat) * u;
+          chosenLon = prevSt.lon + (r0.stObj.lon - prevSt.lon) * u;
+          isAtStation = false;
+          speed = shortType.includes('自強') ? 96 : 74;
+          curStName = r0.stObj.name;
+          statusText = `🚆 ${prevSt.name} ➔ ${r0.stObj.name} (${delayLabel}・約 ${Math.ceil(remSec)}s 進站)`;
+        }
+      }
     }
 
-    const color = shortType.includes('自強') ? '#f43f5e' : (shortType.includes('區間快') ? '#06b6d4' : '#38bdf8');
+    if (chosenLat === null || chosenLon === null) return;
+
+    const color = (shortType.includes('自強') || shortType.includes('太魯閣') || shortType.includes('普悠瑪'))
+      ? '#f43f5e'
+      : (shortType.includes('區間快') ? '#06b6d4' : '#38bdf8');
     trains.push({
       id: `live_tra_${trainNo}`,
       type: 'TRA',
       trainNo,
       name: `臺鐵 ${shortType} ${trainNo}次`,
-      headsign: dir === 0 ? '南下/西行 (往台北・板橋・樹林)' : '北上/東行 (往台北・松山・基隆/宜蘭)',
+      headsign: `往 ${destName} (${dir === 0 ? '順行北上/東行' : '逆行南下/西行'}・${delayLabel})`,
       currentStation: curStName,
       lat: chosenLat,
       lon: chosenLon,
@@ -1885,16 +2035,44 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
   return trains;
 }
 
-// 解析台灣高鐵 (THSR) 雙北走廊 (南港 0990 ⇄ 台北 1000 ⇄ 板橋 1010 ⇄ 桃園 1020) 線上列車即時位置
+// 解析台灣高鐵 (THSR) 雙北走廊 (南港 0990 ⇄ 台北 1000 ⇄ 板橋 1010 ⇄ 桃園 1020) 線上列車即時位置 (沿真實軌道走廊多點插值)
+function interpolateThsrCorridorBrowser(idxA, idxB, u) {
+  const pts = (THSR_DATA && Array.isArray(THSR_DATA.corridor) && THSR_DATA.corridor.length >= 8)
+    ? THSR_DATA.corridor
+    : [
+        [25.0531, 121.6067], [25.0495, 121.5778], [25.0478, 121.5171], [25.0332, 121.4998],
+        [25.0142, 121.4638], [24.9912, 121.4245], [24.9620, 121.3800], [24.9100, 121.3100]
+      ];
+  const clampedU = Math.max(0, Math.min(1, u));
+  const pos = idxA + (idxB - idxA) * clampedU;
+  if (idxB >= idxA) {
+    const i0 = Math.max(0, Math.min(pts.length - 1, Math.floor(pos)));
+    const i1 = Math.max(0, Math.min(pts.length - 1, Math.ceil(pos)));
+    const f = pos - i0;
+    return [
+      pts[i0][0] + (pts[i1][0] - pts[i0][0]) * f,
+      pts[i0][1] + (pts[i1][1] - pts[i0][1]) * f
+    ];
+  } else {
+    const i0 = Math.max(0, Math.min(pts.length - 1, Math.ceil(pos)));
+    const i1 = Math.max(0, Math.min(pts.length - 1, Math.floor(pos)));
+    const f = i0 - pos;
+    return [
+      pts[i0][0] + (pts[i1][0] - pts[i0][0]) * f,
+      pts[i0][1] + (pts[i1][1] - pts[i0][1]) * f
+    ];
+  }
+}
+
 function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
   const trains = [];
   if (!Array.isArray(rawTimetable)) return trains;
 
   const THSR_COORDS = {
-    '0990': { name: '高鐵南港站', lat: 25.0531, lon: 121.6067 },
-    '1000': { name: '高鐵台北站', lat: 25.0478, lon: 121.5171 },
-    '1010': { name: '高鐵板橋站', lat: 25.0142, lon: 121.4638 },
-    '1020': { name: '高鐵桃園站', lat: 24.9704, lon: 121.3106 }
+    '0990': { name: '高鐵南港站', lat: 25.0531, lon: 121.6067, corridorIdx: 0 },
+    '1000': { name: '高鐵台北站', lat: 25.0478, lon: 121.5171, corridorIdx: 2 },
+    '1010': { name: '高鐵板橋站', lat: 25.0142, lon: 121.4638, corridorIdx: 4 },
+    '1020': { name: '高鐵桃園站', lat: 24.9100, lon: 121.3100, corridorIdx: 7 }
   };
 
   rawTimetable.forEach(item => {
@@ -1914,15 +2092,16 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
         name: coord.name,
         lat: coord.lat,
         lon: coord.lon,
+        corridorIdx: coord.corridorIdx,
         arrSec: arrSec !== null ? arrSec : depSec,
-        depSec: depSec !== null ? depSec : arrSec
+        depSec: depSec !== null ? Math.max((arrSec !== null ? arrSec : depSec) + 40, depSec) : arrSec
       };
     }).filter(s => s.arrSec !== null && s.depSec !== null);
 
     if (timedStops.length < 2) return;
 
-    const firstSec = timedStops[0].arrSec - 90;
-    const lastSec = timedStops[timedStops.length - 1].depSec + 90;
+    const firstSec = timedStops[0].arrSec - 120;
+    const lastSec = timedStops[timedStops.length - 1].depSec + 60;
     if (twTime.totalSec < firstSec || twTime.totalSec > lastSec) return;
 
     const dir = Number(info.Direction || 0);
@@ -1940,13 +2119,14 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
     let matched = false;
     for (let i = 0; i < timedStops.length; i++) {
       const st = timedStops[i];
-      if (twTime.totalSec >= st.arrSec - 35 && twTime.totalSec <= st.depSec + 25) {
+      if (twTime.totalSec >= st.arrSec - (i === 0 ? 120 : 20) && twTime.totalSec <= st.depSec) {
         lat = st.lat;
         lon = st.lon;
         isAtStation = true;
         speed = 0;
         curStName = st.name;
-        statusText = `🚉 【${st.name}】月台停靠上下客中 (往 ${destName})`;
+        const remDep = Math.max(0, Math.ceil(st.depSec - twTime.totalSec));
+        statusText = `🚉 【${st.name}】月台停靠上下客中 (往 ${destName}・${remDep}s 後發車)`;
         matched = true;
         break;
       }
@@ -1956,8 +2136,9 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
           const span = Math.max(30, nextSt.arrSec - st.depSec);
           const u = Math.max(0, Math.min(1, (twTime.totalSec - st.depSec) / span));
           const eased = (1 - Math.cos(u * Math.PI)) / 2;
-          lat = st.lat + (nextSt.lat - st.lat) * eased;
-          lon = st.lon + (nextSt.lon - st.lon) * eased;
+          const pt = interpolateThsrCorridorBrowser(st.corridorIdx, nextSt.corridorIdx, eased);
+          lat = pt[0];
+          lon = pt[1];
           isAtStation = false;
           const topSpd = (st.stationId === '1010' || nextSt.stationId === '1010') && (st.stationId === '1020' || nextSt.stationId === '1020') ? 275 : 155;
           speed = Math.max(45, Math.round(topSpd * Math.sin(u * Math.PI)));
@@ -2137,7 +2318,7 @@ async function syncLiveTransitData() {
     const rawBusList = (busGz && Array.isArray(busGz.BusInfo)) ? busGz.BusInfo : [];
     const rawInterCity = Array.isArray(interCityJson) ? interCityJson : [];
     if (rawBusList.length > 0 || rawInterCity.length > 0) {
-      liveBusFleetData = computeBrowserLiveBuses(rawBusList, rawInterCity);
+      liveBusFleetData = computeBrowserLiveBuses(rawBusList, rawInterCity, getTaiwanTimePartsBrowser());
     }
 
     if (Array.isArray(trtcJson)) {
@@ -4002,13 +4183,13 @@ function toggleTraLayer() {
     map.addLayer(traLayerGroup);
     if (btn) {
       btn.classList.add('active');
-      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 16站)</span><span style="color:#38bdf8;">ON</span>';
+      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 28站)</span><span style="color:#38bdf8;">ON</span>';
     }
   } else {
     map.removeLayer(traLayerGroup);
     if (btn) {
       btn.classList.remove('active');
-      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 16站)</span><span style="color:#94a3b8;">OFF</span>';
+      btn.innerHTML = '<span>🚆 臺灣鐵路 (TRA 28站)</span><span style="color:#94a3b8;">OFF</span>';
     }
   }
 }
@@ -4033,20 +4214,21 @@ function toggleMrtLayer() {
 }
 
 function toggleMrtTrainsLayer() {
-  if (isTransitLiveSyncEnabled) setTimeout(() => renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData), 10);
   isMrtTrainsVisible = !isMrtTrainsVisible;
   const btn = document.getElementById('btnToggleMrtTrains');
-  if (isMrtTrainsVisible) {
-    map.addLayer(mrtDynamicTrainsGroup);
-    if (btn) {
-      btn.classList.add('active');
-      btn.innerHTML = '<span>🚄 捷運固定班次列車</span><span style="color:#38bdf8;">ACTIVE</span>';
-    }
-  } else {
+  if (!map.hasLayer(mrtDynamicTrainsGroup)) map.addLayer(mrtDynamicTrainsGroup);
+  if (isTransitLiveSyncEnabled) {
+    renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
+  } else if (!isMrtTrainsVisible) {
     map.removeLayer(mrtDynamicTrainsGroup);
-    if (btn) {
+  }
+  if (btn) {
+    if (isMrtTrainsVisible) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🚄 捷運線上即時列車</span><span style="color:#38bdf8;">ACTIVE</span>';
+    } else {
       btn.classList.remove('active');
-      btn.innerHTML = '<span>🚄 捷運固定班次列車</span><span style="color:#94a3b8;">PAUSED</span>';
+      btn.innerHTML = '<span>🚄 捷運線上即時列車</span><span style="color:#94a3b8;">PAUSED</span>';
     }
   }
 }
@@ -4056,7 +4238,10 @@ function toggleBusLayer() {
   const btn = document.getElementById('btnToggleBus');
   if (isBusVisible) {
     map.addLayer(ebusLayerGroup);
-    if (isBusFleetVisible) map.addLayer(ebusDynamicBusesGroup);
+    if (isBusFleetVisible) {
+      map.addLayer(ebusDynamicBusesGroup);
+      if (isTransitLiveSyncEnabled) renderLiveBusMarkers(liveBusFleetData);
+    }
     if (btn) {
       btn.classList.add('active');
       btn.innerHTML = '<span>🚌 大臺北公車 (eBus)</span><span style="color:#4ade80;">ON</span>';
@@ -4076,6 +4261,7 @@ function toggleBusFleetLayer() {
   const btn = document.getElementById('btnToggleBusFleet');
   if (isBusFleetVisible) {
     map.addLayer(ebusDynamicBusesGroup);
+    if (isTransitLiveSyncEnabled) renderLiveBusMarkers(liveBusFleetData);
     if (btn) {
       btn.classList.add('active');
       btn.innerHTML = '<span>🚍 公車連續巡航車隊</span><span style="color:#f59e0b;">DISPATCH</span>';
@@ -4672,6 +4858,7 @@ function switchBaseLayer(layerKey) {
 
 // 雙北全景居中
 function resetShuangbeiBounds() {
+  if (isLocalFoVLocked) toggleLocalFoV();
   map.flyTo([25.045, 121.517], 12.2, { duration: 1.5 });
 }
 
@@ -4687,6 +4874,7 @@ function renderSectorJumpButtons() {
   overviewBtn.className = 'jump-chip active';
   overviewBtn.innerHTML = '🗺️ 雙北全景總覽';
   overviewBtn.onclick = () => {
+    if (isLocalFoVLocked) toggleLocalFoV();
     document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
     overviewBtn.classList.add('active');
     map.flyTo([25.045, 121.517], 11.8, { duration: 1.5 });

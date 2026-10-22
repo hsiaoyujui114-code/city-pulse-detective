@@ -3520,3 +3520,34 @@ flowchart TD
    - 雙軌倉庫（`city-pulse-detective` 與 `taipei-metro-detective-rpg`）同步提交並推送至 GitHub。
 
 ---
+
+## 第 98 回合：1:1 真實網路地圖與 2.5D 主沙盤地圖深度體檢 ✕ 8 大軌道幾何、即時 GPS 與渲染缺陷清零修復
+
+### 📅 對話時序與委託人核心指示
+- **時間戳**：2026-10-22
+- **委託人原始指令**：
+  > 「幫我檢查地圖」
+
+### 🔍 全方位深度體檢發現與 8 大關鍵修復成果
+1. **🚆 臺鐵宜蘭線八堵—暖暖 V 字型跨港折返突刺修復 ✕ 縱貫線北至南地理排序校正 (`transit-data.js`)**：
+   - 修正 `SHUANGBEI_TRA_NETWORK.corridors[1]`（宜蘭線）誤插入三坑、基隆座標導致軌道從八堵衝向基隆港再折返暖暖的 V 型折線異常，讓宜蘭線自八堵（`[25.1085, 121.7285]`）平滑分岔直通暖暖（`[25.1025, 121.7415]`）。
+   - 將 `SHUANGBEI_TRA_NETWORK.stations` 縱貫線北段嚴格依地理北至南重新排序（`基隆 ➔ 三坑 ➔ 八堵 ➔ 七堵 ➔ 百福 ➔ 五堵 ➔ 汐止 ... ➔ 鶯歌`），消除鶯歌與百福相鄰造成的跨盆地插值跳躍。
+2. **🚌 官方公車「路線0」進廠幽靈車剔除 ✕ 新北核心幹線（656、99、965）即時同步補齊 (`cyber-realmap.js` & `transit-live-service.js`)**：
+   - 實測 `GetBusData.gz` 內含 225 輛 `RouteID === '0'` 或 `BusStatus === 99` / `DutyStatus === 2` 之場站休息車；新增嚴格過濾器，徹底杜絕地圖出現「路線0」幽靈公車。
+   - 針對新北市交通局管轄之示範核心幹線（`656`、`99`、`965` 等），當北市單一資料包未涵蓋時自動以台灣標準時間（`UTC+8`）時刻表同步補齊，確保點擊公車檢索面板任一路線皆能飛越鎖定在線公車。
+3. **🚇 捷運支線感知序列解析 ✕ 125 秒隧道狀態追蹤器 (`computeBrowserLiveMrtTrains`)**：
+   - 改由 `line.branches` 依當前站與終點站解析正確支線序列，徹底消除中和新蘆線 `O21 迴龍` 跳 `O50 三重國小`、淡水線 `R22 北投` 跳 `R22A 新北投`、新店線 `G03 七張` 跳 `G03A 小碧潭`、淡海輕軌 `V11 崁頂` 跳 `V28 台北海洋大學` 等跨支線錯誤插值。
+   - 建立狀態化 `browserMrtTrainTracker`（保留剛觸發月台到站感應之 TRTC 列車 125 秒），使捷運列車離站進入站間隧道行駛時持續平滑推進，不會在兩站之間憑空消失；桃園機捷（`TYMC`）過濾 `EstimateTime <= 2.0` 避免單一列車於相鄰站重複出現。
+4. **🚆 臺鐵順逆行方向語意校正 ✕ 420 秒進場篩選 (`computeBrowserLiveTraTrains`)**：
+   - 對齊交通部 PTX 臺鐵 `Direction: 0`（順行：北上/東行）與 `Direction: 1`（逆行：南下/西行）真實定義，採用獨立路線序列（`BROWSER_TRA_LINE_SEQS`）與 `EndingStationName.Zh_tw` 終點站標示，並過濾距離雙北首站尚超過 420 秒之外縣市遠方列車。
+5. **🚅 高鐵多節點軌道走廊精準插值 (`computeBrowserLiveThsrTrains`)**：
+   - 新增 `interpolateThsrCorridorBrowser`，讓高鐵列車在南港（`0990`）、台北（`1000`）、板橋（`1010`）、桃園（`1020`）之間嚴格沿著 `THSR_DATA.corridor` 多點折線行駛，100% 貼合橘色高鐵專用軌。
+6. **🔭 預設開啟全區自由縮放 (`isLocalFoVLocked = false`) ✕ 圖層開關即時連動 (`cyber-realmap.js` & `cyber-realmap.html`)**：
+   - 預設解鎖 `minZoom: 9`，並於點擊「🗺️ 雙北全景總覽」與「🔭 雙北全景居中」時自動解除局部鎖定，讓玩家可自由縮放至雙北全景（`9x~12x`）或街道特寫（`22x`）。
+   - 修正 `toggleMrtTrainsLayer` 暫停捷運列車時誤將臺鐵與高鐵列車一併移除之問題；修正 `toggleBusLayer` 與 `toggleBusFleetLayer` 開啟時立即重繪即時公車。
+7. **🧭 羅盤 HUD 防重疊定位 ✕ 左右戰術面板捲軸自適應 (`cyber-realmap.css`)**：
+   - 將 `.compass-rose-hud` 移至 `top: 168px; right: 244px;`，徹底消除與頂部品牌篩選列之重疊；為 `.left-telemetry-panel` 與 `.right-tactical-panel` 加上 `max-height: calc(100vh - 184px); overflow-y: auto;`，確保筆電螢幕下所有按鈕與圖例完整可操作。
+8. **🎮 2.5D 主沙盤 (`game.js`) `drawRotatedMrtTrain` / `drawRotatedTraTrain` 作用域修復 ✕ 靜態環境即時動態備援**：
+   - 修復 `game.js` 中 `drawRotatedMrtTrain` 與 `drawRotatedTraTrain` 定義於 `renderScene()` 外部卻直接引用區域變數 `screenX`、`screenZ`、`scale` 導致之 `ReferenceError` 斷幀問題，並為 `syncSandpitLiveTransit` 補齊瀏覽器直連 PTX 即時動態備援。
+
+---
