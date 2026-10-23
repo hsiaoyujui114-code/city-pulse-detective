@@ -59,6 +59,16 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // 50 宗歷史風情與生活科學案件全集展示支援
+  if (reqPath === '/cases' || reqPath === '/cases/' || reqPath === '/cases.html') {
+    const casesHtml = path.join(__dirname, 'cases.html');
+    if (fs.existsSync(casesHtml)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      fs.createReadStream(casesHtml).pipe(res);
+      return;
+    }
+  }
+
   // 偵探核心 REST API 路由
   if (reqPath.startsWith('/api/detective/') && detectiveEngine) {
     res.setHeader('Access-Control-Allow-Origin', '*');

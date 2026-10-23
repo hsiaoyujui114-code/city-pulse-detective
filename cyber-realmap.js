@@ -5567,6 +5567,8 @@ function openCaseBriefModal(caseId) {
       <button class="case-card-close-btn" onclick="closeCaseModal()" style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉簡報</button>
       <button class="btn-easter-egg" onclick="attemptCaseEasterEgg('${c.id}')" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; box-shadow:0 0 10px rgba(245,158,11,0.4);">🥚 探勘案發現場周邊彩蛋</button>
       <button class="btn-fly-to-scene" onclick="flyToCaseLocation(${c.lat}, ${c.lon})">🚀 俯衝案發現場門牌</button>
+      <a href="/detective" target="_blank" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 0 10px rgba(2,132,199,0.4);" title="以都會調查員身分立案調查此案件">🕵️ 立案調查</a>
+      <a href="cases.html" target="_blank" style="background:rgba(245,158,11,0.18); border:1px solid #f59e0b; color:#fbbf24; font-weight:800; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="查看 50 宗歷史生活科學案件全集檔案庫">📂 50 案全集</a>
     </div>
   `;
 
