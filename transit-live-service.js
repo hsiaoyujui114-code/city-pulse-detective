@@ -316,6 +316,40 @@ class TransitLiveService {
       isFetching: false
     };
 
+    // 官方台北捷運即時儀表板 (WebCorner) 快取
+    this.metroWebCornerCache = {
+      trains: [],
+      lastFetchTime: 0,
+      isFetching: false
+    };
+    this.METRO_WEBCORNER_TTL_MS = 12000; // 官方即時列車儀表板 12 秒快取
+
+    // 建立站點快速座標索引
+    this.stationLookup = new Map();
+    if (TRANSIT_SSOT && Array.isArray(TRANSIT_SSOT.SHUANGBEI_MRT_NETWORK)) {
+      TRANSIT_SSOT.SHUANGBEI_MRT_NETWORK.forEach(net => {
+        if (Array.isArray(net.stations)) {
+          net.stations.forEach(st => {
+            this.stationLookup.set(st.code, st);
+            this.stationLookup.set(st.name, st);
+          });
+        }
+        if (Array.isArray(net.branches)) {
+          net.branches.forEach(br => {
+            if (Array.isArray(br.stations)) {
+              br.stations.forEach(st => {
+                this.stationLookup.set(st.code, st);
+                this.stationLookup.set(st.name, st);
+              });
+            }
+          });
+        }
+      });
+    }
+    if (this.stationLookup.has('R02')) {
+      this.stationLookup.set('R01', this.stationLookup.get('R02'));
+    }
+
     this.traCache = {
       liveBoard: [],
       lastFetchTime: 0,
@@ -451,6 +485,46 @@ class TransitLiveService {
     });
   }
 
+  // 下載純文字或 HTML 網頁 (自動處理 gzip/deflate)
+  fetchText(url) {
+    return new Promise((resolve, reject) => {
+      const req = https.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Encoding': 'gzip, deflate'
+        },
+        timeout: 8000
+      }, (res) => {
+        if (res.statusCode !== 200) {
+          res.resume();
+          return reject(new Error(`HTTP ${res.statusCode} from ${url}`));
+        }
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => {
+          try {
+            const buf = Buffer.concat(chunks);
+            let text = '';
+            const enc = (res.headers['content-encoding'] || '').toLowerCase();
+            if (enc.includes('gzip') || (buf[0] === 0x1f && buf[1] === 0x8b)) {
+              text = zlib.gunzipSync(buf).toString('utf-8');
+            } else if (enc.includes('deflate')) {
+              text = zlib.inflateSync(buf).toString('utf-8');
+            } else {
+              text = buf.toString('utf-8');
+            }
+            resolve(text);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('Timeout ' + url)); });
+    });
+  }
+
   // 1. 拉取雙北公車 800+ 路線中文對照表 (GetRoute.gz)
   async ensureRouteMetaLoaded() {
     const now = Date.now();
@@ -550,6 +624,166 @@ class TransitLiveService {
     return this.mrtCache;
   }
 
+  // 3.1 官方即時列車儀表板拉取 (https://web.metro.taipei/pages2026/WebCorner/{LINE})
+  async fetchLiveMetroTaipeiWebCorner() {
+    const now = Date.now();
+    if (now - this.metroWebCornerCache.lastFetchTime < this.METRO_WEBCORNER_TTL_MS && this.metroWebCornerCache.trains.length > 0) {
+      return this.metroWebCornerCache.trains;
+    }
+    if (this.metroWebCornerCache.pendingPromise) {
+      return this.metroWebCornerCache.pendingPromise;
+    }
+
+    this.metroWebCornerCache.pendingPromise = (async () => {
+      const LINE_CONFIGS = [
+        { code: 'BL', name: '板南線', color: '#0070bd', termA: '南港展覽館', termB: '頂埔', closeTime: '00:52' },
+        { code: 'R',  name: '淡水信義線', color: '#e3002c', termA: '淡水', termB: '象山', closeTime: '00:48' },
+        { code: 'G',  name: '松山新店線', color: '#008659', termA: '松山', termB: '新店', closeTime: '00:42' },
+        { code: 'O',  name: '中和新蘆線(迴龍)', color: '#f8b61c', termA: '迴龍', termB: '南勢角', closeTime: '00:49' },
+        { code: 'O1', name: '中和新蘆線(蘆洲)', color: '#f8b61c', termA: '蘆洲', termB: '南勢角', closeTime: '00:49' },
+        { code: 'BR', name: '文湖線', color: '#c48c31', termA: '南港展覽館', termB: '動物園', closeTime: '00:45' },
+        { code: 'Y',  name: '環狀線', color: '#fedb00', termA: '新北產業園區', termB: '大坪林', closeTime: '00:40' },
+        { code: 'BX', name: '新北投支線', color: '#fd92a4', termA: '北投', termB: '新北投', closeTime: '00:00' },
+        { code: 'QX', name: '小碧潭支線', color: '#cee57a', termA: '七張', termB: '小碧潭', closeTime: '00:00' }
+      ];
+
+      try {
+        const fetchTasks = LINE_CONFIGS.map(cfg =>
+          this.fetchText(`https://web.metro.taipei/pages2026/WebCorner/${cfg.code}`)
+            .then(html => ({ cfg, html }))
+        );
+        const responses = await Promise.allSettled(fetchTasks);
+
+        const parsedTrains = [];
+        const seenCarNos = new Set();
+        const officialUrl = 'https://www.metro.taipei/cp.aspx?n=59D50DF212B82F6A&Create=1&s=380A51678612648A&ccms_cs=1&state=F5D336F102ACBC68';
+
+        responses.forEach((res) => {
+          if (res.status !== 'fulfilled' || !res.value) return;
+          const { cfg, html } = res.value;
+
+          // 1. 解析站點列表
+          const stationRegex = /<div class=\"station__box\" title=\"([^\"]+)\"[^>]*id=\"stationbox(\d+)\"/g;
+          const stationMap = new Map();
+          let sm;
+          while ((sm = stationRegex.exec(html)) !== null) {
+            const title = sm[1].trim();
+            const idx = parseInt(sm[2], 10);
+            const parts = title.split(/\s+/);
+            const code = parts[0];
+            const name = parts[1] || parts[0];
+            const stGeo = this.stationLookup.get(code) || this.stationLookup.get(name) || { lat: 25.0425, lon: 121.5072 };
+            stationMap.set(idx, { code, name, lat: stGeo.lat, lon: stGeo.lon, title });
+          }
+
+          // 2. 解析各站與站間軌道區間盒 (Ypointbox)
+          const boxRegex = /<div class=\"routemap__box\" id=\"Ypointbox(\d+)\">([\s\S]*?)(?=<div class=\"routemap__box\" id=\"Ypointbox|\s*<\/div>\s*<\/div>\s*<\/main>)/g;
+          let bm;
+          while ((bm = boxRegex.exec(html)) !== null) {
+            const boxNum = parseInt(bm[1], 10);
+            const boxHtml = bm[2];
+
+            const trainItemRegex = /<div class=\"([^\"]*train__item[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*data-cartweight=\"([^\"]*)\"/g;
+            let tm;
+            while ((tm = trainItemRegex.exec(boxHtml)) !== null) {
+              const clsStr = tm[1];
+              const title = tm[2].trim();
+              const cartweight = tm[3].trim();
+
+              if (!clsStr.includes('show')) continue;
+
+              const isDown = clsStr.includes('p_left') || cartweight.toLowerCase().includes('down');
+              const isUp = clsStr.includes('p_right') || cartweight.toLowerCase().includes('up');
+              const carNo = title || cartweight || (`TR-${boxNum}`);
+
+              // 跨線去重 (如 O 與 O1 重疊站點)
+              if (seenCarNos.has(carNo)) continue;
+              seenCarNos.add(carNo);
+
+              // 嚴格過濾專車與回送車輛 (專車不須顯示)
+              if (title.includes('專車') || title.includes('回送') || cartweight.includes('special')) continue;
+
+              const isAtStation = (boxNum % 2 === 1);
+              let curSt, nextSt, destName, lat, lon, speed, statusText;
+
+              if (isAtStation) {
+                const stIdx = Math.floor((boxNum + 1) / 2);
+                curSt = stationMap.get(stIdx) || { name: '月台', code: '', lat: 25.0425, lon: 121.5072 };
+                const nextIdx = isDown ? stIdx + 1 : stIdx - 1;
+                nextSt = stationMap.get(nextIdx) || curSt;
+                destName = isDown ? cfg.termB : cfg.termA;
+                lat = curSt.lat;
+                lon = curSt.lon;
+                speed = 0;
+                statusText = `🚉 【${curSt.name}】月台靠站上下客中 ➔ 往${destName}`;
+              } else {
+                const stAIdx = Math.floor(boxNum / 2);
+                const stBIdx = stAIdx + 1;
+                const stA = stationMap.get(stAIdx) || { name: '前站', code: '', lat: 25.0425, lon: 121.5072 };
+                const stB = stationMap.get(stBIdx) || { name: '次站', code: '', lat: 25.0425, lon: 121.5072 };
+                if (isDown) {
+                  curSt = stA;
+                  nextSt = stB;
+                  destName = cfg.termB;
+                } else {
+                  curSt = stB;
+                  nextSt = stA;
+                  destName = cfg.termA;
+                }
+                lat = (stA.lat + stB.lat) / 2;
+                lon = (stA.lon + stB.lon) / 2;
+                speed = 54;
+                statusText = `🚇 區間行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・54 km/h)`;
+              }
+
+              const cleanLineCode = cfg.code === 'O1' ? 'O' : (cfg.code === 'BX' ? 'R' : (cfg.code === 'QX' ? 'G' : cfg.code));
+              const trainNumberStr = `${cleanLineCode}-${carNo.split('/')[0] || carNo}`;
+
+              parsedTrains.push({
+                id: `live_webcorner_${cleanLineCode}_${carNo.replace(/[^a-zA-Z0-9]/g, '_')}`,
+                type: 'MRT',
+                lineCode: cleanLineCode,
+                lineName: cfg.name.split('(')[0],
+                name: `[${trainNumberStr}] ${cfg.name.split('(')[0]} (${curSt.name})`,
+                trainName: `[${trainNumberStr}] ${cfg.name.split('(')[0]} (${curSt.name})`,
+                trainNo: trainNumberStr,
+                carSet: `車組 ${carNo}`,
+                fullTrainCode: `${cleanLineCode}型電聯車 [${carNo}]`,
+                closingTime: cfg.closeTime,
+                thisTrainClosingTime: cfg.closeTime,
+                lastTrainTime: cfg.closeTime,
+                officialTimetableUrl: officialUrl,
+                headsign: `往 ${destName}`,
+                currentStation: curSt.name,
+                nextStation: nextSt.name,
+                lat,
+                lon,
+                speed,
+                isAtStation,
+                color: cfg.color,
+                status: statusText,
+                updateTime: new Date().toISOString(),
+                source: 'web_metro_taipei_live'
+              });
+            }
+          }
+        });
+
+        if (parsedTrains.length > 0) {
+          this.metroWebCornerCache.trains = parsedTrains;
+          this.metroWebCornerCache.lastFetchTime = Date.now();
+        }
+      } catch (err) {
+        console.warn('[TransitLiveService] fetchLiveMetroTaipeiWebCorner 警告:', err.message);
+      }
+      return this.metroWebCornerCache.trains;
+    })().finally(() => {
+      this.metroWebCornerCache.pendingPromise = null;
+    });
+
+    return this.metroWebCornerCache.pendingPromise;
+  }
+
   // 4. 拉取臺鐵即時列車看板 (TRA LiveBoard)
   async fetchLiveTra() {
     const now = Date.now();
@@ -602,6 +836,7 @@ class TransitLiveService {
     await Promise.allSettled([
       this.fetchLiveBuses(),
       this.fetchLiveMrt(),
+      this.fetchLiveMetroTaipeiWebCorner(),
       this.fetchLiveTra(),
       this.fetchLiveThsr()
     ]);
@@ -794,9 +1029,25 @@ class TransitLiveService {
       return lineObj.stations || [];
     };
 
-    // (A) 處理 TRTC 即時列車 (BL, R, G, O, BR, Y)
+    // (A) 優先注入台北捷運官網 (web.metro.taipei) WebCorner 即時儀表板的 50+ 列真實運行列車
+    const webCornerTrains = (this.metroWebCornerCache && Array.isArray(this.metroWebCornerCache.trains))
+      ? this.metroWebCornerCache.trains
+      : [];
+
+    webCornerTrains.forEach(t => {
+      // 1. 嚴格過濾路線0 與 專車/回送
+      if (!t.lineCode || t.lineCode === '0' ||
+          String(t.name).includes('專車') || String(t.name).includes('回送') ||
+          String(t.headsign).includes('專車') || String(t.headsign).includes('回送')) {
+        return;
+      }
+      seenTrainKeys.add(t.id);
+      results.push(t);
+    });
+
+    // (B) 處理桃園機場捷運 (TYMC / Line A) 即時列車與 TRTC 備援列車
     const allLiveBoards = [
-      ...(this.mrtCache.trtc || []),
+      ...(results.length === 0 ? (this.mrtCache.trtc || []) : []),
       ...(this.mrtCache.tymc || []).filter(x => x.EstimateTime != null && x.EstimateTime <= 2)
     ];
 
@@ -812,6 +1063,7 @@ class TransitLiveService {
       }
 
       const lineCode = entry.LineID || entry.LineNO || '';
+      if (lineCode === '0') return; // 刪除路線0
       const lineObj = lineLookup.get(lineCode);
       if (!lineObj) return;
 
@@ -919,7 +1171,7 @@ class TransitLiveService {
       });
     });
 
-    // (B) 補充淡海輕軌 (V) 與安坑輕軌 (K) 真實時刻表同步列車 (以及當外部 API 尚未回傳時之備援)
+    // (C) 補充淡海輕軌 (V) 與安坑輕軌 (K) 真實時刻表同步列車 (以及當外部 API 尚未回傳時之備援)
     const { nowSec } = getTaiwanDaySeconds();
     const ensureLines = ['V', 'K'];
     if (results.length === 0) {
@@ -1098,6 +1350,10 @@ class TransitLiveService {
           const u = Math.max(0.02, Math.min(0.98, (nowSec - sA.depSec) / span));
           const lat = sA.coords.lat + (sB.coords.lat - sA.coords.lat) * u;
           const lon = sA.coords.lon + (sB.coords.lon - sA.coords.lon) * u;
+
+          // ★ 企劃書出入境核心規則：南下列車一旦往南駛過鶯歌南端邊界 (lat < 24.945)，即離境出城，在地圖上消失看不到了！
+          if (lat < 24.945) return;
+
           const distKm = calcDistKm(sA.coords.lat, sA.coords.lon, sB.coords.lat, sB.coords.lon);
           const avgSpeed = Math.min(125, Math.max(45, Math.round((distKm / (span / 3600)))));
 
@@ -1259,6 +1515,17 @@ class TransitLiveService {
         if (nowSec > stA.depSec && nowSec < stB.arrSec) {
           const span = Math.max(60, stB.arrSec - stA.depSec);
           const u = (nowSec - stA.depSec) / span;
+
+          // ★ 企劃書出入境核心規則：南下列車一旦跨過新北邊界即離境消失，北上班次自南端入境出現
+          if (stA.id === '1010' && stB.id === '1020') {
+            // 南下列車 (板橋 ➔ 桃園方向)：超過新北西南邊界 (u > 0.42) 即離境出城，在地圖上消失看不到了！
+            if (u > 0.42) return;
+          }
+          if (stA.id === '1020' && stB.id === '1010') {
+            // 北上班次 (桃園 ➔ 板橋方向)：尚未跨進新北西南邊界 (u < 0.58) 尚未入境，不顯示！
+            if (u < 0.58) return;
+          }
+
           const pt = interpolateCorridorSegment(THSR_CORRIDOR_PTS, stA.corridorIdx, stB.corridorIdx, u);
           const isSouthOfBanqiao = (stA.id === '1010' || stB.id === '1020');
           const topSpeed = isSouthOfBanqiao ? 285 : 145;
