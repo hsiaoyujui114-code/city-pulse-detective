@@ -1577,6 +1577,11 @@ class TransitLiveService {
       mrtTrains,
       traTrains,
       thsrTrains,
+      // 兼顧向下相容與全域測試別名
+      metro: mrtTrains,
+      mrt: mrtTrains,
+      tra: traTrains,
+      thsr: thsrTrains,
       railSchedule
     };
   }
