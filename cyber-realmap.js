@@ -348,6 +348,13 @@ function initCyberRealMap() {
   // 啟動施工狀態即時同步服務
   fetchLiveConstructionStatus();
 
+  // 啟動全新四大系統：親臨迷霧、1935 文史鐵道、人行流動導航、即時交通音場與跑馬燈
+  initAudioFxEngine();
+  initFogOfWarSystem();
+  initHistorical1935RailLayer();
+  initWalkNavFlowlineSystem();
+  updateTransitTickerBroadcast();
+
   console.log('✅ 1:1 真實雙北網路街道全景圖與四軌大眾運輸已全數載入完成！');
 }
 
@@ -380,7 +387,7 @@ function initPlayerAvatarMarker() {
         <span style="font-size:18px;">🕵️</span>
       </div>
       <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.92); border:1px solid #00f0ff; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; white-space:nowrap; z-index:4;">
-        雙北全息巡航者
+        都會調查員
       </div>
     </div>
   `;
@@ -393,11 +400,25 @@ function initPlayerAvatarMarker() {
   playerAvatarMarker = L.marker([25.0465, 121.5170], { icon: icon, zIndexOffset: 2000 }).addTo(map);
   playerAvatarMarker.bindPopup(`
     <div style="font-size:12px; color:#f8fafc; padding:4px;">
-      <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 雙北全息巡航者 (即時定位 ✕ 扇形探照)</div>
+      <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 都會調查員 (100m 實體親臨感應圈 ✕ 扇形探照)</div>
       <div>當前位置：台北車站 忠孝西路一段核心</div>
-      <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">配備 Google Maps 藍光視線錐，指針與方位羅盤 100% 同步！</div>
+      <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">鍵盤 WASD / 方向鍵可實體漫遊，親訪老街撥開迷霧！</div>
     </div>
   `);
+
+  // 初始化都會調查員 110m 實體感應圈 (Fog of War 感應半徑)
+  if (map && !playerSenseCircle) {
+    playerSenseCircle = L.circle([25.0465, 121.5170], {
+      radius: 110,
+      color: '#38bdf8',
+      weight: 1.5,
+      opacity: 0.85,
+      fillColor: '#0284c7',
+      fillOpacity: 0.08,
+      dashArray: '4, 6',
+      className: 'sense-radius-circle'
+    }).addTo(map);
+  }
 }
 
 function setPlayerHeading(deg) {
@@ -2902,6 +2923,11 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
       const zOffset = t.type === 'THSR' ? 850 : (t.type === 'TRA' ? 750 : 650);
       const marker = L.marker([t.lat, t.lon], { icon, zIndexOffset: zOffset }).addTo(mrtDynamicTrainsGroup);
       marker.bindPopup(() => buildLiveRailPopupHtml(t));
+      marker.on('click', () => {
+        if (t.type === 'THSR') playTransitSound('thsr_whoosh');
+        else if (t.type === 'TRA') playTransitSound('tra_bell');
+        else playTransitSound('mrt_chime');
+      });
       liveRailTrainMarkers.set(t.id, { marker, data: t });
     }
   });
@@ -2929,6 +2955,9 @@ function updateLiveTransitHUD(data) {
 
   const syncEl = document.getElementById('hudLiveSyncTime');
   if (syncEl) syncEl.innerText = `${data.taiwanTime || lastLiveSyncTimeStr || '即時'} (每10秒更新)`;
+
+  // 同步更新頂部雙北四軌即時出入境廣播跑馬燈
+  updateTransitTickerBroadcast(data);
 }
 
 // ──────────────────────────────────────────
@@ -5671,3 +5700,711 @@ function triggerRadarScan() {
 window.addEventListener('DOMContentLoaded', () => {
   initCyberRealMap();
 });
+
+
+// ──────────────────────────────────────────
+// 💎 16. 全新四大系統實裝 (依委託人開工調度令)
+// 1. 老街與特色場域「親臨探索迷霧機制 (Fog of War)」
+// 2. 百年文史時空圖層 (1935 昭和鐵道 ✕ 現代捷運疊圖)
+// 3. 實體人行步道與騎樓拓撲導航指引 (禁止瞬移・曼哈頓街廓折角)
+// 4. 即時交通環境音場 (Web Audio API) ✕ 頂部出入境通報跑馬燈
+// ──────────────────────────────────────────
+
+// ==========================================
+// 🔊 系統 4.1：即時交通環境音場引擎 (Web Audio API)
+// ==========================================
+let audioCtx = null;
+let isAudioFxEnabled = true;
+
+function initAudioFxEngine() {
+  // 瀏覽器點擊任處時自動激活 AudioContext
+  const unlockAudio = () => {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {}
+    window.removeEventListener('click', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+  };
+  window.addEventListener('click', unlockAudio, { once: true });
+  window.addEventListener('keydown', unlockAudio, { once: true });
+}
+
+function playTransitSound(type) {
+  if (!isAudioFxEnabled) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+
+    if (type === 'mrt_chime') {
+      // 台北捷運進站短旋律短琶音 (E5 - G#5 - B5 - C#6 - E6)
+      const freqs = [659.25, 830.61, 987.77, 1108.73, 1318.51];
+      freqs.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+        gain.gain.setValueAtTime(0.18, now + idx * 0.11);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.11 + 0.32);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.11);
+        osc.stop(now + idx * 0.11 + 0.32);
+      });
+    } else if (type === 'thsr_whoosh') {
+      // 台灣高鐵高速啟程雙音 chime (F5 - C6)
+      [698.46, 1046.50].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.22);
+        gain.gain.setValueAtTime(0.22, now + idx * 0.22);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.22 + 0.42);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.22);
+        osc.stop(now + idx * 0.22 + 0.42);
+      });
+    } else if (type === 'tra_bell') {
+      // 台鐵平交道與列車鳴笛雙鈴
+      [880, 880].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.25);
+        gain.gain.setValueAtTime(0.16, now + idx * 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.25 + 0.24);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.25);
+        osc.stop(now + idx * 0.25 + 0.24);
+      });
+    } else if (type === 'fog_unlock') {
+      // 親臨老街迷霧解鎖全息風鈴 (C5 - G5 - C6)
+      [523.25, 783.99, 1046.50].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.15, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.38);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.38);
+      });
+    }
+  } catch (err) {
+    console.warn('音效播放失敗:', err);
+  }
+}
+
+function toggleAudioFx() {
+  isAudioFxEnabled = !isAudioFxEnabled;
+  const btn = document.getElementById('btnToggleAudio');
+  if (btn) {
+    btn.classList.toggle('active', isAudioFxEnabled);
+    btn.innerHTML = `<span>🔊 交通進站音場 (北捷/高鐵)</span><span style="color:${isAudioFxEnabled ? '#22c55e' : '#94a3b8'};">${isAudioFxEnabled ? 'AUDIO ON' : 'MUTED'}</span>`;
+  }
+  showNavToast(isAudioFxEnabled ? '🔊 交通進站音場已開啟 (點擊捷運/火車/高鐵可聽進站音樂)' : '🔇 交通進站音場已靜音');
+}
+
+// ==========================================
+// 🛰️ 系統 4.2：頂部 HUD 出入境即時廣播跑馬燈
+// ==========================================
+function updateTransitTickerBroadcast(transitSnapshot = null) {
+  const marqueeEl = document.getElementById('tickerMarqueeText');
+  if (!marqueeEl) return;
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  let text = `[${timeStr}] 🛰️ 雙北四軌即時走廊：`;
+
+  if (transitSnapshot) {
+    const thsr = transitSnapshot.thsrTrains || transitSnapshot.thsr || [];
+    const tra = transitSnapshot.traTrains || transitSnapshot.tra || [];
+    const mrt = transitSnapshot.mrtTrains || transitSnapshot.metro || [];
+    const buses = transitSnapshot.buses || [];
+
+    // 高鐵出入境快訊
+    if (thsr.length > 0) {
+      const sampleThsr = thsr[0];
+      text += ` 🚅【高鐵即時出入境】${sampleThsr.name} 正行駛於台北⇄板橋走廊 (${sampleThsr.status})　`;
+    }
+    // 捷運快訊
+    if (mrt.length > 0) {
+      const sampleMrt = mrt[0];
+      text += ` 🚇【捷運車隊動態】${sampleMrt.name}｜${sampleMrt.status}｜收班: ${sampleMrt.closingTime || '24:00'}　`;
+    }
+    // 臺鐵快訊
+    if (tra.length > 0) {
+      const sampleTra = tra[0];
+      text += ` 🚆【臺鐵走廊即時】${sampleTra.name}｜${sampleTra.status}　`;
+    }
+    // 307 幹線動態
+    const b307 = buses.find(b => String(b.routeName).includes('307'));
+    if (b307) {
+      text += ` 🚍【307幹線巡航】車牌 ${b307.busId} 正以時速 ${Math.round(b307.speed)} km/h 巡航中 (${b307.headsign})　`;
+    }
+  } else {
+    text += ` 🚅 高鐵南北走廊出入境監測中 ✕ 🚆 臺鐵縱貫線全線準點 ✕ 🚇 捷運66列在線列車秒級運轉 ✕ 🚍 307幹線全線即時巡航中！`;
+  }
+
+  marqueeEl.innerText = text;
+}
+
+// ==========================================
+// 🌫️ 系統 1：老街與特色場域「親臨探索迷霧機制 (Fog of War)」
+// ==========================================
+let isFogOfWarActive = true;
+let playerSenseCircle = null;
+const FOG_RADIUS_METERS = 110; // 80~120m 實體親臨感應半徑
+let historicLandmarksLayerGroup = null;
+const fogHistoricMarkers = new Map();
+const unlockedHistoricLandmarkIds = new Set();
+
+const HISTORIC_STREETS_AND_LANDMARKS = [
+  {
+    id: 'dadaocheng_ganyuan',
+    name: '大稻埕乾元參藥行',
+    era: '百年老街（迪化街核心）',
+    category: '老街名鋪',
+    lat: 25.0568,
+    lon: 121.5098,
+    icon: '🌿',
+    color: '#10b981',
+    desc: '創立於清光緒元年的百年漢藥老字號，專營人參、黃耆與天然草本配方。',
+    scienceNote: '【科學探究原理】：生藥草本防潮乾燥保存技術、物理蒸發與天然草本抗氧化。',
+    unlockedReward: '已解鎖現場 85 折「百草防潮香包」＆ 獲得案件證物【泛黃藥單殘頁】！'
+  },
+  {
+    id: 'monga_anxi_herb',
+    name: '艋舺青草巷安西藥草行',
+    era: '清代至日治百年青草老街',
+    category: '老街名鋪',
+    lat: 25.0371,
+    lon: 121.4998,
+    icon: '🍵',
+    color: '#059669',
+    desc: '龍山寺旁著名的青草巷百年老攤，代代熬煮苦茶、青草茶、仙草茶。',
+    scienceNote: '【科學探究原理】：高溫水萃取植物單寧酸與苦味素，天然降溫消暑之生理熱平衡。',
+    unlockedReward: '已解鎖現場「特熬退火青草茶（體力+30）」＆ 解鎖艋舺古井傳聞彩蛋！'
+  },
+  {
+    id: 'chongqing_south_book',
+    name: '重慶南路正中書局舊址',
+    era: '戰後至現代書店街',
+    category: '老街名鋪',
+    lat: 25.0438,
+    lon: 121.5140,
+    icon: '📚',
+    color: '#f59e0b',
+    desc: '台北著名的重慶南路書店街核心地標，曾聚集全台灣最密集的文史圖書出版商。',
+    scienceNote: '【科學探究原理】：古籍紙張木質素酸化老化防護、墨水鐵五倍子反應與紫外線褪色。',
+    unlockedReward: '已解鎖借閱【1935 台北市區改正規劃圖錄】＆ 獲得密碼破譯解碼板！'
+  },
+  {
+    id: 'ximen_camera_street',
+    name: '西門博愛路日光相機老店',
+    era: '日治末期至光復相機街',
+    category: '老街名鋪',
+    lat: 25.0452,
+    lon: 121.5118,
+    icon: '📷',
+    color: '#38bdf8',
+    desc: '博愛路與漢口街著名的台北相機街，匯聚光學儀器、老鏡頭與銀鹽暗房沖印。',
+    scienceNote: '【科學探究原理】：光學凸透鏡成像、焦距調整、硝酸銀感光鹵化反應。',
+    unlockedReward: '已解鎖現場借調【超高倍率光學放大鏡】＆【暗房紅光濾鏡】！'
+  },
+  {
+    id: 'beitou_longnaitang',
+    name: '北投瀧乃湯溫泉浴室',
+    era: '日治明治三十年 (1896)',
+    category: '老街名鋪',
+    lat: 25.1378,
+    lon: 121.5065,
+    icon: '♨️',
+    color: '#f97316',
+    desc: '北投現存最古老的日式木造公共溫泉浴場，引自地熱谷的天然青磺溫泉。',
+    scienceNote: '【科學探究原理】：天然強酸性青磺泉（pH 1.2~1.5），含微量鐳元素與硫酸鹽結晶。',
+    unlockedReward: '已解鎖現場借用【石蕊試紙組】＆ 獲得北投石地熱結晶樣本！'
+  },
+  {
+    id: 'tamsui_grandma_iron_egg',
+    name: '淡水阿婆鐵蛋老店',
+    era: '民國六十年代老街傳奇',
+    category: '老街名鋪',
+    lat: 25.1695,
+    lon: 121.4428,
+    icon: '🥚',
+    color: '#a855f7',
+    desc: '淡水渡船頭旁老店，因海風吹拂與反覆滷製意外發明的台灣特色名產。',
+    scienceNote: '【科學探究原理】：蛋白質在長時間反覆高溫脫水與醬汁高滲透壓下的緊密膠原收縮。',
+    unlockedReward: '已解鎖現場 85 折鐵蛋伴手禮 ＆ 獲得案件線索【渡船頭潮汐時刻表】！'
+  },
+  {
+    id: 'banqiao_lin_garden',
+    name: '板橋林家花園汲古書屋',
+    era: '清代光緒年間 (1888)',
+    category: '文史古蹟',
+    lat: 25.0112,
+    lon: 121.4552,
+    icon: '🏛️',
+    color: '#ef4444',
+    desc: '台灣僅存最完整的清代古典園林建築，庭院迴廊、漏窗與水榭相映成趣。',
+    scienceNote: '【科學探究原理】：江南園林隔音水榭聲學反射、青磚瓦片毛細孔自然調節溫濕度。',
+    unlockedReward: '已解鎖【園林聲學回音測距】互動 ＆ 觸發【林園私塾密件】歷史案件！'
+  },
+  {
+    id: 'sanxia_indigo_dye',
+    name: '三峽老街庶民藍染工坊',
+    era: '清代至日治樟腦茶葉藍染中心',
+    category: '老街名鋪',
+    lat: 24.9348,
+    lon: 121.3712,
+    icon: '🧵',
+    color: '#0284c7',
+    desc: '依傍三峽溪清澈水質發展的三峽染布老街，紅磚拱廊立面雕飾典雅。',
+    scienceNote: '【科學探究原理】：大菁植物葉片發酵產生可溶性無色靛藍，經空氣氧化成不溶性藍色染料。',
+    unlockedReward: '已解鎖現場【氧化還原色彩檢驗】技能 ＆ 獲得【防偽藍染布條】證物！'
+  }
+];
+
+function initFogOfWarSystem() {
+  if (!map) return;
+  if (!historicLandmarksLayerGroup) {
+    historicLandmarksLayerGroup = L.layerGroup().addTo(map);
+  }
+  renderHistoricLandmarks();
+}
+
+function renderHistoricLandmarks() {
+  if (!map || !historicLandmarksLayerGroup) return;
+  historicLandmarksLayerGroup.clearLayers();
+  fogHistoricMarkers.clear();
+
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+
+  HISTORIC_STREETS_AND_LANDMARKS.forEach(item => {
+    const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, item.lat, item.lon) * 1000);
+    const isUnlocked = unlockedHistoricLandmarkIds.has(item.id) || distMeters <= FOG_RADIUS_METERS || !isFogOfWarActive;
+
+    const iconHtml = `
+      <div class="historic-landmark-pin ${isUnlocked ? 'fog-unlocked-marker' : 'fog-locked-marker'}" id="fog_pin_${item.id}"
+        style="width:36px; height:36px; border-radius:50%; background:#0f172a; border:2px solid ${item.color}; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px ${item.color}; cursor:pointer;"
+        title="${isUnlocked ? item.name : '🌫️ 迷霧覆蓋・需實地親臨'}">
+        <span style="font-size:18px;">${item.icon}</span>
+      </div>
+    `;
+
+    const icon = L.divIcon({
+      html: iconHtml,
+      className: 'historic-div-icon',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18]
+    });
+
+    const marker = L.marker([item.lat, item.lon], { icon }).addTo(historicLandmarksLayerGroup);
+
+    marker.on('click', () => {
+      attemptInteractHistoricLandmark(item.id);
+    });
+
+    fogHistoricMarkers.set(item.id, { marker, data: item });
+  });
+}
+
+function updateFogOfWarMarkers(playerPos) {
+  if (!playerPos) return;
+
+  HISTORIC_STREETS_AND_LANDMARKS.forEach(item => {
+    const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, item.lat, item.lon) * 1000);
+    const entry = fogHistoricMarkers.get(item.id);
+    if (!entry) return;
+
+    const dom = document.getElementById(`fog_pin_${item.id}`);
+    const wasUnlocked = unlockedHistoricLandmarkIds.has(item.id);
+
+    if (distMeters <= FOG_RADIUS_METERS || !isFogOfWarActive) {
+      if (!wasUnlocked) {
+        unlockedHistoricLandmarkIds.add(item.id);
+        playTransitSound('fog_unlock');
+        showNavToast(`🌟【親臨探索解鎖！】您已抵達【${item.name}】感應圈！`);
+      }
+      if (dom) {
+        dom.classList.remove('fog-locked-marker');
+        dom.classList.add('fog-unlocked-marker');
+      }
+    } else if (wasUnlocked) {
+      if (dom) {
+        dom.classList.remove('fog-locked-marker');
+        dom.classList.add('fog-unlocked-marker');
+      }
+    } else {
+      if (dom) {
+        dom.classList.remove('fog-unlocked-marker');
+        dom.classList.add('fog-locked-marker');
+      }
+    }
+  });
+}
+
+function attemptInteractHistoricLandmark(landmarkId) {
+  const item = HISTORIC_STREETS_AND_LANDMARKS.find(x => x.id === landmarkId);
+  if (!item) return;
+
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, item.lat, item.lon) * 1000);
+
+  if (isFogOfWarActive && distMeters > FOG_RADIUS_METERS && !unlockedHistoricLandmarkIds.has(item.id)) {
+    // 尚未實地親臨：彈窗提示
+    showProximityModal({
+      title: '🌫️【迷霧籠罩・尚未實地親臨】',
+      color: '#f59e0b',
+      badge: '企劃書空間交互規範',
+      message: `您目前距離【${item.name}】還有 <b style="color:#f59e0b; font-size:14px;">${distMeters} 公尺</b>！<br><br>
+        ⚠️ <b>委託人最高指示</b>：不可直接隔空獲取彩蛋！必須親自實體步行或搭乘大眾運輸前往現場，才能撥開街廓迷霧、發現店鋪特色與解鎖科學證物！<br><br>
+        📍 <b>歷史風情背景</b>：${item.era}｜${item.desc}<br><br>
+        💡 <b>行動指引</b>：點擊下方按鈕啟動人行道導航指引線，沿實體路網步行前往現場！`,
+      actionLabel: `🚶 沿街廓步行導航前往 (${distMeters}m)`,
+      onAction: () => {
+        drawWalkingNavFlowline(item.lat, item.lon, item.name);
+      }
+    });
+  } else {
+    // 已實體親臨現場：解鎖互動
+    showProximityModal({
+      title: `✨【實體親臨・迷霧撥開】${item.name}`,
+      color: '#10b981',
+      badge: `${item.era}｜${item.category}`,
+      message: `您已親身漫遊抵達現場（距此僅 <b style="color:#a7f3d0;">${distMeters}m</b>）！<br><br>
+        🏮 <b>風俗文史背景</b>：${item.desc}<br><br>
+        🔬 <b style="color:#fde047;">${item.scienceNote}</b><br><br>
+        🎁 <b>探索回饋</b>：<span style="color:#38bdf8; font-weight:800;">${item.unlockedReward}</span>`,
+      actionLabel: '🎒 收納入調查員背包',
+      onAction: () => {
+        playTransitSound('fog_unlock');
+        showNavToast(`🎒 已獲得【${item.name}】特有證物與探索紀錄！`);
+      }
+    });
+  }
+}
+
+function toggleFogOfWar() {
+  isFogOfWarActive = !isFogOfWarActive;
+  const btn = document.getElementById('btnToggleFogOfWar');
+  if (btn) {
+    btn.classList.toggle('active', isFogOfWarActive);
+    btn.innerHTML = `<span>🌫️ 老街親臨感應 (100m)</span><span style="color:${isFogOfWarActive ? '#f59e0b' : '#94a3b8'};">${isFogOfWarActive ? 'FOG ON' : 'FOG OFF'}</span>`;
+  }
+  if (playerSenseCircle && map) {
+    if (isFogOfWarActive) {
+      if (!map.hasLayer(playerSenseCircle)) playerSenseCircle.addTo(map);
+    } else {
+      if (map.hasLayer(playerSenseCircle)) map.removeLayer(playerSenseCircle);
+    }
+  }
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+  renderHistoricLandmarks();
+  updateFogOfWarMarkers(playerPos);
+  showNavToast(isFogOfWarActive ? '🌫️ 老街親臨感應迷霧已開啟 (需步行至 110m 內解鎖)' : '🌐 全景迷霧已解除 (總覽模式)');
+}
+
+// ==========================================
+// 📜 系統 2：百年文史時空圖層 (1935 昭和鐵道 ✕ 現代捷運疊圖)
+// ==========================================
+let isHistorical1935Visible = false;
+let historical1935LayerGroup = null;
+
+const TAIPEI_1935_RAIL_NETWORK = {
+  tamsuiLine: {
+    name: '舊臺鐵淡水線 (1901~1988)',
+    japaneseName: '台湾総督府鉄道 淡水線 (昭和十年)',
+    color: '#d97706',
+    dashArray: '8, 8',
+    description: '台灣第一條鐵路支線，北起台北驛，經圓山、士林、北投抵達淡水港口，曾行駛蒸汽火車與柴油客車。',
+    path: [
+      [25.0480, 121.5170],
+      [25.0530, 121.5205],
+      [25.0580, 121.5208],
+      [25.0715, 121.5203],
+      [25.0932, 121.5260],
+      [25.1210, 121.5110],
+      [25.1320, 121.4985],
+      [25.1325, 121.4720],
+      [25.1250, 121.4670],
+      [25.1375, 121.4600],
+      [25.1678, 121.4452]
+    ],
+    stations: [
+      { name: '舊台北驛 (第三代赤煉瓦車站)', lat: 25.0480, lon: 121.5170, year: '1901-1989', desc: '文藝復興式紅磚洋樓，具鐘樓與圓弧拱廊，曾是全台鐵道總樞紐。' },
+      { name: '雙連驛', lat: 25.0580, lon: 121.5208, year: '1915-1988', desc: '昔日大稻埕外圍重要轉運貨運站，現為捷運雙連站。' },
+      { name: '圓山驛', lat: 25.0715, lon: 121.5203, year: '1901-1988', desc: '鄰近台灣神社與圓山動物園，曾是假日時台北市民最熱門之郊遊車站。' },
+      { name: '士林驛', lat: 25.0932, lon: 121.5260, year: '1901-1988', desc: '清代士林舊街與外雙溪農產出入門戶，早期設有貨物裝卸月台。' },
+      { name: '北投驛', lat: 25.1320, lon: 121.4985, year: '1901-1988', desc: '淡水線主線與新北投溫泉浴場線的轉軌大站，洋風站房造型優美。' },
+      { name: '淡水驛', lat: 25.1678, lon: 121.4452, year: '1901-1988', desc: '淡水港貨運接駁終點站，月台緊鄰淡水河畔，夕陽鐵道美景名聞遐邇。' }
+    ]
+  },
+  xinbeitouBranch: {
+    name: '新北投浴場支線 (1916~1988)',
+    japaneseName: '新北投浴場支線 (昭和十年)',
+    color: '#ea580c',
+    dashArray: '5, 5',
+    description: '專為北投溫泉觀光特別興建的單線鐵道，連結北投驛與新北投乘降場。',
+    path: [
+      [25.1320, 121.4985],
+      [25.1365, 121.5035]
+    ],
+    stations: [
+      { name: '新北投乘降場 (經典木造浴場驛)', lat: 25.1365, lon: 121.5035, year: '1916-1988', desc: '全台著名木造車站，具銅皮屋頂與精緻氣窗雕刻，現已移築重組於新北投七星公園內。' }
+    ]
+  },
+  wanxinLine: {
+    name: '萬新鐵路 (萬華至新店, 1921~1965)',
+    japaneseName: '台北鉄道 萬新線 (私鐵時期)',
+    color: '#b91c1c',
+    dashArray: '8, 6',
+    description: '由台北鐵道株式會社興建，沿新店溪與瑠公圳行駛，運送文山包種茶、景美石碇煤礦與新店木材。',
+    path: [
+      [25.0355, 121.5000],
+      [25.0300, 121.5060],
+      [25.0245, 121.5120],
+      [25.0210, 121.5175],
+      [25.0215, 121.5235],
+      [25.0160, 121.5290],
+      [25.0135, 121.5340],
+      [24.9980, 121.5380],
+      [24.9920, 121.5410],
+      [24.9820, 121.5390],
+      [24.9750, 121.5405],
+      [24.9680, 121.5420],
+      [24.9580, 121.5385]
+    ],
+    stations: [
+      { name: '萬華驛 (萬新線起點)', lat: 25.0355, lon: 121.5000, year: '1921-1965', desc: '萬新鐵路與縱貫線交會之貨運客運重要玄關。' },
+      { name: '螢橋驛 (中正橋畔休閒地)', lat: 25.0210, lon: 121.5175, year: '1921-1965', desc: '昔日新店溪畔螢火蟲聚集、釣魚賞景之日式料亭名勝。' },
+      { name: '公館乘降場 (帝國大學前)', lat: 25.0135, lon: 121.5340, year: '1921-1965', desc: '鄰近台北帝國大學（今台灣大學）與蟾蜍山，學生通勤重要車站。' },
+      { name: '景美驛', lat: 24.9920, lon: 121.5410, year: '1921-1965', desc: '瑠公圳木梘與景尾街茶商匯聚點，運煤轉運極盛一時。' },
+      { name: '新店驛 (碧潭水運終點)', lat: 24.9580, lon: 121.5385, year: '1921-1965', desc: '萬新線終點站，緊鄰碧潭吊橋與屈尺山區水力發電建設物資集散地。' }
+    ]
+  }
+};
+
+function initHistorical1935RailLayer() {
+  if (!map) return;
+  if (!historical1935LayerGroup) {
+    historical1935LayerGroup = L.layerGroup();
+  }
+
+  // 繪製各文史鐵路
+  Object.values(TAIPEI_1935_RAIL_NETWORK).forEach(line => {
+    // 鐵軌黑底
+    L.polyline(line.path, {
+      color: '#1c1917',
+      weight: 6,
+      opacity: 0.8
+    }).addTo(historical1935LayerGroup);
+
+    // 鐵軌枕木紋
+    L.polyline(line.path, {
+      color: line.color,
+      weight: 3.5,
+      opacity: 0.95,
+      dashArray: line.dashArray
+    }).addTo(historical1935LayerGroup);
+
+    // 站點圖標
+    line.stations.forEach(st => {
+      const iconHtml = `
+        <div class="history-station-pin" title="${st.name}">
+          <span style="font-size:16px;">🚂</span>
+        </div>
+      `;
+      const icon = L.divIcon({
+        html: iconHtml,
+        className: 'history-div-icon',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+      });
+
+      const marker = L.marker([st.lat, st.lon], { icon }).addTo(historical1935LayerGroup);
+      const popupHtml = `
+        <div class="history-popup-container" style="font-family:serif; min-width:270px; color:#fef3c7; background:#1c1917; padding:8px; border-radius:6px; border:1px solid #f59e0b;">
+          <div style="font-size:10px; color:#fbbf24; font-weight:800; border-bottom:1px solid rgba(245,158,11,0.3); padding-bottom:3px; margin-bottom:5px;">
+            📜 昭和十年 (1935) 文史鐵道驛站｜${line.japaneseName}
+          </div>
+          <div style="font-size:14px; font-weight:900; color:#fed7aa; margin-bottom:4px;">${st.name}</div>
+          <div style="font-size:10.5px; color:#d6d3d1; margin-bottom:6px;">營運年代：<b style="color:#fbbf24;">${st.year}</b></div>
+          <div style="font-size:10px; line-height:1.6; color:#e7e5e4; background:rgba(0,0,0,0.5); padding:6px; border-radius:4px; margin-bottom:6px;">
+            ${st.desc}
+          </div>
+          <div style="font-size:9.5px; color:#a8a29e;">
+            💡 <b>現代對照</b>：現已轉型為台北都會捷運路網，見證百年大眾運輸演進！
+          </div>
+        </div>
+      `;
+      marker.bindPopup(popupHtml, { maxWidth: 320 });
+    });
+  });
+}
+
+function toggleHistorical1935Layer() {
+  isHistorical1935Visible = !isHistorical1935Visible;
+  const btn = document.getElementById('btnToggleHistory1935');
+  if (btn) {
+    btn.classList.toggle('active', isHistorical1935Visible);
+    btn.innerHTML = `<span>📜 1935 昭和鐵道百年文史</span><span style="color:${isHistorical1935Visible ? '#ea580c' : '#94a3b8'};">${isHistorical1935Visible ? '1935 ON' : 'OFF'}</span>`;
+  }
+  if (map && historical1935LayerGroup) {
+    if (isHistorical1935Visible) {
+      if (!map.hasLayer(historical1935LayerGroup)) historical1935LayerGroup.addTo(map);
+      showNavToast('📜 1935 昭和鐵道時空鏡頭已啟動！(舊淡水線、萬新鐵路已與現代捷運疊合)');
+    } else {
+      if (map.hasLayer(historical1935LayerGroup)) map.removeLayer(historical1935LayerGroup);
+      showNavToast('📜 已關閉 1935 文史鐵道圖層');
+    }
+  }
+}
+
+// ==========================================
+// 🚶 系統 3：實體人行步道導航流動線 (禁止瞬移・曼哈頓街廓折角)
+// ==========================================
+let isWalkNavFlowlineActive = true;
+let walkNavFlowlineLayer = null;
+let walkNavTargetMarker = null;
+
+function initWalkNavFlowlineSystem() {
+  if (!map) return;
+  // 監聽鍵盤 WASD / 方向鍵實體漫遊
+  window.addEventListener('keydown', handlePlayerKeyboardWalk);
+}
+
+function handlePlayerKeyboardWalk(e) {
+  // 如果正在輸入框則不觸發
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  const step = 0.00018; // 每次約 20 公尺步幅
+  let dLat = 0, dLon = 0, deg = null;
+
+  if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+    dLat = step; deg = 0;
+  } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
+    dLat = -step; deg = 180;
+  } else if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+    dLon = -step * 1.1; deg = 270;
+  } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+    dLon = step * 1.1; deg = 90;
+  }
+
+  if (dLat !== 0 || dLon !== 0) {
+    e.preventDefault();
+    movePlayerByOffset(dLat, dLon, deg);
+  }
+}
+
+function movePlayerByOffset(dLat, dLon, headingDeg) {
+  if (!playerAvatarMarker) return;
+  const curPos = playerAvatarMarker.getLatLng();
+  const nextLat = curPos.lat + dLat;
+  const nextLng = curPos.lng + dLon;
+  const nextLatLng = [nextLat, nextLng];
+
+  playerAvatarMarker.setLatLng(nextLatLng);
+  if (headingDeg !== null) setPlayerHeading(headingDeg);
+
+  // 感應圈同步跟隨
+  if (playerSenseCircle) {
+    playerSenseCircle.setLatLng(nextLatLng);
+  }
+
+  // 掃描老街迷霧
+  updateFogOfWarMarkers({ lat: nextLat, lng: nextLng });
+
+  // 如果開啟了導航目標，動態更新導航折線
+  if (walkNavTargetMarker && isWalkNavFlowlineActive) {
+    const targetPos = walkNavTargetMarker.getLatLng();
+    drawWalkingNavFlowline(targetPos.lat, targetPos.lng, walkNavTargetMarker._targetName || '目標', false);
+  }
+}
+
+// 沿街廓生成 Manhattan 直角人行折線
+function generateManhattanWalkingPath(startLat, startLng, endLat, endLng) {
+  const midLat = startLat + (endLat - startLat) * 0.55;
+  const midLng = startLng;
+  return [
+    [startLat, startLng],
+    [midLat, midLng],
+    [midLat, endLng],
+    [endLat, endLng]
+  ];
+}
+
+function drawWalkingNavFlowline(targetLat, targetLng, targetName = '導航目的地', autoFly = true) {
+  if (!map || !playerAvatarMarker) return;
+  clearWalkingNavFlowline();
+
+  const playerPos = playerAvatarMarker.getLatLng();
+  const path = generateManhattanWalkingPath(playerPos.lat, playerPos.lng, targetLat, targetLng);
+  const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, targetLat, targetLng) * 1000);
+  const estMinutes = Math.max(1, Math.round(distMeters / (1.2 * 60))); // 步速 1.2m/s
+  const steps = Math.round(distMeters / 0.7);
+
+  walkNavFlowlineLayer = L.polyline(path, {
+    color: '#00f0ff',
+    weight: 5,
+    opacity: 0.9,
+    className: 'walking-nav-flowline'
+  }).addTo(map);
+
+  const badgeHtml = `
+    <div class="walking-nav-badge">
+      🚶 沿實體騎樓步行中 (禁止瞬移)<br>
+      🎯 ${targetName} (${distMeters}m ｜ 約 ${estMinutes} 分鐘 ｜ ${steps} 步)
+    </div>
+  `;
+  const badgeIcon = L.divIcon({
+    html: badgeHtml,
+    className: 'walk-badge-div',
+    iconAnchor: [80, 42]
+  });
+  walkNavTargetMarker = L.marker([targetLat, targetLng], { icon: badgeIcon }).addTo(map);
+  walkNavTargetMarker._targetName = targetName;
+
+  if (autoFly) {
+    map.flyToBounds(L.latLngBounds([playerPos, [targetLat, targetLng]]), {
+      padding: [80, 80],
+      duration: 1.2
+    });
+  }
+
+  showNavToast(`🚶 已規劃實體路網導航：步行前往【${targetName}】(${distMeters}m)`);
+}
+
+function clearWalkingNavFlowline() {
+  if (walkNavFlowlineLayer && map && map.hasLayer(walkNavFlowlineLayer)) {
+    map.removeLayer(walkNavFlowlineLayer);
+    walkNavFlowlineLayer = null;
+  }
+  if (walkNavTargetMarker && map && map.hasLayer(walkNavTargetMarker)) {
+    map.removeLayer(walkNavTargetMarker);
+    walkNavTargetMarker = null;
+  }
+}
+
+function toggleWalkNavFlowline() {
+  isWalkNavFlowlineActive = !isWalkNavFlowlineActive;
+  const btn = document.getElementById('btnToggleWalkNav');
+  if (btn) {
+    btn.classList.toggle('active', isWalkNavFlowlineActive);
+    btn.innerHTML = `<span>🚶 實體人行道導航流動線</span><span style="color:${isWalkNavFlowlineActive ? '#00f0ff' : '#94a3b8'};">${isWalkNavFlowlineActive ? 'ACTIVE' : 'OFF'}</span>`;
+  }
+  if (!isWalkNavFlowlineActive) {
+    clearWalkingNavFlowline();
+    showNavToast('🚶 實體人行導航線已隱藏');
+  } else {
+    showNavToast('🚶 實體人行導航線已開啟 (點選任意站點/老街可自動引導)');
+  }
+}
