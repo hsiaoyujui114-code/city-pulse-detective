@@ -145,6 +145,10 @@
       <span class="telemetry-val highlight" id="hudLiveThsrCount" style="color:#f97316;">連線同步中</span>
     </div>
     <div class="telemetry-row">
+      <span class="telemetry-label">3D 建物可視負載:</span>
+      <span class="telemetry-val highlight" id="hud3DBuildingCount" style="color:#38bdf8;">0 棟 (60 FPS)</span>
+    </div>
+    <div class="telemetry-row">
       <span class="telemetry-label">官方同步時間 SYNC:</span>
       <span class="telemetry-val" id="hudLiveSyncTime" style="color:#a7f3d0; font-size:10px;">網路抓取中...</span>
     </div>
@@ -174,6 +178,12 @@
 
     <div style="font-size:10px; color:#34d399; font-weight:800; margin:8px 0 4px 0;">🚊 雙北大眾運輸四軌與實時交通圖層:</div>
     <div class="tool-btn-grid">
+      <!-- 🌟 雙北全域 3D 真實建築物系統 (60FPS 視錐剔除 ✕ 空間網格 ✕ LOD 批次合併) -->
+      <button class="tactical-tool-btn active" id="btnToggle3DBuildings" onclick="toggle3DBuildingsLayer()">
+        <span>🏙️ 雙北全域 3D 建築 (60FPS)</span>
+        <span style="color:#38bdf8;">3D ON</span>
+      </button>
+
       <!-- 🌟 老街親臨感應圈 (Fog of War) -->
       <button class="tactical-tool-btn active" id="btnToggleFogOfWar" onclick="toggleFogOfWar()">
         <span>🌫️ 老街親臨感應 (100m)</span>

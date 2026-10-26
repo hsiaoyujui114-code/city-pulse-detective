@@ -2100,3 +2100,31 @@ body[data-map-theme="nlsc"] .road-badge-marker {
   background: #1c1917;
   padding: 2px;
 }
+
+/* ──────────────────────────────────────────
+   🏙️ 雙北全域真實 3D 建築圖層樣式 (Real 3D Buildings ✕ 60 FPS)
+   ────────────────────────────────────────── */
+.building-3d-canvas-layer {
+  pointer-events: none;
+  z-index: 400;
+}
+
+.building-3d-pin-label {
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid #38bdf8;
+  color: #f8fafc;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.building-3d-pin-label:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.9);
+}
