@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ==========================================================================
  * 《雙北漫遊：都會行蹤》- 現代 2D ✕ 2.5D 動漫都會冒險 RPG
  * 60FPS 現代平滑動態渲染 (Y-Sorting 深度分層 ✕ 動態陰影 ✕ 天候光影)
@@ -3006,42 +3006,120 @@ function renderScene() {
   // 1.5 雙北街廓真實都會建築群、綠帶公園與林蔭行道樹 (Urban Fabric & Architecture - 視錐剔除)
   // 【徹底消除商店孤立浮動或並排感！商店嵌於真實大廈、公寓街廓與林蔭之間】
   // ──────────────────────────────────────────
+  // ──────────────────────────────────────────
+  // 1.5 雙北街廓真實都會建築群立體鋼骨框架 (Building Structural Wireframes - 視錐剔除)
+  // ──────────────────────────────────────────
   function drawCityBlockBuilding(bx, bz, bw, bd, bColor, label, bHeight=28) {
-    if (!isInViewport(bx + bw / 2, bz + bd / 2, Math.max(bw, bd) + 15)) return;
+    if (!isInViewport(bx + bw / 2, bz + bd / 2, Math.max(bw, bd) + 25)) return;
     const sx = screenX(bx);
     const sz = screenZ(bz);
-    // 建築物投影陰影
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    drawSafeRoundRect(ctx, sx + 3 * scale, sz + 3 * scale, bw * scale, bd * scale, 4);
+    const w = bw * scale;
+    const d = bd * scale;
+    const hPx = Math.max(4, bHeight * scale * 0.32);
+
+    // 1. 建築物投影陰影
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
+    drawSafeRoundRect(ctx, sx + 4 * scale, sz + 4 * scale, w, d, 3);
     ctx.fill();
-    // 建築本體
-    ctx.fillStyle = bColor;
-    drawSafeRoundRect(ctx, sx, sz, bw * scale, bd * scale, 4);
-    ctx.fill();
-    ctx.strokeStyle = '#475569';
+
+    // 2. 基底佔地邊界框架 (Ground Rim)
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
     ctx.lineWidth = 1;
+    drawSafeRoundRect(ctx, sx, sz, w, d, 2);
     ctx.stroke();
 
-    // 辦公/住宅透光窗格矩陣 (Lit Windows) - 僅在足夠放大時繪製微觀窗格
+    // 3. 2.5D 立體拉伸面 (South & East Extrusion Faces)
+    if (hPx > 5) {
+      // 南立體受光面
+      ctx.fillStyle = 'rgba(14, 165, 233, 0.22)';
+      ctx.beginPath();
+      ctx.moveTo(sx, sz + d);
+      ctx.lineTo(sx + w, sz + d);
+      ctx.lineTo(sx + w + hPx * 0.3, sz + d - hPx);
+      ctx.lineTo(sx + hPx * 0.3, sz + d - hPx);
+      ctx.closePath();
+      ctx.fill();
+
+      // 東側立面
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.beginPath();
+      ctx.moveTo(sx + w, sz + d);
+      ctx.lineTo(sx + w, sz);
+      ctx.lineTo(sx + w + hPx * 0.3, sz - hPx);
+      ctx.lineTo(sx + w + hPx * 0.3, sz + d - hPx);
+      ctx.closePath();
+      ctx.fill();
+
+      // 水平樓層橫樑框架線 (Floor Strata Wireframes)
+      const strataCount = Math.min(8, Math.max(2, Math.floor(bHeight / 6)));
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (let f = 1; f < strataCount; f++) {
+        const frac = f / strataCount;
+        ctx.moveTo(sx + frac * (hPx * 0.3), sz + d - frac * hPx);
+        ctx.lineTo(sx + w + frac * (hPx * 0.3), sz + d - frac * hPx);
+        ctx.lineTo(sx + w + frac * (hPx * 0.3), sz - frac * hPx);
+      }
+      ctx.stroke();
+
+      // 4 主結構立柱鋼骨線 (Corner Skeleton Columns)
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sx, sz + d);
+      ctx.lineTo(sx + hPx * 0.3, sz + d - hPx);
+      ctx.moveTo(sx + w, sz + d);
+      ctx.lineTo(sx + w + hPx * 0.3, sz + d - hPx);
+      ctx.moveTo(sx + w, sz);
+      ctx.lineTo(sx + w + hPx * 0.3, sz - hPx);
+      ctx.stroke();
+    }
+
+    // 4. 頂樓樓頂框架 (Top Roof Face & Wireframe Rim)
+    const topX = sx + hPx * 0.3;
+    const topZ = sz - hPx;
+    ctx.fillStyle = bColor || '#1e293b';
+    drawSafeRoundRect(ctx, topX, topZ, w, d, 2);
+    ctx.fill();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 5. 辦公/住宅透光窗格矩陣 (Lit Windows)
     if (scale >= 6.0) {
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.35)';
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.40)';
       const cols = Math.floor(bw / 8);
       const rows = Math.floor(bd / 7);
       for (let c = 1; c < cols; c++) {
         for (let r = 1; r < rows; r++) {
           if ((c + r) % 2 === 0) {
-            ctx.fillRect(sx + (c * 8 - 2) * scale, sz + (r * 7 - 1.5) * scale, 3.5 * scale, 3 * scale);
+            ctx.fillRect(topX + (c * 8 - 2) * scale, topZ + (r * 7 - 1.5) * scale, 3.5 * scale, 3 * scale);
           }
         }
       }
     }
 
-    // 頂樓設備層/標籤
-    if (label && scale >= 10) {
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `bold ${Math.max(8, scale * 0.45)}px sans-serif`;
+    // 6. 頂樓機房天線尖塔線框 (Roof Antenna Spire / Helipad)
+    if (bHeight >= 50 && scale >= 3.5) {
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(topX + w / 2, topZ + d / 2);
+      ctx.lineTo(topX + w / 2, topZ + d / 2 - 12 * scale);
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(topX + w / 2, topZ + d / 2 - 12 * scale, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 7. 頂樓標籤
+    if (label && scale >= 8) {
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold ' + Math.max(9, Math.floor(scale * 0.48)) + 'px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(label, sx + (bw / 2) * scale, sz + (bd / 2) * scale + 3);
+      ctx.fillText(label, topX + (bw / 2) * scale, topZ + (bd / 2) * scale + 3);
     }
   }
 
