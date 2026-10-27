@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ==========================================================================
  * 《雙北漫遊：都會行蹤》- 現代 2D ✕ 2.5D 動漫都會冒險 RPG
  * 60FPS 現代平滑動態渲染 (Y-Sorting 深度分層 ✕ 動態陰影 ✕ 天候光影)
@@ -6265,7 +6265,13 @@ function appendChatMessage(author, text) {
   if (!box) return;
   const row = document.createElement("div");
   row.className = "chat-msg-row";
-  row.innerHTML = `<span class="author">[${author}]:</span> <span>${text}</span>`;
+  const authorSpan = document.createElement("span");
+  authorSpan.className = "author";
+  authorSpan.textContent = `[${author}]: `;
+  const textSpan = document.createElement("span");
+  textSpan.textContent = text;
+  row.appendChild(authorSpan);
+  row.appendChild(textSpan);
   box.appendChild(row);
   box.scrollTop = box.scrollHeight;
 }

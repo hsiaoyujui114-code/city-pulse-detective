@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================================
  * NEO-TAIPEI 1:1 REAL HOLO-MAP (雙北 1:1 真實全息科技地圖 - 附檔引擎)
  * 核心引擎：Leaflet 1.9.4 ✕ 1:1 真實網路地圖 (CARTO / OSM / 衛星) ✕ SSOT 雙軌
@@ -532,33 +532,7 @@ function harmonizeMapTheme(themeKey) {
   }
 }
 
-// 鍵盤 WASD / 方向鍵巡航偵探角色，動態計算朝向與扇形光錐
-window.addEventListener('keydown', (e) => {
-  if (['ArrowUp', 'KeyW', 'ArrowDown', 'KeyS', 'ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) {
-    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-    if (!playerAvatarMarker || !map) return;
-    const curPos = playerAvatarMarker.getLatLng();
-    const step = 0.00035; // 約 35-40 公尺
-    let dLat = 0, dLng = 0;
-    let heading = playerHeading;
-
-    if (e.code === 'ArrowUp' || e.code === 'KeyW') { dLat += step; heading = 0; }
-    else if (e.code === 'ArrowDown' || e.code === 'KeyS') { dLat -= step; heading = 180; }
-    else if (e.code === 'ArrowLeft' || e.code === 'KeyA') { dLng -= step; heading = 270; }
-    else if (e.code === 'ArrowRight' || e.code === 'KeyD') { dLng += step; heading = 90; }
-
-    const newLat = curPos.lat + dLat;
-    const newLng = curPos.lng + dLng;
-    playerAvatarMarker.setLatLng([newLat, newLng]);
-    setPlayerHeading(heading);
-
-    if (isLocalFoVLocked) {
-      updateLocalRadarHalo([newLat, newLng]);
-      map.panTo([newLat, newLng], { animate: true, duration: 0.2 });
-    }
-    updateSpotlightVignette();
-  }
-});
+// 鍵盤巡航統一由 initWalkNavFlowlineSystem 專職掌管，單一監聽確保 20m 精確步距與 Esc 快捷鍵支持
 
 // ──────────────────────────────────────────
 // 4.5 雙北核心真實路網與街道高光圖層 (Major Real Streets & Avenues Layer)
@@ -1477,6 +1451,9 @@ let liveMrtTrainsData = [];
 let liveTraTrainsData = [];
 let liveThsrTrainsData = [];
 let lastLiveSyncTimeStr = '';
+let isLastTransitFromLiveServer = false;
+let liveTransitDataMode = 'INITIALIZING'; // 'LIVE_SERVER' | 'LIVE_BROWSER' | 'OFFLINE_ESTIMATE'
+let lastLiveSuccessTimeStr = '';
 
 function getTaiwanTimePartsBrowser() {
   const now = new Date();
@@ -2553,6 +2530,9 @@ async function syncLiveTransitData() {
         liveThsrTrainsData = Array.isArray(data.thsrTrains) ? data.thsrTrains : [];
         liveRailScheduleData = data.railSchedule || null;
         lastLiveSyncTimeStr = data.taiwanTime || twTime.timeStr;
+        lastLiveSuccessTimeStr = lastLiveSyncTimeStr;
+        isLastTransitFromLiveServer = true;
+        liveTransitDataMode = 'LIVE_SERVER';
 
         renderLiveBusMarkers(liveBusFleetData);
         renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
@@ -2616,7 +2596,16 @@ async function syncLiveTransitData() {
     liveMrtTrainsData = computeBrowserLiveMrtTrains(browserRawMrtTrtc, browserRawMrtTymc, curTw);
     liveTraTrainsData = computeBrowserLiveTraTrains(browserRawTraLive, curTw);
     liveThsrTrainsData = computeBrowserLiveThsrTrains(browserRawThsrToday, curTw);
-    lastLiveSyncTimeStr = curTw.timeStr;
+
+    const hasFreshBrowserData = (rawBusList && rawBusList.length > 0) || (rawInterCity && rawInterCity.length > 0) || (Array.isArray(trtcJson) && trtcJson.length > 0) || (Array.isArray(tymcJson) && tymcJson.length > 0) || (Array.isArray(traJson) && traJson.length > 0) || (Array.isArray(thsrJson) && thsrJson.length > 0);
+    if (hasFreshBrowserData) {
+      liveTransitDataMode = 'LIVE_BROWSER';
+      lastLiveSuccessTimeStr = curTw.timeStr;
+      lastLiveSyncTimeStr = lastLiveSuccessTimeStr;
+    } else {
+      liveTransitDataMode = 'OFFLINE_ESTIMATE';
+    }
+    isLastTransitFromLiveServer = false;
 
     renderLiveBusMarkers(liveBusFleetData);
     renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
@@ -2625,10 +2614,12 @@ async function syncLiveTransitData() {
       activeMrtCount: liveMrtTrainsData.length,
       activeTraCount: liveTraTrainsData.length,
       activeThsrCount: liveThsrTrainsData.length,
-      taiwanTime: lastLiveSyncTimeStr
+      taiwanTime: lastLiveSuccessTimeStr || curTw.timeStr
     });
   } catch (err) {
     console.warn('[LiveTransit] 網路即時抓取重試中:', err);
+    liveTransitDataMode = 'OFFLINE_ESTIMATE';
+    isLastTransitFromLiveServer = false;
   }
 }
 
@@ -2666,7 +2657,7 @@ function tickLiveTransitPositions() {
   }
 
   // 2. 每 1 秒依據台灣標準時間 (UTC+8) 精確推進軌道列車即時動態 (出入境門戶與站間秒級平滑推進)
-  if (!usedServerApi || !liveMrtTrainsData || liveMrtTrainsData.length === 0) {
+  if (!isLastTransitFromLiveServer || !liveMrtTrainsData || liveMrtTrainsData.length === 0) {
     liveMrtTrainsData = computeBrowserLiveMrtTrains(browserRawMrtTrtc, browserRawMrtTymc, twTime);
     liveTraTrainsData = computeBrowserLiveTraTrains(browserRawTraLive, twTime);
     liveThsrTrainsData = computeBrowserLiveThsrTrains(browserRawThsrToday, twTime);
@@ -2957,7 +2948,13 @@ function updateLiveTransitHUD(data) {
   if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (高鐵走廊)`;
 
   const syncEl = document.getElementById('hudLiveSyncTime');
-  if (syncEl) syncEl.innerText = `${data.taiwanTime || lastLiveSyncTimeStr || '即時'} (每10秒更新)`;
+  if (syncEl) {
+    if (liveTransitDataMode === 'LIVE_SERVER' || liveTransitDataMode === 'LIVE_BROWSER') {
+      syncEl.innerHTML = `<span style="color:#4ade80;">🟢 官方即時</span> ${lastLiveSuccessTimeStr || data.taiwanTime || '即時'} (每10秒更新)`;
+    } else {
+      syncEl.innerHTML = `<span style="color:#fbbf24;">🟡 離線推算中</span> ${lastLiveSuccessTimeStr ? `(前次: ${lastLiveSuccessTimeStr})` : '(無網路)'}`;
+    }
+  }
 
   // 同步更新頂部雙北四軌即時出入境廣播跑馬燈
   updateTransitTickerBroadcast(data);
@@ -6346,9 +6343,20 @@ function initWalkNavFlowlineSystem() {
 }
 
 function handlePlayerKeyboardWalk(e) {
+  // Esc 鍵關閉所有彈窗（案件戰術詳情、鄰近交互、地圖氣泡）
+  if (e.key === 'Escape' || e.code === 'Escape') {
+    closeCaseModal();
+    const prox = document.getElementById('proximityInteractionModal');
+    if (prox) prox.style.display = 'none';
+    if (typeof map !== 'undefined' && map && typeof map.closePopup === 'function') {
+      map.closePopup();
+    }
+    return;
+  }
+
   // 如果正在輸入框則不觸發
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-  const step = 0.00018; // 每次約 20 公尺步幅
+  const step = 0.00018; // 每次約 20 公尺步幅（0.00018度 ≈ 20.0m）
   let dLat = 0, dLon = 0, deg = null;
 
   if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
@@ -6380,6 +6388,13 @@ function movePlayerByOffset(dLat, dLon, headingDeg) {
   // 感應圈同步跟隨
   if (playerSenseCircle) {
     playerSenseCircle.setLatLng(nextLatLng);
+  }
+
+  // 自適應暗角與局部雷達光環更新
+  updateSpotlightVignette();
+  if (isLocalFoVLocked) {
+    updateLocalRadarHalo(nextLatLng);
+    if (map) map.panTo(nextLatLng, { animate: true, duration: 0.15 });
   }
 
   // 掃描老街迷霧
@@ -6423,8 +6438,8 @@ function drawWalkingNavFlowline(targetLat, targetLng, targetName = '導航目的
 
   const badgeHtml = `
     <div class="walking-nav-badge">
-      🚶 沿實體騎樓步行中 (禁止瞬移)<br>
-      🎯 ${targetName} (${distMeters}m ｜ 約 ${estMinutes} 分鐘 ｜ ${steps} 步)
+      🚶 曼哈頓街廓折角示意線（非真實 GPS 道路導航）<br>
+      🎯 預估前往 ${targetName} (${distMeters}m ｜ 約 ${estMinutes} 分鐘 ｜ ${steps} 步)
     </div>
   `;
   const badgeIcon = L.divIcon({
@@ -6442,7 +6457,7 @@ function drawWalkingNavFlowline(targetLat, targetLng, targetName = '導航目的
     });
   }
 
-  showNavToast(`🚶 已規劃實體路網導航：步行前往【${targetName}】(${distMeters}m)`);
+  showNavToast(`🚶 已標示曼哈頓街廓折角示意線：前往【${targetName}】(折角預估 ${distMeters}m)`);
 }
 
 function clearWalkingNavFlowline() {
@@ -6461,13 +6476,13 @@ function toggleWalkNavFlowline() {
   const btn = document.getElementById('btnToggleWalkNav');
   if (btn) {
     btn.classList.toggle('active', isWalkNavFlowlineActive);
-    btn.innerHTML = `<span>🚶 實體人行道導航流動線</span><span style="color:${isWalkNavFlowlineActive ? '#00f0ff' : '#94a3b8'};">${isWalkNavFlowlineActive ? 'ACTIVE' : 'OFF'}</span>`;
+    btn.innerHTML = `<span>🚶 曼哈頓人行折角示意線</span><span style="color:${isWalkNavFlowlineActive ? '#00f0ff' : '#94a3b8'};">${isWalkNavFlowlineActive ? 'ACTIVE' : 'OFF'}</span>`;
   }
   if (!isWalkNavFlowlineActive) {
     clearWalkingNavFlowline();
-    showNavToast('🚶 實體人行導航線已隱藏');
+    showNavToast('🚶 曼哈頓人行折角示意線已隱藏');
   } else {
-    showNavToast('🚶 實體人行導航線已開啟 (點選任意站點/老街可自動引導)');
+    showNavToast('🚶 曼哈頓人行折角示意線已開啟 (點選任意站點/老街可自動引導)');
   }
 }
 
