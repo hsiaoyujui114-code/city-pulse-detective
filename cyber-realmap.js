@@ -3281,21 +3281,35 @@ function addTraLayer() {
 // ──────────────────────────────────────────
 // 🏛️ 雙北三鐵共構與捷運轉乘核心大站配置 (Interchange Multi-Ring Hubs)
 // ──────────────────────────────────────────
+// ──────────────────────────────────────────
+// 🏛️ 雙北三鐵共構與捷運轉乘核心大站配置 (Interchange Multi-Ring Hubs)
+// 包含所有官方路線編號：BL (板南)、R (淡水信義)、G (松山新店)、O (中和新蘆)、BR (文湖)、Y (環狀)、A (機捷)、V (淡海)、K (安坑)
+// ──────────────────────────────────────────
 const MRT_TRANSFER_HUBS = {
-  '台北車站': { outer: '#e3002c', inner: '#0070bd', core: '#f59e0b', desc: '四鐵共構都會心臟 (台鐵✕高鐵✕板南線✕淡水信義線)' },
-  '板橋': { outer: '#0070bd', inner: '#ffd300', core: '#f59e0b', desc: '新北新板特區四鐵核心 (台鐵✕高鐵✕板南線✕環狀線)' },
-  '西門': { outer: '#0070bd', inner: '#008659', core: '#ffffff', desc: '西區雙線樞紐 (板南線✕松山新店線)' },
-  '中正紀念堂': { outer: '#e3002c', inner: '#008659', core: '#ffffff', desc: '紅綠雙核心轉乘站 (淡水信義線✕松山新店線)' },
-  '忠孝復興': { outer: '#0070bd', inner: '#c48c31', core: '#ffffff', desc: '東區雙核心樞紐 (板南線✕文湖線)' },
-  '忠孝新生': { outer: '#0070bd', inner: '#f8991d', core: '#ffffff', desc: '光華三創科技軸心 (板南線✕中和新蘆線)' },
-  '南京復興': { outer: '#008659', inner: '#c48c31', core: '#ffffff', desc: '松山文湖十字交匯 (松山新店線✕文湖線)' },
-  '松江南京': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南京金融街角 (松山新店線✕中和新蘆線)' },
-  '大安': { outer: '#e3002c', inner: '#c48c31', core: '#ffffff', desc: '大安生活圈雙軌 (淡水信義線✕文湖線)' },
-  '東門': { outer: '#e3002c', inner: '#f8991d', core: '#ffffff', desc: '永康商圈雙線交會 (淡水信義線✕中和新蘆線)' },
-  '古亭': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南區轉乘咽喉 (松山新店線✕中和新蘆線)' },
-  '南港': { outer: '#0070bd', inner: '#3b82f6', core: '#ea580c', desc: '東區門戶三鐵共構 (台鐵✕高鐵✕板南線)' },
-  '大坪林': { outer: '#008659', inner: '#ffd300', core: '#ffffff', desc: '新店環狀交匯 (松山新店線✕環狀線)' },
-  '景安': { outer: '#f8991d', inner: '#ffd300', core: '#ffffff', desc: '中和雙捷十字 (中和新蘆線✕環狀線)' }
+  '台北車站': { outer: '#0070bd', inner: '#e3002c', core: '#8246af', desc: '四鐵共構都會心臟 (板南線 BL12 ✕ 淡水信義線 R10 ✕ 機捷 A1 ✕ 台鐵高鐵)' },
+  '板橋': { outer: '#0070bd', inner: '#ffd300', core: '#f59e0b', desc: '新北新板特區四鐵核心 (板南線 BL07 ✕ 環狀線 Y16 ✕ 台鐵高鐵)' },
+  '西門': { outer: '#0070bd', inner: '#008659', core: '#ffffff', desc: '西區雙線樞紐 (板南線 BL11 ✕ 松山新店線 G12)' },
+  '中正紀念堂': { outer: '#e3002c', inner: '#008659', core: '#ffffff', desc: '紅綠雙核心轉乘站 (淡水信義線 R08 ✕ 松山新店線 G10)' },
+  '忠孝復興': { outer: '#0070bd', inner: '#c48c31', core: '#ffffff', desc: '東區雙核心樞紐 (板南線 BL15 ✕ 文湖線 BR10)' },
+  '忠孝新生': { outer: '#0070bd', inner: '#f8991d', core: '#ffffff', desc: '光華三創科技軸心 (板南線 BL14 ✕ 中和新蘆線 O07)' },
+  '南京復興': { outer: '#008659', inner: '#c48c31', core: '#ffffff', desc: '松山文湖十字交匯 (松山新店線 G16 ✕ 文湖線 BR11)' },
+  '松江南京': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南京金融街角 (松山新店線 G15 ✕ 中和新蘆線 O08)' },
+  '大安': { outer: '#e3002c', inner: '#c48c31', core: '#ffffff', desc: '大安生活圈雙軌 (淡水信義線 R05 ✕ 文湖線 BR09)' },
+  '東門': { outer: '#e3002c', inner: '#f8991d', core: '#ffffff', desc: '永康商圈雙線交會 (淡水信義線 R07 ✕ 中和新蘆線 O06)' },
+  '古亭': { outer: '#008659', inner: '#f8991d', core: '#ffffff', desc: '南區轉乘咽喉 (松山新店線 G09 ✕ 中和新蘆線 O05)' },
+  '南港': { outer: '#0070bd', inner: '#3b82f6', core: '#ea580c', desc: '東區門戶三鐵共構 (板南線 BL22 ✕ 台鐵高鐵)' },
+  '大坪林': { outer: '#008659', inner: '#ffd300', core: '#ffffff', desc: '新店環狀交匯 (松山新店線 G04 ✕ 環狀線 Y07)' },
+  '景安': { outer: '#f8991d', inner: '#ffd300', core: '#ffffff', desc: '中和雙捷十字 (中和新蘆線 O02 ✕ 環狀線 Y11)' },
+  '頭前庄': { outer: '#f8991d', inner: '#ffd300', core: '#ffffff', desc: '新莊雙捷樞紐 (中和新蘆線 O17 ✕ 環狀線 Y18)' },
+  '民權西路': { outer: '#e3002c', inner: '#f8991d', core: '#ffffff', desc: '北大同十字樞紐 (淡水信義線 R13 ✕ 中和新蘆線 O11)' },
+  '中山': { outer: '#e3002c', inner: '#008659', core: '#ffffff', desc: '中山南西商圈 (淡水信義線 R11 ✕ 松山新店線 G14)' },
+  '新北產業園區': { outer: '#ffd300', inner: '#8246af', core: '#ffffff', desc: '新北智慧雙捷門戶 (環狀線 Y20 ✕ 機捷 A3)' },
+  '三重': { outer: '#f8991d', inner: '#8246af', core: '#ffffff', desc: '三重機捷交會 (中和新蘆線 O15 ✕ 機捷 A2)' },
+  '南港展覽館': { outer: '#0070bd', inner: '#c48c31', core: '#ffffff', desc: '經貿雙線端點樞紐 (板南線 BL23 ✕ 文湖線 BR24)' },
+  '十四張': { outer: '#ffd300', inner: '#e67799', core: '#ffffff', desc: '新店雙捷輕軌交會 (環狀線 Y08 ✕ 安坑輕軌 K09)' },
+  '紅樹林': { outer: '#e3002c', inner: '#0099cc', core: '#ffffff', desc: '淡水雙軌轉乘 (淡水信義線 R27 ✕ 淡海輕軌 V01)' },
+  '北投': { outer: '#e3002c', inner: '#fd92a4', core: '#ffffff', desc: '北投溫泉支線端點 (淡水信義線 R22 ✕ 新北投支線 R22A)' },
+  '七張': { outer: '#008659', inner: '#cee57a', core: '#ffffff', desc: '七張小碧潭端點 (松山新店線 G03 ✕ 小碧潭支線 G03A)' }
 };
 
 function addMrtLayer() {
@@ -3304,13 +3318,11 @@ function addMrtLayer() {
 
   const currentZoom = (typeof map !== 'undefined' && map) ? map.getZoom() : 13;
 
+  // 1. 繪製所有捷運軌道路線 (Polylines)
   MRT_DATA.forEach(line => {
-    // 依分支獨立繪製軌道線 (徹底修復中和新蘆線 15 公里雷射線、淡水線新北投折返、新店線小碧潭折返、淡海輕軌跨海直連)
     if (line.branches && line.branches.length > 0) {
       line.branches.forEach(branch => {
         const branchCoords = branch.stations.map(st => [st.lat, st.lon]);
-
-        // 外層光暈底線
         L.polyline(branchCoords, {
           color: line.color,
           weight: 7,
@@ -3319,7 +3331,6 @@ function addMrtLayer() {
           lineJoin: 'round'
         }).addTo(mrtLayerGroup);
 
-        // 核心發光亮線 ✕ 微動態流光 (Transit Flow Ribbon)
         const poly = L.polyline(branchCoords, {
           color: line.glowColor || line.color,
           weight: 3.5,
@@ -3331,8 +3342,6 @@ function addMrtLayer() {
       });
     } else {
       const coords = line.stations.map(st => [st.lat, st.lon]);
-
-      // 外層光暈底線
       L.polyline(coords, {
         color: line.color,
         weight: 7,
@@ -3341,7 +3350,6 @@ function addMrtLayer() {
         lineJoin: 'round'
       }).addTo(mrtLayerGroup);
 
-      // 核心發光亮線 ✕ 微動態流光 (Transit Flow Ribbon)
       const poly = L.polyline(coords, {
         color: line.glowColor || line.color,
         weight: 3.5,
@@ -3351,65 +3359,116 @@ function addMrtLayer() {
 
       poly.bindTooltip(`🚇 ${line.name}`, { sticky: true });
     }
+  });
 
-    // 繪製捷運站點標籤 Marker (雙層 DOM 內嵌，縮放切換純靠 CSS，0ms 重繪卡頓)
-    line.stations.forEach((st, idx) => {
-      const hub = MRT_TRANSFER_HUBS[st.name];
-      const isHub = !!hub || (idx === 0 || idx === line.stations.length - 1 || 
-                     ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區', '動物園', '南港展覽館', '淡水', '頂埔', '新店', '南勢角', '蘆洲', '迴龍'].includes(st.name));
+  // 2. 統一聚合雙北所有捷運站點 (徹底消除共構站重複圖層覆蓋，完整呈現官方正確編號 如 BL12 ✕ R10 ✕ A1)
+  const stationAggregator = new Map();
 
-      const metroSvg = `<svg class="metro-official-logo" viewBox="-50 -50 100 100" width="16" height="16">
-        <path d="M -26,10 C -28,-14 -12,-36 14,-36 C 26,-36 36,-30 42,-20 L 46,-30 L 46,-6 L 22,-10 L 32,-17 C 27,-23 21,-27 14,-27 C -6,-27 -18,-11 -17,10 Z" fill="#0070bc" />
-        <path d="M 26,-10 C 28,14 12,36 -14,36 C -26,36 -36,30 -42,20 L -46,30 L -46,6 L -22,10 L -32,17 C -27,23 -21,27 -14,27 C 6,27 18,11 17,-10 Z" fill="#00a650" />
-      </svg>`;
-
-      const lineCode = st.code || line.lineCode || 'MRT';
-
-      const dotHtml = hub ? `
-        <div class="mrt-hub-concentric-dot" title="🏛️ 轉乘樞紐：${st.name} (${hub.desc})">
-          <div class="hub-ring-outer" style="border-color:${hub.outer};"></div>
-          <div class="hub-ring-inner" style="border-color:${hub.inner};"></div>
-          <div class="hub-dot-core" style="background:${hub.core};"></div>
-        </div>
-      ` : `
-        <div class="pin-mrt-compact-dot" style="background:${line.color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${lineCode})"></div>
-      `;
-
-      const html = `
-        <div class="mrt-pin-hybrid ${isHub ? 'is-hub' : ''}">
-          <div class="pin-mrt-vector" style="border-color:${line.color};">
-            <span class="mrt-logo-box">${metroSvg}</span>
-            <span class="mrt-line-pill" style="background:${line.color};">${lineCode}</span>
-            <span class="mrt-station-title">${st.name}</span>
-          </div>
-          ${dotHtml}
-        </div>
-      `;
-
-      const icon = L.divIcon({
-        html: html,
-        className: 'transit-pin-wrap station-marker-wrap' + (isHub ? ' is-hub' : ''),
-        iconAnchor: [48, 14]
-      });
-
-      const hubNotice = hub ? `<div style="font-size:11px; color:#facc15; font-weight:800; margin-top:3px;">🏛️ 轉乘大站同心光環：${hub.desc}</div>` : '';
-
-      const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
-      marker.bindPopup(`
-        <div style="font-family:sans-serif; color:#f8fafc; min-width:210px;">
-          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${line.color};"></span>
-            <strong style="font-size:13px; color:#ffffff;">捷運 ${st.name} 站 ${st.code ? '(' + st.code + ')' : ''}</strong>
-          </div>
-          <div style="font-size:11px; color:#38bdf8; font-weight:700;">官方標誌：科技藍 (#0070bc) ✕ 生機綠 (#00a650)</div>
-          <div style="font-size:10px; color:#94a3b8; margin-top:2px;">所屬路線：${line.name} [代表色 ${lineCode}：${line.color}]</div>
-          ${hubNotice}
-          <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">雙北都會捷運高運量/中運量主幹道，全線固定班距發車。</div>
-        </div>
-      `);
+  MRT_DATA.forEach(line => {
+    line.stations.forEach(st => {
+      const cleanName = st.name.replace(/站$/, '').trim();
+      if (!stationAggregator.has(cleanName)) {
+        stationAggregator.set(cleanName, {
+          name: cleanName,
+          lat: st.lat,
+          lon: st.lon,
+          lines: []
+        });
+      }
+      const agg = stationAggregator.get(cleanName);
+      if (!agg.lines.some(l => l.code === st.code)) {
+        agg.lines.push({
+          lineCode: line.lineCode,
+          lineName: line.name,
+          code: st.code || line.lineCode,
+          color: line.color,
+          glowColor: line.glowColor
+        });
+      }
     });
   });
+
+  const metroSvg = `<svg class="metro-official-logo" viewBox="-50 -50 100 100" width="16" height="16">
+    <path d="M -26,10 C -28,-14 -12,-36 14,-36 C 26,-36 36,-30 42,-20 L 46,-30 L 46,-6 L 22,-10 L 32,-17 C 27,-23 21,-27 14,-27 C -6,-27 -18,-11 -17,10 Z" fill="#0070bc" />
+    <path d="M 26,-10 C 28,14 12,36 -14,36 C -26,36 -36,30 -42,20 L -46,30 L -46,6 L -22,10 L -32,17 C -27,23 -21,27 -14,27 C 6,27 18,11 17,-10 Z" fill="#00a650" />
+  </svg>`;
+
+  // 3. 逐一繪製聚合後的站點標籤 Marker
+  stationAggregator.forEach(st => {
+    const hub = MRT_TRANSFER_HUBS[st.name];
+    const isHub = !!hub || st.lines.length > 1 || 
+                  ['台北車站', '板橋', '府中', '西門', '中正紀念堂', '忠孝復興', '松江南京', '南京復興', '大安', '古亭', '大坪林', '新北產業園區', '動物園', '南港展覽館', '淡水', '頂埔', '新店', '南勢角', '蘆洲', '迴龍'].includes(st.name);
+
+    const primaryColor = hub ? hub.outer : st.lines[0].color;
+
+    // 產生所有共構路線之捷運官方編號膠囊 (Pills)
+    const pillsHtml = st.lines.map(l => {
+      const textColor = (l.lineCode === 'Y') ? '#0f172a' : '#ffffff';
+      return `<span class="mrt-line-pill" style="background:${l.color}; color:${textColor}; font-weight:900;">${l.code}</span>`;
+    }).join('');
+
+    const dotHtml = hub ? `
+      <div class="mrt-hub-concentric-dot" title="🏛️ 轉乘樞紐：${st.name} (${hub.desc})">
+        <div class="hub-ring-outer" style="border-color:${hub.outer};"></div>
+        <div class="hub-ring-inner" style="border-color:${hub.inner};"></div>
+        <div class="hub-dot-core" style="background:${hub.core};"></div>
+      </div>
+    ` : (st.lines.length > 1 ? `
+      <div class="mrt-hub-concentric-dot" title="🏛️ 雙線轉乘：${st.name}">
+        <div class="hub-ring-outer" style="border-color:${st.lines[0].color};"></div>
+        <div class="hub-ring-inner" style="border-color:${st.lines[1].color};"></div>
+        <div class="hub-dot-core" style="background:#ffffff;"></div>
+      </div>
+    ` : `
+      <div class="pin-mrt-compact-dot" style="background:${st.lines[0].color}; border:1.5px solid #ffffff;" title="🚇 ${st.name} (${st.lines[0].code})"></div>
+    `);
+
+    const html = `
+      <div class="mrt-pin-hybrid ${isHub ? 'is-hub' : ''}">
+        <div class="pin-mrt-vector" style="border-color:${primaryColor};">
+          <span class="mrt-logo-box">${metroSvg}</span>
+          ${pillsHtml}
+          <span class="mrt-station-title">${st.name}</span>
+        </div>
+        ${dotHtml}
+      </div>
+    `;
+
+    const anchorX = 38 + (st.lines.length * 15);
+    const icon = L.divIcon({
+      html: html,
+      className: 'transit-pin-wrap station-marker-wrap' + (isHub ? ' is-hub' : ''),
+      iconAnchor: [anchorX, 14]
+    });
+
+    const linesDetailHtml = st.lines.map(l => `
+      <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${l.color}; margin-right:4px;"></span>
+        <b style="color:#ffffff;">${l.code}</b> ${l.lineName}
+      </div>
+    `).join('');
+
+    const hubNotice = hub ? `<div style="font-size:11px; color:#facc15; font-weight:800; margin-top:4px;">🏛️ 轉乘樞紐：${hub.desc}</div>` : '';
+
+    const marker = L.marker([st.lat, st.lon], { icon }).addTo(mrtLayerGroup);
+    marker.bindPopup(`
+      <div style="font-family:sans-serif; color:#f8fafc; min-width:220px;">
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <strong style="font-size:14px; color:#ffffff;">捷運 ${st.name} 站</strong>
+        </div>
+        <div style="font-size:11px; color:#38bdf8; font-weight:800; margin-bottom:4px;">
+          官方車站編號：${st.lines.map(l => l.code).join(' ✕ ')}
+        </div>
+        ${linesDetailHtml}
+        ${hubNotice}
+        <div style="font-size:10px; color:#94a3b8; margin-top:6px; border-top:1px solid rgba(255,255,255,0.15); padding-top:4px;">
+          雙北都會捷運高運量/中運量路網，全線官方即時發車。
+        </div>
+      </div>
+    `);
+  });
 }
+
 
 function updateMrtLODVisibility() {
   if (typeof map === 'undefined' || !map) return;

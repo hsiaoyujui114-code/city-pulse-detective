@@ -441,7 +441,7 @@ const busZhongshanRoute = [
   { x: 54, z: 25,   stopName: '台北車站 (公園路北行)', street: '中正・公園路' },
   { x: 84, z: 0,    street: '中正・忠孝西路口' },
   { x: 84, z: -45,  stopName: '中山市場站 (北行)', street: '中山・中山北路一段' },
-  { x: 84, z: -95,  stopName: '捷運中山站 (北行)', street: '中山・中山北路' },
+  { x: 84, z: -95,  stopName: '捷運中山站 (R11 北行)', street: '中山・中山北路' },
   { x: 84, z: -140, stopName: '雙連市場站 (北行)', street: '中山・民生西路' },
   { x: 84, z: -195, stopName: '晴光商圈站 (北行終點)', street: '中山・雙城街口' }
 ];
@@ -471,7 +471,7 @@ const bus299Route = [
   { x: 180,  z: 0,   stopName: '捷運忠孝復興站 (折返)', street: '大安・忠孝東路四段' },
   // 返程 (西行)
   { x: 180,  z: 4,   street: '大安・忠孝東路四段 (西行)' },
-  { x: 120,  z: 4,   stopName: '捷運忠孝新生站 (西行)', street: '大安・忠孝東路三段' },
+  { x: 120,  z: 4,   stopName: '捷運忠孝新生站 (BL14 西行)', street: '大安・忠孝東路三段' },
   { x: 35,   z: 4,   street: '中正・忠孝西路' },
   { x: -20,  z: 4,   stopName: '台北車站(忠孝西行月台)', street: '中正・忠孝西路專用道' },
   { x: -92,  z: 4,   street: '中正・忠孝西路 (往新莊)' },
@@ -861,7 +861,7 @@ function updateBusPhysics(bus) {
 // ──────────────────────────────────────────
 const mrtBannanTrack = [
   // 板南線 (東行：頂埔/府中 ➔ 台北車站 ➔ 忠孝復興)
-  { x: -180, z: 12, stopName: '捷運府中站 (BL05)', line: '板南線' },
+  { x: -180, z: 12, stopName: '捷運府中站 (BL06)', line: '板南線' },
   { x: -150, z: 12, stopName: '捷運板橋站 (BL07)', line: '板南線' },
   { x: -100, z: 12, stopName: '捷運新埔站 (BL08)', line: '板南線' },
   { x: -50,  z: 12, stopName: '捷運西門站 (BL11)', line: '板南線' },
@@ -871,14 +871,14 @@ const mrtBannanTrack = [
   { x: 185,  z: 12, stopName: '捷運忠孝復興站 (BL15)', line: '板南線' },
 
   // 板南線 (西行：忠孝復興 ➔ 台北車站 ➔ 府中/頂埔)
-  { x: 185,  z: 18, stopName: '捷運忠孝復興站 (返程)', line: '板南線' },
-  { x: 120,  z: 18, stopName: '捷運忠孝新生站 (西行)', line: '板南線' },
-  { x: 70,   z: 18, stopName: '捷運善導寺站 (西行)', line: '板南線' },
-  { x: 0,    z: 18, stopName: '捷運台北車站 (西行月台)', line: '板南線' },
-  { x: -50,  z: 18, stopName: '捷運西門站 (西行月台)', line: '板南線' },
-  { x: -100, z: 18, stopName: '捷運新埔站 (西行)', line: '板南線' },
-  { x: -150, z: 18, stopName: '捷運板橋站 (西行)', line: '板南線' },
-  { x: -180, z: 18, stopName: '捷運府中站 (終點整備)', line: '板南線' }
+  { x: 185,  z: 18, stopName: '捷運忠孝復興站 (BL15 返程)', line: '板南線' },
+  { x: 120,  z: 18, stopName: '捷運忠孝新生站 (BL14 西行)', line: '板南線' },
+  { x: 70,   z: 18, stopName: '捷運善導寺站 (BL13 西行)', line: '板南線' },
+  { x: 0,    z: 18, stopName: '捷運台北車站 (BL12 西行月台)', line: '板南線' },
+  { x: -50,  z: 18, stopName: '捷運西門站 (BL11 西行月台)', line: '板南線' },
+  { x: -100, z: 18, stopName: '捷運新埔站 (BL08 西行)', line: '板南線' },
+  { x: -150, z: 18, stopName: '捷運板橋站 (BL07 西行)', line: '板南線' },
+  { x: -180, z: 18, stopName: '捷運府中站 (BL06 終點整備)', line: '板南線' }
 ];
 
 const mrtTamsuiTrack = [
@@ -892,13 +892,13 @@ const mrtTamsuiTrack = [
   { x: 62, z: 95,   stopName: '捷運中正紀念堂站 (R08)', line: '淡水信義線' },
 
   // 淡水信義線 (北行：中正紀念堂 ➔ 台北車站 ➔ 圓山/淡水)
-  { x: 68, z: 95,   stopName: '捷運中正紀念堂 (北行發車)', line: '淡水信義線' },
-  { x: 68, z: 45,   stopName: '捷運臺大醫院站 (北行)', line: '淡水信義線' },
-  { x: 68, z: 15,   stopName: '捷運台北車站 (北行月台)', line: '淡水信義線' },
-  { x: 68, z: -45,  stopName: '中山地下段 (北行)', line: '淡水信義線' },
-  { x: 68, z: -95,  stopName: '捷運中山站 (北行)', line: '淡水信義線' },
-  { x: 68, z: -140, stopName: '捷運民權西路 (北行)', line: '淡水信義線' },
-  { x: 68, z: -180, stopName: '捷運圓山站 (回場整備)', line: '淡水信義線' }
+  { x: 68, z: 95,   stopName: '捷運中正紀念堂 (R08 北行發車)', line: '淡水信義線' },
+  { x: 68, z: 45,   stopName: '捷運臺大醫院站 (R09 北行)', line: '淡水信義線' },
+  { x: 68, z: 15,   stopName: '捷運台北車站 (R10 北行月台)', line: '淡水信義線' },
+  { x: 68, z: -45,  stopName: '中山地下段 (R11 北行)', line: '淡水信義線' },
+  { x: 68, z: -95,  stopName: '捷運中山站 (R11 北行)', line: '淡水信義線' },
+  { x: 68, z: -140, stopName: '捷運民權西路 (R13 北行)', line: '淡水信義線' },
+  { x: 68, z: -180, stopName: '捷運圓山站 (R14 回場整備)', line: '淡水信義線' }
 ];
 
 // 雙北捷運固定班距動態列車車隊 (Fixed Headway Fleet - 含車次編號與這班收班時間)
