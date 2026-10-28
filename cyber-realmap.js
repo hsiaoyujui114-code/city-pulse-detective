@@ -137,10 +137,14 @@ function initCyberRealMap() {
     return;
   }
 
-  // 1. 建立地圖實例 (預設鎖定局部導航視野，嚴格落實企劃書認路與探索規則，整數 ZoomSnap 60FPS)
+  // 1. 讀取本機 localStorage 存檔（若有有效進度則恢復，若無則使用企劃書預設核心站點）
+  const savedState = loadSavedMapState();
+  const initCenter = (savedState && savedState.lat && savedState.lon) ? [savedState.lat, savedState.lon] : currentFocusCoord;
+  const initZoom = (savedState && typeof savedState.zoom === 'number') ? savedState.zoom : 15;
+
   map = L.map('map', {
-    center: currentFocusCoord,
-    zoom: 15,
+    center: initCenter,
+    zoom: initZoom,
     minZoom: isLocalFoVLocked ? 14 : 9,
     maxZoom: 22,
     zoomControl: false,
@@ -342,6 +346,24 @@ function initCyberRealMap() {
   // 初始化環境風格自適應換裝 (Google Maps 階層道路包邊、聚光暗角調適)
   harmonizeMapTheme(currentBaseLayerKey);
 
+  // 恢復儲存之調查員座標與底圖設定
+  if (savedState) {
+    if (savedState.playerLat && savedState.playerLon && playerAvatarMarker) {
+      playerAvatarMarker.setLatLng([savedState.playerLat, savedState.playerLon]);
+      if (playerSenseCircle) playerSenseCircle.setLatLng([savedState.playerLat, savedState.playerLon]);
+    }
+    if (savedState.playerHeading != null) setPlayerHeading(savedState.playerHeading);
+    if (savedState.baseLayerKey && baseLayers && baseLayers[savedState.baseLayerKey]) {
+      switchBaseLayer(savedState.baseLayerKey);
+      const sel = document.getElementById('tileSelect');
+      if (sel) sel.value = savedState.baseLayerKey;
+    }
+  }
+
+  // 自動保存位置與進度 (重整後位置保留、損壞自動防護)
+  map.on('moveend', saveMapState);
+  map.on('zoomend', saveMapState);
+
   // 啟動真實大眾運輸即時同步 (TDX/eBus 官方車機 GPS)
   startLiveTransitSync();
 
@@ -533,6 +555,72 @@ function harmonizeMapTheme(themeKey) {
 }
 
 // 鍵盤巡航統一由 initWalkNavFlowlineSystem 專職掌管，單一監聽確保 20m 精確步距與 Esc 快捷鍵支持
+
+// ==========================================
+// 📱 手機端面板防重疊控制系統 (Mobile Panel Exclusivity Controller)
+// ==========================================
+function toggleMobilePanel(side) {
+  const leftPanel = document.getElementById('leftTelemetryPanel');
+  const rightPanel = document.getElementById('rightTacticalPanel');
+  const btnLeft = document.getElementById('btnToggleLeftPanel');
+  const btnRight = document.getElementById('btnToggleRightPanel');
+
+  if (side === 'left') {
+    const isNowActive = leftPanel ? leftPanel.classList.toggle('mobile-active') : false;
+    if (rightPanel) rightPanel.classList.remove('mobile-active');
+    if (btnLeft) btnLeft.classList.toggle('active', isNowActive);
+    if (btnRight) btnRight.classList.remove('active');
+  } else if (side === 'right') {
+    const isNowActive = rightPanel ? rightPanel.classList.toggle('mobile-active') : false;
+    if (leftPanel) leftPanel.classList.remove('mobile-active');
+    if (btnRight) btnRight.classList.toggle('active', isNowActive);
+    if (btnLeft) btnLeft.classList.remove('active');
+  }
+}
+
+// ==========================================
+// 💾 瀏覽器本機儲存 (localStorage) 地圖位置與進度系統 (含版本欄位與防崩潰容錯)
+// ==========================================
+const MAP_STORAGE_KEY = 'CYBER_REALMAP_STATE_V1';
+
+function loadSavedMapState() {
+  try {
+    const raw = localStorage.getItem(MAP_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.version === 1 && typeof parsed.lat === 'number' && typeof parsed.lon === 'number' && typeof parsed.zoom === 'number') {
+      if (parsed.lat >= 24.5 && parsed.lat <= 25.5 && parsed.lon >= 121.0 && parsed.lon <= 122.2) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('[LocalStorage] 讀取地圖進度快取失敗，安全降級使用預設值:', err);
+  }
+  return null;
+}
+
+function saveMapState() {
+  if (!map) return;
+  try {
+    const c = map.getCenter();
+    const z = map.getZoom();
+    const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : null;
+    const state = {
+      version: 1,
+      lastSavedAt: Date.now(),
+      lat: c.lat,
+      lon: c.lng,
+      zoom: z,
+      playerLat: playerPos ? playerPos.lat : c.lat,
+      playerLon: playerPos ? playerPos.lng : c.lng,
+      playerHeading: typeof playerHeading !== 'undefined' ? playerHeading : 0,
+      baseLayerKey: typeof currentBaseLayerKey !== 'undefined' ? currentBaseLayerKey : 'nlsc'
+    };
+    localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    // 忽略配額或無痕環境異常
+  }
+}
 
 // ──────────────────────────────────────────
 // 4.5 雙北核心真實路網與街道高光圖層 (Major Real Streets & Avenues Layer)
@@ -2101,10 +2189,11 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
         timeToArrivalSec: Math.max(0, Math.round(segSec - inSegSec)),
         isAtStation,
         color: line.color || '#10b981',
+        isSimulated: true,
         status: isAtStation
           ? `🚉 【${s1.name}】月台停靠中`
           : `🚇 ${s1.name} ➔ ${s2.name} (${speed} km/h)`,
-        source: '官方時刻表台灣時間 (UTC+8) 同步'
+        source: '系統運轉模擬 (班距排程模擬，官方尚無開放即時資料)'
       });
     });
   });
@@ -2667,21 +2756,28 @@ function tickLiveTransitPositions() {
 
 function buildLiveBusPopupHtml(b) {
   const isStopped = b.speed <= 1 || b.dutyStatus === 2;
+  const isExtrapolating = !!b.isExtrapolating;
+  const modeBadge = isStopped
+    ? (b.dutyStatus === 2 ? '🚏 進站上下客' : '🛑 號誌/站牌停等')
+    : (isExtrapolating ? '🟡 航位外推中 (±45m)' : '🟢 官方GPS剛更新');
+  const modeColor = isStopped ? '#ef4444' : (isExtrapolating ? '#f59e0b' : '#10b981');
+
   return `
     <div style="font-family:sans-serif; min-width:275px; color:#f8fafc;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-size:13px; font-weight:900; color:#38bdf8;">🚍 公車 ${b.routeName} (${b.busId})</span>
-        <span style="font-size:10px; background:${isStopped ? '#ef4444' : '#10b981'}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
-          ${b.dutyStatus === 2 ? '🚏 進站上下客' : (isStopped ? '🛑 號誌/站牌停等' : '🟢 真實GPS巡航')}
+        <span style="font-size:10px; background:${modeColor}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
+          ${modeBadge}
         </span>
       </div>
       <div style="font-size:11px; font-weight:700; color:#facc15;">${b.headsign || '雙北即時營運車次'}｜${b.operator || '大臺北公車'}</div>
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
         真實世界狀態：<b style="color:${isStopped ? '#f87171' : '#4ade80'};">${b.status}</b><br>
+        即時動態性質：<b style="color:${isExtrapolating ? '#fbbf24' : '#4ade80'};">${isExtrapolating ? '🟡 10秒輪詢間隔航位外推 (依時速與方位角推算)' : '🟢 雙北交通局官方 eBus 車機 GPS (即時更新)'}</b><br>
         即時車機時速：<b style="color:${isStopped ? '#f87171' : '#4ade80'}; font-size:13px;">${Math.round(b.speed)} km/h</b>｜航向角：<b>${Math.round(b.azimuth || 0)}°</b><br>
         即時 GPS 座標：<b>${b.lat.toFixed(5)}°N, ${b.lon.toFixed(5)}°E</b><br>
-        車機回傳時間：<b>${b.dataTime || lastLiveSyncTimeStr || '即時'}</b><br>
-        資料來源：<b style="color:#38bdf8;">${b.source || '雙北交通局官方 eBus / TDX 即時車機 GPS'}</b>
+        車機回傳時間：<b>${b.dataTime || lastLiveSuccessTimeStr || '即時'}</b><br>
+        資料來源：<b style="color:#38bdf8;">雙北交通局官方 eBus 車機 GPS (10秒更新)</b>
       </div>
       <div style="margin-top:8px; display:flex; gap:6px;">
         <a href="https://ebus.gov.taipei/ebus?rid=${b.routeId}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
@@ -2725,7 +2821,9 @@ function renderLiveBusMarkers(buses) {
     return a.distSq - b.distSq;
   });
 
-  const maxRichBadges = 110;
+  const curZ = map ? map.getZoom() : 15;
+  // 依縮放層級自適應顯示標籤：廣域縮小視角 (<14) 減少密集標籤避免重疊，放大街廓 (>=15) 完整展示
+  const maxRichBadges = curZ >= 15 ? 120 : (curZ >= 14 ? 45 : 12);
   const activeBadgeKeys = new Set();
   const activeDotKeys = new Set();
 
@@ -2817,19 +2915,33 @@ function renderLiveBusMarkers(buses) {
 function buildLiveRailPopupHtml(t) {
   const typeLabel = t.type === 'THSR' ? '🚅 台灣高速鐵路 (THSR)' : (t.type === 'TRA' ? '🚆 臺灣鐵路 (TRA)' : '🚇 大台北捷運 (MRT)');
   const isMrt = t.type === 'MRT';
+  const isTra = t.type === 'TRA';
+  const isThsr = t.type === 'THSR';
+  const isSimulated = !!t.isSimulated || (t.source && t.source.includes('模擬'));
+
+  let sourceDetail = '';
+  if (isThsr) {
+    sourceDetail = '交通部 PTX 今日營運時刻表推算 (車次與時刻相符，位置為時刻表估算，不反映即時誤點)';
+  } else if (isTra) {
+    sourceDetail = '交通部 PTX TRA LiveBoard 即時看板 ✕ 站間內插推算 (非即時 GPS)';
+  } else if (isSimulated) {
+    sourceDetail = '系統運轉模擬 (班距排程模擬，官方尚無開放即時資料)';
+  } else {
+    sourceDetail = '交通部 PTX TRTC/TYMC LiveBoard 看板 ✕ 班距運行推算 (官方開放資料無 GPS 及車組編號，班次為示意編號)';
+  }
 
   return `
     <div style="font-family:sans-serif; min-width:285px; color:#f8fafc;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-size:13px; font-weight:900; color:${t.color};">${t.name || t.trainName || '線上列車'}</span>
-        <span style="font-size:10px; background:${t.isAtStation ? '#f59e0b' : '#10b981'}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
-          ${t.isAtStation ? '🚉 月台靠泊中' : '🟢 即時軌道運轉'}
+        <span style="font-size:10px; background:${isSimulated ? '#eab308' : (t.isAtStation ? '#f59e0b' : '#10b981')}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
+          ${isSimulated ? '🟡 班距模擬' : (t.isAtStation ? '🚉 月台靠泊中' : '🟢 即時軌道推算')}
         </span>
       </div>
       <div style="font-size:11px; font-weight:700; color:#38bdf8;">${typeLabel}｜${t.headsign}</div>
       ${isMrt ? `
       <div style="margin-top:7px; padding:6px 9px; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.35); border-radius:6px; font-size:10px; line-height:1.6;">
-        <div>🏷️ <b>班次編號：</b><span style="color:#fde047; font-weight:800;">${t.fullTrainCode || t.trainNo || t.name}</span></div>
+        <div>🏷️ <b>班次示意編號：</b><span style="color:#fde047; font-weight:800;">${t.trainNo || t.name}</span> <span style="color:#94a3b8; font-size:9.5px;">(示意編號，非真實車組)</span></div>
         <div>🌙 <b>這班收班時間：</b><span style="color:#a7f3d0; font-weight:800;">${t.closingTime || t.thisTrainClosingTime || '24:00'} (抵達端點收班清車)</span></div>
         <div>⏰ <b>全線末班收班：</b><span style="color:#cbd5e1;">約 ${t.lastTrainTime || '00:45'} (各端點站 24:00 對開)</span></div>
         <div style="margin-top:3px; font-size:9px;">
@@ -2838,10 +2950,10 @@ function buildLiveRailPopupHtml(t) {
       </div>
       ` : ''}
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
-        即時動態：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'};">${t.status}</b><br>
-        即時行駛時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b><br>
-        即時軌道座標：<b>${t.lat.toFixed(5)}°N, ${t.lon.toFixed(5)}°E</b><br>
-        資料來源：<b style="color:#38bdf8;">${t.source}</b>
+        運行狀態：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'};">${t.status}</b><br>
+        估算時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b> <span style="font-size:9.5px; color:#94a3b8;">(平均推算)</span><br>
+        軌道推算座標：<b>${t.lat.toFixed(5)}°N, ${t.lon.toFixed(5)}°E</b><br>
+        資料性質：<b style="color:${isSimulated ? '#facc15' : '#38bdf8'};">${sourceDetail}</b>
       </div>
     </div>
   `;
@@ -2936,21 +3048,21 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
 
 function updateLiveTransitHUD(data) {
   const busEl = document.getElementById('hudLiveBusCount');
-  if (busEl) busEl.innerText = `${data.activeBusCount || 0} 輛 (即時GPS)`;
+  if (busEl) busEl.innerText = `${data.activeBusCount || 0} 輛 (官方GPS/外推)`;
 
   const mrtEl = document.getElementById('hudLiveMrtCount');
-  if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (線上運轉)`;
+  if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (看板推算/排程)`;
 
   const traEl = document.getElementById('hudLiveTraCount');
-  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (台鐵即時)`;
+  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (看板內插推算)`;
 
   const thsrEl = document.getElementById('hudLiveThsrCount');
-  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (高鐵走廊)`;
+  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (今日時刻表推算)`;
 
   const syncEl = document.getElementById('hudLiveSyncTime');
   if (syncEl) {
     if (liveTransitDataMode === 'LIVE_SERVER' || liveTransitDataMode === 'LIVE_BROWSER') {
-      syncEl.innerHTML = `<span style="color:#4ade80;">🟢 官方即時</span> ${lastLiveSuccessTimeStr || data.taiwanTime || '即時'} (每10秒更新)`;
+      syncEl.innerHTML = `<span style="color:#4ade80;">🟢 官方即時同步</span> ${lastLiveSuccessTimeStr || data.taiwanTime || '即時'} (10秒更新)`;
     } else {
       syncEl.innerHTML = `<span style="color:#fbbf24;">🟡 離線推算中</span> ${lastLiveSuccessTimeStr ? `(前次: ${lastLiveSuccessTimeStr})` : '(無網路)'}`;
     }
@@ -6405,6 +6517,9 @@ function movePlayerByOffset(dLat, dLon, headingDeg) {
     const targetPos = walkNavTargetMarker.getLatLng();
     drawWalkingNavFlowline(targetPos.lat, targetPos.lng, walkNavTargetMarker._targetName || '目標', false);
   }
+
+  // 自動保存位置進度
+  saveMapState();
 }
 
 // 沿街廓生成 Manhattan 直角人行折線

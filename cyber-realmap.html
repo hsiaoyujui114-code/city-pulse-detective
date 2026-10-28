@@ -101,11 +101,20 @@
     </div>
   </div>
 
+  <!-- 📱 手機端專屬面板切換浮動條 (320px / 390px / 768px 防重疊切換) -->
+  <div class="mobile-panel-toggles" id="mobilePanelToggles">
+    <button class="mobile-toggle-btn" id="btnToggleLeftPanel" onclick="toggleMobilePanel('left')">🛰️ 遙測 HUD</button>
+    <button class="mobile-toggle-btn" id="btnToggleRightPanel" onclick="toggleMobilePanel('right')">⚙️ 戰術圖層</button>
+  </div>
+
   <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
-  <aside class="left-telemetry-panel" style="top:194px;">
+  <aside class="left-telemetry-panel" id="leftTelemetryPanel" style="top:194px;">
     <div class="panel-header">
       <span>🛰️ SATELLITE TELEMETRY</span>
-      <span style="color:#4ade80;">ONLINE</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="color:#4ade80;">ONLINE</span>
+        <button class="mobile-panel-close-btn" onclick="toggleMobilePanel('left')" title="收合面板">✕</button>
+      </div>
     </div>
     
     <div class="telemetry-row">
@@ -161,10 +170,13 @@
   </aside>
 
   <!-- 右側戰術圖層控制與工具箱 (Right Tactical Control Panel) -->
-  <aside class="right-tactical-panel" style="top:194px;">
+  <aside class="right-tactical-panel" id="rightTacticalPanel" style="top:194px;">
     <div class="panel-header">
       <span>⚙️ TACTICAL GIS</span>
-      <span>1:1 REAL</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>1:1 REAL</span>
+        <button class="mobile-panel-close-btn" onclick="toggleMobilePanel('right')" title="收合面板">✕</button>
+      </div>
     </div>
 
     <div style="font-size:10px; color:#38bdf8; font-weight:800; margin-bottom:4px;">🗺️ 1:1 真實網路圖資切換 (高清街道保證・放大不模糊):</div>

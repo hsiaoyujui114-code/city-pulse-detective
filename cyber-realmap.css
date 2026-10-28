@@ -2128,3 +2128,160 @@ body[data-map-theme="nlsc"] .road-badge-marker {
   transform: scale(1.15);
   box-shadow: 0 0 18px rgba(0, 240, 255, 0.9);
 }
+
+/* ──────────────────────────────────────────
+   📱 響應式面板與視窗優化 (Responsive Panels & Modal Buttons)
+   徹底解決手機 320px/390px/768px 面板重疊與按鈕排版擁擠
+   ────────────────────────────────────────── */
+.mobile-panel-toggles {
+  display: none;
+}
+
+.mobile-panel-close-btn {
+  display: none;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 800;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 🏷️ 捷運站點標籤 LOD 視距分級 (避免廣域 1280px / 13.0x 標籤互相疊加遮蓋) */
+body:not(.map-zoom-near) .station-marker-wrap:not(.is-hub) .mrt-station-title {
+  display: none;
+}
+body:not(.map-zoom-near) .station-marker-wrap:not(.is-hub) .pin-mrt-vector {
+  padding: 1px 4px;
+}
+body:not(.map-zoom-near) .station-marker-wrap:not(.is-hub) .mrt-logo-box {
+  display: none;
+}
+body.map-zoom-near .station-marker-wrap .mrt-station-title {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  /* 頂部全息標題列防截斷縮放 */
+  .holo-top-bar {
+    height: auto !important;
+    padding: 6px 10px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .brand-section {
+    max-width: 100% !important;
+  }
+  .brand-main-title {
+    font-size: 13px !important;
+    flex-wrap: wrap !important;
+  }
+  .brand-sub-title {
+    display: none !important; /* 手機端隱藏超長裝飾性副標，保證主標題 100% 完整無截斷 */
+  }
+  .companion-badge {
+    font-size: 9px !important;
+    padding: 1px 4px !important;
+  }
+  .jump-scroll-wrap {
+    order: 3 !important;
+    width: 100% !important;
+    margin: 2px 0 !important;
+  }
+  .dual-track-btn {
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+  }
+
+  /* 跑馬燈移至底部或緊湊顯示，避免壓迫地圖視野 */
+  .transit-ticker-bar {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 1200 !important;
+    border-radius: 0 !important;
+  }
+
+  .cases-top-strip, .store-filter-strip {
+    display: none !important; /* 避免手機端垂直推疊過多橫條吃滿螢幕 */
+  }
+
+  /* 手機端左右側面板防重疊：預設收合，提供切換按鈕，單次僅能開啟一個 */
+  .mobile-panel-toggles {
+    display: flex !important;
+    position: absolute;
+    top: 52px;
+    right: 10px;
+    z-index: 1100;
+    gap: 6px;
+  }
+
+  .mobile-toggle-btn {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #00f0ff;
+    color: #38bdf8;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .mobile-toggle-btn.active {
+    background: linear-gradient(135deg, #0284c7, #00f0ff);
+    color: #030712;
+  }
+
+  .left-telemetry-panel,
+  .right-tactical-panel {
+    top: 90px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: 360px !important;
+    margin: 0 auto;
+    max-height: 60vh !important;
+    display: none !important;
+    z-index: 1500 !important;
+  }
+
+  .left-telemetry-panel.mobile-active,
+  .right-tactical-panel.mobile-active {
+    display: block !important;
+  }
+
+  .mobile-panel-close-btn {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* 案件戰術簡報彈窗底部按鈕：雙欄網格佈局，徹底解決 390px/320px 直排擠壓 */
+  .case-card-footer {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .case-card-footer .case-card-close-btn {
+    grid-column: span 2 !important;
+  }
+  .case-card-footer button,
+  .case-card-footer a {
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 7px 6px !important;
+    font-size: 11px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+  }
+}
