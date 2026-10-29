@@ -1119,15 +1119,15 @@ const SHUANGBEI_MRT_SCHEDULE_SPEC = [
   },
   {
     lineCode: 'Y',
-    lineName: '環狀線 (黃線)',
+    lineName: '環狀線 (黃線 Y07-Y20)',
     color: '#fedb00',
     glowColor: '#fef08a',
-    headwaySeconds: 30,
+    headwaySeconds: 360,
     terminalA: '大坪林',
     terminalB: '新北產業園區',
-    fleetCount: 2,
+    fleetCount: 10,
     speedKmh: 55,
-    dwellTimeSec: 3.0
+    dwellTimeSec: 25.0
   },
   {
     lineCode: 'BR',

@@ -179,7 +179,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
     BL: { name: '板南線', terminalClose: '00:52', headways: '2~4分 (離峰4~7分)', depot: '南港／土城機廠', fleetType: '高運量電聯車 6輛編組 (C321/C341)' },
     G:  { name: '松山新店線', terminalClose: '00:42', headways: '3~5分 (離峰5~8分)', depot: '新店機廠', fleetType: '高運量電聯車 6輛編組 (C371/C381)' },
     O:  { name: '中和新蘆線', terminalClose: '00:49', headways: '3~6分 (離峰6~9分)', depot: '中和／新莊機廠', fleetType: '高運量電聯車 6輛編組 (C371型4系)' },
-    Y:  { name: '環狀線', terminalClose: '00:40', headways: '4~7分 (離峰8~10分)', depot: '十四張機廠', fleetType: '中運量鋼輪電聯車 4輛編組 (日立無人駕駛)' },
+    Y:  { name: '環狀線 (黃線)', terminalClose: '00:40', headways: '4~7分 (離峰7~10分, 深夜12~15分)', depot: '十四張車輛段 (新店區十四張路)', fleetType: '610型電聯車 4節編組 (日立軌道 101~117組)' },
     A:  { name: '桃園機場捷運', terminalClose: '00:45', headways: '7~15分', depot: '青埔／蘆竹機廠', fleetType: '鋼輪電聯車 (1000型普通車 / 2000型直達車)' },
     V:  { name: '淡海輕軌', terminalClose: '00:30', headways: '10~15分', depot: '淡海機廠', fleetType: '超低底盤輕軌 5節編組 (行武者號)' },
     K:  { name: '安坑輕軌', terminalClose: '00:30', headways: '10~15分', depot: '安坑機廠', fleetType: '超低底盤輕軌 5節編組 (光耀金)' }
@@ -234,10 +234,14 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'Y': {
-      const runNum = 601 + ((idxSeed * 2 + dirOddEven) % 20);
-      const cA = 101 + (idxSeed % 17);
-      trainNo = `Y-${runNum}`;
-      carSet = `車組 10${cA % 10}`;
+      // 環狀線全線 17 列 610型電聯車 (編組 101 ~ 117，車號 1011~1174)
+      // 新北捷運官方營運車次 (Run No.) 為 01 ~ 17
+      const setIdx = (idxSeed % 17) + 1;
+      const setNum = 100 + setIdx;
+      const runNum = ((idxSeed + dirOddEven) % 17) + 1;
+      const runNumPad = String(runNum).padStart(2, '0');
+      trainNo = `環狀線 Y${runNumPad} (${runNumPad}車次)`;
+      carSet = `第 ${String(setIdx).padStart(2, '0')} 編組 (車號 ${setNum}1-${setNum}4 · 610型)`;
       break;
     }
     case 'A': {
