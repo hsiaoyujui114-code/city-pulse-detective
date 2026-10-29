@@ -2450,3 +2450,57 @@ body:not(.map-zoom-mid) .moving-mrt-train {
     max-height: 45vh;
   }
 }
+/* 🎯 公車專注過濾指示浮動膠囊 (Floating Bus Filter Active Pill) */
+.bus-filter-active-pill {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1.5px solid #f59e0b;
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45), 0 4px 12px rgba(0, 0, 0, 0.6);
+  font-family: inherit;
+  font-size: 11px;
+  color: #f8fafc;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: filterPillPulse 2.5s infinite;
+}
+@keyframes filterPillPulse {
+  0%, 100% { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+  50% { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.7); }
+}
+.bus-filter-active-pill .pill-dot {
+  font-size: 13px;
+}
+.bus-filter-active-pill .pill-clear-btn {
+  background: rgba(239, 68, 68, 0.85);
+  border: none;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.bus-filter-active-pill .pill-clear-btn:hover {
+  background: #dc2626;
+}
+@media (max-width: 768px) {
+  .bus-filter-active-pill {
+    top: 130px;
+    width: 92%;
+    max-width: 360px;
+    font-size: 10px;
+    padding: 5px 10px;
+    justify-content: space-between;
+  }
+}

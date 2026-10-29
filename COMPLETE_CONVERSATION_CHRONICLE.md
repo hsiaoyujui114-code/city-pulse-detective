@@ -4392,3 +4392,73 @@ flowchart TD
 #### 3. 專案手冊與倉庫規格永久固化
 - 已將「第十條：委託人最高自主調度分派體系」同步寫入全專案之 `AI_HANDOFF_PROJECT_SPEC.md` 與 `docs/01_ai_handover/AI_HANDOVER.md`。
 - 恪守委託人最高永久鐵則：全倉庫完成 git commit 並 100% push 至 GitHub 遠端 main 分支。
+---
+
+### 第 125 輪對話全誌：ai-engineer (project) 公車專注過濾鍵（率過鍵）實裝 ✕ 其餘公車全域關閉 ✕ 實體 F 鍵與 CDP 實測 (2026-10-29 晚間)
+
+#### 1. 任務緣起與自主調度
+- **時間戳**：2026-10-29 21:25
+- **委託人原始指示**：
+  > 「要率過鍵，會把公車全部關閉，只剩下我選擇的公車」
+- **Leader 自主智能路由**：
+  - 識別需求特徵：「公車」、「地圖過濾」➔ 100% 歸屬【雙本地圖與全域交通系統】。
+  - **由 Leader 自動派發予專責角色 `project` (`ai-engineer`) 執行**，無需委託人手動指名！
+- **執行倉庫**：
+  - [`city-pulse-detective`](https://github.com/hsiaoyujui114-code/city-pulse-detective)
+  - [`taipei-metro-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg)
+  - [`taipei-detective-core`](https://github.com/hsiaoyujui114-code/taipei-detective-core)
+  - [`taipei-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-detective-rpg)
+
+#### 2. 公車專注過濾鍵系統架構實裝
+
+##### ① 核心過濾邏輯與狀態管理 (`cyber-realmap.js`)
+- **狀態變數**：
+  - `isBusFilterOnlySelected`: 專注過濾開關布林值。
+  - `selectedBusFilterBusId`: 玩家選定之公車車牌（例如 `739-FW`）。
+  - `selectedBusFilterRouteName`: 玩家選定之公車路線（例如 `536區`）。
+  - `busFilterScopeMode`: 支援 `single`（僅留選中之單輛公車）與 `route`（同路線全部公車）。
+- **`renderLiveBusMarkers` 閉環**：
+  - 當過濾啟動時，`busesToRender` 精確過濾為僅剩選中車輛（1 輛）。
+  - 全雙北其餘 1,900+ 輛公車（無論是近景徽章還是遠景 Canvas 圓點）在當次與後續每秒排程中 **100% 自圖層中徹底關閉與清除**。
+  - 選中公車享有高對比金色高光外框與呼吸燈，無視遠近視野恆常清晰可見。
+
+##### ② 4 大便捷觸發管道（視覺 ✕ 鍵盤全覆蓋）
+1. **公車詳細彈窗按鈕**：點擊地圖任意公車，彈窗內增設 `🎯 專注過濾鍵：關閉其餘公車，只顯示此車 (按 F)`。
+2. **巴視達浮動路線看板**：面板標題列增設 `🎯 專注此公車` ⇄ `🌐 恢復全車隊` 按鈕。
+3. **右側戰術圖層面板**：增設 `🎯 專注過濾選中公車 (按 F)` 快捷開關。
+4. **實體鍵盤快捷鍵「過濾鍵 (F)」**：在全島地圖任何時刻按下鍵盤 `F` / `f` 鍵，即刻一鍵切換過濾與還原！
+
+##### ③ 頂部動態浮動膠囊指示器 (`#busFilterActivePill`)
+- 啟動過濾時，於地圖正上方展開金黃色半透明磨砂呼吸燈面板：
+  - 顯示：`🎯 專注過濾中：僅顯示 [路線 (車牌)]（其餘公車已全部關閉）`。
+  - 附帶 `[切換同線全部公車 / 僅留此單車]` 彈性範圍切換鈕。
+  - 附帶 `[✕ 恢復全公車]` 按鈕，點擊即刻一秒復原全雙北車隊。
+
+#### 3. 真實 Chrome CDP 全自動化實測數據
+
+```text
+[1] 過濾前初始狀態：
+    總在線公車數: 958 輛 (350 徽章 + 608 Canvas 圓點)
+    isBusFilterOnlySelected: false
+    全雙北公車全量奔馳中
+
+[2] 點選公車 (739-FW 536區) 並啟動專注過濾：
+    targetBusId: 739-FW (536區)
+    activeBadgesCount: 1 (僅剩所選公車)
+    activeDotsCount: 0 (其餘 957 輛圓點 100% 關閉清除)
+    isBusFilterOnlySelected: true
+    pillVisible: flex (頂部專注過濾浮動膠囊啟動)
+
+[3] 按下鍵盤「F 鍵」快捷解除：
+    activeBadgesCount: 350
+    activeDotsCount: 608
+    全雙北車隊即刻 100% 完整無縫復原！
+
+[4] 手機 390px 視口排版驗證：
+    scrollWidth === clientWidth === 390 (isOverflow: false)
+    過濾膠囊置頂居中，自適應受控於螢幕內！
+```
+
+#### 4. 恪守最高永久鐵則：全倉庫 Commit 與 Push
+- 恪守委託人最高永久鐵則：修改完成後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
+- 四大憲法級紅線（0 少年偵探、0 益碩/藝碩、0 瞬移、0 歷史廢除職稱）0 違規！

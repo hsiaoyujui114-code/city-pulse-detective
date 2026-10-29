@@ -1536,6 +1536,10 @@ let liveBusCanvasDots = new Map();    // 全雙北 2,000+ 輛在線公車硬體�
 let liveRailTrainMarkers = new Map(); // 捷運 (MRT) ＋ 臺鐵 (TRA) ＋ 高鐵 (THSR) 真實線上列車標記
 let liveTransitRealtimeTicker = null; // 每 1 秒平滑推進與台灣標準時間 (UTC+8) 對齊計時器
 let highlightedLiveRouteKeyword = ''; // 使用者於公車面板點擊鎖定之即時路線關鍵字
+let isBusFilterOnlySelected = false;       // 🎯 是否啟動公車專注過濾模式（會把其餘公車全部關閉，只剩下選中的公車）
+let selectedBusFilterBusId = null;         // 玩家選中專注過濾的公車車號 (例如 '409-FY')
+let selectedBusFilterRouteName = null;     // 玩家選中專注過濾的公車路線 (例如 '307')
+let busFilterScopeMode = 'single';         // 'single' (僅此單車) 或 'route' (同路線全部車輛)
 
 // 瀏覽器直連官方資料快取
 let browserRouteMetaById = new Map();
@@ -2854,9 +2858,17 @@ function buildLiveBusPopupHtml(b) {
   const timeLabel = isSim ? '資料時間' : (isStale ? '前次成功時間' : '車機回傳時間');
   const sourceText = isSim ? b.source : (b.source || '雙北交通局官方 eBus 車機 GPS (10秒更新)');
 
+  const isCurrentFiltered = isBusFilterOnlySelected && (selectedBusFilterBusId === b.busId);
+  const filterBtnHtml = `
+      <button onclick="toggleBusFilterOnlySelected('${b.busId}', '${b.routeName}')" style="background:${isCurrentFiltered ? '#d97706' : '#1e293b'}; color:#fff; border:1.5px solid ${isCurrentFiltered ? '#f59e0b' : '#38bdf8'}; border-radius:6px; padding:6px 10px; font-size:11px; font-weight:800; cursor:pointer; width:100%; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 0 10px ${isCurrentFiltered ? 'rgba(245,158,11,0.5)' : 'rgba(56,189,248,0.3)'};">
+        <span>${isCurrentFiltered ? '🌐 解除專注過濾 (恢復全雙北公車)' : '🎯 專注過濾鍵：關閉其餘公車，只顯示此車 (按 F)'}</span>
+      </button>
+  `;
+
   const verifyLinkHtml = isSim
     ? ''
     : `
+      ${filterBtnHtml}
       <button onclick="traceBusRouteAndStops(window.__lastClickedBus || { busId: '${b.busId}', routeId: '${b.routeId}', routeName: '${b.routeName}', lat: ${b.lat}, lon: ${b.lon}, goBack: ${b.goBack || 0}, speed: ${b.speed || 0}, headsign: '${b.headsign || ''}' })" style="background:linear-gradient(135deg, #0284c7, #38bdf8); color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 0 10px rgba(56,189,248,0.5);">
         <span>🚏 巴視達：展開全線移動軌跡與站牌</span>
       </button>
@@ -3169,7 +3181,12 @@ function showBusTaNavigatorPanel(bus, stops, nextStopIdx) {
           ${bus.headsign || ''} · <span style="color:#facc15;">${speedText}</span>
         </div>
       </div>
-      <button onclick="clearTrackedBusRoute()" style="background:#ef4444; border:none; color:#fff; font-size:11px; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:700;">關閉</button>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button onclick="toggleBusFilterOnlySelected('${bus.busId}', '${bus.routeName}')" style="background:${isBusFilterOnlySelected && selectedBusFilterBusId === bus.busId ? '#d97706' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:800; display:flex; align-items:center; gap:3px;">
+          <span>${isBusFilterOnlySelected && selectedBusFilterBusId === bus.busId ? '🌐 恢復全車隊' : '🎯 專注此公車'}</span>
+        </button>
+        <button onclick="clearTrackedBusRoute()" style="background:#ef4444; border:none; color:#fff; font-size:11px; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:700;">關閉</button>
+      </div>
     </div>
     <div style="padding:6px 12px; background:rgba(30,41,59,0.8); font-size:10px; color:#38bdf8; display:flex; justify-content:space-between;">
       <span>🔜 下一站：<b>${nextStName}</b></span>
@@ -3191,6 +3208,119 @@ function showBusTaNavigatorPanel(bus, stops, nextStopIdx) {
   }, 80);
 }
 
+// ==========================================
+// 🎯 核心過濾鍵系統：把公車全部關閉，只剩下玩家選擇的公車 (快捷鍵 F)
+// ==========================================
+function toggleBusFilterOnlySelected(targetBusId, targetRouteName, mode) {
+  if (mode) busFilterScopeMode = mode;
+
+  if (targetBusId) {
+    if (isBusFilterOnlySelected && selectedBusFilterBusId === targetBusId && (!mode || mode === busFilterScopeMode)) {
+      // 再次點擊相同車輛 ➔ 關閉過濾，恢復全車隊
+      clearBusFilterOnlySelected();
+      return;
+    }
+    // 啟用專注過濾
+    isBusFilterOnlySelected = true;
+    selectedBusFilterBusId = targetBusId;
+    selectedBusFilterRouteName = targetRouteName || '';
+    if (typeof showNavToast === 'function') {
+      const scopeLabel = busFilterScopeMode === 'route' ? `【${selectedBusFilterRouteName} 全線公車】` : `公車【${selectedBusFilterRouteName ? selectedBusFilterRouteName + ' (' + targetBusId + ')' : targetBusId}】`;
+      showNavToast(`🎯 專注過濾已啟動：已關閉其餘公車，全地圖僅保留 ${scopeLabel}！(按 F 鍵可恢復)`);
+    }
+  } else {
+    // 快捷鍵 F 或工具面板按鈕切換
+    if (isBusFilterOnlySelected) {
+      clearBusFilterOnlySelected();
+      return;
+    }
+    const activeBus = window.__lastClickedBus || (liveBusFleetData && liveBusFleetData.find(b => b.busId === currentlyTrackedBusId)) || (liveBusFleetData && liveBusFleetData[0]);
+    if (activeBus) {
+      isBusFilterOnlySelected = true;
+      selectedBusFilterBusId = activeBus.busId;
+      selectedBusFilterRouteName = activeBus.routeName || '';
+      if (typeof showNavToast === 'function') {
+        showNavToast(`🎯 專注過濾已啟動：已關閉其餘公車，僅保留【${activeBus.routeName} (${activeBus.busId})】！(按 F 鍵恢復)`);
+      }
+    } else {
+      if (typeof showNavToast === 'function') {
+        showNavToast('💡 請先在地圖上點選一輛公車，即可啟動專注過濾（僅留該車、關閉其餘公車）！');
+      }
+      return;
+    }
+  }
+
+  updateBusFilterFloatingPill();
+  updateTacticalBusFilterButton();
+  if (isTransitLiveSyncEnabled && liveBusFleetData && liveBusFleetData.length > 0) {
+    renderLiveBusMarkers(liveBusFleetData);
+  }
+}
+
+function clearBusFilterOnlySelected() {
+  isBusFilterOnlySelected = false;
+  selectedBusFilterBusId = null;
+  selectedBusFilterRouteName = null;
+  updateBusFilterFloatingPill();
+  updateTacticalBusFilterButton();
+  if (typeof showNavToast === 'function') {
+    showNavToast('🌐 已解除專注過濾：全雙北 1,900+ 輛公車車隊已全數恢復顯現！');
+  }
+  if (isTransitLiveSyncEnabled && liveBusFleetData && liveBusFleetData.length > 0) {
+    renderLiveBusMarkers(liveBusFleetData);
+  }
+}
+
+function setBusFilterScopeMode(mode) {
+  busFilterScopeMode = mode;
+  updateBusFilterFloatingPill();
+  if (isTransitLiveSyncEnabled && liveBusFleetData && liveBusFleetData.length > 0) {
+    renderLiveBusMarkers(liveBusFleetData);
+  }
+  if (typeof showNavToast === 'function') {
+    const txt = mode === 'route' ? `已切換為【同路線 ${selectedBusFilterRouteName} 全部公車】` : `已切換為【僅選定單輛公車 ${selectedBusFilterBusId}】`;
+    showNavToast(`🎯 過濾範圍變更：${txt}`);
+  }
+}
+
+function updateBusFilterFloatingPill() {
+  const pill = document.getElementById('busFilterActivePill');
+  const textEl = document.getElementById('busFilterPillText');
+  if (!pill) return;
+
+  if (isBusFilterOnlySelected && selectedBusFilterBusId) {
+    pill.style.display = 'flex';
+    const busLabel = selectedBusFilterRouteName ? `${selectedBusFilterRouteName} (${selectedBusFilterBusId})` : selectedBusFilterBusId;
+    const isSingle = busFilterScopeMode === 'single';
+    if (textEl) {
+      textEl.innerHTML = `
+        <span>🎯 專注過濾中：僅顯示 <b>${isSingle ? busLabel : '路線 ' + selectedBusFilterRouteName}</b>（其餘公車已全部關閉）</span>
+        <button onclick="setBusFilterScopeMode('${isSingle ? 'route' : 'single'}')" style="background:rgba(2,132,199,0.8); border:1px solid #38bdf8; color:#fff; font-size:9px; padding:1px 6px; border-radius:8px; cursor:pointer; margin-left:4px;">
+          ${isSingle ? '切換同線全部公車' : '切換僅此單車'}
+        </button>
+      `;
+    }
+  } else {
+    pill.style.display = 'none';
+  }
+}
+
+function updateTacticalBusFilterButton() {
+  const btn = document.getElementById('btnToggleBusFilter');
+  const tag = document.getElementById('busFilterStatusTag');
+  if (btn && tag) {
+    if (isBusFilterOnlySelected) {
+      btn.classList.add('active');
+      tag.textContent = 'FILTERED (ON)';
+      tag.style.color = '#f59e0b';
+    } else {
+      btn.classList.remove('active');
+      tag.textContent = 'ALL';
+      tag.style.color = '#94a3b8';
+    }
+  }
+}
+
 function renderLiveBusMarkers(buses) {
   if (!map || !ebusDynamicBusesGroup) return;
   if (!isBusVisible || !isBusFleetVisible) {
@@ -3200,13 +3330,23 @@ function renderLiveBusMarkers(buses) {
     return;
   }
 
+  // 🎯 專注過濾鍵判斷：若開啟專注過濾，將其餘公車全部關閉，只剩下玩家選擇的公車
+  let busesToRender = buses;
+  if (isBusFilterOnlySelected && selectedBusFilterBusId) {
+    if (busFilterScopeMode === 'route' && selectedBusFilterRouteName) {
+      busesToRender = buses.filter(b => String(b.routeName).toLowerCase() === String(selectedBusFilterRouteName).toLowerCase());
+    } else {
+      busesToRender = buses.filter(b => b.busId === selectedBusFilterBusId);
+    }
+  }
+
   const center = map.getCenter();
   const bounds = map.getBounds().pad(0.35); // 擴大渲染緩衝區以防邊緣跳閃
   const kw = (highlightedLiveRouteKeyword || '').trim().toLowerCase();
   const curZ = map ? map.getZoom() : 15;
 
   // 計算每輛公車與視窗範圍關係
-  const scored = buses.map(b => {
+  const scored = busesToRender.map(b => {
     const inBounds = bounds.contains([b.lat, b.lon]);
     const isHighlighted = kw.length > 0 && (
       String(b.routeName).toLowerCase().includes(kw) ||
@@ -3235,7 +3375,7 @@ function renderLiveBusMarkers(buses) {
   scored.forEach((item, idx) => {
     const b = item.b;
     const busKey = `live_${b.busId}`;
-    const useBadge = item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
+    const useBadge = isBusFilterOnlySelected || item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
 
     if (useBadge) {
       activeBadgeKeys.add(busKey);
@@ -6924,6 +7064,15 @@ function initWalkNavFlowlineSystem() {
 }
 
 function handlePlayerKeyboardWalk(e) {
+  // 🎯 鍵盤「過濾鍵 (F)」：快速切換公車專注過濾模式（會把公車全部關閉，只剩下選中的公車）
+  if (e.key === 'f' || e.key === 'F') {
+    if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+      e.preventDefault();
+      toggleBusFilterOnlySelected();
+      return;
+    }
+  }
+
   // Esc 鍵關閉所有彈窗（案件戰術詳情、鄰近交互、地圖氣泡）
   if (e.key === 'Escape' || e.code === 'Escape') {
     closeCaseModal();

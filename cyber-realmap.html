@@ -106,6 +106,13 @@
     </div>
   </div>
 
+  <!-- 🎯 公車專注過濾指示浮動膠囊 (按 F 鍵或點擊隨時解除過濾) -->
+  <div id="busFilterActivePill" class="bus-filter-active-pill" style="display:none;">
+    <span class="pill-dot">🎯</span>
+    <span id="busFilterPillText">專注過濾中：僅顯示公車 <b>--</b>（其餘公車已關閉）</span>
+    <button onclick="clearBusFilterOnlySelected()" class="pill-clear-btn" title="恢復全雙北所有公車">✕ 恢復全公車</button>
+  </div>
+
   
 
   <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
@@ -291,6 +298,11 @@
       </button>
       <button class="tactical-tool-btn" id="btnShuangbeiBusOverview" onclick="zoomToShuangbeiBusOverview()" title="一鍵俯瞰雙北全境 2,000+ 輛奔馳公車" style="background:rgba(2,132,199,0.3); border-color:#38bdf8;">
         <span>🎯 雙北公車全覽</span><span style="color:#38bdf8; font-size:10px;">ALL</span>
+      </button>
+      <!-- 🌟 專注過濾鍵 (快捷鍵 F：關閉其餘公車，只剩下我選擇的公車) -->
+      <button class="tactical-tool-btn" id="btnToggleBusFilter" onclick="toggleBusFilterOnlySelected()" title="過濾鍵（快捷鍵 F）：關閉全雙北其餘公車，僅保留我選擇的公車">
+        <span>🎯 專注過濾鍵 (按 F)</span>
+        <span id="busFilterStatusTag" style="color:#94a3b8;">ALL</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleBusFleet" onclick="toggleBusFleetLayer()">
         <span>🚍 公車巡航 (紅燈強制停等)</span>
