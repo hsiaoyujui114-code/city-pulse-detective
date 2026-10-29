@@ -51,7 +51,7 @@
     </div>
 
     <!-- 雙軌與偵探切換按鈕 -->
-    <div style="display:flex; gap:8px;">
+    <div class="top-nav-actions" style="display:flex; gap:8px;">
       <a href="cases.html" target="_blank" class="dual-track-btn" id="btnCasesAll" style="border-color:rgba(251,191,36,0.5); color:#fbbf24; background:rgba(217,119,6,0.18);" title="開啟 50 宗歷史風情與生活科學案件全集展示手冊">
         <span>📂 50 宗科學案件全集</span>
       </a>
@@ -98,11 +98,11 @@
     <button class="filter-chip-btn" data-filter="cases" onclick="filterStoreMarkers('cases', this)">🚨 10大示範案件</button>
   </div>
 
-  <!-- 🛰️ 雙北四軌即時出入境通報跑馬燈 HUD (Live Transit Dispatch Ticker HUD) -->
+  <!-- 🛰️ 雙北四軌動態通報跑馬燈 HUD (Live Transit Dispatch Ticker HUD) -->
   <div class="transit-ticker-bar" id="transitTickerBar">
-    <div class="ticker-badge">🛰️ 雙北四軌即時出入境通報</div>
+    <div class="ticker-badge">🛰️ 雙北四軌動態通報</div>
     <div class="ticker-content-track" id="tickerContentTrack">
-      <span class="ticker-marquee-text" id="tickerMarqueeText">📡 即時交通走廊連線中：高鐵出入境走廊、台鐵縱貫線北段、捷運66列在線列車、307幹線真實車隊同步運轉中...</span>
+      <span class="ticker-marquee-text" id="tickerMarqueeText">📡 動態交通走廊連線中：高鐵出入境走廊、台鐵縱貫線北段、捷運在線列車、大臺北公車車隊動態運轉中...</span>
     </div>
   </div>
 
@@ -143,15 +143,15 @@
       <span class="telemetry-val highlight" id="hudLiveBusCount" style="color:#22c55e;">連線同步中</span>
     </div>
     <div class="telemetry-row">
-      <span class="telemetry-label">即時捷運列車 MRT:</span>
+      <span class="telemetry-label">捷運推算列車 MRT:</span>
       <span class="telemetry-val highlight" id="hudLiveMrtCount" style="color:#38bdf8;">連線同步中</span>
     </div>
     <div class="telemetry-row">
-      <span class="telemetry-label">即時臺鐵列車 TRA:</span>
+      <span class="telemetry-label">臺鐵推算列車 TRA:</span>
       <span class="telemetry-val highlight" id="hudLiveTraCount" style="color:#60a5fa;">連線同步中</span>
     </div>
     <div class="telemetry-row">
-      <span class="telemetry-label">即時高鐵列車 THSR:</span>
+      <span class="telemetry-label">高鐵推算列車 THSR:</span>
       <span class="telemetry-val highlight" id="hudLiveThsrCount" style="color:#f97316;">連線同步中</span>
     </div>
     <div class="telemetry-row">

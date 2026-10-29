@@ -2171,6 +2171,15 @@ body.map-zoom-near .station-marker-wrap .mrt-station-title {
   display: inline;
 }
 
+/* 🚄 軌道列車在 Zoom < 13 廣域視野下簡化標籤，隱藏速度副標籤避免與捷運線互疊 (待修正 5/5) */
+body:not(.map-zoom-mid) .moving-mrt-train .mrt-live-speed-tag {
+  display: none !important;
+}
+body:not(.map-zoom-mid) .moving-mrt-train {
+  padding: 1px 5px !important;
+  font-size: 9px !important;
+}
+
 @media (max-width: 768px) {
   /* 🚌 公車導航面板手機版防超出螢幕 (待修正 1/10) */
   .ebus-navigator-panel {
@@ -2217,7 +2226,26 @@ body.map-zoom-near .station-marker-wrap .mrt-station-title {
   .jump-scroll-wrap {
     order: 3 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
     margin: 2px 0 !important;
+  }
+  .top-nav-actions {
+    order: 2 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    margin: 2px 0 !important;
+  }
+  .top-nav-actions .dual-track-btn {
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
   }
   .dual-track-btn {
     font-size: 10px !important;

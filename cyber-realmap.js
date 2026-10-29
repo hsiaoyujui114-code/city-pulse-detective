@@ -19,13 +19,14 @@ const TRA_DATA = (typeof SHUANGBEI_TRA_NETWORK !== 'undefined') ? SHUANGBEI_TRA_
 const MRT_DATA = (typeof SHUANGBEI_MRT_NETWORK !== 'undefined') ? SHUANGBEI_MRT_NETWORK : [];
 const EBUS_KEY_ROUTES = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHUANGBEI_EBUS_KEY_ROUTES : [];
 
-// ⏱️ 各交通資料來源最後成功時間表 (待修正 5/10)
+// ⏱️ 各交通資料來源最後成功時間表 (待修正 1/5 & 5/10)
 const sourceLastOkMs = { bus: 0, intercity: 0, trtc: 0, tymc: 0, tra: 0, thsr: 0 };
 let prevBusPlates = new Map();
 
 function isSourceStale(key, limitMs = 60000) {
-  if (!sourceLastOkMs[key]) return true;
-  return (Date.now() - sourceLastOkMs[key]) > limitMs;
+  const lastMs = (key === 'thsr' && (!sourceLastOkMs.thsr || sourceLastOkMs.thsr === 0)) ? (typeof lastBrowserThsrFetchMs !== 'undefined' ? lastBrowserThsrFetchMs : 0) : sourceLastOkMs[key];
+  if (!lastMs) return true;
+  return (Date.now() - lastMs) > limitMs;
 }
 
 // 3. 全域地圖與圖層管理
@@ -330,6 +331,7 @@ function initCyberRealMap() {
     updateMrtLODVisibility();
   });
   updateStoreLODVisibility();
+  updateMrtLODVisibility();
   addDemoCasesMarkers();
   initPlayerAvatarMarker();
   setupTelemetryListeners();
@@ -2125,7 +2127,7 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
         lat = curSt.lat + (nextSt.lat - curSt.lat) * eased;
         lon = curSt.lon + (nextSt.lon - curSt.lon) * eased;
         speed = Math.max(22, Math.round(68 * Math.sin(u * Math.PI)));
-        statusText = `🚇 即時行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
+        statusText = `🚇 推算行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
       }
     } else {
       const remSec = Math.max(4, estMin * 60 - elapsedSec);
@@ -2133,7 +2135,7 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
       lat = prevSt.lat + (curSt.lat - prevSt.lat) * u;
       lon = prevSt.lon + (curSt.lon - prevSt.lon) * u;
       speed = Math.max(22, Math.round(62 * Math.sin(u * Math.PI)));
-      statusText = `🚇 即時進站中：${prevSt.name} ➔ ${curSt.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
+      statusText = `🚇 推算進站中：${prevSt.name} ➔ ${curSt.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
     }
 
     const curMinutes = (twTime && twTime.hour != null) ? (twTime.hour * 60 + twTime.minute) : null;
@@ -2652,6 +2654,22 @@ async function syncLiveTransitData() {
         isLastTransitFromLiveServer = true;
         liveTransitDataMode = 'LIVE_SERVER';
 
+        const serverNowMs = Date.now();
+        if (Array.isArray(liveBusFleetData) && liveBusFleetData.length > 0) {
+          sourceLastOkMs.bus = serverNowMs;
+          sourceLastOkMs.intercity = serverNowMs;
+        }
+        if (Array.isArray(liveMrtTrainsData) && liveMrtTrainsData.length > 0) {
+          sourceLastOkMs.trtc = serverNowMs;
+          sourceLastOkMs.tymc = serverNowMs;
+        }
+        if (Array.isArray(liveTraTrainsData) && liveTraTrainsData.length > 0) {
+          sourceLastOkMs.tra = serverNowMs;
+        }
+        if (Array.isArray(liveThsrTrainsData) && liveThsrTrainsData.length > 0) {
+          sourceLastOkMs.thsr = serverNowMs;
+        }
+
         const officialBuses = liveBusFleetData.filter(b => b.dataKind === 'OFFICIAL_GPS');
     const simBuses = liveBusFleetData.filter(b => b.dataKind === 'SIMULATED');
     renderLiveBusMarkers(liveBusFleetData);
@@ -2696,20 +2714,30 @@ async function syncLiveTransitData() {
 
     const rawBusList = (busGz && Array.isArray(busGz.BusInfo)) ? busGz.BusInfo : [];
     const rawInterCity = Array.isArray(interCityJson) ? interCityJson : [];
+    if (rawBusList.length > 0) {
+      sourceLastOkMs.bus = fetchMs;
+    }
+    if (rawInterCity.length > 0) {
+      sourceLastOkMs.intercity = fetchMs;
+    }
     if (rawBusList.length > 0 || rawInterCity.length > 0) {
       liveBusFleetData = computeBrowserLiveBuses(rawBusList, rawInterCity, getTaiwanTimePartsBrowser());
     }
 
-    if (Array.isArray(trtcJson)) {
+    if (Array.isArray(trtcJson) && trtcJson.length > 0) {
+      sourceLastOkMs.trtc = fetchMs;
       browserRawMrtTrtc = trtcJson.map(x => ({ ...x, _fetchMs: fetchMs }));
     }
-    if (Array.isArray(tymcJson)) {
+    if (Array.isArray(tymcJson) && tymcJson.length > 0) {
+      sourceLastOkMs.tymc = fetchMs;
       browserRawMrtTymc = tymcJson.map(x => ({ ...x, _fetchMs: fetchMs }));
     }
-    if (Array.isArray(traJson)) {
+    if (Array.isArray(traJson) && traJson.length > 0) {
+      sourceLastOkMs.tra = fetchMs;
       browserRawTraLive = traJson;
     }
     if (Array.isArray(thsrJson) && thsrJson.length > 0) {
+      sourceLastOkMs.thsr = fetchMs;
       browserRawThsrToday = thsrJson;
       lastBrowserThsrFetchMs = fetchMs;
     }
@@ -3196,18 +3224,18 @@ function renderLiveBusMarkers(buses) {
     return a.distSq - b.distSq;
   });
 
-  // 顯著提升雙北公車能見度：
-  // Zoom >= 14: 視野內公車 (上限 600) 一律使用完整動態徽章 (車號+車牌+速度)
-  // Zoom 12~13 (雙北全景): 視野內公車 (上限 500) 使用緊湊型微型公車膠囊 [🚌 307]
-  // 視野外或其餘遠景車輛: 呈現為清晰高光公車點位，點擊亦可開卡片
-  const maxBadges = curZ >= 14 ? 600 : (curZ >= 12 ? 450 : 120);
+  // 🏷️ 公車標籤 LOD 視距分級 (待修正 5/5: 徹底杜絕 1,900+ 輛全量公車在廣域互疊遮蓋)
+  // Zoom < 15: 全量公車渲染為無文字輕量 Canvas 圓點 (點擊與懸浮可查看路線、車牌、卡片)，僅高亮選中車顯示文字徽章
+  // Zoom >= 15: 視野內公車 (上限 350) 展開完整動態文字徽章 (車號+車牌+速度)
+  const isHighDetailZoom = curZ >= 15.0;
+  const maxBadges = isHighDetailZoom ? 350 : 0;
   const activeBadgeKeys = new Set();
   const activeDotKeys = new Set();
 
   scored.forEach((item, idx) => {
     const b = item.b;
     const busKey = `live_${b.busId}`;
-    const useBadge = item.isHighlighted || (item.inBounds && idx < maxBadges);
+    const useBadge = item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
 
     if (useBadge) {
       activeBadgeKeys.add(busKey);
@@ -4009,7 +4037,9 @@ function addMrtLayer() {
 
 function updateMrtLODVisibility() {
   if (typeof map === 'undefined' || !map) return;
+  const isMid = map.getZoom() >= 13.0;
   const isNear = map.getZoom() >= 14.0;
+  document.body.classList.toggle('map-zoom-mid', isMid);
   document.body.classList.toggle('map-zoom-near', isNear);
 }
 
@@ -4732,7 +4762,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(65 + Math.sin(u * Math.PI) * 90);
         isAtStation = false; curSt = '高鐵台北站';
-        statusText = `🚅 即時高速行駛：板橋 ➔ 台北 (往南港・${speed} km/h)`;
+        statusText = `🚅 高速行駛：板橋 ➔ 台北 (往南港・${speed} km/h)`;
       } else if (elapsed < 840) {
         lat = THSR_PTS[2][0]; lon = THSR_PTS[2][1];
         speed = 0; isAtStation = true; curSt = '高鐵台北站';
@@ -4743,7 +4773,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(55 + Math.sin(u * Math.PI) * 80);
         isAtStation = false; curSt = '高鐵南港站';
-        statusText = `🚅 即時進站中：台北 ➔ 南港 (往南港・${speed} km/h)`;
+        statusText = `🚅 推算進站中：台北 ➔ 南港 (往南港・${speed} km/h)`;
       } else {
         lat = THSR_PTS[0][0]; lon = THSR_PTS[0][1];
         speed = 0; isAtStation = true; curSt = '高鐵南港站';
@@ -4958,8 +4988,8 @@ function generateRealtimeMrtCorridor(twTime) {
             color: line.color || '#0070bd',
             status: isAtStation
               ? `🚉 【${s1.name}】月台停靠中 (往${destName}・${Math.ceil(20 - inSegSec)}s 後發車)`
-              : `🚇 即時行駛：${s1.name} ➔ ${s2.name} (往${destName}・${speed} km/h)`,
-            source: '雙北捷運即時時鐘推進引擎'
+              : `🚇 推算行駛：${s1.name} ➔ ${s2.name} (往${destName}・${speed} km/h)`,
+            source: '雙北捷運班距推算引擎'
           });
         }
       });
@@ -5166,10 +5196,10 @@ function toggleMrtTrainsLayer() {
   if (btn) {
     if (isMrtTrainsVisible) {
       btn.classList.add('active');
-      btn.innerHTML = '<span>🚄 捷運線上即時列車</span><span style="color:#38bdf8;">ACTIVE</span>';
+      btn.innerHTML = '<span>🚇 捷運班距推算列車</span><span style="color:#38bdf8;">ACTIVE</span>';
     } else {
       btn.classList.remove('active');
-      btn.innerHTML = '<span>🚄 捷運線上即時列車</span><span style="color:#94a3b8;">PAUSED</span>';
+      btn.innerHTML = '<span>🚇 捷運班距推算列車</span><span style="color:#94a3b8;">PAUSED</span>';
     }
   }
 }
@@ -6430,7 +6460,7 @@ function updateTransitTickerBroadcast(transitSnapshot = null) {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  let text = `[${timeStr}] 🛰️ 雙北四軌即時走廊：`;
+  let text = `[${timeStr}] 🛰️ 雙北四軌動態走廊：`;
 
   if (transitSnapshot) {
     const thsr = transitSnapshot.thsrTrains || transitSnapshot.thsr || [];

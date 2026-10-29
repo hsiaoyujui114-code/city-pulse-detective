@@ -4172,3 +4172,83 @@ flowchart TD
 
 #### 5. 4 大專案倉庫全面同步推送
 - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四個倉庫之 `cyber-realmap.js`、`cyber-realmap.html`、`cyber-realmap.css` 與文件全誌全面同步，並推送至 GitHub 遠端 main 分支。
+
+---
+
+### 第 121 輪對話全誌：地圖問題欄五大待修正項目 100% 徹底修復與全平台實測驗收 (2026-10-29 傍晚)
+
+#### 1. 任務核心指令與方針
+- **委託人最高鐵則**：
+  1. 叫 project 把最新紀錄抓下來（Git pull origin main 對齊 Round 120）。
+  2. 閱讀問題欄（`https://files.instinct.com/ju4sf6hj7efj-agy`）並將裡面列出的問題全數修好。
+  3. 每次修改完成後，100% 自動 `git add`、`commit` 並 `push` 到 GitHub。
+- **嚴守四大憲法紅線**：
+  1. 0 少年偵探（全面稱「都會調查員」或「市民」）。
+  2. 0 益碩／藝碩。
+  3. 0 地圖瞬移（遵循曼哈頓人行折角步道與大眾運輸真實等車移轉）。
+  4. 0 歷史廢除職稱。
+
+#### 2. 地圖問題欄 5 大項目修復對照
+
+##### 【待修正 1／5：斷線新鮮度追蹤接線完成】—— 通過
+- **根本原因**：`sourceLastOkMs` 宣告後在整個代碼庫中零處寫入，導致所有來源被 `isSourceStale()` 判為過期，HUD 恆亮黃燈「(過期)」。
+- **修復措施**：
+  - 在通道 B（`syncLiveTransitData` 瀏覽器直連端點）中，於各來源（公車 `rawBusList`、客運 `rawInterCity`、北捷 `trtcJson`、桃捷 `tymcJson`、台鐵 `traJson`、高鐵 `thsrJson`）拉取成功時，各自記錄獨立 `fetchMs` 時間戳記至 `sourceLastOkMs`。
+  - 在通道 A（本地私服聚合端點）中，成功回傳時亦將 `nowMs` 同步寫入各來源時間表。
+  - 嚴格保留新鮮度閥值（公車/捷運/台鐵 60 秒、高鐵 15 分鐘），正常時亮綠燈，斷線超過 60 秒自動如實轉為黃燈「離線推算」。
+- **CDP 實測驗證**：
+  - 初始載入實測：`sourceLastOkMs` 成功寫入，HUD 顯示 `🟢公車 🟢捷運 🟢台鐵 🟢高鐵`，公車計數顯示 `X 輛 (官方GPS) ＋ Y 輛 (班距模擬)`。
+  - 逾時模擬實測：將時間戳回撥 70 秒後，HUD 即刻如實轉黃 `🟡台鐵(過期)`，公車計數轉為 `1880 輛 (資料過期)`。
+
+##### 【待修正 2／5：捷運站名 LOD 接線完成與樞紐站正常顯示】—— 通過
+- **根本原因**：`updateMrtLODVisibility()` 過去僅維護 `map-zoom-near`（zoom >= 14），全專案從未設置 `map-zoom-mid` class，導致 CSS 中 `body:not(.map-zoom-mid) .station-marker-wrap.is-hub .mrt-station-title { display: none; }` 恆成立，32 個特等與轉乘樞紐站名在任何層級均被隱藏；且初始化時未主動觸發。
+- **修復措施**：
+  - 在 `updateMrtLODVisibility()` 補齊中間門檻：`const isMid = map.getZoom() >= 13.0; document.body.classList.toggle('map-zoom-mid', isMid);`。
+  - 在地圖初始化 `initCyberRealMap()` 於 `zoomend` 監聽註冊後立即主動調用一次 `updateMrtLODVisibility()`。
+- **CDP 實測驗證**：
+  - Zoom 12：`bodyClasses: ""`，樞紐站與非樞紐站名皆為 `display: none`（消除廣域覆蓋，僅留幾何光點）。
+  - Zoom 13：`bodyClasses: "map-zoom-mid"`，頂埔、府中、板橋、西門、台北車站等樞紐站名為 `display: inline`，非樞紐站名隱藏。
+  - Zoom 14+：`bodyClasses: "map-zoom-mid map-zoom-near"`，全雙北所有捷運站名皆為 `display: inline`。
+  - 初始載入：重整後不碰地圖即刻呈現對應層級正確顯示。
+
+##### 【待修正 3／5：手機頁首橫向溢出 100% 收進 100vw】—— 通過
+- **根本原因**：手機版 `.holo-top-bar` 內部 `.jump-scroll-wrap` 缺乏 `min-width: 0`；同時右側切換按鈕群缺少包裝容器折行約束，導致 320px / 390px 視口寬度下撐出 420px 的橫向滾動。
+- **修復措施**：
+  - 在 `@media (max-width: 768px)` 中為 `.jump-scroll-wrap` 補上 `order: 3 !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: 1 1 auto !important; margin: 2px 0 !important;`。
+  - 為頂部按鈕列增設 `.top-nav-actions`，在手機端指定 `order: 2 !important; width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 4px !important;`，按鈕本體設為 `flex: 1 1 auto; min-width: 0`。
+- **CDP 實測驗證**：
+  - 320px：`scrollWidth === clientWidth === 320`（isOverflow: false）。
+  - 390px：`scrollWidth === clientWidth === 390`（isOverflow: false）。
+  - 768px：`scrollWidth === clientWidth === 768`（isOverflow: false）。
+  - 1280px：`scrollWidth === clientWidth === 1280`（isOverflow: false）。
+  - 全視口下 100% 消除水平滾動條，頁首按鈕與特區快速跳轉條均完美受控於螢幕內！
+
+##### 【待修正 4／5：殘留「即時」字樣徹底清理與 Y 線回歸】—— 通過
+- **根本原因**：部分無真實 GPS 的軌道推算系統與看板界面殘留「即時」詞彙。
+- **修復措施**：
+  - `cyber-realmap.html` 頂部跑馬燈徽章由「🛰️ 雙北四軌即時出入境通報」修正為「🛰️ 雙北四軌動態通報」。
+  - `cyber-realmap.js` 跑馬燈文本由「雙北四軌即時走廊」修正為「雙北四軌動態走廊」。
+  - 遙測 HUD 標籤將北捷/台鐵/高鐵修正為「推算列車」。
+  - 捷運列車彈窗狀態由「🚇 即時行駛：…」修正為「🚇 推算行駛：…」，「🚇 即時進站中：…」修正為「🚇 推算進站中：…」。
+  - 右側戰術圖層開關由「🚄 捷運線上即時列車」修正為「🚇 捷運班距推算列車」。
+  - 恪守鐵則：「官方即時」嚴格僅保留給具備真實車機 GPS 的來源（公車 GetBusData.gz 與公路客運）。
+- **Y 線回歸觀察**：
+  - 列車物件帶有完整 `sourceTrace` 標記（本地伺服器回傳 `web_metro_taipei_live`；離線/直連為 `headway-sim`），未再發現假冒 LiveBoard 之異常車組。
+
+##### 【待修正 5／5：全車隊 1,900+ 輛公車與列車標籤互疊（LOD 視距分級）】—— 通過
+- **根本原因**：全量公車上線後同場 ~1,900 輛公車在 Zoom 12~14 產生大量車牌文字標籤互疊，遮蔽街廓視野。
+- **修復措施**：
+  - **公車視距分級**：
+    - Zoom < 15：公車以無文字之高性能 Canvas 圓點渲染（點擊與懸浮可查看路線、車牌、卡片與巴視達軌跡），僅高亮選中車顯示文字徽章。
+    - Zoom >= 15：視野內公車展開完整動態文字徽章（車號+車牌+速度）。
+    - 絕不刪除車輛、絕不關閉全車隊功能，保留 1,888+ 輛全雙北車隊！
+  - **軌道列車視距分級**：
+    - Zoom < 13：軌道列車在廣域視野下簡化標籤，隱藏速度副標籤，消除文字互疊。
+- **CDP 實測數據**：
+  - Zoom 12：公車標籤數 0，公車圓點數 1,877（清爽流暢，街廓完全可讀）。
+  - Zoom 13：公車標籤數 0，公車圓點數 1,877。
+  - Zoom 15：公車標籤數 350（視野內展開），公車圓點數 1,527（視野外或密集區緩衝）。
+
+#### 3. 專案倉庫鏡像同步與 Git 推送
+- 本地雙倉庫 (`city-pulse-detective` ✕ `taipei-metro-detective-rpg`) 程式碼 100% 鏡像同步。
+- 嚴格落實委託人最高鐵則：已執行 `git add`、`commit` 並成功 `push` 至 GitHub 遠端 main 分支。
