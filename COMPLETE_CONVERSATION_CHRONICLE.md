@@ -4367,3 +4367,28 @@ flowchart TD
 
 #### 4. 恪守最高永久鐵則：全倉庫 Commit 與 Push
 - 恪守委託人最高鐵則：更新完成後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
+---
+
+### 第 124 輪對話全誌：委託人最高自主調度分派體系確立（地圖➔project ✕ 偵探程式碼➔code ✕ 案件劇本➔story ✕ Leader自主智能派發）(2026-10-29 晚間)
+
+#### 1. 任務緣起與委託人最高永久指示
+- **時間戳**：2026-10-29 21:22
+- **委託人原始指示**：
+  > 「以後我跟你講的東西，你要自己判別，我不會再跟你講說要跟誰講，除非有必要。
+  > 
+  > 所以做地圖的話，就是要給project指令
+  > 做偵探內容的話，但我說的不是案件，是《偵探程式碼》的話，是要給code
+  > 如果是要做按鍵（案件）的話，請你交給story」
+- **調度主持**：Leader（專案協同與總管調度長）
+
+#### 2. 自主分派三權分立鐵則確立
+- **`Leader`（總管調度長）職責**：
+  - 未來接收委託人任何需求時，全面啟動自主語意識別與需求領域剖析，免除委託人指名之累。
+- **三大專職角色精確職權**：
+  1. 🗺️ **`project`**（`ai-engineer`，倉庫 `city-pulse-detective` ✕ `taipei-metro-detective-rpg`）：專責地圖、GIS、雙北交通動態、HUD 視口排版、以及地圖問題欄（`https://files.instinct.com/ju4sf6hj7efj-agy`）之全量修訂。
+  2. 💻 **`code`**（`ai-engineer`，倉庫 `taipei-detective-core`）：專責《偵探程式碼》、核心推理引擎狀態機、生活科學鑑識實驗邏輯、DAG Eureka 心防瓦解算法、REST API 路由與自動化測試套件。
+  3. 📜 **`story`**（`planner`，倉庫 `taipei-detective-rpg`）：專責 50 宗歷史生活科學案件全集之劇本、涉案華人關係人群像、口供證詞、物證對質線索、108 課綱科普實驗企劃與獨立研究企劃書。
+
+#### 3. 專案手冊與倉庫規格永久固化
+- 已將「第十條：委託人最高自主調度分派體系」同步寫入全專案之 `AI_HANDOFF_PROJECT_SPEC.md` 與 `docs/01_ai_handover/AI_HANDOVER.md`。
+- 恪守委託人最高永久鐵則：全倉庫完成 git commit 並 100% push 至 GitHub 遠端 main 分支。
