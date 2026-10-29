@@ -3995,3 +3995,25 @@ flowchart TD
   - 臺北大眾捷運官網：`https://www.metro.taipei/`
   - 台灣高鐵官網：`https://www.thsrc.com.tw/`
   - 國營臺灣鐵路官網：`https://www.railway.gov.tw/`
+
+
+---
+
+## 📌 對話紀錄第 115 輪 (2026-10-29 11:07)
+
+### 🗣️ 委託人反饋與提問
+- **「是說最近很盛行的PHP資案事件」**
+
+---
+
+### 🛡️ 專業資安剖析與免疫架構說明
+
+#### 1. 事件本體：CVE-2024-4577（PHP Windows Best-Fit RCE 遠端代碼執行漏洞）
+- **漏洞背景**：由臺灣知名白帽資安團隊 DEVCORE（戴夫寇爾）研究員 Orange Tsai 揭露。該漏洞源於 Windows 在處理非英語系編碼（特別是繁體中文 CP950、簡體中文 CP936、日文 CP932）時的 **Best-Fit 特性**，會將特定的 URL 字元（如 `%ad` 軟連字號）自動轉換為連字號 `-`。
+- **攻擊手法**：攻擊者藉此繞過 PHP 原本對命令行參數的檢查，在 URL 中注入 `-d allow_url_include=1 -d auto_prepend_file=php://input`，直接在受害主機上執行任意程式碼（RCE）。
+- **重大危害**：漏洞發布後適逢連假，駭客組織迅速結合 **TellYouThePass 等勒索軟體**發動全球無差別自動化掃描，造成台灣大量學校、公家機關與中小企業的 Windows + XAMPP 伺服器檔案遭到加密勒索。
+
+#### 2. 為什麼本專案對該事件「100% 完全免疫」
+1. **無 PHP 直譯器**：本專案為純 HTML5 + Vanilla JS + Leaflet 靜態網頁架構，本機與伺服器均未安裝、亦無執行任何 `php.exe` 或 `php-cgi.exe`。
+2. **無 XAMPP / Apache CGI 暴露**：未啟用任何 PHP-CGI 模組或 ScriptAlias 路由，根本不存在受攻擊的媒介。
+3. **GitHub Pages 靜態 CDN 邊緣隔離**：所有線上網站託管於 GitHub Pages 邊緣節點，僅提供靜態檔案分發，不執行任何伺服器端腳本；即使攻擊者傳入惡意參數，亦只會回傳靜態 404 或純文字，代碼完全無法在伺服器端被執行。
