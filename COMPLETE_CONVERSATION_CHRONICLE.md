@@ -4252,3 +4252,57 @@ flowchart TD
 #### 3. 專案倉庫鏡像同步與 Git 推送
 - 本地雙倉庫 (`city-pulse-detective` ✕ `taipei-metro-detective-rpg`) 程式碼 100% 鏡像同步。
 - 嚴格落實委託人最高鐵則：已執行 `git add`、`commit` 並成功 `push` 至 GitHub 遠端 main 分支。
+---
+
+### 第 122 輪對話全誌：code ✕ story 跨端深度協同討論大會（50 案資料庫與偵探核心 100% 雙向對齊 ✕ 地圖問題欄第 74 條閉環 ✕ 憲法禁忌合規）(2026-10-29 晚間)
+
+#### 1. 會議緣起與委託人最高指示
+- **時間戳**：2026-10-29 20:37
+- **委託人原始指示**：
+  > 「請你叫code和story互相討論，因為他們兩個做東西息息相關」
+- **調度主持**：Leader（專案協同與跨端調度長）
+- **出席代表**：
+  - 💻 **`code`**：獨立偵探核心引擎開發者（維護倉庫：[`taipei-detective-core`](https://github.com/hsiaoyujui114-code/taipei-detective-core)）
+  - 📜 **`story`**：企劃與 50 大案劇本作者（維護倉庫：[`taipei-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-detective-rpg)）
+
+#### 2. 四大核心交集議題深度協商實況
+
+##### 議題一：50 案全集資料結構與偵探核心引擎的 100% 雙向對齊
+- **`code` 提出**：
+  - 偵探核心引擎（`taipei-detective-core`）先前使用的是舊版 16 欄位 `fifty_cases.json`（436KB），而 `story` 最新的 `cases.json`（534KB）已擴充包含 `chapter`（5 大篇章）、`diy_experiment`（學童可操作之家庭微實驗）與 `cross_case_clue`（跨案暗線與失落的臺北城密碼）。
+  - 需要將 `story` 的最新版本完整鏡像同步至 `src/data/cases/fifty_cases.json`，並由 `StoryLoader.js` 自動解析新欄位，透過 REST API `/api/detective/cases` 與 `/api/detective/case/:id` 開放給前端與工作台。
+- **`story` 回應與承諾**：
+  - 全力支持！50 案全集已精準涵蓋雙北 41 特區，每一案都綁定一項生活科學鑑識原理（如草酸鈣結晶、熱敏變色墨水、虹吸管水壓、天平浮力阿基米德、摩斯電碼與旗語、幾何光學反射、壓強與受力面積等），完全對齊國小自然科學課綱。
+  - `story` 將確保每次更新案件文本時，保持 JSON 語法 100% 合規，絕不在代碼中寫死，維持 Data-Driven 模組化。
+
+##### 議題二：地圖問題欄第 74 條「案件 1–10 標題與編號一致性」徹底閉環
+- **爭議現況檢討**：
+  - 地圖問題欄指出：早期寫在 `shared-data.js` 的 `DEMO_10_CASES` 標題（如「西門老牌連鎖咖啡雙倍濃縮拿鐵案」、「北車忠孝西路地下道虹吸水壓失衡案」）與 `cases.json` 的正式名稱（如「西門町連鎖咖啡店拿鐵中毒案」、「台北車站三鐵連通長廊水力延時案」）存在微小文字命名差異。
+- **`code` 與 `story` 達成共識**：
+  - **唯一真理來源（Single Source of Truth）**：以 `story` 的 `cases.json` 為最高權威！
+  - `demo_cases.json` 與 `shared-data.js` 中的 10 大示範案件全面以 `cases.json` 中的 CASE-01 ~ CASE-10 正式標準名稱為準。
+  - `code` 的 `StoryLoader.js` 的多重別名機制（支援 `CASE-01`、`case_01`、`CASE-2026-001`、純數字 `1`、以及標題模糊比對）已全面相容，雙向查詢 100% 命中，絕不因歷史命名差異而產生 404 或資料斷裂！
+
+##### 議題三：口供筆錄、物證打臉與有向因果思維導圖 (DAG Eureka Moment) 協同
+- **`code` 提出**：
+  - 核心引擎已實裝「心理防線值 (100% ➔ 0%)」機制：當調查員出示關鍵物證、或是透過鑑識實驗（如滴定試紙變深紅顯示強酸）戳破嫌犯不在場證明時，嫌犯心理防線會斷崖式崩潰，並解鎖關鍵自白（Eureka Moment）。
+  - 需要 `story` 在設計劇本時，明確指定「哪一項證物」能擊破「哪一個嫌疑人的哪一段證詞」，形成有向無環圖 (DAG)。
+- **`story` 回應與承諾**：
+  - 在 `cases.json` 與 `CASES_50_FULL_SPEC.md` 中，每一案皆有設計 3 位關係人（例如 CASE-01 中的副店長高智敏、兼職員工陳佩君、熟客林志誠），並在 `characters` 與 `deposition` 中精確記載其嫌疑點與真犯人露出破綻的關鍵證物（如咖啡渣中的草酸晶體、手套破損滲漏汗液印痕等）。
+  - `story` 與 `code` 約定在物證對質表（`cross_examination_matrix`）中固化擊破關聯，讓推理過程嚴謹可驗證，絕無邏輯死角。
+
+##### 議題四：全域四大最高憲法級絕對禁忌交叉稽核與修正
+- **`code` 的自動化掃描發現**：
+  - `code` 的 `npm test` 階段 10 執行全檔案正則掃描時，在 `story` 的 `cases.json` 發現 3 處殘留之歷史職稱用語（`CASE-14` 展館實習生、`CASE-44` 華山展場值班工讀生、`CASE-50` 兩名工讀生共同在場證詞）。
+- **`story` 即刻更正**：
+  - `CASE-14` 修正為「展館助理研究員」。
+  - `CASE-44` 修正為「華山展場值班助理員」。
+  - `CASE-50` 修正為「兩名值班助理共同在場證詞」。
+  - `CASES_50_FULL_SPEC.md` 與 `cases.html` 同步修復！
+- **重跑測試結果**：
+  - `taipei-detective-core` 執行 `npm test`，10 大階段、50 案全集驗證、憲法紅線掃描 100% 通過（0 違規）！
+
+#### 3. 專案倉庫鏡像同步與 Git 推送
+- **`taipei-detective-core`**：更新 `src/data/cases/fifty_cases.json` 至 50 案全集完整版，`npm test` 100% 通過。
+- **`taipei-detective-rpg`**：修復 `cases.json`、`cases.html`、`CASES_50_FULL_SPEC.md` 歷史職稱殘留，確保 100% 憲法級合規。
+- 嚴格恪守委託人最高鐵則：修改後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
