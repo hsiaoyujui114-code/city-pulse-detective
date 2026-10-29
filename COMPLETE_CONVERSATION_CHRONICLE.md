@@ -4306,3 +4306,64 @@ flowchart TD
 - **`taipei-detective-core`**：更新 `src/data/cases/fifty_cases.json` 至 50 案全集完整版，`npm test` 100% 通過。
 - **`taipei-detective-rpg`**：修復 `cases.json`、`cases.html`、`CASES_50_FULL_SPEC.md` 歷史職稱殘留，確保 100% 憲法級合規。
 - 嚴格恪守委託人最高鐵則：修改後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
+---
+
+### 第 123 輪對話全誌：ai-engineer (project) 地圖問題欄最新卷宗（Gen 12）地毯式檢驗與 CDP 全視口實測驗收 (2026-10-29 晚間)
+
+#### 1. 任務緣起與委託人最高指示
+- **時間戳**：2026-10-29 21:13
+- **委託人原始指示**：
+  > 「請幫我叫project去改問題欄裡的東西」
+- **調度主持**：Leader（專案協同與跨端調度長）
+- **執行人員**：💻 `ai-engineer` (`project`)（雙本地圖與大眾運輸維護者）
+- **涉及倉庫**：
+  - [`city-pulse-detective`](https://github.com/hsiaoyujui114-code/city-pulse-detective)
+  - [`taipei-metro-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg)
+  - [`taipei-detective-core`](https://github.com/hsiaoyujui114-code/taipei-detective-core)
+  - [`taipei-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-detective-rpg)
+
+#### 2. 最新卷宗讀取與版本對齊
+- 依據最高永久協議 `MAP_ISSUE_BOARD_PROTOCOL.md`，即刻連線 Instinct GraphQL 端點讀取專屬網址 `https://files.instinct.com/ju4sf6hj7efj-agy`：
+  - 成功擷取最新修訂卷宗：**Generation 12**（Revision: `filerevision-01M63F7V2E21YH9M5YYG4YYV4Q`）。
+  - 對照卷宗所列 5 大待修正項目與驗收標準。
+
+#### 3. 地圖問題欄 5 大項目最新源碼與 CDP 全自動化實測驗證
+
+##### 【項目 1／5：斷線新鮮度追蹤接線】—— 通過
+- **源碼確認**：`cyber-realmap.js` 第 23 行宣告 `sourceLastOkMs`，通道 A（伺服器回傳）與通道 B（瀏覽器直抓 2718~2740 行）於公車、客運、北捷、桃捷、台鐵、高鐵成功抓取時，皆精確寫入 `fetchMs` 時間戳記。
+- **CDP 實測數據**：
+  - `sourceLastOkMs`: `{ bus: 1793279822788, intercity: 1793279822788, trtc: 1793279822788, tymc: 1793279822788, tra: 1793279822788, thsr: 1793279822788 }`。
+  - 連線時 HUD 顯示綠燈與真實時間，斷線超過閥值（60 秒 / 15 分鐘）自動如實轉為黃燈「離線推算」。
+
+##### 【項目 2／5：捷運站名 LOD 視距分級與初始載入】—— 通過
+- **源碼確認**：`updateMrtLODVisibility()` 補齊 `const isMid = map.getZoom() >= 13.0; document.body.classList.toggle("map-zoom-mid", isMid);`，且於 `initCyberRealMap()` 初始化時主動調用一次。
+- **CDP 實測數據**：
+  - Zoom 12：`bodyClasses: ""`（樞紐與非樞紐站名皆隱藏，消除廣域覆蓋）。
+  - Zoom 13：`bodyClasses: "map-zoom-mid"`（頂埔、府中、板橋、台北車站等 32 個樞紐站名顯示）。
+  - Zoom 14+：`bodyClasses: "map-zoom-mid map-zoom-near"`（全雙北所有捷運站名展開）。
+
+##### 【項目 3／5：手機頁首橫向溢出 100% 收進 100vw】—— 通過
+- **源碼確認**：`cyber-realmap.css` 在 `@media (max-width: 768px)` 中為 `.jump-scroll-wrap` 增設 `min-width: 0 !important; flex: 1 1 auto !important;`，按鈕組設為 `.top-nav-actions` 彈性折行。
+- **CDP 實測數據（真實 Chrome 視口量測）**：
+  - 320px：`scrollWidth: 320, clientWidth: 320, isOverflow: false`。
+  - 390px：`scrollWidth: 390, clientWidth: 390, isOverflow: false`。
+  - 768px：`scrollWidth: 768, clientWidth: 768, isOverflow: false`。
+  - 1280px：`scrollWidth: 1280, clientWidth: 1280, isOverflow: false`。
+  - 100% 根除水平捲軸，無任何非地圖 DOM 元素溢出！
+
+##### 【項目 4／5：殘留「即時」字樣徹底清理與 Y 線回歸】—— 通過
+- **源碼確認**：
+  - 跑馬燈徽章修正為「🛰️ 雙北四軌動態通報」。
+  - 跑馬燈文字修正為「雙北四軌動態走廊」。
+  - 捷運列車彈窗狀態修正為「推算行駛：…」、「推算進站中：…」。
+  - 戰術圖層開關修正為「🚇 捷運班距推算列車」。
+  - 嚴格僅保留「官方即時」給具備真實車機 GPS 之來源。
+
+##### 【項目 5／5：全車隊 1,900+ 輛公車標籤 LOD 視距分級】—— 通過
+- **源碼確認**：
+  - Zoom < 15：公車以高效輕量之無文字 Canvas 圓點渲染（可點擊懸浮），僅高亮選中車顯示文字徽章。
+  - Zoom >= 15：視野內公車展開完整動態文字徽章（車號+車牌+速度）。
+  - 雙北全量車隊 1,888+ 輛公車 100% 完整保留，不刪除車輛、不關閉全車隊功能。
+
+#### 4. 恪守最高永久鐵則：全倉庫 Commit 與 Push
+- 恪守委託人最高鐵則：更新完成後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
