@@ -1667,53 +1667,62 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       const b = rawBusList[i];
       if (!b || !b.RouteID) continue;
       const ridStr = String(b.RouteID).trim();
-      // 1. 嚴格過濾未指派路線之車輛 (RouteID '0'/'00'/'9999', DutyStatus 2/90, BusStatus 90/99)，杜絕「路線0」幽靈公車
       if (ridStr === '0' || ridStr === '00' || ridStr === '9999') continue;
+
       const dutyStatus = Number(b.DutyStatus || 0);
       const busStatus = Number(b.BusStatus || 0);
-      if (dutyStatus === 2 || dutyStatus === 90 || busStatus === 90 || busStatus === 99) continue;
+      // 僅排除事故故障 (99) 或未派車；端點站/總站待命 (dutyStatus 2/90, busStatus 90) 一律保留納入雙北全量車隊！
+      if (busStatus === 99) continue;
+      const isIdleInDepot = (dutyStatus === 2 || dutyStatus === 90 || busStatus === 90);
 
       const ridNum = Number(b.RouteID);
       const meta = browserRouteMetaById.get(ridNum) || browserRouteMetaByPathAttr.get(ridNum);
-      const rawRouteName = meta ? meta.name : (b.RouteName || `公車${ridStr}`);
+      const preset = (typeof SHUANGBEI_ROUTE_META_PRESET !== 'undefined') ? SHUANGBEI_ROUTE_META_PRESET[ridStr] : null;
+      const rawRouteName = meta ? meta.name : (preset ? preset[0] : (b.RouteName || `路線${ridStr}`));
       const routeName = String(rawRouteName).trim();
       const bRouteName = String(b.RouteName || '').trim();
 
-      // 徹底刪除路線 0
-      if (routeName === '0' || routeName === '路線0' || routeName === '路線 0' || routeName === '公車0' || routeName === '公車 0' ||
+      // 排除無效代碼 0
+      if (routeName === '0' || routeName === '路線0' || routeName === '路線 0' || routeName === '線路0' ||
           bRouteName === '0' || bRouteName === '路線0' || bRouteName === '路線 0') {
         continue;
       }
 
-      // 2. 嚴格過濾專車 (專車不須顯示：學生專車、公祭專車、接駁專車、回送等)
-      const isSpecial = routeName.includes('專車') ||
-                        bRouteName.includes('專車') ||
-                        routeName.toLowerCase().includes('special') ||
-                        String(b.TripHeadSign || '').includes('專車') ||
-                        String(b.TripHeadSign || '').includes('回送');
-      if (isSpecial) continue;
+      // 僅排除靈車/公祭專車；學生接駁、跳蛙公車與通勤專車一律正常保留
+      const isGhost = routeName.includes('公祭') || bRouteName.includes('公祭') || String(b.TripHeadSign || '').includes('公祭');
+      if (isGhost) continue;
 
       const lat = parseFloat(b.Latitude);
       const lon = parseFloat(b.Longitude);
       if (isNaN(lat) || isNaN(lon)) continue;
-      if (lat < 24.80 || lat > 25.30 || lon < 121.30 || lon > 122.02) continue;
+      // 擴大至全雙北 41 行政特區全部領域（石門/富貴角 25.35 ~ 烏來/坪林 24.60，林口/鶯歌 121.15 ~ 貢寮/三貂角 122.10）
+      if (lat < 24.60 || lat > 25.35 || lon < 121.15 || lon > 122.10) continue;
 
       const plate = String(b.BusID || '').trim();
       if (!plate || seenPlates.has(plate)) continue;
       seenPlates.add(plate);
 
       presentRouteCodes.add(routeName);
-      const operator = meta ? meta.operator : '大臺北聯營公車';
+      const operator = meta ? meta.operator : (preset ? preset[1] : '大臺北聯營公車');
       const goBack = Number(b.GoBack);
-      let headsign = '雙北即時營運車次';
-      if (meta && (meta.departure || meta.destination)) {
+      let headsign = isIdleInDepot ? '總站/站端待命 (準備開班)' : '常規營運車次';
+      const depName = meta ? meta.departure : (preset ? preset[2] : '');
+      const desName = meta ? meta.destination : (preset ? preset[3] : '');
+      if (depName || desName) {
         headsign = goBack === 1
-          ? `往 ${meta.departure || meta.destination} (返程)`
-          : `往 ${meta.destination || meta.departure} (去程)`;
+          ? `往 ${depName || desName} (返程)`
+          : `往 ${desName || depName} (去程)`;
       }
 
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
-      const isStopped = rawSpeed <= 1;
+      const isStopped = rawSpeed <= 1 || isIdleInDepot;
+
+      let statusDesc = `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`;
+      if (isIdleInDepot) {
+        statusDesc = '🅿️ 站端/調度總站待命中 (0 km/h)';
+      } else if (isStopped) {
+        statusDesc = '🔴 停等/站牌上下客中 (0 km/h)';
+      }
 
       result.push({
         busId: plate,
@@ -1726,15 +1735,16 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         baseLat: lat,
         baseLon: lon,
         lastFetchMs: fetchMs,
-        speed: rawSpeed,
+        speed: isIdleInDepot ? 0 : rawSpeed,
         azimuth: parseFloat(b.Azimuth) || 0,
         goBack,
         dutyStatus,
         busStatus,
+        isIdleInDepot,
         dataKind: 'OFFICIAL_GPS',
-        status: isStopped ? '🚦 號誌/站牌停等上下客中 (0 km/h)' : `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`,
+        status: statusDesc,
         dataTime: b.DataTime || '',
-        source: '雙北交通局 eBus 官方車機 GPS (GetBusData.gz)'
+        source: '雙北交通局 eBus 官方車載 GPS (GetBusData.gz)'
       });
     }
   }
@@ -1743,31 +1753,30 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
     for (let i = 0; i < rawInterCity.length; i++) {
       const b = rawInterCity[i];
       if (!b || !b.BusPosition) continue;
-      if (Number(b.DutyStatus) === 2 || Number(b.BusStatus) === 99) continue;
+      if (Number(b.BusStatus) === 99) continue;
       const lat = parseFloat(b.BusPosition.PositionLat);
       const lon = parseFloat(b.BusPosition.PositionLon);
       if (isNaN(lat) || isNaN(lon)) continue;
-      if (lat < 24.80 || lat > 25.30 || lon < 121.30 || lon > 122.02) continue;
+      if (lat < 24.60 || lat > 25.35 || lon < 121.15 || lon > 122.10) continue;
 
       const plate = String(b.PlateNumb || '').trim();
       if (!plate || seenPlates.has(plate)) continue;
       seenPlates.add(plate);
 
-      const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '國道客運');
-      // 徹底刪除路線0 與 專車
-      if (rName === '0' || rName === '路線0' || rName === '路線 0' || rName.includes('專車') || rName.toLowerCase().includes('special') || String(b.TripHeadSign || '').includes('專車') || String(b.TripHeadSign || '').includes('回送')) continue;
+      const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '公路客運');
+      if (rName === '0' || rName === '路線0' || rName === '路線 0' || rName.includes('公祭')) continue;
 
       presentRouteCodes.add(rName);
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
       const dutyStatus = Number(b.DutyStatus || 0);
-      const isStopped = rawSpeed <= 1;
+      const isStopped = rawSpeed <= 1 || dutyStatus === 2;
 
       result.push({
         busId: plate,
         routeId: String(b.RouteID || rName),
-        routeName: `${rName} (跨市客運)`,
-        operator: '公路/國道客運',
-        headsign: Number(b.Direction) === 1 ? '返程往雙北/基隆' : '去程往雙北/基隆',
+        routeName: `${rName} (跨區客運)`,
+        operator: '公路/跨區客運',
+        headsign: Number(b.Direction) === 1 ? '返程往起點/總站' : '去程往終點/總站',
         lat,
         lon,
         baseLat: lat,
@@ -1778,19 +1787,20 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         goBack: Number(b.Direction || 0),
         dutyStatus,
         busStatus: Number(b.BusStatus || 0),
+        isIdleInDepot: dutyStatus === 2,
         dataKind: 'OFFICIAL_GPS',
-        status: isStopped ? '🚏 客運轉運站/站牌停靠中' : `🛣️ 國道/跨市巡航中 (${Math.round(rawSpeed)} km/h)`,
+        status: isStopped ? '🔴 客運轉運站/停等上下客' : `🟢 國道/公路巡航中 (${Math.round(rawSpeed)} km/h)`,
         dataTime: b.SrcUpdateTime || '',
         source: '交通部 PTX/TDX 公路客運即時 GPS'
       });
     }
   }
 
-  // 補充新北市交通局管轄核心幹線 (如 656, 99, 965 等示範路線，確保於 eBus 面板點擊時皆有即時公車可追蹤鎖定)
+  // 補齊雙北市交通局管轄示範幹線 (若剛好無實體車輛上線時輔助班距車輛)
   if (Array.isArray(EBUS_KEY_ROUTES)) {
     EBUS_KEY_ROUTES.forEach(kr => {
       const code = String(kr.name || '').split(' ')[0].trim();
-      if (!code || code === '0' || code === '路線0' || code.includes('專車') || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
+      if (!code || code === '0' || code === '路線0' || code.includes('公祭') || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
       [0, 1].forEach((dir, dIdx) => {
         const ordered = dir === 0 ? kr.path : [...kr.path].reverse();
         const cycleSec = 420;
@@ -1805,7 +1815,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
           busId: plate,
           routeId: kr.id || code,
           routeName: code,
-          operator: kr.operator || '新北台北聯營公車',
+          operator: kr.operator || '大臺北聯營公車',
           headsign: kr.headsign || (dir === 0 ? '去程' : '返程'),
           lat: pt[0],
           lon: pt[1],
@@ -1817,10 +1827,11 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
           goBack: dir,
           dutyStatus: isStopped ? 2 : 1,
           busStatus: 0,
+          isIdleInDepot: false,
           dataKind: 'SIMULATED',
-          status: isStopped ? '🚏 站牌靠泊上下客中 (0 km/h)' : `🟡 班距模擬巡航中 (${spd} km/h)`,
+          status: isStopped ? '🔴 站牌停靠上下客中 (0 km/h)' : `🟡 班距模擬巡航中 (${spd} km/h)`,
           dataTime: curTw.timeStr,
-          source: '系統班距模擬 (依幹線時刻表與當下時鐘產生，非真實車輛)'
+          source: '系統班距模擬 (依幹線時刻表與當下時間產生，非現實即時車)'
         });
       });
     });
@@ -2637,10 +2648,14 @@ async function syncLiveTransitData() {
         isLastTransitFromLiveServer = true;
         liveTransitDataMode = 'LIVE_SERVER';
 
-        renderLiveBusMarkers(liveBusFleetData);
-        renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
-        updateLiveTransitHUD({
-          activeBusCount: liveBusFleetData.length,
+        const officialBuses = liveBusFleetData.filter(b => b.dataKind === 'OFFICIAL_GPS');
+    const simBuses = liveBusFleetData.filter(b => b.dataKind === 'SIMULATED');
+    renderLiveBusMarkers(liveBusFleetData);
+    renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
+    updateLiveTransitHUD({
+      officialBusCount: officialBuses.length,
+      simBusCount: simBuses.length,
+      activeBusCount: liveBusFleetData.length,
           activeMrtCount: liveMrtTrainsData.length,
           activeTraCount: liveTraTrainsData.length,
           activeThsrCount: liveThsrTrainsData.length,
@@ -2710,9 +2725,13 @@ async function syncLiveTransitData() {
     }
     isLastTransitFromLiveServer = false;
 
+    const officialBuses = liveBusFleetData.filter(b => b.dataKind === 'OFFICIAL_GPS');
+    const simBuses = liveBusFleetData.filter(b => b.dataKind === 'SIMULATED');
     renderLiveBusMarkers(liveBusFleetData);
     renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
     updateLiveTransitHUD({
+      officialBusCount: officialBuses.length,
+      simBusCount: simBuses.length,
       activeBusCount: liveBusFleetData.length,
       activeMrtCount: liveMrtTrainsData.length,
       activeTraCount: liveTraTrainsData.length,
@@ -2844,10 +2863,11 @@ function renderLiveBusMarkers(buses) {
   }
 
   const center = map.getCenter();
-  const bounds = map.getBounds().pad(0.15);
+  const bounds = map.getBounds().pad(0.35); // 擴大渲染緩衝區以防邊緣跳閃
   const kw = (highlightedLiveRouteKeyword || '').trim().toLowerCase();
+  const curZ = map ? map.getZoom() : 15;
 
-  // 計算每輛公車與畫面中心的距離，優先為視野內的公車與鎖定路線公車建立精細 DOM 徽章
+  // 計算每輛公車與視窗範圍關係
   const scored = buses.map(b => {
     const inBounds = bounds.contains([b.lat, b.lon]);
     const isHighlighted = kw.length > 0 && (
@@ -2866,32 +2886,64 @@ function renderLiveBusMarkers(buses) {
     return a.distSq - b.distSq;
   });
 
-  const curZ = map ? map.getZoom() : 15;
-  // 依縮放層級自適應顯示標籤：廣域縮小視角 (<14) 減少密集標籤避免重疊，放大街廓 (>=15) 完整展示
-  const maxRichBadges = curZ >= 15 ? 120 : (curZ >= 14 ? 45 : 12);
+  // 顯著提升雙北公車能見度：
+  // Zoom >= 14: 視野內公車 (上限 600) 一律使用完整動態徽章 (車號+車牌+速度)
+  // Zoom 12~13 (雙北全景): 視野內公車 (上限 500) 使用緊湊型微型公車膠囊 [🚌 307]
+  // 視野外或其餘遠景車輛: 呈現為清晰高光公車點位，點擊亦可開卡片
+  const maxBadges = curZ >= 14 ? 600 : (curZ >= 12 ? 450 : 120);
   const activeBadgeKeys = new Set();
   const activeDotKeys = new Set();
 
   scored.forEach((item, idx) => {
     const b = item.b;
     const busKey = `live_${b.busId}`;
-    const useRichBadge = item.isHighlighted || (idx < maxRichBadges && item.inBounds);
+    const useBadge = item.isHighlighted || (item.inBounds && idx < maxBadges);
 
-    if (useRichBadge) {
+    if (useBadge) {
       activeBadgeKeys.add(busKey);
-      const isStopped = b.speed <= 1 || b.dutyStatus === 2;
-      const speedText = b.dutyStatus === 2 ? '🚏 靠站' : (isStopped ? '🛑 0 km/h' : `${Math.round(b.speed)} km/h`);
-      const speedBg = item.isHighlighted ? '#d97706' : (isStopped ? '#dc2626' : '#0284c7');
+      const isStopped = b.speed <= 1 || b.dutyStatus === 2 || b.isIdleInDepot;
+      const isIdle = !!b.isIdleInDepot;
+      
+      let speedText = `${Math.round(b.speed)} km/h`;
+      let speedBg = '#0284c7';
+      if (item.isHighlighted) {
+        speedBg = '#d97706';
+      } else if (isIdle) {
+        speedBg = '#475569';
+        speedText = '🅿️ 待命';
+      } else if (isStopped) {
+        speedBg = '#dc2626';
+        speedText = '🔴 0 km/h';
+      }
+
       const borderCol = item.isHighlighted ? '#fde047' : '#ffffff';
 
-      const iconHtml = `
-        <div class="moving-fleet-bus ${isStopped ? 'bus-stopped' : 'bus-cruising'}" id="bus_icon_${b.busId}" style="background:${speedBg}; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; border:2px solid ${borderCol}; box-shadow:0 0 10px ${item.isHighlighted ? '#facc15' : (isStopped ? 'rgba(239,68,68,0.85)' : 'rgba(2,132,199,0.75)')}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-          <span style="font-size:11px;">🚍</span>
-          <span>${b.routeName}</span>
-          <span style="font-size:9px; opacity:0.9;">(${b.busId})</span>
-          <span class="bus-live-speed-tag" style="background:rgba(0,0,0,0.45); padding:1px 4px; border-radius:6px; font-size:9px; color:#fff;">${speedText}</span>
-        </div>
-      `;
+      // 依 Zoom 級別呈現不同密度的徽章
+      let iconHtml = '';
+      let iconSize = [104, 24];
+      let iconAnchor = [52, 12];
+
+      if (curZ >= 14 || item.isHighlighted) {
+        // 標準高對比動態徽章
+        iconHtml = `
+          <div class="moving-fleet-bus ${isStopped ? 'bus-stopped' : 'bus-cruising'}" id="bus_icon_${b.busId}" style="background:${speedBg}; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; border:2px solid ${borderCol}; box-shadow:0 0 10px ${item.isHighlighted ? '#facc15' : (isIdle ? 'rgba(71,85,105,0.8)' : (isStopped ? 'rgba(239,68,68,0.85)' : 'rgba(2,132,199,0.75)'))}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <span style="font-size:11px;">🚌</span>
+            <span style="max-width:110px; overflow:hidden; text-overflow:ellipsis;">${b.routeName}</span>
+            <span style="font-size:9px; opacity:0.9;">(${b.busId})</span>
+            <span class="bus-live-speed-tag" style="background:rgba(0,0,0,0.45); padding:1px 4px; border-radius:6px; font-size:9px; color:#fff;">${speedText}</span>
+          </div>
+        `;
+      } else {
+        // Zoom 12~13 緊湊微型公車膠囊 (清楚標註路線號碼，讓全雙北一眼看盡所有公車)
+        iconSize = [64, 18];
+        iconAnchor = [32, 9];
+        iconHtml = `
+          <div class="moving-fleet-bus bus-compact-pill ${isStopped ? 'bus-stopped' : 'bus-cruising'}" id="bus_icon_${b.busId}" style="background:${speedBg}; color:#fff; font-size:9px; font-weight:900; padding:1px 5px; border-radius:8px; border:1.5px solid ${borderCol}; box-shadow:0 0 6px rgba(0,0,0,0.6); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:2px;">
+            <span style="font-size:9px;">🚌</span>
+            <span style="max-width:70px; overflow:hidden; text-overflow:ellipsis;">${b.routeName}</span>
+          </div>
+        `;
+      }
 
       if (liveBusMarkers.has(busKey)) {
         const entry = liveBusMarkers.get(busKey);
@@ -2911,16 +2963,17 @@ function renderLiveBusMarkers(buses) {
         const icon = L.divIcon({
           html: iconHtml,
           className: 'bus-fleet-div-icon',
-          iconAnchor: [52, 12]
+          iconSize,
+          iconAnchor
         });
-        const marker = L.marker([b.lat, b.lon], { icon, zIndexOffset: item.isHighlighted ? 900 : 300 }).addTo(ebusDynamicBusesGroup);
+        const marker = L.marker([b.lat, b.lon], { icon, zIndexOffset: item.isHighlighted ? 900 : (item.inBounds ? 350 : 150) }).addTo(ebusDynamicBusesGroup);
         marker.bindPopup(() => buildLiveBusPopupHtml(b));
         liveBusMarkers.set(busKey, { marker, data: b });
       }
     } else {
       activeDotKeys.add(busKey);
-      const isStopped = b.speed <= 1 || b.dutyStatus === 2;
-      const fillColor = isStopped ? '#ef4444' : '#22c55e';
+      const isStopped = b.speed <= 1 || b.dutyStatus === 2 || b.isIdleInDepot;
+      const fillColor = b.isIdleInDepot ? '#64748b' : (isStopped ? '#ef4444' : '#22c55e');
 
       if (liveBusCanvasDots.has(busKey)) {
         const entry = liveBusCanvasDots.get(busKey);
@@ -2929,13 +2982,13 @@ function renderLiveBusMarkers(buses) {
         entry.data = b;
       } else {
         const dot = L.circleMarker([b.lat, b.lon], {
-          radius: 4.5,
+          radius: 5.5,
           color: '#ffffff',
-          weight: 1.2,
+          weight: 1.5,
           fillColor,
-          fillOpacity: 0.92
+          fillOpacity: 0.95
         }).addTo(ebusDynamicBusesGroup);
-        dot.bindTooltip(`🚍 ${b.routeName} (${b.busId})｜${Math.round(b.speed)} km/h`, { direction: 'top', offset: [0, -5] });
+        dot.bindTooltip(`🚌 ${b.routeName} (${b.busId}) · ${b.isIdleInDepot ? '待命中' : Math.round(b.speed) + ' km/h'}`, { direction: 'top', offset: [0, -5] });
         dot.bindPopup(() => buildLiveBusPopupHtml(b));
         liveBusCanvasDots.set(busKey, { dot, data: b });
       }
@@ -8741,4 +8794,14 @@ function toggle3DBuildingsLayer() {
     ? `🏙️ 建築物框架圖層已切換至【${buildingWireframeTheme === 'neon' ? '霓虹賽博鋼骨' : (buildingWireframeTheme === 'blueprint' ? '工程建築藍圖' : '透光水晶玻璃')}】模式`
     : '🏙️ 建築物框架圖層已關閉';
   showNavToast(toastMsg);
+}
+
+function zoomToShuangbeiBusOverview() {
+  if (!map) return;
+  if (!isBusVisible) toggleBusLayer();
+  if (!isBusFleetVisible) toggleBusFleetLayer();
+  map.flyTo([25.045, 121.52], 12, { duration: 1.5 });
+  if (typeof showNavToast === 'function') {
+    showNavToast('🚌 已切換至「雙北公車全景俯瞰」視角 (俯瞰雙北全境 2,000+ 輛奔馳公車)');
+  }
 }

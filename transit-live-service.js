@@ -854,7 +854,8 @@ class TransitLiveService {
       const bRouteName = String(b.RouteName || '').trim();
 
       // 1. 嚴格刪除路線 0 與無效代碼 (RouteID '0'/'00'/'9999', 路線0, 路線 0, 公車0)
-      if (!b.RouteID || routeIdStr === '0' || routeIdStr === '00' || routeIdStr === '9999' || String(b.DutyStatus) === '2' || String(b.DutyStatus) === '90' || String(b.BusStatus) === '99' || String(b.BusStatus) === '90') continue;
+      if (!b.RouteID || routeIdStr === '0' || routeIdStr === '00' || routeIdStr === '9999' || String(b.BusStatus) === '99') continue;
+      const isIdleInDepot = String(b.DutyStatus) === '2' || String(b.DutyStatus) === '90' || String(b.BusStatus) === '90';
 
       const meta = this.routeMetaMap.get(routeIdStr);
       const rawRouteName = (meta && meta.nameZh) || FALLBACK_ROUTE_ID_MAP[routeIdStr] || b.RouteName || `公車${routeIdStr}`;
@@ -882,7 +883,7 @@ class TransitLiveService {
 
       const lat = parseFloat(b.Latitude);
       const lon = parseFloat(b.Longitude);
-      if (isNaN(lat) || isNaN(lon) || lat < 24.75 || lat > 25.32 || lon < 121.30 || lon > 122.05) {
+      if (isNaN(lat) || isNaN(lon) || lat < 24.60 || lat > 25.35 || lon < 121.15 || lon > 122.10) {
         continue;
       }
       seenBuses.add(busKey);
