@@ -4103,3 +4103,25 @@ flowchart TD
 
 #### 4. 4 大倉庫同步提交與推送
 - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 全面同步更新代碼與對話全誌，並推送至 GitHub 遠端 main 分支。
+
+
+---
+
+## 📌 對話紀錄第 118 輪 (2026-10-29 11:31)
+
+### 🗣️ 委託人反饋與提問
+- **「為什麼會一只打開終端機?」**
+
+---
+
+### 🛡️ 終端機喚起成因解析與背景管理
+
+#### 1. 終端機頻繁喚起原因說明
+1. **多倉庫同步推送（Git 遠端交互）**：
+   - 依據委託人指示之最高規範，每次修復（雙北全量公車、環狀線班次與編組）均需在 4 大倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core`）執行代碼同步、提交以及 `git pull --rebase` 與 `git push`。
+   - IDE 介面在執行系統指令時，會自動將焦點切換或彈出底部的「Terminal（終端機）」分頁以展示網路傳輸進度。
+2. **即時公車 API 下載與語法校驗**：
+   - 為驗證全雙北 2,000+ 輛公車實際下載與解析正確性，在本地調用 `agy-node` 進行實時驗證與語法檢查，觸發了終端機輸出。
+
+#### 2. 目前進程狀態
+- 經清查，所有背景任務已 100% 執行完畢，系統無任何殘留之背景常駐行程或無限迴圈腳本（Running Tasks: 0），終端機已回歸靜止。
