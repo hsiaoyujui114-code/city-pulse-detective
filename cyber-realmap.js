@@ -19,6 +19,15 @@ const TRA_DATA = (typeof SHUANGBEI_TRA_NETWORK !== 'undefined') ? SHUANGBEI_TRA_
 const MRT_DATA = (typeof SHUANGBEI_MRT_NETWORK !== 'undefined') ? SHUANGBEI_MRT_NETWORK : [];
 const EBUS_KEY_ROUTES = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHUANGBEI_EBUS_KEY_ROUTES : [];
 
+// ⏱️ 各交通資料來源最後成功時間表 (待修正 5/10)
+const sourceLastOkMs = { bus: 0, intercity: 0, trtc: 0, tymc: 0, tra: 0, thsr: 0 };
+let prevBusPlates = new Map();
+
+function isSourceStale(key, limitMs = 60000) {
+  if (!sourceLastOkMs[key]) return true;
+  return (Date.now() - sourceLastOkMs[key]) > limitMs;
+}
+
 // 3. 全域地圖與圖層管理
 let map = null;
 let currentBaseLayerKey = 'nlsc';
@@ -1722,6 +1731,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         goBack,
         dutyStatus,
         busStatus,
+        dataKind: 'OFFICIAL_GPS',
         status: isStopped ? '🚦 號誌/站牌停等上下客中 (0 km/h)' : `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`,
         dataTime: b.DataTime || '',
         source: '雙北交通局 eBus 官方車機 GPS (GetBusData.gz)'
@@ -1768,6 +1778,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         goBack: Number(b.Direction || 0),
         dutyStatus,
         busStatus: Number(b.BusStatus || 0),
+        dataKind: 'OFFICIAL_GPS',
         status: isStopped ? '🚏 客運轉運站/站牌停靠中' : `🛣️ 國道/跨市巡航中 (${Math.round(rawSpeed)} km/h)`,
         dataTime: b.SrcUpdateTime || '',
         source: '交通部 PTX/TDX 公路客運即時 GPS'
@@ -1806,9 +1817,10 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
           goBack: dir,
           dutyStatus: isStopped ? 2 : 1,
           busStatus: 0,
-          status: isStopped ? '🚏 站牌靠泊上下客中 (0 km/h)' : `🟢 新北幹線時刻同步巡航 (${spd} km/h)`,
+          dataKind: 'SIMULATED',
+          status: isStopped ? '🚏 站牌靠泊上下客中 (0 km/h)' : `🟡 班距模擬巡航中 (${spd} km/h)`,
           dataTime: curTw.timeStr,
-          source: '新北市交通局 eBus 幹線時刻表同步 (UTC+8)'
+          source: '系統班距模擬 (依幹線時刻表與當下時鐘產生，非真實車輛)'
         });
       });
     });
@@ -2134,7 +2146,8 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
       isAtStation,
       color: line.color || '#0070bd',
       status: statusText,
-      source: `交通部 PTX/TDX 捷運即時動態 (${sys} LiveBoard)`
+      sourceTrace: { feed: `${sys}-LiveBoard`, matchedStation: curSt.name, lineCode: line.lineCode },
+      source: '官方 LiveBoard 看板 (無 GPS)，位置為班距推算'
     });
   });
 
@@ -2190,6 +2203,7 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
         isAtStation,
         color: line.color || '#10b981',
         isSimulated: true,
+        sourceTrace: { feed: 'headway-sim', matchedStation: s1.name, lineCode: line.lineCode },
         status: isAtStation
           ? `🚉 【${s1.name}】月台停靠中`
           : `🚇 ${s1.name} ➔ ${s2.name} (${speed} km/h)`,
@@ -2755,12 +2769,47 @@ function tickLiveTransitPositions() {
 }
 
 function buildLiveBusPopupHtml(b) {
+  const isSim = b.dataKind === 'SIMULATED';
+  const isStale = typeof isSourceStale === 'function' ? isSourceStale('bus', 60000) : false;
   const isStopped = b.speed <= 1 || b.dutyStatus === 2;
   const isExtrapolating = !!b.isExtrapolating;
-  const modeBadge = isStopped
-    ? (b.dutyStatus === 2 ? '🚏 進站上下客' : '🛑 號誌/站牌停等')
-    : (isExtrapolating ? '🟡 航位外推中 (±45m)' : '🟢 官方GPS剛更新');
-  const modeColor = isStopped ? '#ef4444' : (isExtrapolating ? '#f59e0b' : '#10b981');
+
+  let modeBadge, modeColor;
+  if (isSim) {
+    modeBadge = '🟡 班距模擬車輛';
+    modeColor = '#f59e0b';
+  } else if (isStale) {
+    const lastTimeStr = (sourceLastOkMs && sourceLastOkMs.bus) ? new Date(sourceLastOkMs.bus).toTimeString().split(' ')[0] : (lastLiveSuccessTimeStr || '離線');
+    modeBadge = `🟡 資料過期 (前次: ${lastTimeStr})`;
+    modeColor = '#f59e0b';
+  } else if (isStopped) {
+    modeBadge = (b.dutyStatus === 2 ? '🚏 進站上下客' : '🛑 號誌/站牌停等');
+    modeColor = '#ef4444';
+  } else if (isExtrapolating) {
+    modeBadge = '🟡 航位外推中 (±45m)';
+    modeColor = '#f59e0b';
+  } else {
+    modeBadge = '🟢 官方GPS剛更新';
+    modeColor = '#10b981';
+  }
+
+  const natureText = isSim
+    ? '🟡 班距模擬：依幹線時刻表與當下時鐘產生的示意車輛，不是真實公車'
+    : (isStale
+        ? '🟡 官方來源暫時取不到，顯示前次成功資料'
+        : (isExtrapolating ? '🟡 10秒輪詢間隔航位外推 (依時速與方位角推算)' : '🟢 雙北交通局官方 eBus 車機 GPS (即時更新)'));
+
+  const coordLabel = isSim ? '推算座標' : '即時 GPS 座標';
+  const timeLabel = isSim ? '資料時間' : (isStale ? '前次成功時間' : '車機回傳時間');
+  const sourceText = isSim ? b.source : (b.source || '雙北交通局官方 eBus 車機 GPS (10秒更新)');
+
+  const verifyLinkHtml = isSim
+    ? ''
+    : `<div style="margin-top:8px; display:flex; gap:6px;">
+        <a href="https://ebus.gov.taipei/ebus?rid=${b.routeId}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
+          🔗 開啟 ebus.gov.taipei 官方驗證
+        </a>
+      </div>`;
 
   return `
     <div style="font-family:sans-serif; min-width:275px; color:#f8fafc;">
@@ -2773,17 +2822,13 @@ function buildLiveBusPopupHtml(b) {
       <div style="font-size:11px; font-weight:700; color:#facc15;">${b.headsign || '雙北即時營運車次'}｜${b.operator || '大臺北公車'}</div>
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
         真實世界狀態：<b style="color:${isStopped ? '#f87171' : '#4ade80'};">${b.status}</b><br>
-        即時動態性質：<b style="color:${isExtrapolating ? '#fbbf24' : '#4ade80'};">${isExtrapolating ? '🟡 10秒輪詢間隔航位外推 (依時速與方位角推算)' : '🟢 雙北交通局官方 eBus 車機 GPS (即時更新)'}</b><br>
+        即時動態性質：<b style="color:${isSim || isStale || isExtrapolating ? '#fbbf24' : '#4ade80'};">${natureText}</b><br>
         即時車機時速：<b style="color:${isStopped ? '#f87171' : '#4ade80'}; font-size:13px;">${Math.round(b.speed)} km/h</b>｜航向角：<b>${Math.round(b.azimuth || 0)}°</b><br>
-        即時 GPS 座標：<b>${b.lat.toFixed(5)}°N, ${b.lon.toFixed(5)}°E</b><br>
-        車機回傳時間：<b>${b.dataTime || lastLiveSuccessTimeStr || '即時'}</b><br>
-        資料來源：<b style="color:#38bdf8;">雙北交通局官方 eBus 車機 GPS (10秒更新)</b>
+        ${coordLabel}：<b>${b.lat.toFixed(5)}°N, ${b.lon.toFixed(5)}°E</b><br>
+        ${timeLabel}：<b>${b.dataTime || lastLiveSuccessTimeStr || '即時'}</b><br>
+        資料來源：<b style="color:#38bdf8;">${sourceText}</b>
       </div>
-      <div style="margin-top:8px; display:flex; gap:6px;">
-        <a href="https://ebus.gov.taipei/ebus?rid=${b.routeId}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
-          🔗 開啟 ebus.gov.taipei 官方驗證
-        </a>
-      </div>
+      ${verifyLinkHtml}
     </div>
   `;
 }
@@ -2934,8 +2979,8 @@ function buildLiveRailPopupHtml(t) {
     <div style="font-family:sans-serif; min-width:285px; color:#f8fafc;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-size:13px; font-weight:900; color:${t.color};">${t.name || t.trainName || '線上列車'}</span>
-        <span style="font-size:10px; background:${isSimulated ? '#eab308' : (t.isAtStation ? '#f59e0b' : '#10b981')}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
-          ${isSimulated ? '🟡 班距模擬' : (t.isAtStation ? '🚉 月台靠泊中' : '🟢 即時軌道推算')}
+        <span style="font-size:10px; background:${isSimulated ? '#eab308' : (t.isAtStation ? '#f59e0b' : '#eab308')}; color:#fff; padding:1px 6px; border-radius:4px; font-weight:700;">
+          ${isSimulated ? '🟡 班距模擬' : (t.isAtStation ? '🚉 月台靠泊中' : (isThsr ? '🟡 時刻表推算' : (isTra ? '🟡 看板內插推算' : '🟡 看板班距推算')))}
         </span>
       </div>
       <div style="font-size:11px; font-weight:700; color:#38bdf8;">${typeLabel}｜${t.headsign}</div>
@@ -2953,7 +2998,8 @@ function buildLiveRailPopupHtml(t) {
         運行狀態：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'};">${t.status}</b><br>
         估算時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b> <span style="font-size:9.5px; color:#94a3b8;">(平均推算)</span><br>
         軌道推算座標：<b>${t.lat.toFixed(5)}°N, ${t.lon.toFixed(5)}°E</b><br>
-        資料性質：<b style="color:${isSimulated ? '#facc15' : '#38bdf8'};">${sourceDetail}</b>
+        資料性質：<b style="color:${isSimulated ? '#facc15' : '#38bdf8'};">${sourceDetail}</b><br>
+        資料時間：<b>${isThsr ? `今日營運時刻表 (${new Date().toISOString().slice(0, 10)})` : (lastLiveSuccessTimeStr || '即時推算')}</b>
       </div>
     </div>
   `;
@@ -3047,8 +3093,18 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
 }
 
 function updateLiveTransitHUD(data) {
+  const offCount = (data.officialBusCount !== undefined) ? data.officialBusCount : (data.activeBusCount || 0);
+  const simCount = (data.simBusCount !== undefined) ? data.simBusCount : 0;
+  const isBusStale = isSourceStale('bus', 60000);
+
   const busEl = document.getElementById('hudLiveBusCount');
-  if (busEl) busEl.innerText = `${data.activeBusCount || 0} 輛 (官方GPS/外推)`;
+  if (busEl) {
+    if (isBusStale) {
+      busEl.innerText = `${offCount} 輛 (資料過期) ＋ ${simCount} 輛 (班距模擬)`;
+    } else {
+      busEl.innerText = `${offCount} 輛 (官方GPS) ＋ ${simCount} 輛 (班距模擬)`;
+    }
+  }
 
   const mrtEl = document.getElementById('hudLiveMrtCount');
   if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (看板推算/排程)`;
@@ -3061,11 +3117,18 @@ function updateLiveTransitHUD(data) {
 
   const syncEl = document.getElementById('hudLiveSyncTime');
   if (syncEl) {
-    if (liveTransitDataMode === 'LIVE_SERVER' || liveTransitDataMode === 'LIVE_BROWSER') {
-      syncEl.innerHTML = `<span style="color:#4ade80;">🟢 官方即時同步</span> ${lastLiveSuccessTimeStr || data.taiwanTime || '即時'} (10秒更新)`;
-    } else {
-      syncEl.innerHTML = `<span style="color:#fbbf24;">🟡 離線推算中</span> ${lastLiveSuccessTimeStr ? `(前次: ${lastLiveSuccessTimeStr})` : '(無網路)'}`;
-    }
+    const busFresh = !isSourceStale('bus', 60000) || !isSourceStale('intercity', 60000);
+    const mrtFresh = !isSourceStale('trtc', 60000) || !isSourceStale('tymc', 60000);
+    const traFresh = !isSourceStale('tra', 60000);
+    const thsrFresh = !isSourceStale('thsr', 15 * 60 * 1000);
+
+    const busDot = busFresh ? '<span style="color:#4ade80;">🟢公車</span>' : '<span style="color:#fbbf24;">🟡公車(過期)</span>';
+    const mrtDot = mrtFresh ? '<span style="color:#4ade80;">🟢捷運</span>' : '<span style="color:#fbbf24;">🟡捷運(過期)</span>';
+    const traDot = traFresh ? '<span style="color:#4ade80;">🟢台鐵</span>' : '<span style="color:#fbbf24;">🟡台鐵(過期)</span>';
+    const thsrDot = thsrFresh ? '<span style="color:#4ade80;">🟢高鐵</span>' : '<span style="color:#fbbf24;">🟡高鐵(過期)</span>';
+
+    const timeStr = lastLiveSuccessTimeStr || data.taiwanTime || '即時';
+    syncEl.innerHTML = `${busDot} ${mrtDot} ${traDot} ${thsrDot} <span style="color:#cbd5e1; font-size:10px;">${timeStr} (10s)</span>`;
   }
 
   // 同步更新頂部雙北四軌即時出入境廣播跑馬燈
@@ -3571,7 +3634,7 @@ function addMrtLayer() {
         ${linesDetailHtml}
         ${hubNotice}
         <div style="font-size:10px; color:#94a3b8; margin-top:6px; border-top:1px solid rgba(255,255,255,0.15); padding-top:4px;">
-          雙北都會捷運高運量/中運量路網，全線官方即時發車。
+          捷運班次為官方時刻表與班距推算，非即時定位
         </div>
       </div>
     `);
@@ -5999,20 +6062,20 @@ function updateTransitTickerBroadcast(transitSnapshot = null) {
     const mrt = transitSnapshot.mrtTrains || transitSnapshot.metro || [];
     const buses = transitSnapshot.buses || [];
 
-    // 高鐵出入境快訊
+    // 高鐵出入境快訊 (待修正 8/10: 改為時刻表推算)
     if (thsr.length > 0) {
       const sampleThsr = thsr[0];
-      text += ` 🚅【高鐵即時出入境】${sampleThsr.name} 正行駛於台北⇄板橋走廊 (${sampleThsr.status})　`;
+      text += ` 🚅【高鐵時刻表推算】${sampleThsr.name} 正行駛於台北⇄板橋走廊 (${sampleThsr.status})　`;
     }
-    // 捷運快訊
+    // 捷運快訊 (待修正 7/10 & 8/10: 班距模擬與示意編號)
     if (mrt.length > 0) {
       const sampleMrt = mrt[0];
-      text += ` 🚇【捷運車隊動態】${sampleMrt.name}｜${sampleMrt.status}｜收班: ${sampleMrt.closingTime || '24:00'}　`;
+      text += ` 🚇【捷運班距模擬】編號 ${sampleMrt.name} (示意編號)｜${sampleMrt.status}｜收班: ${sampleMrt.closingTime || '24:00'}　`;
     }
-    // 臺鐵快訊
+    // 臺鐵快訊 (待修正 8/10: 看板內插推算)
     if (tra.length > 0) {
       const sampleTra = tra[0];
-      text += ` 🚆【臺鐵走廊即時】${sampleTra.name}｜${sampleTra.status}　`;
+      text += ` 🚆【臺鐵看板內插推算】${sampleTra.name}｜${sampleTra.status}　`;
     }
     // 307 幹線動態
     const b307 = buses.find(b => String(b.routeName).includes('307'));
@@ -6020,7 +6083,7 @@ function updateTransitTickerBroadcast(transitSnapshot = null) {
       text += ` 🚍【307幹線巡航】車牌 ${b307.busId} 正以時速 ${Math.round(b307.speed)} km/h 巡航中 (${b307.headsign})　`;
     }
   } else {
-    text += ` 🚅 高鐵南北走廊出入境監測中 ✕ 🚆 臺鐵縱貫線全線準點 ✕ 🚇 捷運66列在線列車秒級運轉 ✕ 🚍 307幹線全線即時巡航中！`;
+    text += ` 🚅 高鐵走廊時刻推算中 ✕ 🚆 臺鐵走廊看板推算中 ✕ 🚇 捷運路網示意運轉中 ✕ 🚍 雙北公車路線即時監測中`;
   }
 
   marqueeEl.innerText = text;

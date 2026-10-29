@@ -1,5 +1,5 @@
 /**
- * 《雙北漫遊：都會行蹤》- 四軌大眾運輸 100% 真實網路即時 GPS 同步與施工狀態服務模組
+ * 《雙北漫遊：都會行蹤》- 四軌大眾運輸開放資料聚合與施工狀態服務模組（公車為官方真實 GPS，台鐵／高鐵／捷運為官方看板與時刻表推算）
  * Real-World Live Four-Rail Transit (eBus / MRT / TRA / THSR) & Construction Synchronization Service
  *
  * 核心功能：

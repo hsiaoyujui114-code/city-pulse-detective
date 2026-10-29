@@ -62,6 +62,11 @@
         <span>🎮 返回全息戰術沙盤 (主檔)</span>
       </a>
     </div>
+      <!-- 📱 手機端專屬面板切換浮動條 (移入頂部導航列，自動折行於最後一列防壓字重疊) -->
+    <div class="mobile-panel-toggles" id="mobilePanelToggles">
+      <button class="mobile-toggle-btn" id="btnToggleLeftPanel" onclick="toggleMobilePanel('left')">🛰️ 遙測 HUD</button>
+      <button class="mobile-toggle-btn" id="btnToggleRightPanel" onclick="toggleMobilePanel('right')">⚙️ 戰術圖層</button>
+    </div>
   </header>
 
   <!-- 🚨 10 大生活科學探究示範案件跳轉條 (落實評審顧問 50 建議) -->
@@ -101,11 +106,7 @@
     </div>
   </div>
 
-  <!-- 📱 手機端專屬面板切換浮動條 (320px / 390px / 768px 防重疊切換) -->
-  <div class="mobile-panel-toggles" id="mobilePanelToggles">
-    <button class="mobile-toggle-btn" id="btnToggleLeftPanel" onclick="toggleMobilePanel('left')">🛰️ 遙測 HUD</button>
-    <button class="mobile-toggle-btn" id="btnToggleRightPanel" onclick="toggleMobilePanel('right')">⚙️ 戰術圖層</button>
-  </div>
+  
 
   <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
   <aside class="left-telemetry-panel" id="leftTelemetryPanel" style="top:194px;">

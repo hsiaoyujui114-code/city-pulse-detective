@@ -2153,6 +2153,11 @@ body[data-map-theme="nlsc"] .road-badge-marker {
 }
 
 /* 🏷️ 捷運站點標籤 LOD 視距分級 (避免廣域 1280px / 13.0x 標籤互相疊加遮蓋) */
+/* Zoom < 13: 樞紐站與非樞紐站標題皆隱藏，消除 1280px 預設畫面標籤互疊 (待修正 3/10) */
+body:not(.map-zoom-mid) .station-marker-wrap.is-hub .mrt-station-title {
+  display: none;
+}
+
 body:not(.map-zoom-near) .station-marker-wrap:not(.is-hub) .mrt-station-title {
   display: none;
 }
@@ -2167,6 +2172,27 @@ body.map-zoom-near .station-marker-wrap .mrt-station-title {
 }
 
 @media (max-width: 768px) {
+  /* 🚌 公車導航面板手機版防超出螢幕 (待修正 1/10) */
+  .ebus-navigator-panel {
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    top: 96px !important;
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* 📱 面板切換浮動條嵌入頂部導航第4列，永不重疊壓字 (待修正 1/10) */
+  .holo-top-bar .mobile-panel-toggles {
+    order: 4 !important;
+    width: 100% !important;
+    position: static !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: 4px !important;
+    gap: 6px !important;
+  }
+
   /* 頂部全息標題列防截斷縮放 */
   .holo-top-bar {
     height: auto !important;
@@ -2276,12 +2302,24 @@ body.map-zoom-near .station-marker-wrap .mrt-station-title {
     grid-column: span 2 !important;
   }
   .case-card-footer button,
-  .case-card-footer a {
+  .case-card-footer a,
+  .case-card-footer .case-card-close-btn {
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
-    text-align: center !important;
-    padding: 7px 6px !important;
+    min-height: 46px !important;
+    box-sizing: border-box !important;
+    padding: 13px 8px !important;
     font-size: 11px !important;
     white-space: normal !important;
     line-height: 1.3 !important;
+  }
+
+  /* 📱 Leaflet 彈窗手機版防裁切 (待修正 2/10) */
+  .leaflet-popup-content {
+    max-width: calc(100vw - 56px) !important;
+  }
+  .leaflet-popup-content > div {
+    min-width: 0 !important;
   }
 }

@@ -3883,3 +3883,61 @@ flowchart TD
 
 6. **📦 雙倉庫鏡像同步提交與推送（恪守委託人最高鐵則）**：
    - `taipei-metro-detective-rpg` 與 `city-pulse-detective` 雙倉庫完全對齊，執行 `git add`、`commit` 並 `push` 到 GitHub 遠端 main 分支。
+
+
+---
+
+## 📅 Round 113：Instinct 地圖問題欄卷宗 10 大項目地毯式修正與 CDP 實體驗收（2026-10-29）
+
+- **委託人原始指示**：
+  > 「請你幫我改地圖，幫我讀一次https://files.instinct.com/ju4sf6hj7efj-agy裡的東西並且修改全部」
+
+### 🌟 核心成果與落實架構
+依據 `MAP_ISSUE_BOARD_PROTOCOL.md` 最高執行協議，自動存取 Instinct GraphQL API (`hostedFile` ✕ `hostedFileContentLease`)，完整提取《雙北地圖修正指令（2026-10-28 深夜更新）》卷宗（標題：「給 agy 的修改指令庫」），並對「待修正 1/10」至「待修正 10/10」落實地毯式修改與 CDP 實測驗證：
+
+1. **📱 待修正 1／10：手機版面橫向溢出、chips 截斷、切換開關重疊**：
+   - 將 `.mobile-panel-toggles` DOM 移入 `<header class="holo-top-bar">` 內部，在手機媒體查詢設為 `order: 4 !important; width: 100% !important; position: static !important;`，成為頂部導航換行後的最後一列，徹底消除壓字與重疊。
+   - 在 `@media (max-width: 768px)` 補上 `.ebus-navigator-panel` 手機規則（`left: 10px !important; right: 10px !important; width: auto !important; top: 96px !important; max-height: 60vh !important;`）。
+   - `.jump-scroll-wrap` 補上 `overflow-x: auto !important; min-width: 0 !important; flex: 1 1 auto !important;`，消除 flex 子層撐破版面問題。
+   - **實測驗收**：Headless Edge 實測 320x600、390x844、768x1024、1280x800 四種視窗尺寸，`scrollWidth === clientWidth`（`isOverflow: false`），零水平捲軸溢出。
+
+2. **🔘 待修正 2／10：手機彈窗按鈕點擊目標太小（實測嚴格 >= 44px）**：
+   - 在 `@media (max-width: 600px)` 補齊按鈕樣式：`.case-card-footer button, .case-card-footer a, .case-card-footer .case-card-close-btn` 設為 `display: inline-flex !important; align-items: center !important; justify-content: center !important; min-height: 46px !important; box-sizing: border-box !important; padding: 13px 8px !important;`。
+   - 在同一個 600px 媒體查詢加入：`.leaflet-popup-content { max-width: calc(100vw - 56px) !important; } .leaflet-popup-content > div { min-width: 0 !important; }`，壓制內嵌 inline min-width，消除 320px 裁切。
+   - **實測驗收**：透過 CDP 在 320px 與 390px 下實測 5 顆案件彈窗按鈕，rendered height 全數為 44px（`isMin44: true`）。
+
+3. **🏷️ 待修正 3／10：桌機 1280px 標籤互相重疊（兩層門檻 LOD 分級）**：
+   - `updateMrtLODVisibility` 增加 Zoom 13 中間門檻（`map-zoom-mid`）：`const isMid = map.getZoom() >= 13.0; document.body.classList.toggle('map-zoom-mid', isMid);`。
+   - CSS 導入分級規則：`body:not(.map-zoom-mid) .station-marker-wrap.is-hub .mrt-station-title { display: none !important; }`。
+   - **展示效果**：Zoom < 13 僅顯示精美路線膠囊，隱藏所有站名；Zoom 13~13.9 展開轉乘大站站名；Zoom >= 14 展開全雙北所有捷運站名，徹底消除 1280px 預設畫面標籤互疊。
+
+4. **🚍 待修正 4／10：模擬公車假裝官方 GPS（優先處理，如實標記）**：
+   - `computeBrowserLiveBuses` 在三個資料來源中分別注入 `dataKind` 欄位：官方 eBus (`GetBusData.gz`) 與公路客運標記為 `OFFICIAL_GPS`；幹線時刻表車輛（KKB-2651 等 14 輛）標記為 `SIMULATED`，source 改為「系統班距模擬 (依幹線時刻表與當下時鐘產生，非真實車輛)」。
+   - `buildLiveBusPopupHtml` 嚴格分支：模擬車顯示黃色徽章「🟡 班距模擬車輛」，性質行標明「🟡 班距模擬：依幹線時刻表與當下時鐘產生的示意車輛，不是真實公車」，座標標為「推算座標」，時間標為「資料時間」，資料來源使用真實 source，全文杜絕任何「官方GPS」字樣，並隱藏官方驗證連結；真實公車保持綠色官方標示與驗證連結。
+   - HUD 公車計數拆分為「X 輛 (官方GPS) ＋ Y 輛 (班距模擬)」。
+   - 加入差集分析追蹤機制，在每次輪詢後輸出車牌消失清單以查明原因。
+
+5. **📶 待修正 5／10：斷線或抓取失敗時，過期資料判定**：
+   - 建立每來源成功時間表 `sourceLastOkMs = { bus: 0, intercity: 0, trtc: 0, tymc: 0, tra: 0, thsr: 0 }` 與新鮮度判定函式 `isSourceStale(key, limitMs)`（公車/捷運/台鐵 60秒，高鐵 15分鐘）。
+   - 彈窗打開當下即時判定新鮮度，過期時標明「🟡 資料過期 (前次: HH:MM:SS)」。
+   - HUD `syncEl` 依各來源獨立展示狀態燈號（`🟢公車 🟢捷運 🟢台鐵 🟢高鐵`，過期轉黃），公車計數過期時顯示「N 輛 (資料過期)」，絕不以單一來源背書全部。
+
+6. **🚅 待修正 6／10：高鐵標示「即時軌道推算」誤導（推算統一黃色徽章）**：
+   - `buildLiveRailPopupHtml` 全面重構徽章邏輯：高鐵為「🟡 時刻表推算」、台鐵為「🟡 看板內插推算」、捷運為「🟡 看板班距推算」、模擬路線為「🟡 班距模擬」，徹底移除暗示即時定位的綠色軌道推算徽章。
+   - 資料性質行加入「資料時間」，高鐵明確標記「今日營運時刻表 (YYYY-MM-DD)」。
+
+7. **🚇 待修正 7／10 & 8／10：捷運示意編號、跑馬燈文字如實、捷運站彈窗頁尾**：
+   - 捷運列車名稱與編號全面標註「(示意編號)」。
+   - 跑馬燈 `updateTransitTickerBroadcast`：高鐵改為「【高鐵時刻表推算】」、捷運改為「【捷運班距模擬】編號 ... (示意編號)」、臺鐵改為「【臺鐵看板內插推算】」、無資料備用文字改為「示意運轉中」之不宣稱事實說法。
+   - 捷運站彈窗頁尾改為：「捷運班次為官方時刻表與班距推算，非即時定位」。
+
+8. **🔍 待修正 9／10：Y 線 Y-602 來源事件——加入 sourceTrace 追蹤**：
+   - 在 `computeBrowserLiveMrtTrains` 中每一次 trains.push 皆注入 `sourceTrace: { feed: 'TRTC/TYMC-LiveBoard' 或 'headway-sim', matchedStation: curSt.name, lineCode: line.lineCode }` 並以 `console.debug` 輸出。
+   - LiveBoard 列車來源標示統一改為：「官方 LiveBoard 看板 (無 GPS)，位置為班距推算」。
+
+9. **💻 待修正 10／10：Node 伺服器 transit-live-service.js 標頭如實描述**：
+   - 第 2 行標頭由「100% 真實網路即時 GPS 同步」修正為「四軌大眾運輸開放資料聚合與施工狀態服務模組（公車為官方真實 GPS，台鐵／高鐵／捷運為官方看板與時刻表推算）」。
+
+10. **📦 4 大倉庫全軌同步與推送（恪守委託人最高鐵則）**：
+    - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四大倉庫雙軌鏡像同步完成修改。
+    - 執行 `git add`、`commit` 並全量推送至 GitHub 遠端 main 分支。
