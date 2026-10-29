@@ -191,6 +191,12 @@
 
     <div style="font-size:10px; color:#34d399; font-weight:800; margin:8px 0 4px 0;">🚊 雙北大眾運輸四軌與實時交通圖層:</div>
     <div class="tool-btn-grid">
+      <!-- 🌟 巴視達 (BusTa) 即時公車移動路線與沿途站名系統 (點擊任一公車即刻展開) -->
+      <button class="tactical-tool-btn active" id="btnToggleBusTa" onclick="if(window.__lastClickedBus) { traceBusRouteAndStops(window.__lastClickedBus); } else { showNavToast('💡 請在地圖上點擊任一輛公車，即可展開移動路線與沿線站名！'); }" title="巴視達系統：點擊地圖上每一台公車皆可顯示移動路線與沿途站名">
+        <span>🚏 巴視達路線軌跡導航</span>
+        <span style="color:#38bdf8;">點擊公車展開</span>
+      </button>
+
       <!-- 🌟 雙北全域 3D 真實建築物系統 (60FPS 視錐剔除 ✕ 空間網格 ✕ LOD 批次合併) -->
       <button class="tactical-tool-btn active" id="btnToggle3DBuildings" onclick="toggle3DBuildingsLayer()">
         <span>🏙️ 雙北全域 3D 建築 (60FPS)</span>
