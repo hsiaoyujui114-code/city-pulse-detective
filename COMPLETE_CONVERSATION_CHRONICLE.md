@@ -3941,3 +3941,57 @@ flowchart TD
 10. **📦 4 大倉庫全軌同步與推送（恪守委託人最高鐵則）**：
     - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四大倉庫雙軌鏡像同步完成修改。
     - 執行 `git add`、`commit` 並全量推送至 GitHub 遠端 main 分支。
+
+
+---
+
+## 📌 對話紀錄第 114 輪 (2026-10-29 11:05)
+
+### 🗣️ 委託人反饋與提問
+1. **「會不會PHP資安問題」**
+2. **「你確定」**
+3. **「你這些地圖是從哪裡找的」**
+4. **「給我網站」**
+
+---
+
+### 🛡️ 執行紀錄與回覆摘要
+
+#### 1. PHP 安全性徹底清查與防護確認
+- **清查結果**：本系統全專案為 100% 前端靜態網頁（Vanilla JS + Leaflet + WebGL Canvas）與輕量 Node.js 廣播服務，全專案 **0 個 .php 檔案**，執行環境無 PHP 直譯器（無 php / php-cgi 命令）。
+- **架構免疫**：部署於 GitHub Pages 邊緣 CDN，不具備執行伺服器端腳本的能力，架構上天然完全免疫 PHP 相關漏洞（如 PHP 反序列化、遠端代碼執行、檔案包含 RFI/LFI 等）。Node.js 後端服務具備絕對路徑防禦與反向代理保護。
+
+#### 2. 地圖圖資與官方數據來源全清冊公開
+- **5 大 1:1 真實底圖官方來源**：
+  1. **臺灣通用電子地圖 (NLSC)**：內政部國土測繪中心 WMTS 官方服務（`https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}`）。
+  2. **Esri 真實街道全景圖**：美國環境系統研究所公司 (Esri ArcGIS World Street Map)。
+  3. **OpenStreetMap 繁中街道網**：OpenStreetMap 基金會國際開源圖資（德國/法國鏡像）。
+  4. **賽博暗黑夜間圖**：Esri World Dark Gray Canvas 結合霓虹向量街道圖層。
+  5. **實體高空衛星複合圖**：內政部國土測繪中心正射影像（PHOTO2）疊加 Esri Transportation 道路網。
+- **大眾運輸即時開放資料來源**：
+  1. 臺北市/新北市即時公車：臺北市交通局 (Data.Taipei) Azure Blob 廣播源與交通部 TDX 平台。
+  2. 臺北捷運/新北捷運/機捷：交通部 TDX 軌道看板 LiveBoard 與各捷運公司官方行車時刻表。
+  3. 臺灣鐵路：交通部 TDX 臺鐵即時看板 API (Rail/TRA/LiveBoard)。
+  4. 台灣高鐵：交通部 TDX 台灣高鐵今日營運時刻表 API (Rail/THSR/DailyTimetable/Today)。
+- **地理空間與實體門市來源**：
+  1. 雙北 41 行政特區界線向量：內政部戶政司與國土測繪中心公開圖資。
+  2. 160+ 棟地標建築真實框架：台北市都市計畫測繪圖資與實際航空立體基地多邊形頂點。
+  3. 377+ 實體門市與地標 POI：雙北市公開登記點位與 Google Maps WGS84 經緯度校對。
+
+#### 3. 線上展示網站與官方數據平台清單交付
+- **四個專案 GitHub Pages 線上展示網址**：
+  - 城市脈動地圖（最新主版本）：`https://hsiaoyujui114-code.github.io/city-pulse-detective/`
+  - 台北捷運私服探案：`https://hsiaoyujui114-code.github.io/taipei-metro-detective-rpg/`
+  - 都會偵探 RPG 主站：`https://hsiaoyujui114-code.github.io/taipei-detective-rpg/`
+  - 核心系統架構庫：`https://hsiaoyujui114-code.github.io/taipei-detective-core/`
+  - 線上專題企劃書：`https://hsiaoyujui114-code.github.io/taipei-detective-rpg/proposal.html`
+- **官方圖資與開放資料平台網站**：
+  - 內政部國土測繪圖資服務雲 (NLSC)：`https://maps.nlsc.gov.tw/`
+  - 交通部 TDX 運輸資料流通服務平台：`https://tdx.transportdata.tw/`
+  - OpenStreetMap 國際街圖官網：`https://www.openstreetmap.org/`
+  - Esri ArcGIS 地圖官網：`https://www.arcgis.com/`
+  - 臺北市資料大平台：`https://data.taipei/`
+  - 新北市政府資料開放平台：`https://data.ntpc.gov.tw/`
+  - 臺北大眾捷運官網：`https://www.metro.taipei/`
+  - 台灣高鐵官網：`https://www.thsrc.com.tw/`
+  - 國營臺灣鐵路官網：`https://www.railway.gov.tw/`
