@@ -4462,3 +4462,67 @@ flowchart TD
 #### 4. 恪守最高永久鐵則：全倉庫 Commit 與 Push
 - 恪守委託人最高永久鐵則：修改完成後 100% 自動執行 `git add`、`commit` 並推送至 GitHub 遠端 main 分支。
 - 四大憲法級紅線（0 少年偵探、0 益碩/藝碩、0 瞬移、0 歷史廢除職稱）0 違規！
+
+---
+
+### 第 126 輪對話全誌：超微觀街廓親臨系統 (Zoom 19.5) 實裝 ✕ 鏡頭自動鎖定跟隨人物 ✕ 極致街道斑馬線與捷運出口 ✕ 快捷鍵 Z (2026-11-03 下午)
+
+#### 1. 任務緣起與委託人最高指示
+- **時間戳**：2026-11-03 14:06
+- **委託人原始指示**：
+  > 「幫我把地圖放大後做的很仔細，因為我之後不是要這樣大範圍遊玩，而是要放非常大，只會看到自己人物和這附近的街道，你需要在8分鐘之內做完，如果不行就不要做，把現在做的東西上船上去」
+- **調度主持**：Leader（專案協同與總管調度長）
+- **專責角色**：🗺️ `project` (`ai-engineer`，雙本地圖與全域交通維護者)
+- **執行倉庫**：
+  - [`city-pulse-detective`](https://github.com/hsiaoyujui114-code/city-pulse-detective)
+  - [`taipei-metro-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg)
+  - [`taipei-detective-core`](https://github.com/hsiaoyujui114-code/taipei-detective-core)
+  - [`taipei-detective-rpg`](https://github.com/hsiaoyujui114-code/taipei-detective-rpg)
+
+#### 2. 超微觀街廓親臨系統核心架構實裝
+
+##### ① 街廓親臨模式 (Street Focus Mode ✕ Zoom 19.5 ✕ 鏡頭自動跟隨)
+- **開關切換**：新增 `togglePlayerFocusMode()` 支援一鍵雙向切換「19.5x 微觀街廓」與「15.0x 一般全區視角」。
+- **鏡頭自動鎖定**：開啟街廓親臨模式時，玩家以 WASD 或方向鍵步行，鏡頭 100% 自動鎖定並即時平滑平移（`map.panTo(nextLatLng, { duration: 0.12 })`），永遠將都會調查員置於畫面中央，只呈現眼前 30~50m 街道！
+- **實體快捷鍵 `Z`**：在全島地圖任何時刻按下鍵盤 `Z` 鍵，即刻一秒切換進入/退出街廓親臨模式。
+- **頂部動態浮動指示膠囊 (`#streetFocusPill`)**：進入模式時，頂部展示高對比霓虹青光膠囊：`🎯 街廓親臨模式 (19.5x)：鏡頭鎖定人物 ✕ 高精細街道 [全景 (Z)]`。
+
+##### ② 極致微觀街道圖層 (`streetMicroDetailsGroup`，Zoom >= 17.5 展開 32+ 實體細節)
+- **黑白高對比行人穿越道 (斑馬線 Zebra Crossings)**：
+  - 忠孝西路一段 ✕ 館前路口（站前核心大十字路口，四向黑白斑馬線紋理與行人停等區）。
+  - 館前路 ✕ 許昌街口（南陽補習街商圈）。
+  - 重慶南路一段 ✕ 忠孝西路口（書店街頭）。
+  - 公園路 ✕ 青島西路口（捷運 M8 出口前）。
+- **實體捷運地下街出入口 (Subway Exits)**：
+  - 標繪真實出入口立體按鈕：台北地下街 `Z2`、站前地下街 `Z4`（新光三越摩天大樓直達門）、`Z6`、`Z8`、捷運台北車站 `M4`、`M6`、`M8`（公園路）。
+- **實體街角門牌路標 (Street Nameplates)**：
+  - 標繪「忠孝西路一段」、「館前路」、「許昌街」、「重慶南路一段」、「公園路」。
+- **全天候騎樓步行安全區 (Pedestrian Arcades)**：
+  - 忠孝西路南側與館前路騎樓步道。
+- **即時微光足跡粒子 (Footstep Trail)**：
+  - 步行時在腳下留下賽博青光足跡粒子（自動淡出），大幅提升微觀步行代入感。
+
+#### 3. 真實 Edge CDP 全自動化實測數據
+
+```text
+[1] 啟用街廓親臨模式 (Zoom 19.5x)：
+    isStreetFocusMode: true
+    zoom: 19.5 (極致街廓視角)
+    pillDisplay: 'flex' (頂部指示膠囊亮起)
+    pillText: '🎯 街廓親臨模式 (19.5x)：鏡頭鎖定人物 ✕ 高精細街道'
+
+[2] 街道微觀細節動態加載：
+    microLayerCount: 32 (四向斑馬線、捷運出口、街道路牌、騎樓步道全數展開)
+
+[3] 人物步行與鏡頭自動鎖定：
+    playerPos: { lat: 25.04668, lng: 121.517 }
+    mapCenter 同步跟隨置中，鏡頭永遠保持在人物！
+
+[4] 快捷鍵 Z 退出回歸：
+    isStreetFocusMode: false
+    zoom 降回 15.0x 一般視角，膠囊安全隱藏！
+```
+
+#### 4. 恪守最高永久鐵則：4 倉庫全面 Commit ✕ Push
+- `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四大倉庫代碼與文件全數同步並推送至 GitHub 遠端 main 分支。
+- 嚴格恪守 8 分鐘時限與四大憲法級紅線（0 少年偵探、0 藝碩/益碩、0 瞬移、0 歷史廢除職稱）！

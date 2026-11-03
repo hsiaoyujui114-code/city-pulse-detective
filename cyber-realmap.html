@@ -332,9 +332,9 @@
         <span>📡 全息雷達掃描</span>
         <span style="color:#94a3b8;">STANDBY</span>
       </button>
-      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()">
-        <span>👤 超微觀角色特寫 20x</span>
-        <span style="color:#00f0ff;">ZOOM</span>
+      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大至 19.5x 微觀街廓，鏡頭自動跟隨人物與周遭街道">
+        <span>🎯 街廓親臨 (按 Z)</span>
+        <span style="color:#00f0ff;">19.5x</span>
       </button>
       <button class="tactical-tool-btn" id="btnFitBounds" onclick="resetShuangbeiBounds()">
         <span>🔭 雙北全景居中</span>
@@ -422,8 +422,8 @@
 
   <!-- 底部操作提示 (Bottom Hint Bar) -->
   <div class="bottom-hint-bar">
+    <span><span class="hint-key">[WASD 漫遊 / Z 街廓親臨 / F 公車過濾]</span> 鏡頭鎖定人物與附近巷弄街道</span>
     <span><span class="hint-key">[滑鼠滾輪 / 雙指縮放]</span> 1:1 無級縮放到雙北真實巷弄門牌</span>
-    <span><span class="hint-key">[拖曳平移]</span> 自由探索雙北 41 行政特區</span>
     <span><span class="hint-key">[點擊門市 / 站牌 / 🚨警報]</span> 即時調取真實門牌、公車到站預報與自然科學案情</span>
   </div>
 

@@ -48,6 +48,9 @@ let casesLayerGroup = null;
 let sectorsLayerGroup = null;
 let learningVenuesLayerGroup = null;
 let buildingEntranceGlowGroup = null;
+let streetMicroDetailsGroup = null;
+let playerFootstepGroup = null;
+let isStreetFocusMode = false;
 let streetFogOfWarLayerGroup = null;
 let isStreetFogEnabled = false;
 
@@ -287,6 +290,8 @@ function initCyberRealMap() {
   sectorsLayerGroup = L.layerGroup().addTo(map);
   learningVenuesLayerGroup = L.layerGroup().addTo(map);
   buildingEntranceGlowGroup = L.layerGroup().addTo(map);
+  streetMicroDetailsGroup = L.layerGroup().addTo(map);
+  playerFootstepGroup = L.layerGroup().addTo(map);
   streetFogOfWarLayerGroup = L.layerGroup();
   trafficLightsLayerGroup = L.layerGroup().addTo(map);
   underConstructionLayerGroup = L.layerGroup().addTo(map);
@@ -484,10 +489,61 @@ function resetMapOrientation() {
   showNavToast('🧭 方位羅盤已校準為正北方向 (0° N)');
 }
 
+
 function togglePlayerFocusMode() {
   if (!map) return;
-  map.flyTo([25.0465, 121.5170], 20.2, { duration: 1.2 });
+  isStreetFocusMode = !isStreetFocusMode;
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+
+  const btn = document.getElementById('btnFocusPlayer');
+  let pill = document.getElementById('streetFocusPill');
+
+  if (isStreetFocusMode) {
+    // 進入超大微觀街廓視角 (Zoom 19.5，只看自己與眼前街道)
+    map.flyTo([playerPos.lat, playerPos.lng], 19.5, { duration: 1.0 });
+
+    if (btn) {
+      btn.classList.add('active');
+      btn.innerHTML = '<span>🎯 街廓親臨 (ON)</span><span style="color:#00f0ff;">19.5x</span>';
+    }
+
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.id = 'streetFocusPill';
+      pill.className = 'street-focus-pill';
+      document.body.appendChild(pill);
+    }
+    pill.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
+        <span><b>街廓親臨模式 (19.5x)</b>：鏡頭鎖定人物 ✕ 高精細街道</span>
+      </div>
+      <button onclick="togglePlayerFocusMode()" style="background:#0284c7; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">全景 (Z)</button>
+    `;
+    pill.style.display = 'flex';
+
+    if (typeof showNavToast === 'function') {
+      showNavToast('🎯 已進入街廓親臨微觀模式 (19.5x)！鏡頭隨人物移動，展現高精細斑馬線與街廓');
+    }
+  } else {
+    // 退出親臨模式，回歸全區總覽 (Zoom 15)
+    map.flyTo([playerPos.lat, playerPos.lng], 15.0, { duration: 1.0 });
+
+    if (btn) {
+      btn.classList.remove('active');
+      btn.innerHTML = '<span>👤 超微觀角色特寫 20x</span><span style="color:#00f0ff;">ZOOM</span>';
+    }
+
+    if (pill) pill.style.display = 'none';
+
+    if (typeof showNavToast === 'function') {
+      showNavToast('🌐 已切換回一般全區視角 (Zoom 15)');
+    }
+  }
+
+  setTimeout(() => renderStreetMicroDetails(), 1100);
 }
+
 
 // ──────────────────────────────────────────
 // 4.2 生活圈焦點暗角聚光機制 (Tactical Vignette Spotlight - 預設關閉無暗角)
@@ -7065,6 +7121,10 @@ function initWalkNavFlowlineSystem() {
 
 function handlePlayerKeyboardWalk(e) {
   // 🎯 鍵盤「過濾鍵 (F)」：快速切換公車專注過濾模式（會把公車全部關閉，只剩下選中的公車）
+  if (e.key === 'z' || e.key === 'Z') {
+    togglePlayerFocusMode();
+    return;
+  }
   if (e.key === 'f' || e.key === 'F') {
     if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
       e.preventDefault();
@@ -9305,5 +9365,180 @@ function zoomToShuangbeiBusOverview() {
   map.flyTo([25.045, 121.52], 12, { duration: 1.5 });
   if (typeof showNavToast === 'function') {
     showNavToast('🚌 已切換至「雙北公車全景俯瞰」視角 (俯瞰雙北全境 2,000+ 輛奔馳公車)');
+  }
+}
+
+
+// ============================================================
+// 🏙️ 超微觀街廓親臨系統 (Zoom 18-21 極致街道細節 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道)
+// ============================================================
+const STREET_MICRO_DETAILS = {
+  // 1. 行人穿越道 (斑馬線 Zebra Crossings) - 黑白高對比斑馬線紋理
+  crossings: [
+    // 忠孝西路一段 ✕ 館前路口 (站前核心大十字路口)
+    { id: 'cr_zx_gq_n', name: '忠孝西路北側行人穿越道', p1: [25.0468, 121.5165], p2: [25.0468, 121.5175], width: 6, stripes: 12 },
+    { id: 'cr_zx_gq_s', name: '忠孝西路南側行人穿越道 (新光三越前)', p1: [25.0461, 121.5165], p2: [25.0461, 121.5175], width: 6, stripes: 12 },
+    { id: 'cr_zx_gq_w', name: '館前路西側斑馬線', p1: [25.0461, 121.5165], p2: [25.0468, 121.5165], width: 5, stripes: 10 },
+    { id: 'cr_zx_gq_e', name: '館前路東側斑馬線', p1: [25.0461, 121.5175], p2: [25.0468, 121.5175], width: 5, stripes: 10 },
+
+    // 館前路 ✕ 漢口街一段 / 許昌街口
+    { id: 'cr_gq_hk_s', name: '館前路 ✕ 許昌街口斑馬線 (南陽補習街前)', p1: [25.0448, 121.5167], p2: [25.0448, 121.5173], width: 4.5, stripes: 8 },
+    { id: 'cr_gq_hk_w', name: '漢口街一段西向斑馬線', p1: [25.0446, 121.5167], p2: [25.0450, 121.5167], width: 4, stripes: 7 },
+
+    // 忠孝西路 ✕ 重慶南路一段路口
+    { id: 'cr_zx_cq_n', name: '重慶南路口北側穿越道', p1: [25.0467, 121.5132], p2: [25.0467, 121.5140], width: 5.5, stripes: 10 },
+    { id: 'cr_zx_cq_s', name: '重慶南路口南側穿越道 (書店街頭)', p1: [25.0460, 121.5132], p2: [25.0460, 121.5140], width: 5.5, stripes: 10 },
+
+    // 忠孝西路 ✕ 公園路口 (健保大樓 / M8 出口前)
+    { id: 'cr_zx_gy_s', name: '公園路口斑馬線 (捷運 M8 出口旁)', p1: [25.0461, 121.5186], p2: [25.0461, 121.5193], width: 5.5, stripes: 10 }
+  ],
+
+  // 2. 實體地下街與捷運站出入口 (Subway Entrances M1-M8, Z1-Z8)
+  subwayExits: [
+    { id: 'exit_z2', name: '🚇 台北地下街 Z2 出口', lat: 25.0463, lon: 121.5162, desc: '連通站前廣場／館前路' },
+    { id: 'exit_z4', name: '🚇 站前地下街 Z4 出口 (新光三越前)', lat: 25.0459, lon: 121.5169, desc: '新光摩天大樓直達門' },
+    { id: 'exit_z6', name: '🚇 台北地下街 Z6 出口', lat: 25.0460, lon: 121.5153, desc: '重慶南路一段書店街口' },
+    { id: 'exit_z8', name: '🚇 站前地下街 Z8 出口', lat: 25.0460, lon: 121.5143, desc: '台北郵局／博愛路口' },
+    { id: 'exit_m4', name: '🚇 捷運台北車站 M4 出口', lat: 25.0468, lon: 121.5178, desc: '台鐵／高鐵東三門地下連通' },
+    { id: 'exit_m6', name: '🚇 捷運台北車站 M6 出口', lat: 25.0463, lon: 121.5182, desc: '凱撒大飯店／忠孝西路地下街' },
+    { id: 'exit_m8', name: '🚇 捷運台北車站 M8 出口 (公園路)', lat: 25.0462, lon: 121.5190, desc: '中正第一分局／台大醫院方向' }
+  ],
+
+  // 3. 街廓路標與重要門牌 (Street Nameplates & Corner Badges)
+  streetNameplates: [
+    { name: '🛣️ 忠孝西路一段 (北門 ➔ 台北車站 ➔ 行政院)', lat: 25.0464, lon: 121.5168, angle: 90 },
+    { name: '🛣️ 館前路 (新光三越 ➔ 臺灣博物館)', lat: 25.0452, lon: 121.5170, angle: 0 },
+    { name: '🛣️ 許昌街 (南陽補習商圈 ✕ 美食一條街)', lat: 25.0449, lon: 121.5177, angle: 90 },
+    { name: '🛣️ 重慶南路一段 (重南書店文創街)', lat: 25.0450, lon: 121.5136, angle: 0 },
+    { name: '🛣️ 公園路 (常德街 ✕ 台大醫院西址)', lat: 25.0450, lon: 121.5191, angle: 0 }
+  ],
+
+  // 4. 騎樓人行步道安全區 (Pedestrian Arcades)
+  arcades: [
+    {
+      name: '🚶 忠孝西路南側騎樓步道 (全天候遮雨連通走廊)',
+      path: [
+        [25.0460, 121.5130],
+        [25.0460, 121.5195]
+      ]
+    },
+    {
+      name: '🚶 館前路東側人行道 (寬敞步行街區)',
+      path: [
+        [25.0461, 121.5172],
+        [25.0442, 121.5172]
+      ]
+    }
+  ]
+};
+
+// 渲染極致街道細節
+function renderStreetMicroDetails() {
+  if (!map || !streetMicroDetailsGroup) return;
+  const curZoom = map.getZoom();
+
+  // 僅在放得非常大 (Zoom >= 17.5) 時展開極致街道微觀元素
+  if (curZoom < 17.5) {
+    streetMicroDetailsGroup.clearLayers();
+    return;
+  }
+
+  // 若已渲染且層級相同，保留不重繪
+  if (streetMicroDetailsGroup._lastRenderedZoom === curZoom) return;
+  streetMicroDetailsGroup.clearLayers();
+  streetMicroDetailsGroup._lastRenderedZoom = curZoom;
+
+  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
+
+  // 1. 繪製黑白高對比斑馬線 (Crossings)
+  STREET_MICRO_DETAILS.crossings.forEach(cr => {
+    // 外圍行人引導黃色虛線
+    L.polyline([cr.p1, cr.p2], {
+      color: '#fef08a',
+      weight: 12,
+      opacity: 0.25,
+      lineCap: 'square'
+    }).addTo(streetMicroDetailsGroup);
+
+    // 斑馬線核心黑白斑馬條紋 (以高對比虛線擬真呈現)
+    const zebra = L.polyline([cr.p1, cr.p2], {
+      color: '#ffffff',
+      weight: 8,
+      opacity: 0.95,
+      dashArray: '5, 5',
+      lineCap: 'square'
+    }).addTo(streetMicroDetailsGroup);
+
+    zebra.bindTooltip(`🚶 ${cr.name}`, { direction: 'top', offset: [0, -6] });
+  });
+
+  // 2. 繪製騎樓步道專用道
+  STREET_MICRO_DETAILS.arcades.forEach(arc => {
+    const poly = L.polyline(arc.path, {
+      color: '#10b981',
+      weight: 6,
+      opacity: 0.55,
+      dashArray: '8, 6',
+      lineCap: 'round'
+    }).addTo(streetMicroDetailsGroup);
+    poly.bindTooltip(arc.name, { direction: 'center', permanent: false });
+  });
+
+  // 3. 繪製地下街與捷運出入口 (Subway Exits)
+  STREET_MICRO_DETAILS.subwayExits.forEach(ex => {
+    const iconHtml = `
+      <div class="subway-exit-pin" title="${ex.name}" style="background:#0284c7; border:2px solid #38bdf8; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; box-shadow:0 0 12px rgba(56,189,248,0.8); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <span>🚇</span>
+        <span>${ex.name.replace('🚇 ', '')}</span>
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'subway-exit-marker', iconAnchor: [40, 12] });
+    const marker = L.marker([ex.lat, ex.lon], { icon, zIndexOffset: 800 }).addTo(streetMicroDetailsGroup);
+    marker.bindPopup(`
+      <div style="font-family:sans-serif; color:#f8fafc; font-size:11px;">
+        <div style="font-weight:900; color:#38bdf8; font-size:12px;">${ex.name}</div>
+        <div style="color:#cbd5e1; margin-top:2px;">${ex.desc}</div>
+        <div style="color:#94a3b8; font-size:10px; margin-top:4px;">雙北捷運地下連通網絡 ✕ 行人無障礙設施</div>
+      </div>
+    `);
+  });
+
+  // 4. 繪製街角路牌 (Street Nameplates)
+  STREET_MICRO_DETAILS.streetNameplates.forEach(st => {
+    const iconHtml = `
+      <div class="street-nameplate-badge" style="background:rgba(15,23,42,0.92); border:1px solid #facc15; color:#fef08a; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.6); white-space:nowrap; pointer-events:none;">
+        ${st.name}
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'street-plate-marker', iconAnchor: [60, 10] });
+    L.marker([st.lat, st.lon], { icon, zIndexOffset: 500, interactive: false }).addTo(streetMicroDetailsGroup);
+  });
+}
+
+// 步行微光足跡粒子 (Trail)
+let footstepHistory = [];
+function addPlayerFootstep(lat, lon) {
+  if (!map || !playerFootstepGroup) return;
+  const curZoom = map.getZoom();
+  if (curZoom < 17.5) {
+    if (footstepHistory.length > 0) {
+      playerFootstepGroup.clearLayers();
+      footstepHistory = [];
+    }
+    return;
+  }
+
+  const dot = L.circleMarker([lat, lon], {
+    radius: 3.5,
+    color: '#00f0ff',
+    weight: 1,
+    fillColor: '#38bdf8',
+    fillOpacity: 0.6
+  }).addTo(playerFootstepGroup);
+
+  footstepHistory.push(dot);
+  if (footstepHistory.length > 8) {
+    const old = footstepHistory.shift();
+    if (playerFootstepGroup.hasLayer(old)) playerFootstepGroup.removeLayer(old);
   }
 }

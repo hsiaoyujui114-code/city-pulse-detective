@@ -2504,3 +2504,50 @@ body:not(.map-zoom-mid) .moving-mrt-train {
     justify-content: space-between;
   }
 }
+
+
+/* ─── 🎯 街廓親臨模式浮動指示膠囊 ─── */
+.street-focus-pill {
+  position: fixed;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1750;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid #00f0ff;
+  border-radius: 24px;
+  padding: 6px 16px;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4), 0 0 12px rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  pointer-events: auto;
+  animation: streetPillPulse 2s infinite ease-in-out;
+}
+
+@keyframes streetPillPulse {
+  0% { box-shadow: 0 4px 16px rgba(0, 240, 255, 0.3); }
+  50% { box-shadow: 0 4px 28px rgba(0, 240, 255, 0.7); }
+  100% { box-shadow: 0 4px 16px rgba(0, 240, 255, 0.3); }
+}
+
+.subway-exit-marker {
+  transition: transform 0.15s ease;
+}
+.subway-exit-marker:hover {
+  transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+  .street-focus-pill {
+    top: 130px;
+    font-size: 10px;
+    padding: 5px 12px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+  }
+}
