@@ -167,6 +167,7 @@ function initCyberRealMap() {
     wheelPxPerZoomLevel: 120,
     wheelDebounceTime: 60
   });
+  window.map = map;
 
   // 縮放控制面板
   L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -334,11 +335,16 @@ function initCyberRealMap() {
   map.on('zoomend', () => {
     updateStoreLODVisibility();
     updateMrtLODVisibility();
+    renderStreetMicroDetails();
+  });
+  map.on('moveend', () => {
+    renderStreetMicroDetails();
   });
   updateStoreLODVisibility();
   updateMrtLODVisibility();
   addDemoCasesMarkers();
   initPlayerAvatarMarker();
+  renderStreetMicroDetails();
   setupTelemetryListeners();
 
   // 啟動局部導航視野限制雷達 (周遭 850m 生活圈專注圈，認路導航)
@@ -497,10 +503,11 @@ function togglePlayerFocusMode() {
 
   const btn = document.getElementById('btnFocusPlayer');
   let pill = document.getElementById('streetFocusPill');
+  const proxCard = document.getElementById('streetProximityCard');
 
   if (isStreetFocusMode) {
     // 進入超大微觀街廓視角 (Zoom 19.5，只看自己與眼前街道)
-    map.flyTo([playerPos.lat, playerPos.lng], 19.5, { duration: 1.0 });
+    map.flyTo([playerPos.lat, playerPos.lng], 19.5, { duration: 0.8 });
 
     if (btn) {
       btn.classList.add('active');
@@ -522,12 +529,16 @@ function togglePlayerFocusMode() {
     `;
     pill.style.display = 'flex';
 
+    if (proxCard) proxCard.style.display = 'flex';
+    updateStreetProximityHUD(playerPos.lat, playerPos.lng);
+    checkStreetProximityInteraction(playerPos.lat, playerPos.lng);
+
     if (typeof showNavToast === 'function') {
       showNavToast('🎯 已進入街廓親臨微觀模式 (19.5x)！鏡頭隨人物移動，展現高精細斑馬線與街廓');
     }
   } else {
     // 退出親臨模式，回歸全區總覽 (Zoom 15)
-    map.flyTo([playerPos.lat, playerPos.lng], 15.0, { duration: 1.0 });
+    map.flyTo([playerPos.lat, playerPos.lng], 15.0, { duration: 0.8 });
 
     if (btn) {
       btn.classList.remove('active');
@@ -535,13 +546,16 @@ function togglePlayerFocusMode() {
     }
 
     if (pill) pill.style.display = 'none';
+    if (proxCard) proxCard.style.display = 'none';
+    const prompt = document.getElementById('streetInteractPrompt');
+    if (prompt) prompt.style.display = 'none';
 
     if (typeof showNavToast === 'function') {
       showNavToast('🌐 已切換回一般全區視角 (Zoom 15)');
     }
   }
 
-  setTimeout(() => renderStreetMicroDetails(), 1100);
+  setTimeout(() => renderStreetMicroDetails(), 900);
 }
 
 
@@ -3432,6 +3446,16 @@ function renderLiveBusMarkers(buses) {
     const b = item.b;
     const busKey = `live_${b.busId}`;
     const useBadge = isBusFilterOnlySelected || item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
+
+    // 🎯 超微觀街道視角純化優化：當放大至極致視角 (Zoom >= 17.5) 且無高亮/選中時，不在螢幕範圍內的遠方公車不繪製多餘圓點，確保 60FPS
+    if (!useBadge && curZ >= 17.5 && !item.inBounds) {
+      if (liveBusCanvasDots.has(busKey)) {
+        const oldEntry = liveBusCanvasDots.get(busKey);
+        if (ebusDynamicBusesGroup.hasLayer(oldEntry.dot)) ebusDynamicBusesGroup.removeLayer(oldEntry.dot);
+        liveBusCanvasDots.delete(busKey);
+      }
+      return;
+    }
 
     if (useBadge) {
       activeBadgeKeys.add(busKey);
@@ -7120,11 +7144,12 @@ function initWalkNavFlowlineSystem() {
 }
 
 function handlePlayerKeyboardWalk(e) {
-  // 🎯 鍵盤「過濾鍵 (F)」：快速切換公車專注過濾模式（會把公車全部關閉，只剩下選中的公車）
+  // 🎯 鍵盤「親臨鍵 (Z)」：快速切換街廓親臨模式 (19.5x 極致微觀)
   if (e.key === 'z' || e.key === 'Z') {
     togglePlayerFocusMode();
     return;
   }
+  // 🎯 鍵盤「過濾鍵 (F)」：快速切換公車專注過濾模式
   if (e.key === 'f' || e.key === 'F') {
     if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
       e.preventDefault();
@@ -7132,10 +7157,19 @@ function handlePlayerKeyboardWalk(e) {
       return;
     }
   }
+  // 🎯 鍵盤「調查互動鍵 (E)」：近距調查眼前捷運出入口、公車站牌、超商、郵筒與號誌
+  if (e.key === 'e' || e.key === 'E') {
+    if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+      e.preventDefault();
+      handleStreetInteractionKey();
+      return;
+    }
+  }
 
-  // Esc 鍵關閉所有彈窗（案件戰術詳情、鄰近交互、地圖氣泡）
+  // Esc 鍵關閉所有彈窗（案件戰術詳情、微觀調查、鄰近交互、地圖氣泡）
   if (e.key === 'Escape' || e.code === 'Escape') {
     closeCaseModal();
+    closeStreetInvestigationModal();
     const prox = document.getElementById('proximityInteractionModal');
     if (prox) prox.style.display = 'none';
     if (typeof map !== 'undefined' && map && typeof map.closePopup === 'function') {
@@ -7146,7 +7180,9 @@ function handlePlayerKeyboardWalk(e) {
 
   // 如果正在輸入框則不觸發
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-  const step = 0.00018; // 每次約 20 公尺步幅（0.00018度 ≈ 20.0m）
+  const curZoom = map ? map.getZoom() : 15;
+  const inMicro = isStreetFocusMode || curZoom >= 17.5;
+  const step = inMicro ? 0.000085 : 0.00018; // 微觀親臨模式下步幅約 9.5 公尺，全域漫遊約 20 公尺
   let dLat = 0, dLon = 0, deg = null;
 
   if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
@@ -7182,10 +7218,19 @@ function movePlayerByOffset(dLat, dLon, headingDeg) {
 
   // 自適應暗角與局部雷達光環更新
   updateSpotlightVignette();
-  if (isLocalFoVLocked) {
-    updateLocalRadarHalo(nextLatLng);
-    if (map) map.panTo(nextLatLng, { animate: true, duration: 0.15 });
+  const curZoom = map ? map.getZoom() : 15;
+  const inMicroStreetMode = isStreetFocusMode || curZoom >= 17.5;
+  if (isLocalFoVLocked || inMicroStreetMode) {
+    if (isLocalFoVLocked) updateLocalRadarHalo(nextLatLng);
+    if (map) map.panTo(nextLatLng, { animate: true, duration: 0.12 });
   }
+
+  // 即時足跡粒子渲染
+  addPlayerFootstep(nextLat, nextLng);
+
+  // 街廓臨場探索 HUD 與鄰近互動物件檢測
+  updateStreetProximityHUD(nextLat, nextLng);
+  checkStreetProximityInteraction(nextLat, nextLng);
 
   // 掃描老街迷霧
   updateFogOfWarMarkers({ lat: nextLat, lng: nextLng });
@@ -9372,53 +9417,181 @@ function zoomToShuangbeiBusOverview() {
 // ============================================================
 // 🏙️ 超微觀街廓親臨系統 (Zoom 18-21 極致街道細節 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道)
 // ============================================================
+// 🏙️ 超微觀街廓親臨系統 (Zoom 18-21 極致街道細節 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道 ✕ 街角家具 ✕ 臨場HUD)
+// ============================================================
 const STREET_MICRO_DETAILS = {
-  // 1. 行人穿越道 (斑馬線 Zebra Crossings) - 黑白高對比斑馬線紋理
+  // 1. 行人穿越道 (斑馬線 Zebra Crossings) - 黑白高對比斑馬線紋理 + 警示邊界 + 行人引導
   crossings: [
     // 忠孝西路一段 ✕ 館前路口 (站前核心大十字路口)
-    { id: 'cr_zx_gq_n', name: '忠孝西路北側行人穿越道', p1: [25.0468, 121.5165], p2: [25.0468, 121.5175], width: 6, stripes: 12 },
-    { id: 'cr_zx_gq_s', name: '忠孝西路南側行人穿越道 (新光三越前)', p1: [25.0461, 121.5165], p2: [25.0461, 121.5175], width: 6, stripes: 12 },
-    { id: 'cr_zx_gq_w', name: '館前路西側斑馬線', p1: [25.0461, 121.5165], p2: [25.0468, 121.5165], width: 5, stripes: 10 },
-    { id: 'cr_zx_gq_e', name: '館前路東側斑馬線', p1: [25.0461, 121.5175], p2: [25.0468, 121.5175], width: 5, stripes: 10 },
+    { id: 'cr_zx_gq_n', name: '忠孝西路北側行人穿越道 (北車南二門前)', p1: [25.0468, 121.5163], p2: [25.0468, 121.5177], width: 6.5, stripes: 14 },
+    { id: 'cr_zx_gq_s', name: '忠孝西路南側行人穿越道 (新光三越前)', p1: [25.0461, 121.5163], p2: [25.0461, 121.5177], width: 6.5, stripes: 14 },
+    { id: 'cr_zx_gq_w', name: '館前路西側斑馬線 (站前地下街 Z4 旁)', p1: [25.0461, 121.5163], p2: [25.0468, 121.5163], width: 5.5, stripes: 12 },
+    { id: 'cr_zx_gq_e', name: '館前路東側斑馬線 (往 M4/M6 出口)', p1: [25.0461, 121.5177], p2: [25.0468, 121.5177], width: 5.5, stripes: 12 },
 
-    // 館前路 ✕ 漢口街一段 / 許昌街口
-    { id: 'cr_gq_hk_s', name: '館前路 ✕ 許昌街口斑馬線 (南陽補習街前)', p1: [25.0448, 121.5167], p2: [25.0448, 121.5173], width: 4.5, stripes: 8 },
-    { id: 'cr_gq_hk_w', name: '漢口街一段西向斑馬線', p1: [25.0446, 121.5167], p2: [25.0450, 121.5167], width: 4, stripes: 7 },
+    // 館前路 ✕ 許昌街 / 漢口街一段口 (南陽商圈西側核心)
+    { id: 'cr_gq_xc_s', name: '館前路 ✕ 許昌街口斑馬線 (壽德大樓前)', p1: [25.0448, 121.5167], p2: [25.0448, 121.5174], width: 5.0, stripes: 9 },
+    { id: 'cr_gq_hk_w', name: '館前路 ✕ 漢口街一段西向斑馬線', p1: [25.0446, 121.5167], p2: [25.0450, 121.5167], width: 4.5, stripes: 8 },
 
-    // 忠孝西路 ✕ 重慶南路一段路口
-    { id: 'cr_zx_cq_n', name: '重慶南路口北側穿越道', p1: [25.0467, 121.5132], p2: [25.0467, 121.5140], width: 5.5, stripes: 10 },
-    { id: 'cr_zx_cq_s', name: '重慶南路口南側穿越道 (書店街頭)', p1: [25.0460, 121.5132], p2: [25.0460, 121.5140], width: 5.5, stripes: 10 },
+    // 館前路 ✕ 開封街一段口 (書店與商務走廊)
+    { id: 'cr_gq_kf_s', name: '館前路 ✕ 開封街一段橫向斑馬線', p1: [25.0455, 121.5167], p2: [25.0455, 121.5174], width: 5.0, stripes: 9 },
 
-    // 忠孝西路 ✕ 公園路口 (健保大樓 / M8 出口前)
-    { id: 'cr_zx_gy_s', name: '公園路口斑馬線 (捷運 M8 出口旁)', p1: [25.0461, 121.5186], p2: [25.0461, 121.5193], width: 5.5, stripes: 10 }
+    // 館前路 ✕ 襄陽路口 (臺灣博物館正門前林蔭跨街)
+    { id: 'cr_gq_xy_s', name: '館前路 ✕ 襄陽路口穿越道 (博物館石階大道)', p1: [25.0432, 121.5148], p2: [25.0432, 121.5158], width: 6.0, stripes: 11 },
+
+    // 忠孝西路 ✕ 重慶南路一段口 (站前西側核心)
+    { id: 'cr_zx_cq_n', name: '忠孝西路 ✕ 重慶南路北側穿越道', p1: [25.0467, 121.5132], p2: [25.0467, 121.5142], width: 6.0, stripes: 12 },
+    { id: 'cr_zx_cq_s', name: '忠孝西路 ✕ 重慶南路南側穿越道 (書店街頭)', p1: [25.0460, 121.5132], p2: [25.0460, 121.5142], width: 6.0, stripes: 12 },
+    { id: 'cr_cq_kf_s', name: '重慶南路 ✕ 開封街一段斑馬線', p1: [25.0454, 121.5134], p2: [25.0454, 121.5140], width: 4.5, stripes: 8 },
+    { id: 'cr_cq_hk_s', name: '重慶南路 ✕ 漢口街一段斑馬線', p1: [25.0446, 121.5134], p2: [25.0446, 121.5140], width: 4.5, stripes: 8 },
+
+    // 忠孝西路 ✕ 公園路口 (站前東側大路口)
+    { id: 'cr_zx_gy_n', name: '忠孝西路 ✕ 公園路北側穿越道 (健保大樓旁)', p1: [25.0468, 121.5186], p2: [25.0468, 121.5195], width: 6.0, stripes: 12 },
+    { id: 'cr_zx_gy_s', name: '忠孝西路 ✕ 公園路南側穿越道 (M8 出口前)', p1: [25.0461, 121.5186], p2: [25.0461, 121.5195], width: 6.0, stripes: 12 },
+    { id: 'cr_gy_cd_w', name: '公園路 ✕ 常德街口斑馬線 (台大醫院西址門前)', p1: [25.0435, 121.5188], p2: [25.0435, 121.5194], width: 5.0, stripes: 9 },
+
+    // 懷寧街口
+    { id: 'cr_zx_hn_s', name: '忠孝西路 ✕ 懷寧街口斑馬線', p1: [25.0461, 121.5152], p2: [25.0461, 121.5157], width: 4.5, stripes: 7 },
+    { id: 'cr_hn_kf_s', name: '懷寧街 ✕ 開封街一段斑馬線', p1: [25.0454, 121.5152], p2: [25.0454, 121.5157], width: 4.5, stripes: 7 },
+
+    // 南陽街 (補習街商圈行人跨道)
+    { id: 'cr_ny_xc_s', name: '南陽街 ✕ 許昌街口 (學生人潮徒步專用跨線)', p1: [25.0448, 121.5178], p2: [25.0448, 121.5184], width: 4.5, stripes: 8 },
+    { id: 'cr_ny_xy_s', name: '南陽街 ✕ 信陽街口跨線', p1: [25.0441, 121.5178], p2: [25.0441, 121.5184], width: 4.5, stripes: 8 },
+
+    // 忠孝西路 ✕ 博愛路 (北門郵局前穿越道)
+    { id: 'cr_zx_ba_s', name: '忠孝西路 ✕ 博愛路口斑馬線 (古蹟北門郵局前)', p1: [25.0462, 121.5115], p2: [25.0462, 121.5123], width: 5.5, stripes: 10 }
   ],
 
-  // 2. 實體地下街與捷運站出入口 (Subway Entrances M1-M8, Z1-Z8)
+  // 2. 實體地下街與捷運站出入口 (Subway Entrances M1-M8, Z1-Z10)
   subwayExits: [
-    { id: 'exit_z2', name: '🚇 台北地下街 Z2 出口', lat: 25.0463, lon: 121.5162, desc: '連通站前廣場／館前路' },
-    { id: 'exit_z4', name: '🚇 站前地下街 Z4 出口 (新光三越前)', lat: 25.0459, lon: 121.5169, desc: '新光摩天大樓直達門' },
-    { id: 'exit_z6', name: '🚇 台北地下街 Z6 出口', lat: 25.0460, lon: 121.5153, desc: '重慶南路一段書店街口' },
-    { id: 'exit_z8', name: '🚇 站前地下街 Z8 出口', lat: 25.0460, lon: 121.5143, desc: '台北郵局／博愛路口' },
-    { id: 'exit_m4', name: '🚇 捷運台北車站 M4 出口', lat: 25.0468, lon: 121.5178, desc: '台鐵／高鐵東三門地下連通' },
-    { id: 'exit_m6', name: '🚇 捷運台北車站 M6 出口', lat: 25.0463, lon: 121.5182, desc: '凱撒大飯店／忠孝西路地下街' },
-    { id: 'exit_m8', name: '🚇 捷運台北車站 M8 出口 (公園路)', lat: 25.0462, lon: 121.5190, desc: '中正第一分局／台大醫院方向' }
+    { id: 'exit_z1', name: '🚇 台北地下街 Z1 出口', lat: 25.0465, lon: 121.5166, desc: '館前路北口 ✕ 站前廣場', type: 'escalator', badge: 'Z1' },
+    { id: 'exit_z2', name: '🚇 台北地下街 Z2 出口', lat: 25.0463, lon: 121.5162, desc: '連通站前廣場／館前路', type: 'stairs', badge: 'Z2' },
+    { id: 'exit_z3', name: '🚇 台北地下街 Z3 出口', lat: 25.0465, lon: 121.5158, desc: '懷寧街口 ✕ 重慶南路一段', type: 'stairs', badge: 'Z3' },
+    { id: 'exit_z4', name: '🚇 站前地下街 Z4 出口 (新光三越前)', lat: 25.0459, lon: 121.5169, desc: '新光摩天大樓直達電扶梯門', type: 'escalator', badge: 'Z4' },
+    { id: 'exit_z6', name: '🚇 台北地下街 Z6 出口', lat: 25.0460, lon: 121.5153, desc: '重慶南路一段書店街口', type: 'stairs', badge: 'Z6' },
+    { id: 'exit_z8', name: '🚇 站前地下街 Z8 出口', lat: 25.0460, lon: 121.5143, desc: '台北郵局／博愛路口', type: 'stairs', badge: 'Z8' },
+    { id: 'exit_z10', name: '🚇 台北地下街 Z10 出口', lat: 25.0461, lon: 121.5128, desc: '重慶南路一段西側 ✕ 北門相機街口', type: 'elevator', badge: 'Z10' },
+
+    { id: 'exit_m1', name: '🚇 捷運台北車站 M1 出口', lat: 25.0475, lon: 121.5172, desc: '市民大道 ✕ 台北轉運站連通道', type: 'escalator', badge: 'M1' },
+    { id: 'exit_m2', name: '🚇 捷運台北車站 M2 出口', lat: 25.0475, lon: 121.5180, desc: '市民大道 ✕ 中山北路一段', type: 'stairs', badge: 'M2' },
+    { id: 'exit_m3', name: '🚇 捷運台北車站 M3 出口 (天成大飯店)', lat: 25.0466, lon: 121.5185, desc: '忠孝西路東側 ✕ 天成飯店直通電梯', type: 'elevator', badge: 'M3' },
+    { id: 'exit_m4', name: '🚇 捷運台北車站 M4 出口', lat: 25.0468, lon: 121.5178, desc: '台鐵／高鐵東三門地下連通', type: 'escalator', badge: 'M4' },
+    { id: 'exit_m5', name: '🚇 捷運台北車站 M5 出口', lat: 25.0463, lon: 121.5174, desc: '站前廣場 ✕ 忠孝西路中央月台', type: 'stairs', badge: 'M5' },
+    { id: 'exit_m6', name: '🚇 捷運台北車站 M6 出口 (凱撒飯店)', lat: 25.0463, lon: 121.5182, desc: '凱撒大飯店／忠孝西路地下街', type: 'escalator', badge: 'M6' },
+    { id: 'exit_m7', name: '🚇 捷運台北車站 M7 出口', lat: 25.0465, lon: 121.5193, desc: '中山南路 ✕ 忠孝西路路口', type: 'stairs', badge: 'M7' },
+    { id: 'exit_m8', name: '🚇 捷運台北車站 M8 出口 (公園路)', lat: 25.0462, lon: 121.5190, desc: '中正第一分局／台大醫院方向', type: 'escalator', badge: 'M8' }
   ],
 
-  // 3. 街廓路標與重要門牌 (Street Nameplates & Corner Badges)
-  streetNameplates: [
-    { name: '🛣️ 忠孝西路一段 (北門 ➔ 台北車站 ➔ 行政院)', lat: 25.0464, lon: 121.5168, angle: 90 },
-    { name: '🛣️ 館前路 (新光三越 ➔ 臺灣博物館)', lat: 25.0452, lon: 121.5170, angle: 0 },
-    { name: '🛣️ 許昌街 (南陽補習商圈 ✕ 美食一條街)', lat: 25.0449, lon: 121.5177, angle: 90 },
-    { name: '🛣️ 重慶南路一段 (重南書店文創街)', lat: 25.0450, lon: 121.5136, angle: 0 },
-    { name: '🛣️ 公園路 (常德街 ✕ 台大醫院西址)', lat: 25.0450, lon: 121.5191, angle: 0 }
+  // 3. 公車專用道站台與智慧候車亭 (BRT Platforms & Smart Bus Shelters)
+  busShelters: [
+    {
+      id: 'shelter_tpe_w',
+      name: '🚏 台北車站 (忠孝) 公車專用道 - 往西站台',
+      lat: 25.0466,
+      lon: 121.5165,
+      lanes: '299, 232, 14, 218, 260, 39, 忠孝幹線',
+      platform: '月台 A/B (公車專用道獨立島)',
+      features: '⚡ 智慧型動態 LED 到站面板・太陽能遮雨大棚・無障礙斜坡'
+    },
+    {
+      id: 'shelter_tpe_e',
+      name: '🚏 台北車站 (忠孝) 公車專用道 - 往東站台',
+      lat: 25.0466,
+      lon: 121.5173,
+      lanes: '202, 205, 212, 257, 262, 605, 忠孝幹線',
+      platform: '月台 C/D (公車專用道獨立島)',
+      features: '⚡ 智慧型動態 LED 到站面板・雙向通風候車棚・悠遊卡加值機'
+    },
+    {
+      id: 'shelter_gq',
+      name: '🚏 館前路 (新光三越) 站牌候車亭',
+      lat: 25.0456,
+      lon: 121.5172,
+      lanes: '18, 236, 251, 671',
+      platform: '路側標準候車亭',
+      features: '綠能電子紙公車時刻表・盲人點字乘車牌'
+    },
+    {
+      id: 'shelter_cq',
+      name: '🚏 重慶南路一段 (書店街) 候車亭',
+      lat: 25.0451,
+      lon: 121.5135,
+      lanes: '15, 18, 22, 220, 247, 260, 287',
+      platform: '路側標準候車亭',
+      features: '重南書香彩繪玻璃候車亭・USB 緊急充電孔'
+    }
   ],
 
-  // 4. 騎樓人行步道安全區 (Pedestrian Arcades)
+  // 4. 紅綠燈行人號誌燈柱 (Traffic Light Poles with Pedestrian Walk Signal)
+  trafficLights: [
+    { id: 'tl_zx_gq_nw', name: '🚦 忠孝館前路口西北號誌柱', lat: 25.0468, lon: 121.5164, state: 'green' },
+    { id: 'tl_zx_gq_ne', name: '🚦 忠孝館前路口東北號誌柱', lat: 25.0468, lon: 121.5176, state: 'green' },
+    { id: 'tl_zx_gq_sw', name: '🚦 忠孝館前路口西南號誌柱', lat: 25.0461, lon: 121.5164, state: 'red' },
+    { id: 'tl_zx_gq_se', name: '🚦 忠孝館前路口東南號誌柱', lat: 25.0461, lon: 121.5176, state: 'red' },
+    { id: 'tl_gq_xc', name: '🚦 館前許昌路口號誌柱', lat: 25.0448, lon: 121.5170, state: 'green' },
+    { id: 'tl_zx_cq', name: '🚦 忠孝重慶路口號誌柱', lat: 25.0464, lon: 121.5136, state: 'green' },
+    { id: 'tl_zx_gy', name: '🚦 忠孝公園路口號誌柱', lat: 25.0464, lon: 121.5190, state: 'red' }
+  ],
+
+  // 5. 街道家具 (郵筒、消防栓、暖光路燈)
+  streetFurniture: [
+    // 郵筒
+    { id: 'postbox_1', type: 'postbox', name: '📮 中華郵政 雙色郵筒 (綠平信 / 紅限時航空)', lat: 25.0460, lon: 121.5167, address: '館前路 4 號騎樓前' },
+    { id: 'postbox_2', type: 'postbox', name: '📮 中華郵政 雙色郵筒 (重慶南路一段)', lat: 25.0450, lon: 121.5138, address: '重慶南路一段 14 號' },
+    { id: 'postbox_3', type: 'postbox', name: '📮 台北北門郵局 總局百年紀念郵筒', lat: 25.0463, lon: 121.5118, address: '博愛路 1 號 (北門古蹟旁)' },
+
+    // 消防栓
+    { id: 'hydrant_1', type: 'hydrant', name: '🧯 市政標準柱式消防栓 (高壓給水管網)', lat: 25.0462, lon: 121.5161, address: '忠孝西路一段 47 號轉角路緣' },
+    { id: 'hydrant_2', type: 'hydrant', name: '🧯 市政標準柱式消防栓', lat: 25.0449, lon: 121.5168, address: '許昌街 2 號路緣' },
+    { id: 'hydrant_3', type: 'hydrant', name: '🧯 市政標準柱式消防栓', lat: 25.0452, lon: 121.5134, address: '重慶南路一段 28 號' },
+
+    // 路燈暖光投射
+    { id: 'lamp_1', type: 'lamp', name: '💡 站前典雅造型路燈 (暖黃光照)', lat: 25.0464, lon: 121.5166 },
+    { id: 'lamp_2', type: 'lamp', name: '💡 站前典雅造型路燈 (暖黃光照)', lat: 25.0464, lon: 121.5173 },
+    { id: 'lamp_3', type: 'lamp', name: '💡 館前林蔭路燈 (暖黃光照)', lat: 25.0453, lon: 121.5169 },
+    { id: 'lamp_4', type: 'lamp', name: '💡 館前林蔭路燈 (暖黃光照)', lat: 25.0445, lon: 121.5169 },
+    { id: 'lamp_5', type: 'lamp', name: '💡 書店街古典路燈 (暖黃光照)', lat: 25.0458, lon: 121.5136 },
+    { id: 'lamp_6', type: 'lamp', name: '💡 書店街古典路燈 (暖黃光照)', lat: 25.0448, lon: 121.5136 }
+  ],
+
+  // 6. 24H 實體超商與重要地標商鋪 (Convenience Stores & Real Storefronts)
+  storefronts: [
+    { id: 'cvs_711_zc', name: '🏪 7-ELEVEN 站前門市 (24H)', brand: '711', lat: 25.0460, lon: 121.5165, address: '忠孝西路一段 49 號 B1/1F', services: 'ATM 提款・ibon 智動列印・咖啡補給・情報交換' },
+    { id: 'cvs_fm_sk', name: '🏪 全家 FamilyMart 新光門市 (24H)', brand: 'fami', lat: 25.0457, lon: 121.5168, address: '館前路 6 號 1 樓', services: 'FamiPort 機台・包裹寄取・現泡茶飲' },
+    { id: 'cvs_711_sd', name: '🏪 7-ELEVEN 壽德門市 (24H)', brand: '711', lat: 25.0449, lon: 121.5172, address: '許昌街 17 號 1 樓 (補習街入口)', services: '熱食點心・文具影印・調查充電' },
+    { id: 'cvs_fm_hk', name: '🏪 全家 FamilyMart 漢口店 (24H)', brand: 'fami', lat: 25.0447, lon: 121.5164, address: '漢口街一段 42 號', services: '休憩座椅區・悠遊卡加值' },
+    { id: 'landmark_sk', name: '🏢 新光人壽摩天大樓 (站前地標 51 層)', brand: 'landmark', lat: 25.0458, lon: 121.5170, address: '忠孝西路一段 66 號', services: '旋轉門大廳・展望台直達梯' },
+    { id: 'landmark_ntm', name: '🏛️ 國立臺灣博物館 (古典多立克柱式殿堂)', brand: 'landmark', lat: 25.0429, lon: 121.5150, address: '襄陽路 2 號', services: '文史瑰寶典藏・二二八和平公園北門' }
+  ],
+
+  // 7. 街道門牌編號與巷弄看板 (Doorplates & Address Signs)
+  doorplates: [
+    { label: '忠孝西路一段 49 號', lat: 25.0464, lon: 121.5165, building: '台北車站南二門' },
+    { label: '館前路 8 號', lat: 25.0456, lon: 121.5170, building: '新光人壽大樓東門' },
+    { label: '館前路 12 號', lat: 25.0450, lon: 121.5170, building: '合作金庫銀行商業大樓' },
+    { label: '許昌街 17 號', lat: 25.0448, lon: 121.5176, building: '壽德大樓補習文教大廈' },
+    { label: '開封街一段 2 號', lat: 25.0455, lon: 121.5165, building: '站前商務大樓' },
+    { label: '漢口街一段 35 號', lat: 25.0447, lon: 121.5158, building: '相機影音旗艦店' },
+    { label: '重慶南路一段 10 號', lat: 25.0458, lon: 121.5138, building: '三民書局總店' },
+    { label: '重慶南路一段 61 號', lat: 25.0448, lon: 121.5138, building: '商務印書館舊址' },
+    { label: '公園路 13 號', lat: 25.0455, lon: 121.5191, building: '健保署台北業務處' }
+  ],
+
+  // 8. 地面交通標線 (機車待轉區、標線型人行道、公車站專用停靠槽)
+  pavementMarkings: [
+    { id: 'mb_zx_gq', name: '機車兩段左轉待轉區 (忠孝館前路口)', p1: [25.0462, 121.5165], p2: [25.0463, 121.5167] },
+    { id: 'mb_gq_xc', name: '機車待轉區 (館前許昌路口)', p1: [25.0447, 121.5169], p2: [25.0448, 121.5171] },
+    { id: 'mb_zx_cq', name: '機車待轉區 (忠孝重慶路口)', p1: [25.0461, 121.5138], p2: [25.0462, 121.5140] },
+    { id: 'gp_xc', name: '標線型綠底人行步道 (許昌街南側步行專用道)', path: [[25.0447, 121.5168], [25.0447, 121.5186]], color: '#10b981', width: 4 },
+    { id: 'gp_hk', name: '標線型綠底人行步道 (漢口街一段相機街人行道)', path: [[25.0447, 121.5140], [25.0447, 121.5166]], color: '#10b981', width: 4 },
+    { id: 'by_tpe_w', name: '公車專用道站台停靠槽 (黃色鋸齒警示標線)', path: [[25.0466, 121.5158], [25.0466, 121.5178]], color: '#facc15', width: 3, dashArray: '4, 4' }
+  ],
+
+  // 9. 騎樓人行步道安全區 (Pedestrian Arcades)
   arcades: [
     {
       name: '🚶 忠孝西路南側騎樓步道 (全天候遮雨連通走廊)',
       path: [
-        [25.0460, 121.5130],
+        [25.0460, 121.5125],
         [25.0460, 121.5195]
       ]
     },
@@ -9426,11 +9599,43 @@ const STREET_MICRO_DETAILS = {
       name: '🚶 館前路東側人行道 (寬敞步行街區)',
       path: [
         [25.0461, 121.5172],
-        [25.0442, 121.5172]
+        [25.0435, 121.5172]
+      ]
+    },
+    {
+      name: '🚶 館前路西側騎樓 (商圈購物走廊)',
+      path: [
+        [25.0461, 121.5166],
+        [25.0435, 121.5166]
+      ]
+    },
+    {
+      name: '🚶 重慶南路一段東側書店街騎樓',
+      path: [
+        [25.0460, 121.5138],
+        [25.0435, 121.5138]
       ]
     }
+  ],
+
+  // 10. 街道幾何中心線參考 (用於即時動態計算主角所在街道)
+  streets: [
+    { name: '忠孝西路一段 (Zhongxiao W. Rd.)', district: '中正區 站前特區', p1: [25.0464, 121.5120], p2: [25.0464, 121.5200] },
+    { name: '館前路 (Guanqian Rd.)', district: '中正區 站前特區', p1: [25.0468, 121.5170], p2: [25.0430, 121.5170] },
+    { name: '許昌街 (Xuchang St.)', district: '中正區 南陽補習街商圈', p1: [25.0448, 121.5167], p2: [25.0448, 121.5195] },
+    { name: '開封街一段 (Kaifeng St.)', district: '中正區 站前商圈', p1: [25.0455, 121.5130], p2: [25.0455, 121.5175] },
+    { name: '漢口街一段 (Hankou St.)', district: '中正區 相機影音街', p1: [25.0447, 121.5130], p2: [25.0447, 121.5170] },
+    { name: '重慶南路一段 (Chongqing S. Rd.)', district: '中正區 重南書店街', p1: [25.0470, 121.5136], p2: [25.0430, 121.5136] },
+    { name: '公園路 (Gongyuan Rd.)', district: '中正區 台大醫院醫療特區', p1: [25.0470, 121.5191], p2: [25.0430, 121.5191] },
+    { name: '懷寧街 (Huaining St.)', district: '中正區 城中歷史文創區', p1: [25.0465, 121.5154], p2: [25.0430, 121.5154] },
+    { name: '南陽街 (Nanyang St.)', district: '中正區 學生美食文教特區', p1: [25.0455, 121.5180], p2: [25.0438, 121.5180] },
+    { name: '博愛路 (Bo\'ai Rd.)', district: '中正區 台北古蹟北門門戶', p1: [25.0470, 121.5118], p2: [25.0440, 121.5118] },
+    { name: '襄陽路 (Xiangyang Rd.)', district: '中正區 臺灣博物館綠地門戶', p1: [25.0431, 121.5140], p2: [25.0431, 121.5175] }
   ]
 };
+
+// 當前可互動之最近微觀街廓物件
+let currentNearbyInteractiveObject = null;
 
 // 渲染極致街道細節
 function renderStreetMicroDetails() {
@@ -9440,6 +9645,9 @@ function renderStreetMicroDetails() {
   // 僅在放得非常大 (Zoom >= 17.5) 時展開極致街道微觀元素
   if (curZoom < 17.5) {
     streetMicroDetailsGroup.clearLayers();
+    streetMicroDetailsGroup._lastRenderedZoom = curZoom;
+    const proxCard = document.getElementById('streetProximityCard');
+    if (proxCard && !isStreetFocusMode) proxCard.style.display = 'none';
     return;
   }
 
@@ -9448,23 +9656,29 @@ function renderStreetMicroDetails() {
   streetMicroDetailsGroup.clearLayers();
   streetMicroDetailsGroup._lastRenderedZoom = curZoom;
 
-  const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0465, lng: 121.5170 };
-
   // 1. 繪製黑白高對比斑馬線 (Crossings)
   STREET_MICRO_DETAILS.crossings.forEach(cr => {
-    // 外圍行人引導黃色虛線
+    // 柏油底襯
     L.polyline([cr.p1, cr.p2], {
-      color: '#fef08a',
-      weight: 12,
-      opacity: 0.25,
+      color: '#1e293b',
+      weight: cr.width + 4,
+      opacity: 0.85,
       lineCap: 'square'
     }).addTo(streetMicroDetailsGroup);
 
-    // 斑馬線核心黑白斑馬條紋 (以高對比虛線擬真呈現)
+    // 外圍行人引導黃色警示邊界
+    L.polyline([cr.p1, cr.p2], {
+      color: '#fef08a',
+      weight: cr.width + 1.5,
+      opacity: 0.45,
+      lineCap: 'square'
+    }).addTo(streetMicroDetailsGroup);
+
+    // 斑馬線核心黑白斑馬條紋 (擬真高對比)
     const zebra = L.polyline([cr.p1, cr.p2], {
       color: '#ffffff',
-      weight: 8,
-      opacity: 0.95,
+      weight: cr.width,
+      opacity: 0.96,
       dashArray: '5, 5',
       lineCap: 'square'
     }).addTo(streetMicroDetailsGroup);
@@ -9477,41 +9691,152 @@ function renderStreetMicroDetails() {
     const poly = L.polyline(arc.path, {
       color: '#10b981',
       weight: 6,
-      opacity: 0.55,
+      opacity: 0.6,
       dashArray: '8, 6',
       lineCap: 'round'
     }).addTo(streetMicroDetailsGroup);
     poly.bindTooltip(arc.name, { direction: 'center', permanent: false });
   });
 
-  // 3. 繪製地下街與捷運出入口 (Subway Exits)
-  STREET_MICRO_DETAILS.subwayExits.forEach(ex => {
-    const iconHtml = `
-      <div class="subway-exit-pin" title="${ex.name}" style="background:#0284c7; border:2px solid #38bdf8; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; box-shadow:0 0 12px rgba(56,189,248,0.8); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-        <span>🚇</span>
-        <span>${ex.name.replace('🚇 ', '')}</span>
-      </div>
-    `;
-    const icon = L.divIcon({ html: iconHtml, className: 'subway-exit-marker', iconAnchor: [40, 12] });
-    const marker = L.marker([ex.lat, ex.lon], { icon, zIndexOffset: 800 }).addTo(streetMicroDetailsGroup);
-    marker.bindPopup(`
-      <div style="font-family:sans-serif; color:#f8fafc; font-size:11px;">
-        <div style="font-weight:900; color:#38bdf8; font-size:12px;">${ex.name}</div>
-        <div style="color:#cbd5e1; margin-top:2px;">${ex.desc}</div>
-        <div style="color:#94a3b8; font-size:10px; margin-top:4px;">雙北捷運地下連通網絡 ✕ 行人無障礙設施</div>
-      </div>
-    `);
+  // 3. 繪製地面交通標線 (機車待轉區、標線型人行道、公車停靠槽)
+  STREET_MICRO_DETAILS.pavementMarkings.forEach(pm => {
+    if (pm.p1 && pm.p2) {
+      // 矩形待轉區
+      const bounds = [pm.p1, pm.p2];
+      const rect = L.rectangle(bounds, {
+        color: '#38bdf8',
+        weight: 1.5,
+        fillColor: '#0284c7',
+        fillOpacity: 0.25,
+        dashArray: '4, 4'
+      }).addTo(streetMicroDetailsGroup);
+      rect.bindTooltip(`🛵 ${pm.name}`, { direction: 'top' });
+    } else if (pm.path) {
+      const line = L.polyline(pm.path, {
+        color: pm.color || '#10b981',
+        weight: pm.width || 4,
+        opacity: 0.8,
+        dashArray: pm.dashArray || null
+      }).addTo(streetMicroDetailsGroup);
+      line.bindTooltip(`🏷️ ${pm.name}`, { direction: 'center' });
+    }
   });
 
-  // 4. 繪製街角路牌 (Street Nameplates)
-  STREET_MICRO_DETAILS.streetNameplates.forEach(st => {
+  // 4. 繪製公車專用道站台與智慧候車亭
+  STREET_MICRO_DETAILS.busShelters.forEach(bs => {
     const iconHtml = `
-      <div class="street-nameplate-badge" style="background:rgba(15,23,42,0.92); border:1px solid #facc15; color:#fef08a; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.6); white-space:nowrap; pointer-events:none;">
-        ${st.name}
+      <div class="bus-shelter-pin" title="${bs.name}" style="background:linear-gradient(135deg, #d97706, #b45309); border:2px solid #fbbf24; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:14px; box-shadow:0 0 14px rgba(251,191,36,0.7); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <span>🚏</span>
+        <span>${bs.name.replace('🚏 ', '')}</span>
       </div>
     `;
-    const icon = L.divIcon({ html: iconHtml, className: 'street-plate-marker', iconAnchor: [60, 10] });
-    L.marker([st.lat, st.lon], { icon, zIndexOffset: 500, interactive: false }).addTo(streetMicroDetailsGroup);
+    const icon = L.divIcon({ html: iconHtml, className: 'bus-shelter-marker', iconAnchor: [50, 12] });
+    const marker = L.marker([bs.lat, bs.lon], { icon, zIndexOffset: 750 }).addTo(streetMicroDetailsGroup);
+    marker.on('click', () => showStreetInvestigationModal(bs));
+  });
+
+  // 5. 繪製紅綠燈號誌燈柱
+  STREET_MICRO_DETAILS.trafficLights.forEach(tl => {
+    const isGreen = tl.state === 'green';
+    const iconHtml = `
+      <div class="traffic-light-pin" title="${tl.name}" style="background:rgba(15,23,42,0.95); border:1.5px solid ${isGreen ? '#22c55e' : '#ef4444'}; color:${isGreen ? '#4ade80' : '#f87171'}; font-size:9px; font-weight:900; padding:2px 5px; border-radius:8px; box-shadow:0 0 10px ${isGreen ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'}; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
+        <span>${isGreen ? '🚶‍♂️' : '🛑'}</span>
+        <span>${isGreen ? '通行' : '停等'}</span>
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'traffic-light-marker', iconAnchor: [20, 10] });
+    const marker = L.marker([tl.lat, tl.lon], { icon, zIndexOffset: 700 }).addTo(streetMicroDetailsGroup);
+    marker.on('click', () => showStreetInvestigationModal(tl));
+  });
+
+  // 6. 繪製街道家具 (郵筒、消防栓、暖光路燈)
+  STREET_MICRO_DETAILS.streetFurniture.forEach(sf => {
+    if (sf.type === 'lamp') {
+      // 暖黃路燈投射圓
+      L.circle([sf.lat, sf.lon], {
+        radius: 12,
+        color: '#fef08a',
+        weight: 1,
+        fillColor: '#fef08a',
+        fillOpacity: 0.12,
+        interactive: false
+      }).addTo(streetMicroDetailsGroup);
+
+      const lampHtml = `<div class="lamp-pin" title="${sf.name}" style="font-size:12px; filter:drop-shadow(0 0 6px #facc15);">💡</div>`;
+      const icon = L.divIcon({ html: lampHtml, className: 'lamp-marker', iconAnchor: [6, 6] });
+      L.marker([sf.lat, sf.lon], { icon, zIndexOffset: 600, interactive: false }).addTo(streetMicroDetailsGroup);
+    } else if (sf.type === 'postbox') {
+      const boxHtml = `
+        <div class="postbox-pin" title="${sf.name}" style="background:#059669; border:1.5px solid #6ee7b7; color:#fff; font-size:9px; font-weight:800; padding:1px 5px; border-radius:6px; box-shadow:0 0 8px rgba(5,150,105,0.7); display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
+          <span>📮</span>
+          <span>中華郵政</span>
+        </div>
+      `;
+      const icon = L.divIcon({ html: boxHtml, className: 'postbox-marker', iconAnchor: [30, 8] });
+      const marker = L.marker([sf.lat, sf.lon], { icon, zIndexOffset: 650 }).addTo(streetMicroDetailsGroup);
+      marker.on('click', () => showStreetInvestigationModal(sf));
+    } else if (sf.type === 'hydrant') {
+      const hydHtml = `
+        <div class="hydrant-pin" title="${sf.name}" style="background:#dc2626; border:1.5px solid #f87171; color:#fff; font-size:9px; font-weight:800; padding:1px 4px; border-radius:6px; box-shadow:0 0 8px rgba(220,38,38,0.7); display:inline-flex; align-items:center; gap:2px; cursor:pointer;">
+          <span>🧯</span>
+          <span>消火栓</span>
+        </div>
+      `;
+      const icon = L.divIcon({ html: hydHtml, className: 'hydrant-marker', iconAnchor: [24, 8] });
+      const marker = L.marker([sf.lat, sf.lon], { icon, zIndexOffset: 650 }).addTo(streetMicroDetailsGroup);
+      marker.on('click', () => showStreetInvestigationModal(sf));
+    }
+  });
+
+  // 7. 繪製實體超商與地標商鋪 (Convenience Stores & Landmarks)
+  STREET_MICRO_DETAILS.storefronts.forEach(st => {
+    let bg = '#0284c7', border = '#38bdf8';
+    if (st.brand === '711') {
+      bg = '#ea580c'; border = '#fb923c';
+    } else if (st.brand === 'fami') {
+      bg = '#0284c7'; border = '#22c55e';
+    } else if (st.brand === 'landmark') {
+      bg = '#7c3aed'; border = '#a78bfa';
+    }
+
+    const iconHtml = `
+      <div class="cvs-badge-pin" title="${st.name}" style="background:${bg}; border:1.5px solid ${border}; color:#fff; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:10px; box-shadow:0 0 12px rgba(0,0,0,0.8); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <span>${st.name.startsWith('🏪') ? '🏪' : (st.name.startsWith('🏛️') ? '🏛️' : '🏢')}</span>
+        <span>${st.name.replace(/^[^\s]+\s/, '')}</span>
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'cvs-marker', iconAnchor: [45, 10] });
+    const marker = L.marker([st.lat, st.lon], { icon, zIndexOffset: 720 }).addTo(streetMicroDetailsGroup);
+    marker.on('click', () => showStreetInvestigationModal(st));
+  });
+
+  // 8. 繪製地下街與捷運出入口 (Subway Exits)
+  STREET_MICRO_DETAILS.subwayExits.forEach(ex => {
+    const isMrt = ex.id.startsWith('exit_m');
+    const badgeColor = isMrt ? '#0284c7' : '#0891b2';
+    const borderColor = isMrt ? '#38bdf8' : '#22d3ee';
+
+    const iconHtml = `
+      <div class="subway-exit-pin" title="${ex.name}" style="background:${badgeColor}; border:2px solid ${borderColor}; color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:14px; box-shadow:0 0 14px rgba(56,189,248,0.8); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <span>🚇</span>
+        <span style="background:rgba(0,0,0,0.3); padding:0 4px; border-radius:6px; font-size:9px;">${ex.badge}</span>
+        <span>${ex.name.replace(/🚇\s(捷運台北車站|台北地下街|站前地下街)\s*/, '')}</span>
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'subway-exit-marker', iconAnchor: [50, 12] });
+    const marker = L.marker([ex.lat, ex.lon], { icon, zIndexOffset: 850 }).addTo(streetMicroDetailsGroup);
+    marker.on('click', () => showStreetInvestigationModal(ex));
+  });
+
+  // 9. 繪製街角門牌 (Doorplates)
+  STREET_MICRO_DETAILS.doorplates.forEach(dp => {
+    const iconHtml = `
+      <div class="doorplate-pin" style="background:rgba(15,23,42,0.92); border:1px solid #facc15; color:#fef08a; font-size:9px; font-weight:800; padding:1px 6px; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.7); white-space:nowrap; pointer-events:none;">
+        🏷️ ${dp.label}
+      </div>
+    `;
+    const icon = L.divIcon({ html: iconHtml, className: 'doorplate-marker', iconAnchor: [35, 8] });
+    L.marker([dp.lat, dp.lon], { icon, zIndexOffset: 520, interactive: false }).addTo(streetMicroDetailsGroup);
   });
 }
 
@@ -9533,12 +9858,203 @@ function addPlayerFootstep(lat, lon) {
     color: '#00f0ff',
     weight: 1,
     fillColor: '#38bdf8',
-    fillOpacity: 0.6
+    fillOpacity: 0.65
   }).addTo(playerFootstepGroup);
 
   footstepHistory.push(dot);
-  if (footstepHistory.length > 8) {
+  if (footstepHistory.length > 9) {
     const old = footstepHistory.shift();
     if (playerFootstepGroup.hasLayer(old)) playerFootstepGroup.removeLayer(old);
+  }
+}
+
+// ──────────────────────────────────────────
+// 🏙️ 街廓臨場探索 HUD (Street Proximity HUD)
+// ──────────────────────────────────────────
+function calcDistanceMeters(lat1, lon1, lat2, lon2) {
+  const dLat = (lat2 - lat1) * 111000;
+  const dLon = (lon2 - lon1) * 101000;
+  return Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
+function updateStreetProximityHUD(lat, lon) {
+  const proxCard = document.getElementById('streetProximityCard');
+  if (!proxCard) return;
+
+  const curZoom = map ? map.getZoom() : 15;
+  if (!isStreetFocusMode && curZoom < 17.5) {
+    proxCard.style.display = 'none';
+    return;
+  }
+
+  proxCard.style.display = 'flex';
+
+  // 1. 尋找最近的街道
+  let closestStreet = null;
+  let minDist = Infinity;
+  STREET_MICRO_DETAILS.streets.forEach(st => {
+    // 點到線段距離概算
+    const midLat = (st.p1[0] + st.p2[0]) / 2;
+    const midLon = (st.p1[1] + st.p2[1]) / 2;
+    const dist = calcDistanceMeters(lat, lon, midLat, midLon);
+    if (dist < minDist) {
+      minDist = dist;
+      closestStreet = st;
+    }
+  });
+
+  const streetNameEl = document.getElementById('streetNameText');
+  const streetDistEl = document.getElementById('streetDistrictBadge');
+  if (streetNameEl && closestStreet) {
+    streetNameEl.innerText = closestStreet.name;
+  }
+  if (streetDistEl && closestStreet) {
+    streetDistEl.innerText = closestStreet.district;
+  }
+
+  // 2. 尋找最近門牌
+  let closestDoor = null;
+  let minDoorDist = Infinity;
+  STREET_MICRO_DETAILS.doorplates.forEach(dp => {
+    const dist = calcDistanceMeters(lat, lon, dp.lat, dp.lon);
+    if (dist < minDoorDist) {
+      minDoorDist = dist;
+      closestDoor = dp;
+    }
+  });
+
+  const doorEl = document.getElementById('streetDoorplateText');
+  if (doorEl) {
+    if (closestDoor && minDoorDist < 80) {
+      doorEl.innerText = `門牌概位：${closestDoor.label} (${closestDoor.building})`;
+    } else {
+      doorEl.innerText = '門牌概位：站前生活圈行人路段';
+    }
+  }
+}
+
+// ──────────────────────────────────────────
+// 🔍 鄰近可互動物件檢測與 [E] 鍵觸發
+// ──────────────────────────────────────────
+function checkStreetProximityInteraction(lat, lon) {
+  const promptEl = document.getElementById('streetInteractPrompt');
+  const actionTextEl = document.getElementById('interactActionText');
+
+  // 候選物件：捷運出口、公車站牌、超商商鋪、郵筒、消防栓、號誌
+  const interactiveCandidates = [
+    ...STREET_MICRO_DETAILS.subwayExits,
+    ...STREET_MICRO_DETAILS.busShelters,
+    ...STREET_MICRO_DETAILS.storefronts,
+    ...STREET_MICRO_DETAILS.trafficLights,
+    ...STREET_MICRO_DETAILS.streetFurniture.filter(f => f.type !== 'lamp')
+  ];
+
+  let nearest = null;
+  let nearestDist = Infinity;
+
+  interactiveCandidates.forEach(cand => {
+    const d = calcDistanceMeters(lat, lon, cand.lat, cand.lon);
+    if (d < nearestDist) {
+      nearestDist = d;
+      nearest = cand;
+    }
+  });
+
+  // 22 公尺以內視為可調查互動半徑
+  if (nearest && nearestDist <= 22) {
+    currentNearbyInteractiveObject = nearest;
+    if (promptEl) {
+      promptEl.style.display = 'flex';
+      if (actionTextEl) {
+        actionTextEl.innerText = `調查：${nearest.name.split(' (')[0]}`;
+      }
+    }
+  } else {
+    currentNearbyInteractiveObject = null;
+    if (promptEl) promptEl.style.display = 'none';
+  }
+}
+
+// [E] 鍵觸發
+function handleStreetInteractionKey() {
+  if (!currentNearbyInteractiveObject) {
+    if (typeof showNavToast === 'function') {
+      showNavToast('🔍 眼前 20m 內無特定設施，請靠近捷運出口、公車站牌、超商或郵筒後按 [E] 鍵');
+    }
+    return;
+  }
+  showStreetInvestigationModal(currentNearbyInteractiveObject);
+}
+
+// 彈出微觀調查情報視窗
+function showStreetInvestigationModal(obj) {
+  const modal = document.getElementById('streetInvestigationModal');
+  const card = document.getElementById('streetInvestigationCard');
+  if (!modal || !card) return;
+
+  let typeTag = '🏛️ 市政實體設施';
+  let categoryNotes = '都會調查員現場即時取證：此處為雙北交通樞紐核心設施，無障礙動線與人流指引齊備。';
+
+  if (obj.id && obj.id.startsWith('exit_')) {
+    typeTag = '🚇 捷運/地下街立體出口';
+    categoryNotes = `【地下動線特徵】${obj.desc}。連通雙北板南線、淡水信義線與地下步行商圈，全天候監控與消防連動正常。`;
+  } else if (obj.id && obj.id.startsWith('shelter_')) {
+    typeTag = '🚏 智慧公車候車站台';
+    categoryNotes = `【站台特徵】${obj.platform}。停靠路線：${obj.lanes}。配備：${obj.features}。`;
+  } else if (obj.id && (obj.id.startsWith('cvs_') || obj.id.startsWith('landmark_'))) {
+    typeTag = '🏪 24H 實體商鋪與地標';
+    categoryNotes = `【營業與情報網絡】門市地址：${obj.address}。現場服務：${obj.services}。調查員可在此補充能量與調取監視情報。`;
+  } else if (obj.id && obj.id.startsWith('tl_')) {
+    typeTag = '🚦 行人穿越交通號誌';
+    categoryNotes = `【路口號誌運作】號誌燈號：${obj.state === 'green' ? '🟢 綠燈步行中' : '🔴 紅燈停等中'}。內建小綠人走動倒數計時與盲人語音定位提示蜂鳴器。`;
+  } else if (obj.type === 'postbox') {
+    typeTag = '📮 中華郵政實體郵筒';
+    categoryNotes = `【郵政設施】位置：${obj.address}。雙筒規格（左綠平信／右紅限時航空），定時由臺北郵局特差人員開筒取信。`;
+  } else if (obj.type === 'hydrant') {
+    typeTag = '🧯 市政高壓消防栓';
+    categoryNotes = `【消防給水管網】位置：${obj.address}。連通站前自來水高壓幹管，為城中特區火災防護核心設施。`;
+  }
+
+  card.innerHTML = `
+    <div class="investigation-header">
+      <div class="investigation-title-box">
+        <div class="investigation-title-text">${obj.name}</div>
+        <div class="investigation-type-tag">${typeTag}</div>
+      </div>
+      <button class="investigation-close-btn" onclick="closeStreetInvestigationModal()">✕</button>
+    </div>
+
+    <div class="investigation-body-section">
+      <div class="investigation-info-row">
+        <div class="investigation-info-label">實體經緯：</div>
+        <div class="investigation-info-val" style="font-family:monospace; color:#38bdf8;">${obj.lat ? obj.lat.toFixed(5) : '25.0465'}, ${obj.lon ? obj.lon.toFixed(5) : '121.5170'}</div>
+      </div>
+      <div class="investigation-info-row">
+        <div class="investigation-info-label">街廓概位：</div>
+        <div class="investigation-info-val">${obj.address || obj.desc || '台北車站站前生活圈'}</div>
+      </div>
+      <div class="investigation-notes-box">
+        ${categoryNotes}
+      </div>
+    </div>
+
+    <div class="investigation-actions">
+      <button class="investigation-btn investigation-btn-secondary" onclick="closeStreetInvestigationModal()">關閉 (Esc)</button>
+      <button class="investigation-btn investigation-btn-primary" onclick="confirmStreetInvestigationAction('${obj.id || obj.name}')">🔍 深入取證記錄</button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeStreetInvestigationModal() {
+  const modal = document.getElementById('streetInvestigationModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmStreetInvestigationAction(id) {
+  closeStreetInvestigationModal();
+  if (typeof showNavToast === 'function') {
+    showNavToast(`📋 已將【${id}】現況線索登錄於都會調查員現場筆記！`);
   }
 }

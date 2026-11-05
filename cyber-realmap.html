@@ -420,9 +420,30 @@
     </div>
   </div>
 
+  <!-- 🏙️ 街廓親臨微觀探索 HUD (Street Proximity HUD) -->
+  <div class="street-proximity-card" id="streetProximityCard" style="display:none;">
+    <div class="street-proximity-badge">
+      <span class="street-pulse-icon">📍</span>
+      <span class="street-name-text" id="streetNameText">館前路 (Guanqian Rd.)</span>
+      <span class="street-district-badge" id="streetDistrictBadge">中正區 站前特區</span>
+    </div>
+    <div class="street-doorplate-text" id="streetDoorplateText">門牌概位：8號 (新光摩天大樓側)</div>
+    <div class="street-interact-prompt" id="streetInteractPrompt" style="display:none;" onclick="handleStreetInteractionKey()">
+      <span class="interact-key-pill">[E]</span>
+      <span class="interact-action-text" id="interactActionText">調查周邊</span>
+    </div>
+  </div>
+
+  <!-- 🔍 實體街道微觀調查彈窗 (Street Micro Investigation Modal) -->
+  <div class="street-investigation-modal" id="streetInvestigationModal" style="display:none;" onclick="if(event.target===this)closeStreetInvestigationModal();">
+    <div class="street-investigation-card" id="streetInvestigationCard">
+      <!-- 由 JS 動態注入 -->
+    </div>
+  </div>
+
   <!-- 底部操作提示 (Bottom Hint Bar) -->
   <div class="bottom-hint-bar">
-    <span><span class="hint-key">[WASD 漫遊 / Z 街廓親臨 / F 公車過濾]</span> 鏡頭鎖定人物與附近巷弄街道</span>
+    <span><span class="hint-key">[WASD 漫遊 / E 調查 / Z 街廓親臨 / F 公車過濾]</span> 鏡頭鎖定人物與附近巷弄街道</span>
     <span><span class="hint-key">[滑鼠滾輪 / 雙指縮放]</span> 1:1 無級縮放到雙北真實巷弄門牌</span>
     <span><span class="hint-key">[點擊門市 / 站牌 / 🚨警報]</span> 即時調取真實門牌、公車到站預報與自然科學案情</span>
   </div>
