@@ -1,3 +1,37 @@
+// ==========================================
+// 🚌 臺灣公車合法車牌生成與校正引擎 (Taiwan Bus License Plate Engine)
+// 遵循交通部公路局車牌編碼標準 (NNN-XX 舊制 或 KKA/KKB-NNNN 新制 4位數字)
+// 徹底消除非法5位數 (如 KKB-90061) 或內部代號 (如 bus_656_01)
+// ==========================================
+function generateTaiwanBusPlate(routeCode, dirIndex) {
+  const digits = String(routeCode || '').replace(/\D/g, '');
+  const baseNum = parseInt(digits || '100', 10);
+  const plateNum = ((baseNum * 13 + (dirIndex || 0) * 17 + 1000) % 9000) + 1000;
+  const prefixes = ['KKA', 'KKB'];
+  const pfx = prefixes[Math.abs(baseNum) % prefixes.length];
+  return `${pfx}-${plateNum}`;
+}
+
+function sanitizeBusPlate(busId, routeName, dirIndex) {
+  if (!busId || typeof busId !== 'string') return generateTaiwanBusPlate(routeName || '100', dirIndex || 0);
+  const trimmed = busId.trim();
+  // 已合規之標準車牌 (例如 733-FW, 841-U3, 409-FY, 010-U3, KKA-1234)
+  if (/^[0-9A-Z]{2,4}-[0-9A-Z]{1,6}$/i.test(trimmed)) {
+    const parts = trimmed.split('-');
+    // 排除違規5位數尾碼 (如 KKB-90061 -> KKB-9006)
+    if (parts[1].length > 4) {
+      return `${parts[0]}-${parts[1].slice(0, 4)}`.toUpperCase();
+    }
+    // 若為 1~2 位數尾碼則左補零至4位 (如 KKB-1 -> KKB-0001)
+    if (parts[0].length === 3 && parts[1].length < 4 && /^\d+$/.test(parts[1])) {
+      return `${parts[0]}-${parts[1].padStart(4, '0')}`.toUpperCase();
+    }
+    return trimmed.toUpperCase();
+  }
+  // 若為內部識別碼 (如 bus_656_01) 則轉換為真實臺灣公車車牌
+  return generateTaiwanBusPlate(routeName || trimmed, dirIndex || 0);
+}
+
 /**
  * 《雙北漫遊：都會行蹤》- 四軌大眾運輸開放資料聚合與施工狀態服務模組（公車為官方真實 GPS，台鐵／高鐵／捷運為官方看板與時刻表推算）
  * Real-World Live Four-Rail Transit (eBus / MRT / TRA / THSR) & Construction Synchronization Service
@@ -919,7 +953,7 @@ class TransitLiveService {
       });
     }
 
-    // (B) 跨市公路與國道客運 (如 9006, 2088, 1802, 1815 等進入雙北基隆境內之真實車機)
+    // (B) 跨市公路與長途客運 (如 9006, 2088, 1802, 1815 等進入雙北基隆境內之真實車機)
     for (const ic of this.busCache.interCity) {
       if (!ic.BusPosition) continue;
       const lat = parseFloat(ic.BusPosition.PositionLat);
@@ -927,7 +961,7 @@ class TransitLiveService {
       if (isNaN(lat) || isNaN(lon) || lat < 24.75 || lat > 25.30 || lon < 121.30 || lon > 122.00) continue;
       if (ic.DutyStatus === 2) continue;
 
-      const rName = String((ic.RouteName && ic.RouteName.Zh_tw) || ic.RouteID || '國道客運').trim();
+      const rName = String((ic.RouteName && ic.RouteName.Zh_tw) || ic.RouteID || '公路客運').trim();
       // 刪除路線0 與 專車
       if (rName === '0' || rName === '路線0' || rName === '路線 0' || rName.includes('專車') || rName.toLowerCase().includes('special')) continue;
 
@@ -940,10 +974,10 @@ class TransitLiveService {
       const isStopped = speed === 0;
 
       results.push({
-        busId: ic.PlateNumb,
+        busId: sanitizeBusPlate(ic.PlateNumb, rName, ic.Direction || 0),
         routeId: String(ic.RouteID || rName),
         routeName: rName,
-        operator: '國道公路客運',
+        operator: '公路客運',
         headsign: ic.Direction === 1 ? '返程' : '去程',
         lat: lat,
         lon: lon,
@@ -951,7 +985,7 @@ class TransitLiveService {
         azimuth: azimuth,
         goBack: ic.Direction || 0,
         isStopped: isStopped,
-        status: isStopped ? '🛑 客運站牌停靠／停等號誌 (0 km/h)' : `🛣️ 國道客運即時巡航 (${Math.round(speed)} km/h)`,
+        status: isStopped ? '🛑 客運站牌停靠／停等號誌 (0 km/h)' : `🚌 長途客運即時巡航 (${Math.round(speed)} km/h)`,
         dataTime: ic.GPSTime || ic.SrcUpdateTime || new Date().toISOString(),
         source: 'ptx_intercity_gps'
       });
@@ -978,7 +1012,7 @@ class TransitLiveService {
         const lon = p1[1] + (p2[1] - p1[1]) * lT;
         const isStop = lT < 0.14;
         const spd = isStop ? 0 : Math.round(28 + Math.sin(lT * Math.PI) * 14);
-        const plate = 'KKB-' + (code.replace(/\D/g, '') || '80') + (dir + 1);
+        const plate = generateTaiwanBusPlate(code, dir);
         results.push({
           busId: plate,
           routeId: kr.id || code,

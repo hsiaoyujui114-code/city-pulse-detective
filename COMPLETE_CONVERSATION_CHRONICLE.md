@@ -4602,3 +4602,78 @@ flowchart TD
 
 #### 4. 4 大專案倉庫全面 Commit ✕ Push
 - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四大倉庫均已同步更新並推送至 GitHub 遠端 main 分支。
+
+
+---
+
+### 第 128 輪對話全誌：刪除國道高速公路與國道客運 ✕ 修正公車車牌標準合法化
+
+- **日期**：2026-11-06
+- **調度角色**：`project` (AI Engineer / GIS 總工程師，雙本地圖與全域交通系統維護)
+- **指令來源**：委託人指示「幫我請project把最新的紀錄抓下來，把問題欄裡的東西改一下，刪除國道，公車車牌錯誤」
+- **對應規範與問題欄**：`https://files.instinct.com/ju4sf6hj7efj-agy` (地圖問題欄專屬檢驗規範)
+
+#### 1. 核心任務背景與實施目標
+1. **抓取最新紀錄**：全 4 倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-core`、`planner`）執行 `git fetch` 與 `git pull origin main`，同步遠端最新提交至 Round 127。
+2. **刪除國道高速公路（Freeway Expressways）**：
+   - 徹底移除地圖上的國道高速公路（國道一號中山高、國道三號福爾摩沙高、國道五號雪山隧道）拓撲線段與盾牌圖標。
+   - 從 `cyber-realmap.html` 移除 `#btnToggleExpressways`（`🛣️ 國道高速公路 (國1/3/5)`）開關按鈕及圖例項。
+   - 將 `#btnToggleCoachHubs` 按鈕由「🏢 國道客運轉運站」更名為「🏢 長途客運轉運站」。
+   - `SHUANGBEI_EXPRESSWAYS` 陣列清空為 `[]`，`addExpresswaysLayer()` 實施 `clearLayers()` 防護。
+   - 從巡航車隊 `ACTIVE_BUS_FLEET_SPEC` 與 `EBUS_KEY_ROUTES` 中剔除基隆/跨市國道客運路線（9006, 2088, 1802）。
+   - 更新三大客運轉運站（市府轉運站、台北轉運站、板橋客運站）與號誌之關聯描述，徹底淨化「國道」用詞。
+3. **公車車牌錯誤修復（Taiwan Bus License Plate Standard Engine）**：
+   - 依據中華民國交通部公路局標準營業大客車號牌規範：
+     - 舊制：`NNN-XX`（3碼數字+2碼英文字母，如 `733-FW`, `841-U3`, `409-FY`, `010-U3`）
+     - 新制：`KKA-NNNN` / `KKB-NNNN`（3碼英文+4碼數字，如 `KKA-0128`, `KKB-5991`）
+   - 徹底根除舊版班距模擬拼接代碼所衍生之非法 5 位數字號牌（如 `KKB-90061`、`KKB-20881`）及 3 碼尾數號牌。
+   - 徹底根除 `ACTIVE_BUS_FLEET_SPEC` 彈窗與巴視達面板直接暴露程式內部識別碼（如 `bus_656_01`, `bus_307_01`）之缺失，為 14 輛旗艦巡航車輛全面配賦合法真實車牌。
+   - 建立全域車牌校正引擎：
+     - `generateTaiwanBusPlate(routeCode, dirIndex)`：保證生成標準 3 碼前綴 + 4 碼數字尾碼之臺灣營業大客車合法車牌。
+     - `sanitizeBusPlate(busId, routeName, dirIndex)`：全域攔截轉換，支援合規車牌過濾、過長 5 碼自動截斷修正、內部 ID 轉真牌。
+
+#### 2. 實作變更與架構細節
+- **`cyber-realmap.html`**：
+  - 移除 `#btnToggleExpressways` 按鈕與圖例之國道標示。
+  - 將轉運站開關更名為 `🏢 長途客運轉運站 (京站/市府)`。
+  - 車隊圖例更名為 `🚍 連續派發動態公車車隊 (656、307、99、299、承德幹線等)`。
+- **`transit-data.js`**：
+  - `SHUANGBEI_EXPRESSWAYS` 變更為 `[]`。
+  - 移除 `EBUS_KEY_ROUTES` 中的 `bus_9006`, `bus_2088`, `bus_1802`。
+  - 清理號誌 `routes` 綁定中的國道路線。
+  - 修正轉運站描述與南港轉運站 transfers 標記。
+- **`cyber-realmap.js`**：
+  - 注入 `generateTaiwanBusPlate` 與 `sanitizeBusPlate`。
+  - `ACTIVE_BUS_FLEET_SPEC` 配置真實車牌：
+    - 656 幹線：`841-U3`, `851-U3`, `842-U3`
+    - 307 幹線：`733-FW`, `736-FW`, `765-FW`
+    - 99 專線：`007-U5`, `035-U5`
+    - 299 幹線：`010-U3`, `853-U3`
+    - 965 快速客運：`KKA-0128`, `KKA-0129`
+    - 承德幹線：`409-FY`, `410-FY`
+  - `computeBrowserLiveBuses` 全域呼叫 `sanitizeBusPlate`，修復變數 TDZ 宣告順序。
+  - `renderLiveBusMarkers`、`buildLiveBusPopupHtml`、`showBusTaNavigatorPanel`、`traceBusRouteAndStops` 全面採用校正車牌呈現。
+  - `expresswaysLayerGroup` 不再加入 `map`，`addExpresswaysLayer()` 實施 `clearLayers()`。
+- **`transit-live-service.js`**：
+  - 注入合規車牌產生演算法，公路客運巡航狀態與類別去除「國道」標記。
+
+#### 3. 自動化與實機測試驗證
+1. **偵探核心 10 大階段測試驗證 (`npm test`)**：
+   - 50 案全集、涉案關係人、三軌道具、生活科學鑑識、TPASS 交通扣款、憲法級瞬移攔截全數 100% 通過。
+   - 0 違規，三大憲法紅線 100% 守護。
+2. **Node.js 語法與單元校正檢驗**：
+   - 全 4 倉庫語法檢驗 100% 通過。
+   - `SHUANGBEI_EXPRESSWAYS.length === 0` (PASS)。
+   - `generateTaiwanBusPlate` 生成之所有號牌皆符合 `^[A-Z]{3}-\d{4}$` (PASS)。
+   - `sanitizeBusPlate` 針對 `bus_656_01`、`KKB-90061`、`733-FW` 等測試案例 100% PASS。
+3. **Chrome CDP 無頭實機渲染驗證 (`http://localhost:3000/cyber-realmap.html`)**：
+   - `btnHwyExists`: `false` (國道按鈕徹底不存在)
+   - `btnCoachText`: `🏢 長途客運轉運站 (京站/市府) ON`
+   - `expresswaysEmpty`: `true`
+   - `expresswaysLayerEmpty`: `true`
+   - `busesDomCount`: 350 輛在線車隊展開動態徽章
+   - `busDomSample`: `5 (547-U3)`, `604 (548-U5)`, `262 (EAL-0136)`, `265區 (EAL-0203)`, `和平幹線 (EAL-5163)` 等全量合法車牌
+   - 0 runtime exceptions，全域執行零報錯。
+
+#### 4. 4 大專案倉庫全面 Commit ✕ Push
+- `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-core`、`planner` 四大倉庫均已同步更新並推送至 GitHub 遠端 main 分支，工作目錄維持 100% clean。

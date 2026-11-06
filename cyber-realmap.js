@@ -1,3 +1,37 @@
+// ==========================================
+// 🚌 臺灣公車合法車牌生成與校正引擎 (Taiwan Bus License Plate Engine)
+// 遵循交通部公路局車牌編碼標準 (NNN-XX 舊制 或 KKA/KKB-NNNN 新制 4位數字)
+// 徹底消除非法5位數 (如 KKB-90061) 或內部代號 (如 bus_656_01)
+// ==========================================
+function generateTaiwanBusPlate(routeCode, dirIndex) {
+  const digits = String(routeCode || '').replace(/\D/g, '');
+  const baseNum = parseInt(digits || '100', 10);
+  const plateNum = ((baseNum * 13 + (dirIndex || 0) * 17 + 1000) % 9000) + 1000;
+  const prefixes = ['KKA', 'KKB'];
+  const pfx = prefixes[Math.abs(baseNum) % prefixes.length];
+  return `${pfx}-${plateNum}`;
+}
+
+function sanitizeBusPlate(busId, routeName, dirIndex) {
+  if (!busId || typeof busId !== 'string') return generateTaiwanBusPlate(routeName || '100', dirIndex || 0);
+  const trimmed = busId.trim();
+  // 已合規之標準車牌 (例如 733-FW, 841-U3, 409-FY, 010-U3, KKA-1234)
+  if (/^[0-9A-Z]{2,4}-[0-9A-Z]{1,6}$/i.test(trimmed)) {
+    const parts = trimmed.split('-');
+    // 排除違規5位數尾碼 (如 KKB-90061 -> KKB-9006)
+    if (parts[1].length > 4) {
+      return `${parts[0]}-${parts[1].slice(0, 4)}`.toUpperCase();
+    }
+    // 若為 1~2 位數尾碼則左補零至4位 (如 KKB-1 -> KKB-0001)
+    if (parts[0].length === 3 && parts[1].length < 4 && /^\d+$/.test(parts[1])) {
+      return `${parts[0]}-${parts[1].padStart(4, '0')}`.toUpperCase();
+    }
+    return trimmed.toUpperCase();
+  }
+  // 若為內部識別碼 (如 bus_656_01) 則轉換為真實臺灣公車車牌
+  return generateTaiwanBusPlate(routeName || trimmed, dirIndex || 0);
+}
+
 /**
  * ============================================================================
  * NEO-TAIPEI 1:1 REAL HOLO-MAP (雙北 1:1 真實全息科技地圖 - 附檔引擎)
@@ -296,7 +330,7 @@ function initCyberRealMap() {
   streetFogOfWarLayerGroup = L.layerGroup();
   trafficLightsLayerGroup = L.layerGroup().addTo(map);
   underConstructionLayerGroup = L.layerGroup().addTo(map);
-  expresswaysLayerGroup = L.layerGroup().addTo(map);
+  expresswaysLayerGroup = L.layerGroup(); // 依委託人指示徹底刪除國道，不加入地圖
   coachHubsLayerGroup = L.layerGroup().addTo(map);
 
   // 初始化門市圖層群組 (涵蓋全雙北 14 大真實連鎖品牌與地標)
@@ -322,7 +356,8 @@ function initCyberRealMap() {
   addBuildingEntranceGlowLayer();
   addTrafficLightsLayer();
   addUnderConstructionLayer();
-  addExpresswaysLayer();
+  // 依指示徹底刪除國道高速公路
+  if (expresswaysLayerGroup) expresswaysLayerGroup.clearLayers();
   addCoachHubsLayer();
   renderEBusPanel();
   if (!isTransitLiveSyncEnabled) {
@@ -617,7 +652,8 @@ function harmonizeMapTheme(themeKey) {
     addMajorStreetsLayer();
   }
   if (expresswaysLayerGroup && map && map.hasLayer(expresswaysLayerGroup)) {
-    addExpresswaysLayer();
+    // 依指示徹底刪除國道高速公路
+  if (expresswaysLayerGroup) expresswaysLayerGroup.clearLayers();
   }
 
   // 自適應暗角
@@ -1377,7 +1413,7 @@ const SHUANGBEI_MAJOR_STREETS = [
 // 【落實委託人指示：配合後面背景用的地圖去做各種風格的變化，參考 Google Maps 分層方法】
 // ──────────────────────────────────────────
 function getThemedStreetColors(st, themeKey) {
-  const isHwy = st.name.includes('高架') || st.name.includes('快速') || st.name.includes('國道') || st.name.includes('高速公路') || st.name.includes('環河');
+  const isHwy = st.name.includes('高架') || st.name.includes('快速') || st.name.includes('環河');
 
   if (themeKey === 'esri_street') {
     // 🗺️ Esri / Google Maps 經典暖色導航風格 (Google Maps 標誌性白底幹道 ✕ 鮮橙高速公路)
@@ -1774,13 +1810,13 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       // 擴大至全雙北 41 行政特區全部領域（石門/富貴角 25.35 ~ 烏來/坪林 24.60，林口/鶯歌 121.15 ~ 貢寮/三貂角 122.10）
       if (lat < 24.60 || lat > 25.35 || lon < 121.15 || lon > 122.10) continue;
 
-      const plate = String(b.BusID || '').trim();
+      const goBack = Number(b.GoBack);
+      const plate = sanitizeBusPlate(b.BusID, routeName, goBack);
       if (!plate || seenPlates.has(plate)) continue;
       seenPlates.add(plate);
 
       presentRouteCodes.add(routeName);
       const operator = meta ? meta.operator : (preset ? preset[1] : '大臺北聯營公車');
-      const goBack = Number(b.GoBack);
       let headsign = isIdleInDepot ? '總站/站端待命 (準備開班)' : '常規營運車次';
       const depName = meta ? meta.departure : (preset ? preset[2] : '');
       const desName = meta ? meta.destination : (preset ? preset[3] : '');
@@ -1835,11 +1871,10 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       if (isNaN(lat) || isNaN(lon)) continue;
       if (lat < 24.60 || lat > 25.35 || lon < 121.15 || lon > 122.10) continue;
 
-      const plate = String(b.PlateNumb || '').trim();
+      const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '公路客運');
+      const plate = sanitizeBusPlate(b.PlateNumb, rName, b.Direction || 0);
       if (!plate || seenPlates.has(plate)) continue;
       seenPlates.add(plate);
-
-      const rName = (b.RouteName && b.RouteName.Zh_tw) ? b.RouteName.Zh_tw : String(b.RouteUID || '公路客運');
       if (rName === '0' || rName === '路線0' || rName === '路線 0' || rName.includes('公祭')) continue;
 
       presentRouteCodes.add(rName);
@@ -1865,7 +1900,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         busStatus: Number(b.BusStatus || 0),
         isIdleInDepot: dutyStatus === 2,
         dataKind: 'OFFICIAL_GPS',
-        status: isStopped ? '🔴 客運轉運站/停等上下客' : `🟢 國道/公路巡航中 (${Math.round(rawSpeed)} km/h)`,
+        status: isStopped ? '🔴 客運轉運站/停等上下客' : `🟢 公路巡航中 (${Math.round(rawSpeed)} km/h)`,
         dataTime: b.SrcUpdateTime || '',
         source: '交通部 PTX/TDX 公路客運即時 GPS'
       });
@@ -1886,7 +1921,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         const localT = (phase * totalSeg) % 1;
         const isStopped = localT < 0.14;
         const spd = isStopped ? 0 : Math.round(28 + Math.sin(localT * Math.PI) * 14);
-        const plate = `KKB-${code.replace(/\D/g, '') || '80'}${dir + 1}`;
+        const plate = generateTaiwanBusPlate(code, dir);
         result.push({
           busId: plate,
           routeId: kr.id || code,
@@ -2894,6 +2929,7 @@ function tickLiveTransitPositions() {
 }
 
 function buildLiveBusPopupHtml(b) {
+  if (b) b.busId = sanitizeBusPlate(b.busId, b.routeName, b.goBack);
   const isSim = b.dataKind === 'SIMULATED';
   const isStale = typeof isSourceStale === 'function' ? isSourceStale('bus', 60000) : false;
   const isStopped = b.speed <= 1 || b.dutyStatus === 2;
@@ -3101,6 +3137,7 @@ function generateIntelligentStopsFallback(b) {
 
 // 🎯 巴視達核心：追蹤選中公車之實體移動路線與沿途站名
 function traceBusRouteAndStops(bus) {
+  if (bus) bus.busId = sanitizeBusPlate(bus.busId, bus.routeName);
   if (!bus || !map || !highlightedBusRouteGroup) return;
   window.__lastClickedBus = bus;
   currentlyTrackedBusId = bus.busId;
@@ -3214,6 +3251,7 @@ function clearTrackedBusRoute() {
 
 // 渲染巴視達浮動站牌面板
 function showBusTaNavigatorPanel(bus, stops, nextStopIdx) {
+  if (bus) bus.busId = sanitizeBusPlate(bus.busId, bus.routeName);
   let panel = document.getElementById('bustaRouteTrackerPanel');
   if (!panel) {
     panel = document.createElement('div');
@@ -3444,6 +3482,7 @@ function renderLiveBusMarkers(buses) {
 
   scored.forEach((item, idx) => {
     const b = item.b;
+    b.busId = sanitizeBusPlate(b.busId, b.routeName, b.goBack);
     const busKey = `live_${b.busId}`;
     const useBadge = isBusFilterOnlySelected || item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
 
@@ -4327,42 +4366,30 @@ let mrtTrainAnimationTimer = null;
 // 連續發車車隊定義 (多車次錯開班距，連續單向與返程循環，下一班出發接續推進)
 const ACTIVE_BUS_FLEET_SPEC = [
   // 656 專線 (德霖科大 ⇄ 海山 ⇄ 板橋 ⇄ 台北車站 ⇄ 臺大醫院)
-  { id: 'bus_656_01', routeId: 'bus_656', name: '656 幹線 (車次01)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 0, color: '#f97316' },
-  { id: 'bus_656_02', routeId: 'bus_656', name: '656 幹線 (車次02・次班接續)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 22, color: '#f97316' },
-  { id: 'bus_656_03', routeId: 'bus_656', name: '656 幹線 (車次03・返程)', headsign: '往 德霖科大/海山', dir: 1, cycleSec: 65, offsetSec: 35, color: '#ea580c' },
-
-  // 基隆客運 9006 國道客運 (基隆火車站 ⇄ 國道一號 ⇄ 圓山 ⇄ 捷運士林站)
-  { id: 'bus_9006_01', routeId: 'bus_9006', name: '9006 國道客運 (基隆客運)', headsign: '往 捷運士林站/圓山', dir: 0, cycleSec: 75, offsetSec: 5, color: '#2563eb' },
-  { id: 'bus_9006_02', routeId: 'bus_9006', name: '9006 國道客運 (基隆返程)', headsign: '往 基隆火車站港西街', dir: 1, cycleSec: 75, offsetSec: 42, color: '#1d4ed8' },
-
-  // 大都會客運 2088 快捷公車 (基隆八斗子/女中 ⇄ 國道一號 ⇄ 市府轉運站)
-  { id: 'bus_2088_01', routeId: 'bus_2088', name: '2088 快捷客運 (大都會)', headsign: '往 市府轉運站 (信義區)', dir: 0, cycleSec: 70, offsetSec: 10, color: '#06b6d4' },
-  { id: 'bus_2088_02', routeId: 'bus_2088', name: '2088 快捷客運 (返程)', headsign: '往 基隆女中/八斗子', dir: 1, cycleSec: 70, offsetSec: 45, color: '#0891b2' },
-
-  // 國光客運 1802 國道客運 (基隆 ⇄ 南京復興 ⇄ 台北車站 ⇄ 三重)
-  { id: 'bus_1802_01', routeId: 'bus_1802', name: '1802 國道客運 (國光客運)', headsign: '往 三重綜合運動場', dir: 0, cycleSec: 80, offsetSec: 15, color: '#8b5cf6' },
-  { id: 'bus_1802_02', routeId: 'bus_1802', name: '1802 國道客運 (返程)', headsign: '往 基隆國光總站', dir: 1, cycleSec: 80, offsetSec: 55, color: '#7c3aed' },
+  { id: 'bus_656_01', plate: '841-U3', routeId: 'bus_656', name: '656 幹線 (車次01)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 0, color: '#f97316' },
+  { id: 'bus_656_02', plate: '851-U3', routeId: 'bus_656', name: '656 幹線 (車次02・次班接續)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 22, color: '#f97316' },
+  { id: 'bus_656_03', plate: '842-U3', routeId: 'bus_656', name: '656 幹線 (車次03・返程)', headsign: '往 德霖科大/海山', dir: 1, cycleSec: 65, offsetSec: 35, color: '#ea580c' },
 
   // 307 雙北公車之王 (撫遠街 ⇄ 台北車站 ⇄ 板橋府中)
-  { id: 'bus_307_01', routeId: 'bus_307', name: '307 幹線 (首發班次)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 0, color: '#10b981' },
-  { id: 'bus_307_02', routeId: 'bus_307', name: '307 幹線 (次班接續)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 20, color: '#10b981' },
-  { id: 'bus_307_03', routeId: 'bus_307', name: '307 幹線 (返程班次)', headsign: '往 板橋府中/學府路', dir: 1, cycleSec: 60, offsetSec: 38, color: '#059669' },
+  { id: 'bus_307_01', plate: '733-FW', routeId: 'bus_307', name: '307 幹線 (首發班次)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 0, color: '#10b981' },
+  { id: 'bus_307_02', plate: '736-FW', routeId: 'bus_307', name: '307 幹線 (次班接續)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 20, color: '#10b981' },
+  { id: 'bus_307_03', plate: '765-FW', routeId: 'bus_307', name: '307 幹線 (返程班次)', headsign: '往 板橋府中/學府路', dir: 1, cycleSec: 60, offsetSec: 38, color: '#059669' },
 
   // 99 幹線 (學府路專線: 新莊 ⇄ 板橋學府路一段 ⇄ 土城海山)
-  { id: 'bus_99_01', routeId: 'bus_99', name: '99 學府路專線 (正班)', headsign: '往 板橋學府路一段/海山', dir: 0, cycleSec: 55, offsetSec: 8, color: '#10b981' },
-  { id: 'bus_99_02', routeId: 'bus_99', name: '99 學府路專線 (返程)', headsign: '往 新北新莊民安', dir: 1, cycleSec: 55, offsetSec: 35, color: '#047857' },
+  { id: 'bus_99_01', plate: '007-U5', routeId: 'bus_99', name: '99 學府路專線 (正班)', headsign: '往 板橋學府路一段/海山', dir: 0, cycleSec: 55, offsetSec: 8, color: '#10b981' },
+  { id: 'bus_99_02', plate: '035-U5', routeId: 'bus_99', name: '99 學府路專線 (返程)', headsign: '往 新北新莊民安', dir: 1, cycleSec: 55, offsetSec: 35, color: '#047857' },
 
   // 299 幹線 (輔仁大學 ⇄ 台北車站 ⇄ 永春高中)
-  { id: 'bus_299_01', routeId: 'bus_299', name: '299 幹線 (正班)', headsign: '往 台北車站/永春', dir: 0, cycleSec: 65, offsetSec: 12, color: '#0284c7' },
-  { id: 'bus_299_02', routeId: 'bus_299', name: '299 幹線 (返程)', headsign: '往 新莊輔大', dir: 1, cycleSec: 65, offsetSec: 44, color: '#0369a1' },
+  { id: 'bus_299_01', plate: '010-U3', routeId: 'bus_299', name: '299 幹線 (正班)', headsign: '往 台北車站/永春', dir: 0, cycleSec: 65, offsetSec: 12, color: '#0284c7' },
+  { id: 'bus_299_02', plate: '853-U3', routeId: 'bus_299', name: '299 幹線 (返程)', headsign: '往 新莊輔大', dir: 1, cycleSec: 65, offsetSec: 44, color: '#0369a1' },
 
   // 965 快速客運 (金瓜石九份老街 ⇄ 台北車站 ⇄ 板橋府中)
-  { id: 'bus_965_01', routeId: 'bus_965', name: '965 快速客運 (去程)', headsign: '往 九份老街/金瓜石', dir: 0, cycleSec: 90, offsetSec: 18, color: '#f59e0b' },
-  { id: 'bus_965_02', routeId: 'bus_965', name: '965 快速客運 (返程)', headsign: '往 台北車站/板橋府中', dir: 1, cycleSec: 90, offsetSec: 62, color: '#d97706' },
+  { id: 'bus_965_01', plate: 'KKA-0128', routeId: 'bus_965', name: '965 快速客運 (去程)', headsign: '往 九份老街/金瓜石', dir: 0, cycleSec: 90, offsetSec: 18, color: '#f59e0b' },
+  { id: 'bus_965_02', plate: 'KKA-0129', routeId: 'bus_965', name: '965 快速客運 (返程)', headsign: '往 台北車站/板橋府中', dir: 1, cycleSec: 90, offsetSec: 62, color: '#d97706' },
 
   // 承德幹線 (士林 ⇄ 台北車站)
-  { id: 'bus_chengde_01', routeId: 'bus_chengde', name: '承德幹線 (正班)', headsign: '往 台北車站(承德)', dir: 0, cycleSec: 50, offsetSec: 4, color: '#6366f1' },
-  { id: 'bus_chengde_02', routeId: 'bus_chengde', name: '承德幹線 (返程)', headsign: '往 士林區公所', dir: 1, cycleSec: 50, offsetSec: 29, color: '#4f46e5' }
+  { id: 'bus_chengde_01', plate: '409-FY', routeId: 'bus_chengde', name: '承德幹線 (正班)', headsign: '往 台北車站(承德)', dir: 0, cycleSec: 50, offsetSec: 4, color: '#6366f1' },
+  { id: 'bus_chengde_02', plate: '410-FY', routeId: 'bus_chengde', name: '承德幹線 (返程)', headsign: '往 士林區公所', dir: 1, cycleSec: 50, offsetSec: 29, color: '#4f46e5' }
 ];
 
 // 車隊即時動態實體快取
@@ -4532,48 +4559,12 @@ function addUnderConstructionLayer() {
 // 🛣️ 雙北核心國道高速公路圖層 (Freeway Expressways Layer)
 // ──────────────────────────────────────────
 function addExpresswaysLayer() {
-  expresswaysLayerGroup.clearLayers();
-  const expressways = (typeof SHUANGBEI_EXPRESSWAYS !== 'undefined') ? SHUANGBEI_EXPRESSWAYS : [];
-
-  expressways.forEach(hwy => {
-    const themed = getThemedStreetColors(hwy, currentBaseLayerKey);
-
-    // 外層光暈包邊 (Casing)
-    L.polyline(hwy.coords, {
-      color: themed.casing,
-      weight: themed.width + 1.5,
-      opacity: themed.casingOpacity,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }).addTo(expresswaysLayerGroup);
-
-    // 核心高速公路亮線 (Google Maps 標誌性鮮橙/高對比亮線)
-    const line = L.polyline(hwy.coords, {
-      color: themed.core,
-      weight: themed.coreWidth + 1.0,
-      opacity: themed.opacity,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }).addTo(expresswaysLayerGroup);
-
-    line.bindTooltip(`🛣️ ${hwy.name}`, { sticky: true });
-
-    // 標示國道編號盾牌
-    if (hwy.coords.length > 2) {
-      const midIdx = Math.floor(hwy.coords.length / 2);
-      const centerPt = hwy.coords[midIdx];
-      const icon = L.divIcon({
-        html: `<div class="hwy-shield-badge" style="border-color:${themed.core};">🛣️ ${hwy.shortName}</div>`,
-        className: 'hwy-badge-wrap',
-        iconAnchor: [35, 10]
-      });
-      L.marker(centerPt, { icon, interactive: false }).addTo(expresswaysLayerGroup);
-    }
-  });
+  // 依委託人指示：徹底刪除國道高速公路圖層
+  if (expresswaysLayerGroup) expresswaysLayerGroup.clearLayers();
 }
 
 // ──────────────────────────────────────────
-// 🏢 雙北三大特等長途國道客運轉運中樞 (Coach Hubs Layer)
+// 🏢 雙北三大特等長途客運轉運中樞 (Coach Hubs Layer)
 // ──────────────────────────────────────────
 function addCoachHubsLayer() {
   coachHubsLayerGroup.clearLayers();
@@ -4593,7 +4584,7 @@ function addCoachHubsLayer() {
         <div style="font-size:11px; color:#cbd5e1; margin-top:4px; line-height:1.5;">
           ${hub.desc}
         </div>
-        <div style="font-size:10px; color:#38bdf8; margin-top:6px; font-weight:700;">主要國道客運路線：</div>
+        <div style="font-size:10px; color:#38bdf8; margin-top:6px; font-weight:700;">主要長途客運路線：</div>
         <ul style="font-size:10px; color:#94a3b8; margin:2px 0 0 16px; padding:0;">
           ${hub.coaches.map(c => `<li>${c}</li>`).join('')}
         </ul>
@@ -4627,15 +4618,7 @@ function toggleUnderConstructionLayer() {
 }
 
 function toggleExpresswaysLayer() {
-  isExpresswaysVisible = !isExpresswaysVisible;
-  if (isExpresswaysVisible) map.addLayer(expresswaysLayerGroup);
-  else map.removeLayer(expresswaysLayerGroup);
-  const btn = document.getElementById('btnToggleExpressways');
-  if (btn) {
-    btn.classList.toggle('active', isExpresswaysVisible);
-    const badge = btn.querySelector('span:last-child');
-    if (badge) badge.innerText = isExpresswaysVisible ? 'ON' : 'OFF';
-  }
+  if (expresswaysLayerGroup && map) map.removeLayer(expresswaysLayerGroup);
 }
 
 function toggleCoachHubsLayer() {
@@ -4704,6 +4687,7 @@ function initBusFleetContinuousDispatch() {
       <div class="moving-fleet-bus" id="bus_icon_${spec.id}" style="background:${spec.color}; color:#fff; font-size:10px; font-weight:800; padding:2px 7px; border-radius:12px; border:2px solid #ffffff; box-shadow:0 0 10px ${spec.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
         <span style="font-size:11px;">🚍</span>
         <span>${spec.name}</span>
+        <span style="background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:4px; font-size:9px; color:#facc15;">${spec.plate || sanitizeBusPlate(spec.id, spec.name)}</span>
         <span class="bus-live-speed-tag" style="background:rgba(0,0,0,0.4); padding:1px 4px; border-radius:6px; font-size:9px;">36 km/h</span>
       </div>
     `;
@@ -4717,8 +4701,8 @@ function initBusFleetContinuousDispatch() {
     const marker = L.marker(initPt, { icon }).addTo(ebusDynamicBusesGroup);
     marker.on('click', () => {
       traceBusRouteAndStops({
-        busId: spec.id,
-        routeId: '10844',
+        busId: spec.plate || sanitizeBusPlate(spec.id, spec.name),
+        routeId: spec.routeId || '10844',
         routeName: spec.name || '307',
         lat: marker.getLatLng().lat,
         lon: marker.getLatLng().lng,
@@ -4827,6 +4811,7 @@ function initBusFleetContinuousDispatch() {
           </div>
           <div style="font-size:11px; font-weight:700; color:#38bdf8;">行駛方向：${spec.headsign} (${isEW ? '東西廊道' : '南北廊道'})</div>
           <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.5;">
+            車輛牌號：<b style="color:#facc15; font-size:12px;">${spec.plate || sanitizeBusPlate(spec.id, spec.name)}</b><br>
             所屬路線：${route.name}<br>
             營運業者：${route.operator}<br>
             行駛狀態：<b style="color:${item.isStoppedAtRed ? '#f87171' : '#4ade80'};">${statusText}</b><br>
@@ -7891,7 +7876,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
     topColor: '#94a3b8',
     wireframeColor: '#38bdf8',
     isSuperTall: false,
-    desc: '台北車站北側大型國道客運共構商業摩天大廈，立體盤旋公車高架車道。'
+    desc: '台北車站北側大型長途客運共構商業摩天大廈，立體盤旋公車高架車道。'
   },
   {
     id: 'bld_dihua_watsons',
