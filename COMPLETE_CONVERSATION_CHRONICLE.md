@@ -4771,3 +4771,24 @@ flowchart TD
   - 4 大倉庫 JavaScript 語法檢查 100% 通過（`agy-node -c` 0 errors）。
 - **4 大倉庫 Git Commit ✕ Push**：
   - 4 大專案倉庫已全數 commit 並 push 至 GitHub `main` 分支，工作目錄 100% clean。
+
+---
+
+### 第 131 輪紀錄 (Round 131)
+- **委託人核心指示**：
+  `給我所有的參考資料`
+  `所有倉庫的試玩遊戲都是https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html這個網址`
+- **實施改造與規範落實**：
+  1. **全倉庫試玩遊戲統一入口確立**：
+     - 所有專案倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core`）的試玩遊戲網址全面統一錨定為：  
+       **`https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html`**
+     - 同步更新各倉庫之 `README.md`、`AI_HANDOFF_PROJECT_SPEC.md`。
+  2. **全面彙整專案全套核心參考資料庫**：
+     - **試玩遊戲與專題展示官方站點**：統一試玩入口、企劃書線上互動版、50 宗大案全集。
+     - **GitHub 4 大專案倉庫源碼庫**：`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core`。
+     - **官方動態資料查核與 SSOT 資料源**：大臺北公車官方網站 (`ebus.gov.taipei`)、台灣高精真實電子地圖 (`vmap.tw`)、交通部 TDX 運輸資料流通平台、臺北市/新北市政府資料開放平台、雙北 Azure 官方車機 GPS 動態 (`GetBusData.gz`)、北捷/新北捷/台鐵/高鐵官網。
+     - **真實地理圖資與渲染引擎**：Leaflet.js (v1.9.4)、CARTO Dark Matter 底圖圖資、OpenStreetMap (OSM)、Esri World Imagery 衛星空照圖、國土地理資訊系統。
+     - **專案研究與美術參考**：六年級獨立研究主題企劃、雲端硬碟概念圖庫（31 張真實街景考證圖）。
+     - **專案交接手冊與全誌規範**：`COMPLETE_CONVERSATION_CHRONICLE.md`（1~131輪）、`AI_HANDOFF_PROJECT_SPEC.md`、`PROJECT_PROPOSAL.md`、`CASES_50_FULL_SPEC.md`、`MAP_ISSUE_BOARD_PROTOCOL.md`。
+- **4 大倉庫 Git Commit ✕ Push**：
+  - 4 大專案倉庫已全數 commit 並 push 至 GitHub `main` 分支，工作目錄 100% clean。

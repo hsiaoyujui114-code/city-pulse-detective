@@ -1,7 +1,7 @@
 # 🕵️‍♂️ 《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》
 ### Taipei Metro Detective RPG - 雙核心動漫偵探網頁遊戲 ✕ 專屬私服器多人同步
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen)](https://hsiaoyujui114-code.github.io/taipei-metro-detective-rpg/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen)](https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html)
 [![Multiplayer](https://img.shields.io/badge/Multiplayer-WebSocket-blue)](#-專屬多人私服器)
 [![Dual Engine](https://img.shields.io/badge/Engine-3D%20WebGL%20%2B%202.5D%20Canvas-orange)](#-雙核心引擎相容性架構)
 
@@ -83,5 +83,5 @@ npm start
 開啟瀏覽器前往：`http://localhost:3000`
 
 ### 2. GitHub Pages 線上試玩
-直接造訪：[https://hsiaoyujui114-code.github.io/taipei-metro-detective-rpg/](https://hsiaoyujui114-code.github.io/taipei-metro-detective-rpg/)  
+直接造訪（全倉庫統一官方試玩）：[https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html](https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html)  
 *(GitHub Pages 自動啟用同儕偵探共享模擬模式，免架設後台即可單人/展示遊玩)*
