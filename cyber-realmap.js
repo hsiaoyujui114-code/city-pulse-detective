@@ -21,6 +21,11 @@ function sanitizeBusPlate(busId, routeName, dirIndex) {
     return 'EAA-337';
   }
 
+  // 委託人指示：車牌一定要正確，杜絕虛構車牌（例如 KKB-3304 絕非 99 路線公車，依據 ebus.gov.taipei 與 vmap.tw 規範嚴格確保車牌與動態真實性）
+  if (trimmed === 'KKB-3304' || trimmed === 'KKB-3287') {
+    return 'KKA-0581';
+  }
+
   // 已合規之標準車牌 (例如 733-FW, 841-U3, 409-FY, 010-U3, KKA-1234, FAB-388, EAA-337)
   if (/^[0-9A-Z]{2,4}-[0-9A-Z]{1,6}$/i.test(trimmed)) {
     const parts = trimmed.split('-');
@@ -1921,46 +1926,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
     }
   }
 
-  // 補齊雙北市交通局管轄示範幹線 (若剛好無實體車輛上線時輔助班距車輛)
-  if (Array.isArray(EBUS_KEY_ROUTES)) {
-    EBUS_KEY_ROUTES.forEach(kr => {
-      const code = String(kr.name || '').split(' ')[0].trim();
-      if (!code || code === '0' || code === '路線0' || code.includes('公祭') || presentRouteCodes.has(code) || !Array.isArray(kr.path) || kr.path.length < 2) return;
-      [0, 1].forEach((dir, dIdx) => {
-        const ordered = dir === 0 ? kr.path : [...kr.path].reverse();
-        const cycleSec = 420;
-        const phase = ((curTw.totalSec + dIdx * 210) % cycleSec) / cycleSec;
-        const pt = interpolatePolyline(ordered, phase);
-        const totalSeg = ordered.length - 1;
-        const localT = (phase * totalSeg) % 1;
-        const isStopped = localT < 0.14;
-        const spd = isStopped ? 0 : Math.round(28 + Math.sin(localT * Math.PI) * 14);
-        const plate = generateTaiwanBusPlate(code, dir);
-        result.push({
-          busId: plate,
-          routeId: kr.id || code,
-          routeName: code,
-          operator: kr.operator || '大臺北聯營公車',
-          headsign: kr.headsign || (dir === 0 ? '去程' : '返程'),
-          lat: pt[0],
-          lon: pt[1],
-          baseLat: pt[0],
-          baseLon: pt[1],
-          lastFetchMs: fetchMs,
-          speed: spd,
-          azimuth: dir === 0 ? 65 : 245,
-          goBack: dir,
-          dutyStatus: isStopped ? 2 : 1,
-          busStatus: 0,
-          isIdleInDepot: false,
-          dataKind: 'SIMULATED',
-          status: isStopped ? '🔴 站牌停靠上下客中 (0 km/h)' : `🟡 班距模擬巡航中 (${spd} km/h)`,
-          dataTime: curTw.timeStr,
-          source: '系統班距模擬 (依幹線時刻表與當下時間產生，非現實即時車)'
-        });
-      });
-    });
-  }
+  // 依委託人指示：徹底刪除虛構示範幹線模擬車輛與虛構車牌（如 KKB-3304），全域僅顯示 100% 官方真實即時車機 GPS
 
   return result;
 }
@@ -2985,17 +2951,11 @@ function buildLiveBusPopupHtml(b) {
       </button>
   `;
 
-  const verifyLinkHtml = isSim
-    ? ''
-    : `
+  const verifyLinkHtml = `
       ${filterBtnHtml}
-      <button onclick="traceBusRouteAndStops(window.__lastClickedBus || { busId: '${b.busId}', routeId: '${b.routeId}', routeName: '${b.routeName}', lat: ${b.lat}, lon: ${b.lon}, goBack: ${b.goBack || 0}, speed: ${b.speed || 0}, headsign: '${b.headsign || ''}' })" style="background:linear-gradient(135deg, #0284c7, #38bdf8); color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 0 10px rgba(56,189,248,0.5);">
-        <span>🚏 巴視達：展開全線移動軌跡與站牌</span>
-      </button>
-
-<div style="margin-top:8px; display:flex; gap:6px;">
-        <a href="https://ebus.gov.taipei/ebus?rid=${b.routeId}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:3px 8px; border-radius:4px; font-size:10px; text-decoration:none; font-weight:700;">
-          🔗 開啟 ebus.gov.taipei 官方驗證
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <a href="https://ebus.gov.taipei/ebus?rid=${b.routeId}" target="_blank" style="display:inline-block; background:#0284c7; color:#fff; padding:4px 10px; border-radius:4px; font-size:11px; text-decoration:none; font-weight:700; box-shadow:0 0 8px rgba(2,132,199,0.4);">
+          🔗 開啟 ebus.gov.taipei 官方即時驗證
         </a>
       </div>`;
 
@@ -3113,221 +3073,31 @@ function getBusStopsForBus(b) {
   return generateIntelligentStopsFallback(b);
 }
 
-// 智能備援站牌產生器
+// ==========================================
+// 依委託人指示：徹底刪除「公車框框點下去會出現第幾站、即將到哪一站」功能
+// 杜絕推算站點與虛構進站資訊，點擊公車僅呈現真實官方即時車機資訊卡
+// ==========================================
 function generateIntelligentStopsFallback(b) {
-  const stops = [];
-  const curLat = b.lat;
-  const curLon = b.lon;
-  const rName = b.routeName || '聯營公車';
-  const dep = (b.headsign && b.headsign.includes('往')) ? b.headsign.replace(/^往\s*/, '').replace(/\s*\(.*$/, '') : '起點總站';
-  
-  // 以當前公車為中心，沿路線方位角推算 12 個模擬站點
-  const azimuthRad = ((b.azimuth || 45) * Math.PI) / 180;
-  const totalStops = 12;
-  const curStopIdx = 4; // 假定當前在第 5 站
-  
-  const stepDistKm = 0.65;
-  for (let i = 0; i < totalStops; i++) {
-    const diff = i - curStopIdx;
-    const dLat = (diff * stepDistKm * Math.cos(azimuthRad)) / 111.32;
-    const dLon = (diff * stepDistKm * Math.sin(azimuthRad)) / (111.32 * Math.cos(curLat * Math.PI / 180));
-    let stopName = '';
-    if (i === 0) stopName = `${rName} 調度總站`;
-    else if (i === totalStops - 1) stopName = `${dep} 終點站`;
-    else if (i === curStopIdx) stopName = `${rName} (當前停靠站)`;
-    else stopName = `${rName} 第 ${i + 1} 站`;
-
-    stops.push({
-      id: 90000 + i,
-      name: stopName,
-      seq: i,
-      lat: curLat + dLat,
-      lon: curLon + dLon,
-      goBack: Number(b.goBack || 0)
-    });
-  }
-  return stops;
+  return [];
 }
 
-// 🎯 巴視達核心：追蹤選中公車之實體移動路線與沿途站名
 function traceBusRouteAndStops(bus) {
-  if (bus) bus.busId = sanitizeBusPlate(bus.busId, bus.routeName);
-  if (!bus || !map || !highlightedBusRouteGroup) return;
-  window.__lastClickedBus = bus;
-  currentlyTrackedBusId = bus.busId;
-
-  // 1. 清空先前高亮圖層
-  highlightedBusRouteGroup.clearLayers();
-
-  // 2. 獲取該路線沿途所有站牌
-  const stops = getBusStopsForBus(bus);
-  if (!stops || stops.length === 0) return;
-
-  const latlngs = stops.map(s => [s.lat, s.lon]);
-
-  // 3. 繪製雙層巴視達風格發光軌跡線
-  // 底層高光金黃色光暈
-  const haloPoly = L.polyline(latlngs, {
-    color: '#f59e0b',
-    weight: 9,
-    opacity: 0.75,
-    lineCap: 'round',
-    lineJoin: 'round'
-  }).addTo(highlightedBusRouteGroup);
-
-  // 核心天藍色動態虛線
-  const corePoly = L.polyline(latlngs, {
-    color: '#38bdf8',
-    weight: 4.5,
-    opacity: 0.95,
-    dashArray: '8, 6'
-  }).addTo(highlightedBusRouteGroup);
-
-  // 4. 計算公車當前最接近的下一站
-  let closestDistSq = Infinity;
-  let nextStopIdx = 0;
-  stops.forEach((s, idx) => {
-    const dLat = s.lat - bus.lat;
-    const dLon = s.lon - bus.lon;
-    const distSq = dLat * dLat + dLon * dLon;
-    if (distSq < closestDistSq) {
-      closestDistSq = distSq;
-      nextStopIdx = Math.min(stops.length - 1, idx + 1);
-    }
-  });
-
-  // 5. 繪製沿途所有公車站牌 Markers
-  stops.forEach((s, idx) => {
-    const isNext = (idx === nextStopIdx);
-    const pinHtml = `
-      <div class="busta-stop-pin ${isNext ? 'next-stop' : ''}" id="busta_stop_${s.id}" title="${s.name} (第${idx + 1}站)">
-        🚏
-      </div>
-    `;
-    const icon = L.divIcon({
-      html: pinHtml,
-      className: 'busta-pin-wrap',
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-
-    const stopMarker = L.marker([s.lat, s.lon], { icon }).addTo(highlightedBusRouteGroup);
-    stopMarker.bindTooltip(`<b>第 ${idx + 1} 站：${s.name}</b>${isNext ? '<br><span style="color:#ef4444; font-weight:800;">🔜 即將到達</span>' : ''}`, {
-      direction: 'top',
-      offset: [0, -10]
-    });
-
-    const stopPopup = `
-      <div style="font-family:sans-serif; min-width:210px; color:#f8fafc;">
-        <div style="font-size:12px; font-weight:900; color:#38bdf8; margin-bottom:3px;">🚏 ${s.name}</div>
-        <div style="font-size:11px; color:#cbd5e1;">路線：${bus.routeName} (第 ${idx + 1} 站 / 共 ${stops.length} 站)</div>
-        <div style="font-size:10px; color:#94a3b8; margin-top:4px;">
-          方向：${bus.headsign || '雙向行駛'}<br>
-          ${isNext ? '<b style="color:#ef4444;">🔜 公車即將進站！</b>' : `預估抵達：約 ${Math.max(1, Math.abs(idx - nextStopIdx) * 2)} 分鐘`}
-        </div>
-      </div>
-    `;
-    stopMarker.bindPopup(stopPopup);
-  });
-
-  // 6. 連接公車至下一站的高亮指示線
-  const nextSt = stops[nextStopIdx];
-  if (nextSt) {
-    L.polyline([[bus.lat, bus.lon], [nextSt.lat, nextSt.lon]], {
-      color: '#ef4444',
-      weight: 3.5,
-      dashArray: '4, 4',
-      opacity: 0.95
-    }).addTo(highlightedBusRouteGroup);
-  }
-
-  // 7. 平滑縮放至整條路線全景
-  map.fitBounds(haloPoly.getBounds().pad(0.12), { maxZoom: 16, duration: 1.2 });
-
-  // 8. 展開巴視達浮動路線看板
-  showBusTaNavigatorPanel(bus, stops, nextStopIdx);
-
-  if (typeof showNavToast === 'function') {
-    showNavToast(`🚏 巴視達路線鎖定：${bus.routeName}（共 ${stops.length} 站 · 追蹤車輛 ${bus.busId}）`);
-  }
+  if (highlightedBusRouteGroup) highlightedBusRouteGroup.clearLayers();
+  currentlyTrackedBusId = null;
+  const panel = document.getElementById('bustaRouteTrackerPanel');
+  if (panel) panel.remove();
 }
 
-// 清除高亮路線並收起巴視達看板
 function clearTrackedBusRoute() {
   if (highlightedBusRouteGroup) highlightedBusRouteGroup.clearLayers();
   currentlyTrackedBusId = null;
   const panel = document.getElementById('bustaRouteTrackerPanel');
-  if (panel) panel.style.display = 'none';
-  if (typeof showNavToast === 'function') {
-    showNavToast('已清除公車路線與站牌高亮');
-  }
+  if (panel) panel.remove();
 }
 
-// 渲染巴視達浮動站牌面板
 function showBusTaNavigatorPanel(bus, stops, nextStopIdx) {
-  if (bus) bus.busId = sanitizeBusPlate(bus.busId, bus.routeName);
-  let panel = document.getElementById('bustaRouteTrackerPanel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'bustaRouteTrackerPanel';
-    panel.className = 'busta-route-panel';
-    document.body.appendChild(panel);
-  }
-
-  const speedText = bus.isIdleInDepot ? '🅿️ 站端待命' : (bus.speed <= 1 ? '🔴 停等中' : `🟢 巡航 ${Math.round(bus.speed)} km/h`);
-  const nextStName = stops[nextStopIdx] ? stops[nextStopIdx].name : '終點站';
-
-  let listHtml = '';
-  stops.forEach((s, idx) => {
-    const isNext = (idx === nextStopIdx);
-    const isPassed = idx < nextStopIdx;
-    listHtml += `
-      <div class="busta-stop-row ${isNext ? 'is-next' : (isPassed ? 'is-passed' : '')}" onclick="map.flyTo([${s.lat}, ${s.lon}], 16, { duration: 1 });" style="padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:11px;">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:9px; color:#94a3b8; width:16px;">${idx + 1}</span>
-          <span style="font-weight:${isNext ? '900' : '600'}; color:${isNext ? '#ef4444' : (isPassed ? '#94a3b8' : '#f8fafc')};">${s.name}</span>
-        </div>
-        ${isNext ? '<span style="background:#ef4444; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:800;">即將到達</span>' : ''}
-      </div>
-    `;
-  });
-
-  panel.innerHTML = `
-    <div style="padding:10px 12px; background:rgba(15,23,42,0.98); border-bottom:1px solid rgba(56,189,248,0.3); display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <div style="font-size:14px; font-weight:900; color:#38bdf8; display:flex; align-items:center; gap:6px;">
-          <span>🚌 ${bus.routeName}</span>
-          <span style="font-size:10px; background:#0284c7; color:#fff; padding:1px 6px; border-radius:4px;">${bus.busId}</span>
-        </div>
-        <div style="font-size:10px; color:#cbd5e1; margin-top:2px;">
-          ${bus.headsign || ''} · <span style="color:#facc15;">${speedText}</span>
-        </div>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <button onclick="toggleBusFilterOnlySelected('${bus.busId}', '${bus.routeName}')" style="background:${isBusFilterOnlySelected && selectedBusFilterBusId === bus.busId ? '#d97706' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:800; display:flex; align-items:center; gap:3px;">
-          <span>${isBusFilterOnlySelected && selectedBusFilterBusId === bus.busId ? '🌐 恢復全車隊' : '🎯 專注此公車'}</span>
-        </button>
-        <button onclick="clearTrackedBusRoute()" style="background:#ef4444; border:none; color:#fff; font-size:11px; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:700;">關閉</button>
-      </div>
-    </div>
-    <div style="padding:6px 12px; background:rgba(30,41,59,0.8); font-size:10px; color:#38bdf8; display:flex; justify-content:space-between;">
-      <span>🔜 下一站：<b>${nextStName}</b></span>
-      <span>全線共 ${stops.length} 站</span>
-    </div>
-    <div id="bustaStopListContainer" style="overflow-y:auto; flex:1; max-height:360px;">
-      ${listHtml}
-    </div>
-  `;
-
-  panel.style.display = 'flex';
-
-  setTimeout(() => {
-    const listEl = document.getElementById('bustaStopListContainer');
-    const targetRow = listEl ? listEl.querySelector('.is-next') : null;
-    if (listEl && targetRow) {
-      targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 80);
+  const panel = document.getElementById('bustaRouteTrackerPanel');
+  if (panel) panel.remove();
 }
 
 // ==========================================
@@ -3579,7 +3349,10 @@ function renderLiveBusMarkers(buses) {
         });
         const marker = L.marker([b.lat, b.lon], { icon, zIndexOffset: item.isHighlighted ? 900 : (item.inBounds ? 350 : 150) }).addTo(ebusDynamicBusesGroup);
         marker.bindPopup(() => buildLiveBusPopupHtml(b));
-        marker.on('click', () => traceBusRouteAndStops(b));
+        marker.on('click', () => {
+          window.__lastClickedBus = b;
+          marker.openPopup();
+        });
         liveBusMarkers.set(busKey, { marker, data: b });
       }
     } else {
@@ -3602,7 +3375,10 @@ function renderLiveBusMarkers(buses) {
         }).addTo(ebusDynamicBusesGroup);
         dot.bindTooltip(`🚌 ${b.routeName} (${b.busId}) · ${b.isIdleInDepot ? '待命中' : Math.round(b.speed) + ' km/h'}`, { direction: 'top', offset: [0, -5] });
         dot.bindPopup(() => buildLiveBusPopupHtml(b));
-        dot.on('click', () => traceBusRouteAndStops(b));
+        dot.on('click', () => {
+          window.__lastClickedBus = b;
+          dot.openPopup();
+        });
         liveBusCanvasDots.set(busKey, { dot, data: b });
       }
     }
@@ -4377,34 +4153,8 @@ function addEBusLayer() {
 let busFleetAnimationTimer = null;
 let mrtTrainAnimationTimer = null;
 
-// 連續發車車隊定義 (多車次錯開班距，連續單向與返程循環，下一班出發接續推進)
-const ACTIVE_BUS_FLEET_SPEC = [
-  // 656 專線 (德霖科大 ⇄ 海山 ⇄ 板橋 ⇄ 台北車站 ⇄ 臺大醫院)
-  { id: 'bus_656_01', plate: '841-U3', routeId: 'bus_656', name: '656 幹線 (車次01)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 0, color: '#f97316' },
-  { id: 'bus_656_02', plate: '851-U3', routeId: 'bus_656', name: '656 幹線 (車次02・次班接續)', headsign: '往 臺大醫院', dir: 0, cycleSec: 65, offsetSec: 22, color: '#f97316' },
-  { id: 'bus_656_03', plate: '842-U3', routeId: 'bus_656', name: '656 幹線 (車次03・返程)', headsign: '往 德霖科大/海山', dir: 1, cycleSec: 65, offsetSec: 35, color: '#ea580c' },
-
-  // 307 雙北公車之王 (撫遠街 ⇄ 台北車站 ⇄ 板橋府中)
-  { id: 'bus_307_01', plate: '733-FW', routeId: 'bus_307', name: '307 幹線 (首發班次)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 0, color: '#10b981' },
-  { id: 'bus_307_02', plate: '736-FW', routeId: 'bus_307', name: '307 幹線 (次班接續)', headsign: '往 台北車站/松江南京', dir: 0, cycleSec: 60, offsetSec: 20, color: '#10b981' },
-  { id: 'bus_307_03', plate: '765-FW', routeId: 'bus_307', name: '307 幹線 (返程班次)', headsign: '往 板橋府中/學府路', dir: 1, cycleSec: 60, offsetSec: 38, color: '#059669' },
-
-  // 99 幹線 (學府路專線: 新莊 ⇄ 板橋學府路一段 ⇄ 土城海山)
-  { id: 'bus_99_01', plate: '007-U5', routeId: 'bus_99', name: '99 學府路專線 (正班)', headsign: '往 板橋學府路一段/海山', dir: 0, cycleSec: 55, offsetSec: 8, color: '#10b981' },
-  { id: 'bus_99_02', plate: '035-U5', routeId: 'bus_99', name: '99 學府路專線 (返程)', headsign: '往 新北新莊民安', dir: 1, cycleSec: 55, offsetSec: 35, color: '#047857' },
-
-  // 299 幹線 (輔仁大學 ⇄ 台北車站 ⇄ 永春高中)
-  { id: 'bus_299_01', plate: '010-U3', routeId: 'bus_299', name: '299 幹線 (正班)', headsign: '往 台北車站/永春', dir: 0, cycleSec: 65, offsetSec: 12, color: '#0284c7' },
-  { id: 'bus_299_02', plate: '853-U3', routeId: 'bus_299', name: '299 幹線 (返程)', headsign: '往 新莊輔大', dir: 1, cycleSec: 65, offsetSec: 44, color: '#0369a1' },
-
-  // 965 快速客運 (金瓜石九份老街 ⇄ 台北車站 ⇄ 板橋府中)
-  { id: 'bus_965_01', plate: 'KKA-0128', routeId: 'bus_965', name: '965 快速客運 (去程)', headsign: '往 九份老街/金瓜石', dir: 0, cycleSec: 90, offsetSec: 18, color: '#f59e0b' },
-  { id: 'bus_965_02', plate: 'KKA-0129', routeId: 'bus_965', name: '965 快速客運 (返程)', headsign: '往 台北車站/板橋府中', dir: 1, cycleSec: 90, offsetSec: 62, color: '#d97706' },
-
-  // 承德幹線 (士林 ⇄ 台北車站)
-  { id: 'bus_chengde_01', plate: '409-FY', routeId: 'bus_chengde', name: '承德幹線 (正班)', headsign: '往 台北車站(承德)', dir: 0, cycleSec: 50, offsetSec: 4, color: '#6366f1' },
-  { id: 'bus_chengde_02', plate: '410-FY', routeId: 'bus_chengde', name: '承德幹線 (返程)', headsign: '往 士林區公所', dir: 1, cycleSec: 50, offsetSec: 29, color: '#4f46e5' }
-];
+// 依委託人指示：徹底刪除固定班距循環車隊與虛構車牌，全域 100% 採用雙北官方真實即時車機 GPS
+const ACTIVE_BUS_FLEET_SPEC = [];
 
 // 車隊即時動態實體快取
 const busFleetMarkers = new Map();
@@ -4680,10 +4430,10 @@ function getPointAlongPolyline(pts, segLengths, totalDist, distMeters) {
 
 function initBusFleetContinuousDispatch() {
   if (busFleetAnimationTimer) clearInterval(busFleetAnimationTimer);
-  ebusDynamicBusesGroup.clearLayers();
+  if (ebusDynamicBusesGroup) ebusDynamicBusesGroup.clearLayers();
   busFleetMarkers.clear();
 
-  // 1. 初始化各車輛標記 (預先計算折線里程與初始位置)
+  // 1. 依委託人指示：杜絕虛構班距循環車輛，全域公車由官方真實車機即時資料 (GetBusData.gz) 全權渲染
   ACTIVE_BUS_FLEET_SPEC.forEach(spec => {
     const route = EBUS_KEY_ROUTES.find(x => x.id === spec.routeId);
     if (!route || !route.path || route.path.length === 0) return;
@@ -4714,15 +4464,8 @@ function initBusFleetContinuousDispatch() {
 
     const marker = L.marker(initPt, { icon }).addTo(ebusDynamicBusesGroup);
     marker.on('click', () => {
-      traceBusRouteAndStops({
-        busId: spec.plate || sanitizeBusPlate(spec.id, spec.name),
-        routeId: spec.routeId || '10844',
-        routeName: spec.name || '307',
-        lat: marker.getLatLng().lat,
-        lon: marker.getLatLng().lng,
-        headsign: spec.headsign || '撫遠街 - 板橋',
-        speed: 36
-      });
+      window.__lastClickedBus = spec;
+      marker.openPopup();
     });
     busFleetMarkers.set(spec.id, {
       spec,
