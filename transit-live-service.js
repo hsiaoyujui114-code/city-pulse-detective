@@ -14,16 +14,30 @@ function generateTaiwanBusPlate(routeCode, dirIndex) {
 
 function sanitizeBusPlate(busId, routeName, dirIndex) {
   if (!busId || typeof busId !== 'string') return generateTaiwanBusPlate(routeName || '100', dirIndex || 0);
-  const trimmed = busId.trim();
-  // 已合規之標準車牌 (例如 733-FW, 841-U3, 409-FY, 010-U3, KKA-1234)
+  const trimmed = busId.trim().toUpperCase();
+
+  // 委託人指示特別校正：公車車牌號碼有一台是 337，誤寫為 0377（包含 0377 / EAA-0377 / EAA-377 / 377），精準校正為標準合法車牌 EAA-337
+  if (trimmed === '0377' || trimmed === 'EAA-0377' || trimmed === 'EAA-377' || trimmed === '377' || trimmed === '337' || trimmed === 'EAA-337') {
+    return 'EAA-337';
+  }
+
+  // 已合規之標準車牌 (例如 733-FW, 841-U3, 409-FY, 010-U3, KKA-1234, FAB-388, EAA-337)
   if (/^[0-9A-Z]{2,4}-[0-9A-Z]{1,6}$/i.test(trimmed)) {
     const parts = trimmed.split('-');
     // 排除違規5位數尾碼 (如 KKB-90061 -> KKB-9006)
     if (parts[1].length > 4) {
       return `${parts[0]}-${parts[1].slice(0, 4)}`.toUpperCase();
     }
-    // 若為 1~2 位數尾碼則左補零至4位 (如 KKB-1 -> KKB-0001)
-    if (parts[0].length === 3 && parts[1].length < 4 && /^\d+$/.test(parts[1])) {
+    // 排除 0377 / 377 誤判，直接修正為 337 (如 EAA-377 / EAA-0377 -> EAA-337)
+    if (parts[1] === '0377' || parts[1] === '377') {
+      return `${parts[0]}-337`.toUpperCase();
+    }
+    // 臺灣營業大客車合法號牌包含：
+    // 1. 舊制：3碼數字-2碼英文 (如 733-FW, 841-U3, 409-FY, 010-U3)
+    // 2. 新制：3碼英文-4碼數字 (如 KKA-1234, KKB-5991)
+    // 3. 電動大客車/公路客運：3碼英文-3碼數字 (如 EAA-337, FAB-388, FAA-162)
+    // ⚠️ 3碼尾數合法有效，嚴禁擅自左補零為 0377 或 0388！僅 1~2 位數短碼才補零至 4 碼
+    if (parts[0].length === 3 && parts[1].length <= 2 && /^\d+$/.test(parts[1])) {
       return `${parts[0]}-${parts[1].padStart(4, '0')}`.toUpperCase();
     }
     return trimmed.toUpperCase();

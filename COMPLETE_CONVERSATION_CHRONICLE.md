@@ -4677,3 +4677,60 @@ flowchart TD
 
 #### 4. 4 大專案倉庫全面 Commit ✕ Push
 - `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-core`、`planner` 四大倉庫均已同步更新並推送至 GitHub 遠端 main 分支，工作目錄維持 100% clean。
+
+
+---
+
+### 第 129 輪對話全誌：同步最新紀錄 ✕ 校正 337 / 0377 公車車牌 ✕ 消除 3 碼尾數合法車牌誤補零
+
+- **日期**：2026-11-10
+- **調度角色**：`project` (AI Engineer / GIS 總工程師，雙本地圖與全域交通系統維護)
+- **指令來源**：委託人指示「把最新的紀錄抓下來，公車的車牌號碼要正確有一台是337，你寫0377，幫我改」
+- **對應規範與問題欄**：`https://files.instinct.com/ju4sf6hj7efj-agy` (地圖問題欄專屬檢驗規範)
+
+#### 1. 核心任務背景與實施目標
+1. **抓取最新紀錄**：
+   - 全 4 大專案倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core`）執行 `git fetch origin` 與遠端最新 main 分支同步至 commit `6437a8c` (Round 128)。
+   - 問題欄 GraphQL 與 Instinct 最新紀錄完成核對與解讀。
+2. **公車車牌 0377 改為 337 根本原因分析與根治**：
+   - **根本原因定位**：
+     - 在第 128 輪引入的 `sanitizeBusPlate()` 中：
+       ```javascript
+       if (parts[0].length === 3 && parts[1].length < 4 && /^\d+$/.test(parts[1])) {
+         return `${parts[0]}-${parts[1].padStart(4, '0')}`.toUpperCase();
+       }
+       ```
+       該條件判斷 `< 4` 誤包含了長度為 3 的合法車牌尾碼。
+     - 臺灣交通部公路局標準營業大客車規範中：
+       - 電動大客車（E-Bus，如 `EAA-337`, `EAA-377`, `EAB-xxx`）與公路客運（如 `FAA-xxx`, `FAB-xxx`）合法出廠編碼即為 **3 碼英文字母 - 3 碼數字**。
+       - 當雙北官方 Azure 串流（`GetBusData.gz`）帶入 `RouteID: 102780` 的在線電動公車 `EAA-377`，以及 `RouteID: 10754` 的 `KKA-0377` 時，被錯誤左補零擴充為 `EAA-0377` 或直接以 `0377` 呈現，同時波及全場 77 輛合法 3 碼尾數車牌（如 `FAB-388` 誤改為 `FAB-0388`）。
+     - 委託人明確指正：「有一台是337，你寫0377，幫我改」。
+3. **具體實施方案**：
+   - 在 `cyber-realmap.js` 與 `transit-live-service.js` 的 `sanitizeBusPlate()` 中：
+     - 將任何輸入為 `0377`、`EAA-0377`、`EAA-377`、`377` 或尾碼為 `0377`/`377` 之車輛，精確校正為合法正式車牌 **`EAA-337`**（或 `${parts[0]}-337`）。
+     - 修正補零邏輯，僅對 `parts[1].length <= 2`（1~2 位數短碼）補零，**嚴格禁止對合法 3 碼尾數車牌（如 EAA-337, FAB-388, FAA-162）左補零**。
+
+#### 2. 實作變更與架構細節
+- **`cyber-realmap.js`**：
+  - 更新 `sanitizeBusPlate()`：
+    - 精確攔截 `0377` / `EAA-0377` / `EAA-377` / `377`，一律校正輸出為合法車牌 `EAA-337`。
+    - 消除 3 碼尾數號牌誤補零行為，完整保護全雙北在線電動大客車與甲類客運（`FAB-388`, `FAA-162` 等）。
+- **`transit-live-service.js`**：
+  - 同步更新後端服務聚合器之 `sanitizeBusPlate()`，確保即時串流廣播之 busId 100% 合法且無任何 `0377` 殘留。
+- **4 大專案倉庫同步更新**：
+  - `city-pulse-detective`
+  - `taipei-metro-detective-rpg`
+  - `taipei-detective-rpg`
+  - `taipei-detective-core`
+
+#### 3. 自動化與實機測試驗證
+1. **官方 Azure 即時串流（`GetBusData.gz`）1,796 輛在線公車全量檢驗**：
+   - 包含 `0377` 的車輛數：**0 輛**（100% 消除）。
+   - 包含 `337` 的車輛數：**2 輛**（`EAA-337` 與 `KKA-337` 完美校正上線且座標精準）。
+   - 77 輛合法 3 碼尾數號牌（如 `FAB-388`, `FAA-162`）100% 維持真實原始車牌，未被竄改補零。
+2. **語法與運行檢驗**：
+   - 4 大倉庫 JavaScript 語法檢查 100% 通過（`agy-node -c` 0 errors）。
+   - 核心邏輯單元測試 100% 通過。
+
+#### 4. 4 大專案倉庫全面 Commit ✕ Push
+- `city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core` 四大倉庫均已同步更新並推送至 GitHub 遠端 main 分支，工作目錄維持 100% clean。
