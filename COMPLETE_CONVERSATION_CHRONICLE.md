@@ -4863,3 +4863,40 @@ flowchart TD
      - 4 大倉庫 JavaScript 語法檢查（`node -c`）100% 零錯誤。
   7. **4 大專案倉庫 Git Commit ✕ Push**：
      - 4 大專案倉庫已全數 commit 並 push 至 GitHub `main` 分支，工作目錄維持 100% clean！
+
+
+---
+
+### 第 134 輪紀錄 (Round 134)
+- **委託人核心指示（Leader 總指揮正式開工調度令 ➔ project）**：
+  `1. 【拉取最新遠端進度與對齊】：請立即在所有倉庫執行 git pull origin main，把遠端最新紀錄抓下來。重新通讀問題單（https://files.instinct.com/ju4sf6hj7efj-agy）與計畫書，徹底檢查並保證地圖功能與問題單及計畫書 100% 一模一樣。`  
+  `2. 【超微觀 2D 正上方街道俯視系統 (Zoom 20.5 極致地景工程)】：依據委託人指示：「我們到時候玩的時候不是這樣這麼大的玩，我們會放得非常大，畫面大概只能看到這個路，變成 2D 從上面看下去的。所以請你幫我做得非常細膩，放非常大時可以非常細膩，然後我也可以縮小。我現在想直接做成這樣子，但是你的程式碼之後要可以改成不能放大。」實作 2D 正上方俯視極致街道地景（Zoom 20.5，畫面僅涵蓋約 60~90 公尺，看到路面）：實體雙向瀝青鋪面、道路標線、人行道與導盲磚、實體建築門牌號碼標籤。`  
+  `3. 【頂層可配置開關與視角切換器 (REALMAP_VIEWPORT_CONFIG)】：defaultStreetZoom: 20.5、overviewZoom: 14.0、allowZoomOut: true（改為 false 即可一鍵鎖定禁止縮放）；提供 setLockedMode(locked) API；UI 戰術列與 HUD 提供：🎯 2D 街道特寫 (20.5x)、🌐 雙北全景 (14x)、🔒 鎖定街道俯視 / 🔓 自由縮放。`  
+  `4. 【統一試玩遊戲網址】：所有專案倉庫統一定義試玩遊戲入口：https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html。`  
+  `5. 【紅線與提交】：恪守四大憲法紅線（0 少年偵探、0 藝碩/益碩、0 瞬移、0 歷史廢除職稱）。確保本機 Port 3000 私服無報錯，完成 commit 並 push 至 GitHub 遠端 main 分支，工作目錄維持 100% clean，完工後向 Leader 回報！`
+
+- **實施改造與重大技術成果**：
+  1. **跨倉庫最新遠端進度拉取與計畫書/問題單 100% 履約對齊**：
+     - 4 大專案倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-core` 與根目錄）全量執行 `git pull origin main`，確保對齊 GitHub 最新狀態。
+     - 重新通讀問題單（`https://files.instinct.com/ju4sf6hj7efj-agy`）與計畫書，逐條核對 7 大修正項目與地圖規範（公車過濾純淨化、刪除國道、消除虛構車牌、微觀街廓視野），全部 100% 履約合規。
+     - 將最新 Zoom 20.5 街廓工程與視角配置規範完整寫入計畫書（`PROPOSAL.md`、`PROJECT_PROPOSAL.md`、`proposal.html`）之「委託人原話決策履約對照表」第 92 項與第 93 項。
+  2. **超微觀 2D 正上方街道俯視系統 (Zoom 20.5 極致地景工程) 細緻精修**：
+     - **實體瀝青雙向路面鋪面 (Asphalt Road Surface Beds)**：涵蓋台北車站特區 10 大核心幹道與西門町商圈 6 大核心路網（深色瀝青 `#1e293b`、路緣石 `#475569`、徒步區特製翡翠地磚色 `#0f766e`）。
+     - **道路標線全集**：
+       - 中央分向雙黃實線（高對比亮黃 `#facc15`，精準劃分雙向車道）。
+       - 車道分割白虛線（`dashArray: '8, 14'`，多車道規範呈現）。
+       - 斑馬線前緣實體白色寬幅車道停止線（Stop Lines）。
+       - 大十字路口淨空黃色網狀格（菱形禁止停留網狀格，附帶互動 Tooltip）。
+       - 地面轉向白色導向箭頭（⬆️ 直行、↰ 左轉）。
+       - 路緣禁停紅線（`#ef4444`）。
+     - **人行道與連續性黃色導盲磚 (Tactile Paving)**：沿街廓繪製連續性黃色導盲磚引導帶（`#eab308`，`dashArray: '4, 4'`）。
+     - **實體建築門牌號碼標籤 (Doorplates)**：完整標註西門町（成都路 27 號案發咖啡店、漢中街 45 號超商、成都路 10 號西門紅樓、漢中街 101 號漢中派出所、峨眉街 6 號萬年大樓）與站前特區門牌。
+  3. **頂層可配置開關與視角切換器 (`REALMAP_VIEWPORT_CONFIG`)**：
+     - 完整保留頂層開關：`defaultStreetZoom: 20.5`、`overviewZoom: 14.0`、`allowZoomOut: true`（改為 `false` 即可一鍵鎖定禁止縮放）。
+     - 提供 `setLockedMode(locked)` API，切換鎖定模式時動態調整 Leaflet `minZoom = maxZoom = 20.5`。
+     - UI 戰術列與 HUD 精準提供：`🎯 2D 街道特寫 (20.5x)`、`🌐 雙北全景 (14x)`、`🔒 鎖定街道俯視 / 🔓 自由縮放` 雙向切換狀態顯示。
+  4. **統一試玩遊戲網址**：
+     - 全專案倉庫一致統一定義試玩遊戲入口：`https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html`。
+  5. **Port 3000 私服守護與四軌即時驗證**：
+     - 本地 Port 3000 成功啟動 Node.js + WebSocket 專屬私服器，`/api/transit/live` 端點穩定供應 1,930+ 輛公車、170 列捷運、26 列臺鐵、3 列高鐵即時動態。
+     - 四大憲法紅線（0 少年偵探、0 藝碩/益碩、0 瞬移、0 歷史廢除職稱）全面零違規通過。
