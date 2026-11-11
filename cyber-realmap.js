@@ -598,21 +598,23 @@ function update2DStreetLockUI() {
   const text = document.getElementById('tag2DStreetLockText');
   const btn = document.getElementById('btnToggle2DStreetLock');
   if (icon) icon.textContent = isLocked ? '🔒' : '🔓';
-  if (text) text.textContent = isLocked ? '已鎖定街道' : '自由縮放';
+  if (text) text.textContent = isLocked ? '鎖定街道俯視' : '自由縮放';
   if (btn) {
     if (isLocked) {
       btn.classList.add('active');
       btn.style.borderColor = '#ef4444';
       btn.style.background = 'rgba(239, 68, 68, 0.25)';
+      btn.title = '點擊解除鎖定（恢復自由縮放）';
     } else {
       btn.classList.remove('active');
       btn.style.borderColor = '#f59e0b';
       btn.style.background = '';
+      btn.title = '點擊一鍵鎖定為 2D 街道微觀俯視視角 (Zoom 20.5)';
     }
   }
   const pillBtn = document.getElementById('btnPillLockToggle');
   if (pillBtn) {
-    pillBtn.innerHTML = isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角';
+    pillBtn.innerHTML = isLocked ? '🔓 自由縮放' : '🔒 鎖定街道俯視';
     pillBtn.style.background = isLocked ? '#ef4444' : '#0284c7';
   }
 }
