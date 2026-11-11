@@ -324,9 +324,22 @@
         <span>📡 全息雷達掃描</span>
         <span style="color:#94a3b8;">STANDBY</span>
       </button>
+            <!-- 🌟 2D 超微觀街道俯視控制組 (委託人 Round 133 規範) -->
+      <button class="tactical-tool-btn" id="btnToggle2DStreetLock" onclick="toggle2DStreetLockMode()" title="一鍵鎖定/解除 2D 街道微觀俯視視角（鎖定時禁止放大縮小）" style="border-color:#f59e0b;">
+        <span id="tag2DStreetLockIcon">🔓</span>
+        <span id="tag2DStreetLockText">自由縮放</span>
+      </button>
+      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(20.5)" title="2D 正上方極致微觀街道俯視 (Zoom 20.5 實體瀝青/斑馬線/停止線/雙黃線/導盲磚)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
+        <span>🎯 2D 街道特寫</span>
+        <span style="color:#fbbf24; font-size:10px;">20.5x</span>
+      </button>
+      <button class="tactical-tool-btn" id="btnShuangbeiFullView" onclick="setStreetTopDownView(14.0)" title="雙北宏觀全景 (Zoom 14)">
+        <span>🌐 雙北全景</span>
+        <span style="color:#38bdf8; font-size:10px;">14x</span>
+      </button>
       <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大至 19.5x 微觀街廓，鏡頭自動跟隨人物與周遭街道">
-        <span>🎯 街廓親臨 (按 Z)</span>
-        <span style="color:#00f0ff;">19.5x</span>
+        <span>🎯 2D 街道俯視 (按 Z)</span>
+        <span style="color:#00f0ff;">20.5x</span>
       </button>
       <button class="tactical-tool-btn" id="btnFitBounds" onclick="resetShuangbeiBounds()">
         <span>🔭 雙北全景居中</span>

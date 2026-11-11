@@ -2840,3 +2840,33 @@ body:not(.map-zoom-mid) .moving-mrt-train {
   }
 }
 
+
+/* ─── 🌟 2D 超微觀街道俯視系統 (Zoom 20.5 專用高精視覺) ─── */
+.box-junction-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid #facc15;
+  color: #fef08a;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(250, 204, 21, 0.4);
+}
+
+.road-arrow-marker {
+  transition: transform 0.2s ease;
+}
+
+#btnToggle2DStreetLock.active {
+  animation: streetLockPulse 2s infinite ease-in-out;
+}
+
+@keyframes streetLockPulse {
+  0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.85); }
+  100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+}
+
+#btnTopDownStreetView:hover {
+  background: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+}
