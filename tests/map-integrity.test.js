@@ -114,7 +114,10 @@ console.log(`✅ [4] Transit station codes (${totalMrtStations} entries), saniti
 const realmapHtml = readUtf8('cyber-realmap.html');
 const realmapCss = readUtf8('cyber-realmap.css');
 assert(!realmapHtml.includes('?'), 'Mojibake string detected in cyber-realmap.html (ISSUE-21)');
+assert(!realmapHtml.includes('1037') && !realmapJs.includes('1037 條'), 'cyber-realmap UI must show 1,036 routes, not 1037 (P-14)');
+assert(realmapJs.includes('IS_STATIC_HOST') && realmapJs.includes('openDetectiveWorkbench'), 'cyber-realmap.js must guard /api and /detective calls on static hosts');
 assert(realmapCss.includes('min-width: 0'), '.jump-scroll-wrap min-width: 0 safeguard missing in CSS');
+assert(!/\.compass-rose-hud\s*\{[^}]*top:\s*192px/.test(realmapCss), '.compass-rose-hud top must clear #streetFocusPill (232px+)');
 
 for (const f of ['cases.json', 'shared-data.js', 'cyber-realmap.js', 'cases.html']) {
   const txt = readUtf8(f);
@@ -127,6 +130,13 @@ assert(!/\$\\(?:ge|times|text)|\$D=M\/V\$|\$isoX|\$340\$/.test(proposalVisible),
 assert(proposalHtml.includes('93 項') && !proposalHtml.includes('85 項'), 'proposal.html header must show 93 items, not 85 (P-12)');
 assert(proposalHtml.includes('Zoom 20.5') && proposalHtml.includes('REALMAP_VIEWPORT_CONFIG'), 'proposal.html missing items 92/93 (ISSUE-25)');
 assert(!proposalHtml.includes('缺陷清零') && !proposalHtml.includes('d = 3.39'), 'proposal.html still contains falsified/stale claim (P-07/P-13)');
+const sec00Html = proposalHtml.slice(proposalHtml.indexOf('id="sec-00"'), proposalHtml.indexOf('id="sec-01"'));
+for (const rowId of ['12', '14', '29', '39', '43', '44']) {
+  const rowRe = new RegExp(`<tr>\\s*<td[^>]*>${rowId}<\\/td>[\\s\\S]*?<\\/tr>`);
+  const rowMatch = sec00Html.match(rowRe);
+  assert(rowMatch, `Missing row ${rowId} in proposal.html #sec-00`);
+  assert(!rowMatch[0].includes('✅ 100%'), `proposal.html #sec-00 row ${rowId} must not claim ✅ 100% (P-08/P-10/P-11/P-16)`);
+}
 
 const proposalMd = readUtf8('PROPOSAL.md');
 assert(!proposalMd.includes('缺陷清零') && !proposalMd.includes('N=56') && !proposalMd.includes('d = 3.39'), 'PROPOSAL.md contains falsified/stale claim (P-07/P-13)');

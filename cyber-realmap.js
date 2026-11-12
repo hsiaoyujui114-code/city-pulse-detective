@@ -1,3 +1,17 @@
+// 靜態 GitHub Pages / file:// 環境偵測，避免向靜態網域發出無效 /api/* 或 /detective 404 請求
+const IS_STATIC_HOST = typeof location !== 'undefined' && (location.hostname.endsWith('.github.io') || location.protocol === 'file:');
+
+function openDetectiveWorkbench(e) {
+  if (IS_STATIC_HOST) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof showNavToast === 'function') {
+      showNavToast('🕵️ 偵探核心工作台（localhost:3000/detective ＋ taipei-detective-core:3001）須於本機並排啟動雙服務！線上請點「📂 50 宗科學案件全集」閱覽。');
+    }
+    return false;
+  }
+  return true;
+}
+
 // ==========================================
 // 🚌 臺灣公車合法車牌生成與校正引擎 (Taiwan Bus License Plate Engine)
 // 遵循交通部公路局車牌編碼標準 (NNN-XX 舊制 或 KKA/KKB-NNNN 新制 4位數字)
@@ -392,6 +406,11 @@ function initCyberRealMap() {
   addSectorsLayer();
   addAllStoreMarkers();
   map.on('zoomend', () => {
+    const z = map.getZoom();
+    if (z < 18.0 && isStreetFocusMode) {
+      isStreetFocusMode = false;
+      updateStreetFocusPill(false, z);
+    }
     updateStoreLODVisibility();
     updateMrtLODVisibility();
     renderStreetMicroDetails();
@@ -2791,9 +2810,9 @@ async function syncLiveTransitData() {
   if (!isTransitLiveSyncEnabled) return;
   const twTime = getTaiwanTimePartsBrowser();
 
-  // 通道 A：優先嘗試本地 Node 伺服器 /api/transit/live 聚合端點
+  // 通道 A：優先嘗試本地 Node 伺服器 /api/transit/live 聚合端點（靜態 GitHub Pages 直接跳過避免 404）
   let usedServerApi = false;
-  try {
+  if (!IS_STATIC_HOST) try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 3200);
     const res = await fetch('/api/transit/live', { signal: ctrl.signal, cache: 'no-store' });
@@ -3707,7 +3726,7 @@ function toggleConstructionSync() {
 }
 
 async function fetchLiveConstructionStatus() {
-  if (!isConstructionSyncEnabled) return;
+  if (!isConstructionSyncEnabled || IS_STATIC_HOST) return;
   try {
     const res = await fetch('/api/construction/status');
     if (!res.ok) return;
@@ -5152,7 +5171,7 @@ function quickSelectEBus(routeIdOrName) {
   if (r) {
     highlightEBusOnMap(r);
   } else {
-    // 官方 1037 路線搜尋
+    // 官方 1,036 路線搜尋
     showNavToast(`🚌 已定位大臺北公車【${routeIdOrName}】，連結至 ebus.gov.taipei`);
     window.open(`https://ebus.gov.taipei/EBus2/RouteList2`, '_blank');
   }
@@ -5183,10 +5202,10 @@ function toggleEBusNavigator() {
   if (btn) {
     if (isEBusPanelOpen) {
       btn.classList.add('active');
-      btn.innerHTML = '<span>🔍 搜尋 1037 條公車</span><span style="color:#4ade80;">CLOSE</span>';
+      btn.innerHTML = '<span>🔍 搜尋 1,036 條公車</span><span style="color:#4ade80;">CLOSE</span>';
     } else {
       btn.classList.remove('active');
-      btn.innerHTML = '<span>🔍 搜尋 1037 條公車</span><span style="color:#f59e0b;">OPEN</span>';
+      btn.innerHTML = '<span>🔍 搜尋 1,036 條公車</span><span style="color:#f59e0b;">OPEN</span>';
     }
   }
 }
@@ -6304,7 +6323,7 @@ function openCaseBriefModal(caseId) {
       <button class="case-card-close-btn" onclick="closeCaseModal()" style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉簡報</button>
       <button class="btn-easter-egg" onclick="attemptCaseEasterEgg('${c.id}')" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; box-shadow:0 0 10px rgba(245,158,11,0.4);">🥚 探勘案發現場周邊彩蛋</button>
       <button class="btn-fly-to-scene" onclick="flyToCaseLocation(${c.lat}, ${c.lon})">🚀 俯衝案發現場門牌</button>
-      <a href="/detective" target="_blank" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 0 10px rgba(2,132,199,0.4);" title="以都會調查員身分立案調查此案件">🕵️ 立案調查</a>
+      <a href="/detective" target="_blank" onclick="return openDetectiveWorkbench(event)" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 0 10px rgba(2,132,199,0.4);" title="以都會調查員身分立案調查此案件">🕵️ 立案調查</a>
       <a href="cases.html" target="_blank" style="background:rgba(245,158,11,0.18); border:1px solid #f59e0b; color:#fbbf24; font-weight:800; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="查看 50 宗歷史生活科學案件全集檔案庫">📂 50 案全集</a>
     </div>
   `;

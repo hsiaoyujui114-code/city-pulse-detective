@@ -57,7 +57,7 @@
       <a href="cases.html" target="_blank" class="dual-track-btn" id="btnCasesAll" style="border-color:rgba(251,191,36,0.5); color:#fbbf24; background:rgba(217,119,6,0.18);" title="開啟 50 宗歷史風情與生活科學案件全集展示手冊">
         <span>📂 50 宗科學案件全集</span>
       </a>
-      <a href="/detective" target="_blank" class="dual-track-btn" id="btnDetectiveHud" style="border-color:rgba(56,189,248,0.5); color:#38bdf8; background:rgba(2,132,199,0.18);" title="開啟都會調查員偵探工作台">
+      <a href="/detective" target="_blank" class="dual-track-btn" id="btnDetectiveHud" onclick="return openDetectiveWorkbench(event)" style="border-color:rgba(56,189,248,0.5); color:#38bdf8; background:rgba(2,132,199,0.18);" title="開啟都會調查員偵探工作台">
         <span>🕵️ 都會調查員・偵探核心</span>
       </a>
       <a href="index.html" class="dual-track-btn" id="btnSwitchToMain">
@@ -317,7 +317,7 @@
         <span style="color:#f59e0b;">ON</span>
       </button>
       <button class="tactical-tool-btn" id="btnOpenEBusNavigator" onclick="toggleEBusNavigator()">
-        <span>🔍 搜尋 1037 條公車</span>
+        <span>🔍 搜尋 1,036 條公車</span>
         <span style="color:#f59e0b;">OPEN</span>
       </button>
       <button class="tactical-tool-btn" id="btnToggleStreets" onclick="toggleStreetsLayer()">
@@ -376,11 +376,11 @@
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#0284c7; border:1px solid #fff;"></span>
-        <span>🚄 捷運固定班距動態巡航列車 (BL/R/G/O/Y 雙向固定班次)</span>
+        <span>🚄 捷運時刻／看板推算列車 (非真實車機GPS)</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:12px; height:3px; background:#10b981; box-shadow:0 0 4px #10b981;"></span>
-        <span>🚌 大臺北公車 (ebus.gov.taipei 1037條官方路線)</span>
+        <span>🚌 大臺北公車 (ebus.gov.taipei 1,036條官方路線)</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
         <span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#f97316; border:1px solid #fff;"></span>
