@@ -6380,7 +6380,7 @@ async function syncSandpitLiveTransit() {
         const m = regularTrtc.find(x => (x.LineNo || x.LineID) === t.lineCode) || regularTrtc[idx % regularTrtc.length];
         if (m && m.StationName && m.StationName.Zh_tw) {
           const dest = (m.DestinationStationName && m.DestinationStationName.Zh_tw) || '';
-          t.ledText = `🚇 [車次 ${t.trainNo}] ${t.lineCode}線 [${m.StationName.Zh_tw}站] ➔ 往${dest}｜收班: ${t.closingTime || '24:00'}`;
+          t.ledText = `🚇 [車次 ${t.trainNo}] ${t.lineCode}線 [{m.StationName.Zh_tw}站] ➔ 往{dest}｜收班: ${t.closingTime || '24:00'}`;
         }
       });
     }
@@ -6390,7 +6390,7 @@ async function syncSandpitLiveTransit() {
         if (m && m.StationName && m.StationName.Zh_tw) {
           const tType = (m.TrainTypeName && m.TrainTypeName.Zh_tw) ? m.TrainTypeName.Zh_tw.slice(0, 3) : '臺鐵';
           const delay = Number(m.DelayTime) > 0 ? `晚${m.DelayTime}分` : '準點';
-          t.ledText = `🚆 ${m.TrainNo}次 ${tType} [${m.StationName.Zh_tw}] (${delay})`;
+          t.ledText = `🚆 ${m.TrainNo}次 ${tType} [{m.StationName.Zh_tw}] ({delay})`;
         }
       });
     }

@@ -17,12 +17,19 @@ const { WebSocketServer, WebSocket } = require('ws');
 const transitLiveService = require('./transit-live-service');
 
 // 載入獨立都會調查員偵探核心引擎 (落實伺服器版本雙軌並行)
+const CORE_REPO_DIR = path.join(__dirname, '../taipei-detective-core');
 let detectiveEngine = null;
-try {
-  const detectiveModule = require('../taipei-detective-core/src/index');
-  detectiveEngine = detectiveModule.createDetectiveEngine();
-} catch (e) {
-  console.warn('⚠️ Detective core module not loaded in server:', e.message);
+if (!fs.existsSync(CORE_REPO_DIR)) {
+  console.warn('⚠️ [ISSUE-08 前置檢查] 未偵測到兄弟倉庫 ../taipei-detective-core');
+  console.warn('   /detective 與 /api/detective/* 需與 taipei-detective-core 並排置於同一父目錄：');
+  console.warn('   cd .. && git clone https://github.com/hsiaoyujui114-code/taipei-detective-core.git');
+} else {
+  try {
+    const detectiveModule = require('../taipei-detective-core/src/index');
+    detectiveEngine = detectiveModule.createDetectiveEngine();
+  } catch (e) {
+    console.warn('⚠️ Detective core module not loaded in server:', e.message);
+  }
 }
 
 const PORT = process.env.PORT || 3000;
@@ -57,6 +64,9 @@ const server = http.createServer((req, res) => {
       fs.createReadStream(detectiveHtml).pipe(res);
       return;
     }
+    res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8"><title>需要並排部署 taipei-detective-core</title></head><body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:32px;line-height:1.7"><h2>⚠️ 找不到偵探核心兄弟倉庫 (<code>../taipei-detective-core</code>)</h2><p>本路徑 <code>/detective</code> 需與 <code>taipei-detective-core</code> 倉庫置於同一父目錄並排協作。</p><pre style="background:#1e293b;padding:12px;border-radius:8px;">cd ..\ngit clone https://github.com/hsiaoyujui114-code/taipei-detective-core.git</pre><p><a href="/" style="color:#38bdf8;">返回主地圖 (index.html)</a> ｜ <a href="/cyber-realmap.html" style="color:#34d399;">開啟 1:1 真實地圖</a></p></body></html>');
+    return;
   }
 
   // 50 宗歷史風情與生活科學案件全集展示支援
@@ -70,9 +80,18 @@ const server = http.createServer((req, res) => {
   }
 
   // 偵探核心 REST API 路由
-  if (reqPath.startsWith('/api/detective/') && detectiveEngine) {
+  if (reqPath.startsWith('/api/detective/')) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    if (!detectiveEngine) {
+      res.writeHead(503);
+      res.end(JSON.stringify({
+        success: false,
+        error: 'DETECTIVE_CORE_NOT_FOUND',
+        message: '未偵測到 ../taipei-detective-core 兄弟倉庫，請於父目錄執行 git clone https://github.com/hsiaoyujui114-code/taipei-detective-core.git 後重啟伺服器。'
+      }));
+      return;
+    }
 
     function parseBody(request) {
       return new Promise((resolve) => {
@@ -468,6 +487,7 @@ server.listen(PORT, () => {
   console.log(`🕵️‍♂️ 《雙北漫遊偵探 ✕ 城市脈動》專屬私服器已成功啟動！`);
   console.log(`🌐 本地網頁遊戲入口 : http://localhost:${PORT}`);
   console.log(`🔌 多人 WebSocket 位址: ws://localhost:${PORT}`);
+  console.log(`🔍 偵探核心掛載狀態 : ${detectiveEngine ? '✅ 已掛載 ../taipei-detective-core (/detective)' : '⚠️ 未掛載 ../taipei-detective-core（需並排 clone 核心倉庫）'}`);
   console.log(`🎮 支援所有局域網同學連入同一個 3D 台北世界同屏辦案！`);
   console.log(`================================================================`);
 });

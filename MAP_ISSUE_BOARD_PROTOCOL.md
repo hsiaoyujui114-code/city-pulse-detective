@@ -1,21 +1,18 @@
 # 🗺️ 雙北漫遊：都會行蹤 —— 地圖問題欄最高執行協議 (Map Issue Board Protocol)
 
-> **最高委託人指令確立日**：2026-10-28
+> **最高委託人指令確立日**：2026-10-28（第 134 回合擴充雙問題欄聯防與離線對帳機制）  
 > **執行單位**：ai-engineer (`project`) ✕ 專案總協同與任務調度長 Leader (`manager`)
 
 ---
 
 ## 📌 一、 問題欄（地圖問題欄）唯一定義與專屬 URL
 
-每當委託人（總指揮）在對話中提及：
-- **「問題欄」**
-- **「地圖問題欄」**
-- **「去看那個問題欄」**
-- **「看問題欄裡面的東西」**
+每當委託人（總指揮）在對話中提及「問題欄」、「地圖問題欄」、「去看那個問題欄」，`ai-engineer` 與全體協同 AI 須同步檢核以下**雙問題欄來源**：
 
-`ai-engineer` (`project`) 與全體協同 AI 必須在第一時間直覺、明確理解此為**地圖品質稽核與問題修改指令專屬網址**：
+1. 🔗 **Muse 問題欄（最新公開問題追蹤總覽）**：`https://hsiaoyujui114-code.github.io/detective-issue-list/`
+2. 🔗 **Instinct 問題欄（地圖品質稽核卷宗）**：`https://files.instinct.com/ju4sf6hj7efj-agy`
 
-🔗 **專屬網址**：`https://files.instinct.com/ju4sf6hj7efj-agy`
+> 📌 **雙問題欄對照結論（ISSUE-13 已結案對帳）**：本協議已完整擷取 Instinct 問題欄（2026-10-29 修訂卷宗：公車/捷運/台鐵/高鐵資料來源新鮮度 `sourceLastOkMs`、Zoom 15/16 LOD 隱藏、`map-zoom-mid`、`.jump-scroll-wrap min-width: 0`、嚴禁無 GPS 即時字樣、公車點選不顯示第幾站/即將到哪一站）並與 Muse 問題欄（`REVIEW-133` ISSUE-01~25 與 P-01~P-16）逐條比對：**兩份清單完全相容、無互相矛盾**（均不更改玩法、均不重寫 Canvas/`ws` 引擎），已合併執行完畢。
 
 ---
 

@@ -50,7 +50,7 @@ html, body {
 /* 頂部全息戰術導航條 (Top Tactical Navigation Bar) */
 .holo-top-bar {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 12px;
   right: 12px;
   height: 52px;
@@ -58,14 +58,15 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   background: var(--panel-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--panel-border);
   border-radius: 10px;
-  padding: 0 16px;
+  padding: 0 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 12px rgba(0, 240, 255, 0.08);
+  overflow: hidden;
 }
 
 .brand-section {
@@ -93,15 +94,19 @@ html, body {
   flex-direction: column;
 }
 
+.brand-section {
+  flex-shrink: 0;
+}
 .brand-main-title {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 900;
-  letter-spacing: 1.2px;
+  letter-spacing: 0.6px;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .companion-badge {
@@ -118,19 +123,49 @@ html, body {
 .brand-sub-title {
   font-size: 10px;
   color: var(--cyan-glow);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 245px;
 }
 
 /* 特區快速躍遷按鈕列 (Quick Jump Sectors Bar) */
 .jump-scroll-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  max-width: 58%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 240, 255, 0.45) transparent;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 4px 0;
+}
+.strip-scroll-btn {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #38bdf8;
+  border-radius: 6px;
+  width: 24px;
+  height: 28px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.strip-scroll-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  color: #ffffff;
+}
+.strip-scroll-btn.strip-scroll-sm {
+  width: 22px;
+  height: 24px;
+  font-size: 9px;
 }
 
 .jump-scroll-wrap::-webkit-scrollbar {
@@ -197,19 +232,19 @@ html, body {
 /* 左側即時遙測 HUD 面板 (Left Telemetry Panel) */
 .left-telemetry-panel {
   position: absolute;
-  top: 76px;
+  top: 192px;
   left: 12px;
-  width: 250px;
+  width: 288px;
   z-index: 100;
   background: var(--panel-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   font-family: var(--font-mono);
-  max-height: calc(100vh - 184px);
+  max-height: calc(100vh - 250px);
   overflow-y: auto;
 }
 
@@ -230,9 +265,18 @@ html, body {
 .telemetry-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  margin-bottom: 7px;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10.5px;
+  margin-bottom: 6px;
+}
+.telemetry-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.telemetry-val {
+  text-align: right;
+  word-break: keep-all;
 }
 
 .telemetry-label {
@@ -275,18 +319,18 @@ html, body {
 /* 右側戰術圖層控制與掃描工具箱 (Right Tactical Control Panel) */
 .right-tactical-panel {
   position: absolute;
-  top: 76px;
+  top: 192px;
   right: 12px;
-  width: 220px;
+  width: 274px;
   z-index: 100;
   background: var(--panel-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  max-height: calc(100vh - 184px);
+  max-height: calc(100vh - 250px);
   overflow-y: auto;
 }
 
@@ -302,14 +346,26 @@ html, body {
   border: 1px solid rgba(0, 240, 255, 0.25);
   color: #f1f5f9;
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 11px;
+  padding: 6px 9px;
+  font-size: 10.5px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   transition: all 0.2s ease;
+  width: 100%;
+  white-space: nowrap;
+}
+.tactical-tool-btn span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.tactical-tool-btn span:last-child {
+  flex-shrink: 0;
+  font-size: 10px;
 }
 
 .tactical-tool-btn:hover {
@@ -327,7 +383,7 @@ html, body {
 /* 底部操作提示 (Bottom Hint Bar) */
 .bottom-hint-bar {
   position: absolute;
-  bottom: 14px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -335,13 +391,19 @@ html, body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--panel-border);
-  border-radius: 20px;
-  padding: 6px 20px;
-  font-size: 11px;
+  border-radius: 16px;
+  padding: 4px 14px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  white-space: nowrap;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-dim);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   pointer-events: none;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
 }
@@ -471,20 +533,20 @@ html, body {
 /* ─── 🚨 10 大生活科學探究示範案件跳轉條 (Top Strip) ─── */
 .cases-top-strip {
   position: absolute;
-  top: 70px;
+  top: 68px;
   left: 12px;
   right: 12px;
-  height: 42px;
+  height: 38px;
   z-index: 95;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   background: rgba(10, 18, 38, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(244, 63, 94, 0.35);
   border-radius: 8px;
-  padding: 0 12px;
+  padding: 0 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
@@ -516,18 +578,19 @@ html, body {
 
 .case-chip-btn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 7px;
   background: rgba(244, 63, 94, 0.12);
   border: 1px solid rgba(244, 63, 94, 0.4);
   border-radius: 6px;
   color: #fda4af;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   transition: all 0.2s ease;
 }
 
@@ -1129,14 +1192,14 @@ body[data-map-theme="dark"] #map {
 /* 品牌過濾快捷列 (Store Filter Strip) */
 .store-filter-strip {
   position: absolute;
-  top: 118px;
+  top: 112px;
   left: 12px;
   right: 12px;
-  height: 38px;
+  height: 36px;
   z-index: 90;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(10, 18, 38, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1144,9 +1207,19 @@ body[data-map-theme="dark"] #map {
   border-radius: 8px;
   padding: 0 10px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.store-chips-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
 }
+.store-chips-wrap::-webkit-scrollbar { display: none; }
 .store-filter-strip::-webkit-scrollbar { display: none; }
 .store-filter-label {
   font-size: 10px;
@@ -1155,15 +1228,16 @@ body[data-map-theme="dark"] #map {
   white-space: nowrap;
 }
 .filter-chip-btn {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 3px 7px;
   border-radius: 5px;
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(0, 240, 255, 0.2);
   color: #cbd5e1;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
@@ -1743,8 +1817,8 @@ body.show-road-names .road-badge-wrap {
    ────────────────────────────────────────── */
 .compass-rose-hud {
   position: absolute;
-  top: 168px;
-  right: 244px;
+  top: 192px;
+  right: 298px;
   z-index: 1000;
   background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(8px);
@@ -1933,7 +2007,7 @@ body[data-map-theme="nlsc"] .road-badge-marker {
    ────────────────────────────────────────── */
 .transit-ticker-bar {
   position: absolute;
-  top: 160px;
+  top: 154px;
   left: 12px;
   right: 12px;
   height: 26px;
@@ -2110,14 +2184,18 @@ body[data-map-theme="nlsc"] .road-badge-marker {
 }
 
 .building-3d-pin-label {
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1.5px solid #38bdf8;
   color: #f8fafc;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
   font-weight: 800;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.75), 0 0 10px rgba(56, 189, 248, 0.45);
   white-space: nowrap;
   pointer-events: auto;
   cursor: pointer;
@@ -2509,22 +2587,27 @@ body:not(.map-zoom-mid) .moving-mrt-train {
 /* ─── 🎯 街廓親臨模式浮動指示膠囊 ─── */
 .street-focus-pill {
   position: fixed;
-  top: 96px;
+  top: 192px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1750;
+  z-index: 950;
   background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1.5px solid #00f0ff;
-  border-radius: 24px;
-  padding: 6px 16px;
+  border-radius: 20px;
+  padding: 5px 14px;
   color: #f8fafc;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4), 0 0 12px rgba(0, 0, 0, 0.8);
   display: none;
   align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 600px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   pointer-events: auto;
   animation: streetPillPulse 2s infinite ease-in-out;
 }
@@ -2543,19 +2626,29 @@ body:not(.map-zoom-mid) .moving-mrt-train {
 }
 
 @media (max-width: 768px) {
+  .strip-scroll-btn {
+    display: none !important;
+  }
+  .compass-rose-hud {
+    top: auto !important;
+    bottom: 50px !important;
+    left: 10px !important;
+  }
   .street-focus-pill {
-    top: 130px;
-    font-size: 10px;
-    padding: 5px 12px;
+    top: 215px !important;
+    font-size: 9.5px;
+    padding: 4px 10px;
     width: max-content;
-    max-width: calc(100vw - 32px);
+    max-width: calc(100vw - 24px);
+    flex-wrap: wrap;
+    white-space: normal;
   }
 }
 
 /* ─── 🏙️ 街廓親臨微觀探索 HUD (Street Proximity HUD) ─── */
 .street-proximity-card {
   position: fixed;
-  bottom: 46px;
+  bottom: 42px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1750;
@@ -2563,12 +2656,17 @@ body:not(.map-zoom-mid) .moving-mrt-train {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1.5px solid #00f0ff;
-  border-radius: 20px;
-  padding: 8px 18px;
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  overflow-x: auto;
   color: #f8fafc;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   box-shadow: 0 4px 25px rgba(0, 240, 255, 0.4), 0 0 16px rgba(0, 0, 0, 0.85);
   pointer-events: auto;
   font-family: var(--font-sans);

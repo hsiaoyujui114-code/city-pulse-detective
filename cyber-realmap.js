@@ -206,7 +206,7 @@ function initCyberRealMap() {
   // 1. 讀取本機 localStorage 存檔（若有有效進度則恢復，若無則使用企劃書預設核心站點）
   const savedState = loadSavedMapState();
   const initCenter = (savedState && savedState.lat && savedState.lon) ? [savedState.lat, savedState.lon] : currentFocusCoord;
-  const initZoom = (savedState && typeof savedState.zoom === 'number') ? savedState.zoom : 15;
+  const initZoom = (savedState && typeof savedState.zoom === 'number') ? savedState.zoom : 14.0;
 
   map = L.map('map', {
     center: initCenter,
@@ -250,10 +250,13 @@ function initCyberRealMap() {
     return layer;
   }
 
-  // (1) 臺灣通用電子地圖 (內政部國土測繪中心 NLSC 繁中官方街道全圖・最權威最詳實)
+  // (1) 臺灣通用電子地圖 (內政部國土測繪中心 NLSC 繁中官方街道全圖・z=18 含完整街道建築與店家圖示，maxNativeZoom:18 確保 20.5x 放大仍極致清晰不空白)
   const nlscBaseLayer = enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
-    maxNativeZoom: 20,
+    maxNativeZoom: 18,
     maxZoom: 22,
+    keepBuffer: 6,
+    updateWhenZooming: false,
+    updateWhenIdle: false,
     detectRetina: false,
     attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
   }));
@@ -298,8 +301,9 @@ function initCyberRealMap() {
   // (5) 1:1 實體高空衛星 ✕ 真實街道路網全息複合圖層 (NLSC 正射空拍 ✕ 橙白道路向量雙線 ✕ 繁中路標)
   const satelliteHybridLayer = L.layerGroup([
     enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}', {
-      maxNativeZoom: 20,
+      maxNativeZoom: 18,
       maxZoom: 22,
+      keepBuffer: 6,
       detectRetina: false,
       attribution: '&copy; 內政部國土測繪中心 (NLSC) 正射影像'
     }), 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
@@ -391,6 +395,8 @@ function initCyberRealMap() {
     updateStoreLODVisibility();
     updateMrtLODVisibility();
     renderStreetMicroDetails();
+    if (Array.isArray(liveBusFleetData)) renderLiveBusMarkers(liveBusFleetData);
+    if (typeof renderLiveRailTrains === 'function') renderLiveRailTrains(liveMrtTrainsData, liveTraTrainsData, liveThsrTrainsData);
   });
   map.on('moveend', () => {
     renderStreetMicroDetails();
@@ -656,7 +662,7 @@ function updateStreetFocusPill(visible, zoom) {
     pill.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
-        <span><b>2D 街道俯視模式 (${zoom || 20.5}x)</b>：瀝青路面 ✕ 雙黃線 ✕ 斑馬線 ✕ 停止線 ✕ 導盲磚 ✕ 門牌</span>
+        <span><b>2D 街道俯視 (${zoom || 20.5}x)</b>：NLSC街道建築 ✕ 雙黃線 ✕ 斑馬線 ✕ 停止線 ✕ 門牌</span>
       </div>
       <button id="btnPillLockToggle" onclick="toggle2DStreetLockMode()" style="background:${isLocked ? '#ef4444' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">${isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角'}</button>
       <button onclick="setStreetTopDownView(14.0)" style="background:#475569; border:1px solid #94a3b8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:4px;">🌐 全景 (14x)</button>
@@ -3324,19 +3330,31 @@ function renderLiveBusMarkers(buses) {
     return a.distSq - b.distSq;
   });
 
-  // 🏷️ 公車標籤 LOD 視距分級 (待修正 5/5: 徹底杜絕 1,900+ 輛全量公車在廣域互疊遮蓋)
-  // Zoom < 15: 全量公車渲染為無文字輕量 Canvas 圓點 (點擊與懸浮可查看路線、車牌、卡片)，僅高亮選中車顯示文字徽章
-  // Zoom >= 15: 視野內公車 (上限 350) 展開完整動態文字徽章 (車號+車牌+速度)
-  const isHighDetailZoom = curZ >= 15.0;
-  const maxBadges = isHighDetailZoom ? 350 : 0;
+  // 🏷️ 公車標籤 LOD 視距分級 ✕ 螢幕網格去重 (ISSUE-14: 徹底消除廣域/特區標籤牆遮擋道路與案標)
+  // Zoom < 17.0 (13x/14x/15x): 全部渲染為高對比 Canvas 彩色圓點 (懸浮 Tooltip 含路線與車牌，點擊即開啟詳情彈窗)
+  // Zoom >= 17.0 (微觀街寫級別): 依螢幕空間網格去重展開完整徽章 (上限 24 個不互相重疊)
+  const isHighDetailZoom = curZ >= 17.0;
+  const maxBadges = isHighDetailZoom ? 24 : 0;
+  const occupiedCells = new Set();
+  let badgeCount = 0;
   const activeBadgeKeys = new Set();
   const activeDotKeys = new Set();
 
-  scored.forEach((item, idx) => {
+  scored.forEach((item) => {
     const b = item.b;
     b.busId = sanitizeBusPlate(b.busId, b.routeName, b.goBack);
     const busKey = `live_${b.busId}`;
-    const useBadge = isBusFilterOnlySelected || item.isHighlighted || (isHighDetailZoom && item.inBounds && idx < maxBadges);
+    let gridFree = false;
+    if (isHighDetailZoom && item.inBounds && badgeCount < maxBadges) {
+      const pt = map.latLngToContainerPoint([b.lat, b.lon]);
+      const cellKey = `${Math.floor(pt.x / 120)}_${Math.floor(pt.y / 32)}`;
+      if (!occupiedCells.has(cellKey)) {
+        occupiedCells.add(cellKey);
+        gridFree = true;
+      }
+    }
+    const useBadge = isBusFilterOnlySelected || item.isHighlighted || gridFree;
+    if (useBadge && gridFree) badgeCount++;
 
     // 🎯 超微觀街道視角純化優化：當放大至極致視角 (Zoom >= 17.5) 且無高亮/選中時，不在螢幕範圍內的遠方公車不繪製多餘圓點，確保 60FPS
     if (!useBadge && curZ >= 17.5 && !item.inBounds) {
@@ -3476,9 +3494,9 @@ function buildLiveRailPopupHtml(t) {
 
   let sourceDetail = '';
   if (isThsr) {
-    sourceDetail = '交通部 PTX 今日營運時刻表推算 (車次與時刻相符，位置為時刻表估算，不反映即時誤點)';
+    sourceDetail = '交通部 PTX 今日營運時刻表推算 (車次與時刻相符，位置為時刻表估算，不反映實際誤點)';
   } else if (isTra) {
-    sourceDetail = '交通部 PTX TRA LiveBoard 即時看板 ✕ 站間內插推算 (非即時 GPS)';
+    sourceDetail = '交通部 PTX TRA LiveBoard 看板 ✕ 站間內插推算 (非真實車機 GPS)';
   } else if (isSimulated) {
     sourceDetail = '系統運轉模擬 (班距排程模擬，官方尚無開放即時資料)';
   } else {
@@ -3509,7 +3527,7 @@ function buildLiveRailPopupHtml(t) {
         估算時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b> <span style="font-size:9.5px; color:#94a3b8;">(平均推算)</span><br>
         軌道推算座標：<b>${t.lat.toFixed(5)}°N, ${t.lon.toFixed(5)}°E</b><br>
         資料性質：<b style="color:${isSimulated ? '#facc15' : '#38bdf8'};">${sourceDetail}</b><br>
-        資料時間：<b>${isThsr ? `今日營運時刻表 (${new Date().toISOString().slice(0, 10)})` : (lastLiveSuccessTimeStr || '即時推算')}</b>
+        資料時間：<b>${isThsr ? `今日營運時刻表 (${new Date().toISOString().slice(0, 10)})` : (lastLiveSuccessTimeStr || '時鐘推算（非GPS）')}</b>
       </div>
     </div>
   `;
@@ -3543,15 +3561,24 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
     allTrains.push(...filterRegularTrips(thsrTrains));
   }
 
+  const curZ = map ? map.getZoom() : 14;
+  const showFullRailBadge = curZ >= 16.5;
+  if (renderLiveRailTrains._lastCompactMode !== showFullRailBadge) {
+    mrtDynamicTrainsGroup.clearLayers();
+    liveRailTrainMarkers.clear();
+    renderLiveRailTrains._lastCompactMode = showFullRailBadge;
+  }
+
   const activeIds = new Set();
 
   allTrains.forEach(t => {
     activeIds.add(t.id);
     const emoji = t.type === 'THSR' ? '🚅' : (t.type === 'TRA' ? '🚆' : '🚇');
-    const speedLabel = t.isAtStation ? '靠站 0 km/h' : `${t.speed} km/h`;
-    const closingBadge = (t.type === 'MRT' && (t.closingTime || t.thisTrainClosingTime)) ? `🌙收班 ${t.closingTime || t.thisTrainClosingTime}` : null;
+    const speedLabel = t.isAtStation ? '靠站' : `${t.speed} km/h`;
     const badgeBg = t.isAtStation ? '#f59e0b' : t.color;
-    const speedTagText = closingBadge ? `${speedLabel}｜${closingBadge}` : speedLabel;
+    const speedTagText = speedLabel;
+    const shortId = t.trainNo || (t.name ? t.name.split(' ')[0] : '列車');
+    const tipText = `${emoji} ${shortId} · ${t.headsign || ''} · ${speedLabel}`;
 
     if (liveRailTrainMarkers.has(t.id)) {
       const entry = liveRailTrainMarkers.get(t.id);
@@ -3569,21 +3596,32 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
         entry.marker.setPopupContent(buildLiveRailPopupHtml(t));
       }
     } else {
-      const trainTitle = t.trainNo ? `[${t.trainNo}] ${t.name || t.trainName || '列車'}` : (t.name || t.trainName || '線上列車');
-      const iconHtml = `
-        <div class="moving-mrt-train" id="rail_icon_${t.id}" style="background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:14px; border:2px solid ${t.color}; box-shadow:0 0 12px ${t.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${t.color};"></span>
-          <span style="color:#fff;">${emoji} ${trainTitle}</span>
-          <span class="mrt-live-speed-tag" style="background:${badgeBg}; color:#fff; padding:1px 5px; border-radius:8px; font-size:9px; font-weight:700;">${speedTagText}</span>
-        </div>
-      `;
+      let iconHtml = '';
+      let iconAnchor = [12, 12];
+      let iconSize = [24, 24];
+      if (showFullRailBadge) {
+        iconSize = null;
+        iconAnchor = [48, 12];
+        iconHtml = `
+          <div class="moving-mrt-train" id="rail_icon_${t.id}" style="background:#0f172a; color:#fff; font-size:10px; font-weight:900; padding:2px 7px; border-radius:12px; border:2px solid ${t.color}; box-shadow:0 0 10px ${t.color}; white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <span style="color:#fff;">${emoji} ${shortId}</span>
+            <span class="mrt-live-speed-tag" style="background:${badgeBg}; color:#fff; padding:1px 4px; border-radius:6px; font-size:9px; font-weight:700;">${speedTagText}</span>
+          </div>
+        `;
+      } else {
+        iconHtml = `
+          <div class="moving-mrt-train-dot" id="rail_icon_${t.id}" style="width:22px; height:22px; border-radius:50%; background:rgba(15,23,42,0.94); border:2px solid ${t.color}; display:flex; align-items:center; justify-content:center; font-size:11px; box-shadow:0 0 8px ${t.color}; cursor:pointer;">${emoji}</div>
+        `;
+      }
       const icon = L.divIcon({
         html: iconHtml,
         className: 'mrt-train-div-icon',
-        iconAnchor: [64, 12]
+        ...(iconSize ? { iconSize } : {}),
+        iconAnchor
       });
-      const zOffset = t.type === 'THSR' ? 850 : (t.type === 'TRA' ? 750 : 650);
+      const zOffset = t.type === 'THSR' ? 600 : (t.type === 'TRA' ? 560 : 520);
       const marker = L.marker([t.lat, t.lon], { icon, zIndexOffset: zOffset }).addTo(mrtDynamicTrainsGroup);
+      marker.bindTooltip(tipText, { direction: 'top', offset: [0, -10] });
       marker.bindPopup(() => buildLiveRailPopupHtml(t));
       marker.on('click', () => {
         if (t.type === 'THSR') playTransitSound('thsr_whoosh');
@@ -3609,21 +3647,18 @@ function updateLiveTransitHUD(data) {
 
   const busEl = document.getElementById('hudLiveBusCount');
   if (busEl) {
-    if (isBusStale) {
-      busEl.innerText = `${offCount} 輛 (資料過期) ＋ ${simCount} 輛 (班距模擬)`;
-    } else {
-      busEl.innerText = `${offCount} 輛 (官方GPS) ＋ ${simCount} 輛 (班距模擬)`;
-    }
+    const suffix = isBusStale ? '過期' : '官方GPS';
+    busEl.innerText = simCount > 0 ? `${offCount} 輛(${suffix}) ＋ ${simCount} 模擬` : `${offCount} 輛 (${suffix})`;
   }
 
   const mrtEl = document.getElementById('hudLiveMrtCount');
-  if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (看板推算/排程)`;
+  if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (看板排程)`;
 
   const traEl = document.getElementById('hudLiveTraCount');
-  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (看板內插推算)`;
+  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (看板內插)`;
 
   const thsrEl = document.getElementById('hudLiveThsrCount');
-  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (今日時刻表推算)`;
+  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (時刻推算)`;
 
   const syncEl = document.getElementById('hudLiveSyncTime');
   if (syncEl) {
@@ -4724,7 +4759,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(55 + Math.sin(u * Math.PI) * 80);
         isAtStation = false; curSt = '高鐵台北站';
-        statusText = `🚅 即時高速行駛：南港 ➔ 台北 (往左營・${speed} km/h)`;
+        statusText = `🚅 時刻推算行駛：南港 ➔ 台北 (往左營・${speed} km/h)`;
       } else if (elapsed < 540) {
         lat = THSR_PTS[2][0]; lon = THSR_PTS[2][1];
         speed = 0; isAtStation = true; curSt = '高鐵台北站';
@@ -4735,7 +4770,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(65 + Math.sin(u * Math.PI) * 90);
         isAtStation = false; curSt = '高鐵板橋站';
-        statusText = `🚅 即時高速行駛：台北 ➔ 板橋 (往左營・${speed} km/h)`;
+        statusText = `🚅 時刻推算行駛：台北 ➔ 板橋 (往左營・${speed} km/h)`;
       } else if (elapsed < 1030) {
         lat = THSR_PTS[5][0]; lon = THSR_PTS[5][1];
         speed = 0; isAtStation = true; curSt = '高鐵板橋站';
@@ -4746,7 +4781,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(160 + u * 125);
         isAtStation = false; curSt = '新北邊界出境中';
-        statusText = `🚅 極速南下出境：板橋 ➔ 雙北邊界 (往左營・${speed} km/h・即將離境)`;
+        statusText = `🚅 南下出境推算：板橋 ➔ 雙北邊界 (往左營・${speed} km/h・即將離境)`;
       }
 
       trains.push({
@@ -4760,7 +4795,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat, lon, speed, isAtStation,
         color: '#f97316',
         status: statusText,
-        source: '雙北高鐵走廊即時時刻推進引擎 (南下出境消失)'
+        source: '雙北高鐵走廊時刻排程推算 (南下出境消失)'
       });
     }
   });
@@ -4821,7 +4856,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat, lon, speed, isAtStation,
         color: '#ea580c',
         status: statusText,
-        source: '雙北高鐵走廊即時時刻推進引擎 (南端入境出現)'
+        source: '雙北高鐵走廊時刻排程推算 (南端入境出現)'
       });
     }
   });
@@ -4900,8 +4935,8 @@ function generateRealtimeTraCorridor(twTime) {
         color,
         status: isDwell
           ? `🚉 【${ST_NAMES[curIdx]}車站】月台靠泊停等中 (往苗栗)`
-          : `🚆 即時南下巡航：${ST_NAMES[curIdx]} ➔ ${nextSt} (${speed} km/h・即將往南離境)`,
-        source: '雙北臺鐵縱貫線走廊即時時刻推進引擎 (南下出境消失)'
+          : `🚆 班表南下推算：${ST_NAMES[curIdx]} ➔ ${nextSt} (${speed} km/h・即將往南離境)`,
+        source: '雙北臺鐵縱貫線走廊時刻排程推算 (南下出境消失)'
       });
     }
   });
@@ -4941,7 +4976,7 @@ function generateRealtimeTraCorridor(twTime) {
         status: isDwell
           ? `🚉 【${ST_NAMES[curIdx]}車站】月台靠泊停等中 (往基隆)`
           : `🚆 北上入境巡航：${ST_NAMES[curIdx]} ➔ ${nextSt} (${speed} km/h)`,
-        source: '雙北臺鐵縱貫線走廊即時時刻推進引擎 (南端入境出現)'
+        source: '雙北臺鐵縱貫線走廊時刻排程推算 (南端入境出現)'
       });
     }
   });
@@ -5352,7 +5387,7 @@ function buildStoreClusters() {
         className: 'store-cluster-div-icon',
         iconAnchor: [55, 14]
       });
-      const marker = L.marker(hub.center, { icon: clusterIcon }).addTo(storeClusterGroup);
+      const marker = L.marker(hub.center, { icon: clusterIcon, zIndexOffset: 200 }).addTo(storeClusterGroup);
       marker.bindTooltip(`點擊展開【${hub.name}】${nearbyStores.length} 間實體門市`, { direction: 'top' });
     }
   });
@@ -5932,7 +5967,7 @@ function addDemoCasesMarkers() {
       popupAnchor: [0, -20]
     });
 
-    const marker = L.marker([c.lat, c.lon], { icon: beaconIcon });
+    const marker = L.marker([c.lat, c.lon], { icon: beaconIcon, zIndexOffset: 2500 });
     marker.on('click', () => {
       openCaseBriefModal(c.id);
     });
@@ -6152,7 +6187,10 @@ function renderSectorJumpButtons() {
     btn.onclick = () => {
       document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      map.flyTo([s.lat, s.lon], 14.8, { duration: 1.4 });
+      map.setView([s.lat, s.lon], 14.8, { animate: true, duration: 0.35 });
+      if (typeof showNavToast === 'function') {
+        showNavToast(`📍 已跳轉至【${s.name.split('・')[0]}】，正在載入街廓圖磚...`);
+      }
     };
     container.appendChild(btn);
   });
@@ -7822,6 +7860,23 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
 
   // ── 臺北市：北投特區 (TPE-BT) ──
   {
+    id: 'bld_beitou_thermal_valley',
+    name: '北投地熱谷 (青磺泉自然地景)',
+    sector: '北投特區 (TPE-BT)',
+    lat: 25.1376,
+    lon: 121.5117,
+    widthM: 60,
+    depthM: 45,
+    heightM: 12,
+    floors: 1,
+    color: '#0f766e',
+    topColor: '#14b8a6',
+    wireframeColor: '#2dd4bf',
+    isSuperTall: false,
+    isMajorLandmark: true,
+    desc: '北投知名天然高溫青磺泉地熱谷，終年硫磺白煙嫋嫋，為溫泉生態與礦物核心地標。'
+  },
+  {
     id: 'bld_beitou_hotspring',
     name: '北投溫泉博物館 (公共浴場)',
     sector: '北投特區 (TPE-BT)',
@@ -7835,6 +7890,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
     topColor: '#b45309',
     wireframeColor: '#f59e0b',
     isSuperTall: false,
+    isMajorLandmark: true,
     desc: '日治和洋折衷紅磚木結構大浴場，帶有彩繪玻璃與羅馬拱柱結構。'
   },
   {
@@ -8039,7 +8095,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
   },
   {
     id: 'bld_lin_family_garden',
-    name: '板橋林本源園邸 (林家花園來青閣)',
+    name: '板橋林本源園邸 (林家花園)',
     sector: '新北板橋 (NTP-BQ)',
     lat: 25.0105,
     lon: 121.4550,
@@ -8051,6 +8107,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
     topColor: '#b45309',
     wireframeColor: '#fb923c',
     isSuperTall: false,
+    isMajorLandmark: true,
     desc: '全台最完整江南庭園建築群，重簷歇山頂楠木結構精雕細琢閣樓。'
   },
 
@@ -8397,7 +8454,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
   // ── 新北市：淡水特區 (NTP-TS) ──
   {
     id: 'bld_tamsui_fort',
-    name: '淡水紅毛城主堡 (荷蘭聖多明哥城)',
+    name: '淡水紅毛城 (荷蘭聖多明哥城)',
     sector: '新北淡水 (NTP-TS)',
     lat: 25.1755,
     lon: 121.4328,
@@ -8409,6 +8466,7 @@ const SHUANGBEI_REAL_3D_BUILDINGS = [
     topColor: '#dc2626',
     wireframeColor: '#f87171',
     isSuperTall: false,
+    isMajorLandmark: true,
     desc: '淡水河口要塞古堡，外牆磚紅厚實，防禦角樓與荷蘭方形城塞框架。'
   },
   {
@@ -8821,14 +8879,7 @@ function queryVisibleBuildings(bounds, zoom) {
     }
   }
 
-  // 放大至街廓級別 (zoom >= 14) 時，疊加雙北全域街廓實體建築物框架群
-  if (zoom >= 14) {
-    const proceduralBlocks = getProceduralBlockBuildings(bounds, zoom);
-    for (let j = 0; j < proceduralBlocks.length; j++) {
-      visible.push(proceduralBlocks[j]);
-    }
-  }
-
+  // 依問題單 ISSUE-23 優化：停用隨機網格通用藍色方塊（防止在畫面邊緣浮出與誤導建築外觀），僅呈現真實經緯度之雙北認證地標建築
   return visible;
 }
 
@@ -9114,28 +9165,36 @@ function init3DBuildingsLayer() {
       });
       ctx.fill();
 
-      // ── 批次繪製 2：建築物 3D 立體鋼骨框架 ──
+      // ── 批次繪製 2：真實地標建築 3D 框架與名牌 (避開畫布邊緣裁切) ──
       visibleBuildings.forEach(b => {
-        drawBuildingWireframe(ctx, m, b, pxPerMeter, extrusionFactor, buildingWireframeTheme, zoom);
+        const ptCheck = m.latLngToContainerPoint([b.lat, b.lon]);
+        const inSafeMargin = ptCheck.x > 24 && ptCheck.x < size.x - 24 && ptCheck.y > 24 && ptCheck.y < size.y - 24;
+        if (inSafeMargin) {
+          drawBuildingWireframe(ctx, m, b, pxPerMeter, extrusionFactor, buildingWireframeTheme, zoom);
+        }
 
-        // 重點地標或近景時顯示可點擊互動標籤
-        if (!b.isProcedural && (zoom >= 15 || b.isSuperTall)) {
+        // 重點文化地標（紅毛城/地熱谷/林家花園/北車等）在 14.0x 起即清晰顯示名稱，其餘地標 15.0x 起顯示
+        if (!b.isProcedural && (zoom >= 15 || b.isMajorLandmark || b.isSuperTall)) {
           const hPx = Math.max(10, b.heightM * extrusionFactor * 0.85);
-          const topPtY = m.latLngToContainerPoint([b.lat, b.lon]).y - hPx;
-          const topPtX = m.latLngToContainerPoint([b.lat, b.lon]).x + hPx * 0.28;
-          const roofLatLng = m.containerPointToLatLng([topPtX, topPtY]);
+          const ptNow = m.latLngToContainerPoint([b.lat, b.lon]);
+          const topPtY = ptNow.y - hPx;
+          const topPtX = ptNow.x + hPx * 0.28;
+          if (topPtX > 16 && topPtX < size.x - 90 && topPtY > 185 && topPtY < size.y - 42) {
+            const roofLatLng = m.containerPointToLatLng([topPtX, topPtY]);
 
-          const labelHtml = `
-            <div class="building-3d-pin-label" onclick="inspect3DBuilding('${b.id}')" title="點擊檢視【${b.name}】真實建築檔案">
-              🏢 ${b.name} <span style="color:#fde047; font-size:9px;">${b.heightM}m</span>
-            </div>
-          `;
-          const customIcon = L.divIcon({
-            html: labelHtml,
-            className: 'building-3d-div-icon',
-            iconAnchor: [45, 12]
-          });
-          L.marker(roofLatLng, { icon: customIcon, interactive: true }).addTo(buildings3DLabelGroup);
+            const labelHtml = `
+              <div class="building-3d-pin-label" onclick="inspect3DBuilding('${b.id}')" title="點擊檢視【${b.name}】真實建築檔案">
+                🏢 ${b.name} <span style="color:#fde047; font-size:9px;">${b.heightM}m</span>
+              </div>
+            `;
+            const customIcon = L.divIcon({
+              html: labelHtml,
+              className: 'building-3d-div-icon',
+              iconSize: null,
+              iconAnchor: [45, 12]
+            });
+            L.marker(roofLatLng, { icon: customIcon, interactive: true, zIndexOffset: 2000 }).addTo(buildings3DLabelGroup);
+          }
         }
       });
     }
@@ -9232,9 +9291,10 @@ function zoomToShuangbeiBusOverview() {
 const STREET_MICRO_DETAILS = {
   // 1. 實體雙向瀝青路面鋪面 (Asphalt Road Surface Beds) - 2D 正上方俯視極致路面結構
   roadBeds: [
-    // ─── 台北車站特區核心路網 ───
-    { id: 'rb_zx', name: '忠孝西路一段', p1: [25.0465, 121.5115], p2: [25.0465, 121.5200], width: 46, lanes: 6, hasDividers: true, speedLimit: 50 },
-    { id: 'rb_gq', name: '館前路 (林蔭商業大道)', p1: [25.0468, 121.5170], p2: [25.0430, 121.5170], width: 28, lanes: 4, hasDividers: true, speedLimit: 40 },
+    // ─── 台北車站特區核心路網 (100% 精準吻合 NLSC 忠孝西路/館前路/南陽街傾斜軸線) ───
+    { id: 'rb_zx', name: '忠孝西路一段', p1: [25.04747, 121.5118], p2: [25.04590, 121.5190], width: 26, lanes: 6, hasDividers: true, speedLimit: 50 },
+    { id: 'rb_gq', name: '館前路 (林蔭商業大道)', p1: [25.04672, 121.5150], p2: [25.04320, 121.5143], width: 18, lanes: 4, hasDividers: true, speedLimit: 40 },
+    { id: 'rb_ny', name: '南陽街 (北車商圈街道)', p1: [25.04646, 121.51608], p2: [25.04420, 121.51565], width: 12, lanes: 2, hasDividers: false, speedLimit: 30 },
     { id: 'rb_cq', name: '重慶南路一段 (重南書店街)', p1: [25.0470, 121.5136], p2: [25.0430, 121.5136], width: 26, lanes: 4, hasDividers: true, speedLimit: 40 },
     { id: 'rb_xc', name: '許昌街 (南陽補習街商圈)', p1: [25.0448, 121.5167], p2: [25.0448, 121.5195], width: 16, lanes: 2, hasDividers: false, speedLimit: 30 },
     { id: 'rb_kf', name: '開封街一段', p1: [25.0455, 121.5130], p2: [25.0455, 121.5175], width: 18, lanes: 2, hasDividers: false, speedLimit: 40 },
@@ -9255,11 +9315,11 @@ const STREET_MICRO_DETAILS = {
 
   // 2. 行人穿越道 (斑馬線 Zebra Crossings) - 黑白高對比斑馬線紋理 + 警示邊界 + 行人引導
   crossings: [
-    // ─── 台北車站特區十字路口 ───
-    { id: 'cr_zx_gq_n', name: '忠孝西路北側行人穿越道 (北車南二門前)', p1: [25.0468, 121.5163], p2: [25.0468, 121.5177], width: 6.5, stripes: 14 },
-    { id: 'cr_zx_gq_s', name: '忠孝西路南側行人穿越道 (新光三越前)', p1: [25.0461, 121.5163], p2: [25.0461, 121.5177], width: 6.5, stripes: 14 },
-    { id: 'cr_zx_gq_w', name: '館前路西側斑馬線 (站前地下街 Z4 旁)', p1: [25.0461, 121.5163], p2: [25.0468, 121.5163], width: 5.5, stripes: 12 },
-    { id: 'cr_zx_gq_e', name: '館前路東側斑馬線 (往 M4/M6 出口)', p1: [25.0461, 121.5177], p2: [25.0468, 121.5177], width: 5.5, stripes: 12 },
+    // ─── 台北車站特區十字路口斑馬線 (精準對齊真實忠孝西路/南陽/館前路口，不殘留錯位重疊線條) ───
+    { id: 'cr_zx_ny_w', name: '忠孝西路 ✕ 南陽街口行人穿越道 (西側)', p1: [25.04664, 121.51595], p2: [25.04638, 121.51589], width: 5.0, stripes: 12 },
+    { id: 'cr_zx_ny_s', name: '南陽街北口 ✕ 忠孝西路一段穿越道', p1: [25.04635, 121.51598], p2: [25.04631, 121.51618], width: 4.5, stripes: 10 },
+    { id: 'cr_zx_gq_n', name: '忠孝西路 ✕ 館前路口北側穿越道', p1: [25.04692, 121.51492], p2: [25.04668, 121.51488], width: 5.0, stripes: 14 },
+    { id: 'cr_zx_gq_s', name: '忠孝西路 ✕ 館前路口南側穿越道 (新光三越前)', p1: [25.04670, 121.51480], p2: [25.04666, 121.51525], width: 5.0, stripes: 14 },
     { id: 'cr_gq_xc_s', name: '館前路 ✕ 許昌街口斑馬線 (壽德大樓前)', p1: [25.0448, 121.5167], p2: [25.0448, 121.5174], width: 5.0, stripes: 9 },
     { id: 'cr_gq_hk_w', name: '館前路 ✕ 漢口街一段西向斑馬線', p1: [25.0446, 121.5167], p2: [25.0450, 121.5167], width: 4.5, stripes: 8 },
     { id: 'cr_gq_kf_s', name: '館前路 ✕ 開封街一段橫向斑馬線', p1: [25.0455, 121.5167], p2: [25.0455, 121.5174], width: 5.0, stripes: 9 },
@@ -9288,8 +9348,8 @@ const STREET_MICRO_DETAILS = {
 
   // 3. 車道停止線 (Stop Lines) - 位於斑馬線前緣之實體白色寬幅車輛停止標線
   stopLines: [
-    { id: 'sl_zx_gq_w', name: '忠孝西路東向停止線 (館前路口西側)', p1: [25.0463, 121.5161], p2: [25.0467, 121.5161], width: 4.5 },
-    { id: 'sl_zx_gq_e', name: '忠孝西路西向停止線 (館前路口東側)', p1: [25.0463, 121.5179], p2: [25.0467, 121.5179], width: 4.5 },
+    { id: 'sl_zx_gq_w', name: '忠孝西路東向停止線 (南陽街口西側)', p1: [25.04668, 121.51585], p2: [25.04642, 121.51578], width: 3.5 },
+    { id: 'sl_zx_gq_e', name: '忠孝西路西向停止線 (M5出口東側)', p1: [25.04652, 121.51638], p2: [25.04626, 121.51632], width: 3.5 },
     { id: 'sl_gq_zx_s', name: '館前路北向停止線 (忠孝路口南側)', p1: [25.0460, 121.5167], p2: [25.0460, 121.5173], width: 4.0 },
     { id: 'sl_cq_zx_s', name: '重慶南路北向停止線 (忠孝路口南側)', p1: [25.0459, 121.5134], p2: [25.0459, 121.5139], width: 4.0 },
     { id: 'sl_cd_zh_e', name: '成都路東向停止線 (中華路一段路口西側)', p1: [25.0423, 121.5078], p2: [25.0427, 121.5078], width: 4.5 },
@@ -9460,8 +9520,10 @@ const STREET_MICRO_DETAILS = {
 
   // 12. 街道門牌編號與巷弄看板 (Doorplates & Address Signs)
   doorplates: [
-    // 台北車站門牌
-    { label: '忠孝西路一段 49 號', lat: 25.0464, lon: 121.5165, building: '台北車站南二門' },
+    // 台北車站門牌 (涵蓋 20.5x 核心視域)
+    { label: '忠孝西路一段 49 號 (北車M5)', lat: 25.04668, lon: 121.51595, building: '台北車站 M5 出入口旁' },
+    { label: '忠孝西路一段 38 號', lat: 25.04618, lon: 121.51585, building: '凱撒大飯店正面門牌' },
+    { label: '南陽街 4 號', lat: 25.04605, lon: 121.51622, building: '南陽街商圈入口' },
     { label: '館前路 8 號', lat: 25.0456, lon: 121.5170, building: '新光人壽大樓東門' },
     { label: '館前路 12 號', lat: 25.0450, lon: 121.5170, building: '合作金庫銀行商業大樓' },
     { label: '許昌街 17 號', lat: 25.0448, lon: 121.5176, building: '壽德大樓補習文教大廈' },
@@ -9556,20 +9618,19 @@ function renderStreetMicroDetails() {
     STREET_MICRO_DETAILS.roadBeds.forEach(rb => {
       const roadWidth = Math.max(14, rb.width * zoomFactor * 1.5);
 
-      // (1) 路緣外圍石砌路緣石 (Curbs)
+      // (1) 半透全息路面底帶與路緣導線 (確保下方 NLSC 官方路名與商家圖示 100% 清晰透出)
       L.polyline([rb.p1, rb.p2], {
-        color: '#475569',
-        weight: roadWidth + 5,
-        opacity: 0.85,
+        color: '#334155',
+        weight: roadWidth + 3,
+        opacity: 0.25,
         lineCap: 'square',
         interactive: false
       }).addTo(streetMicroDetailsGroup);
 
-      // (2) 實體瀝青黑色路面鋪面 (Dark Asphalt Surface)
       const asphalt = L.polyline([rb.p1, rb.p2], {
-        color: rb.isPedestrian ? '#0f766e' : '#1e293b', // 徒步區使用特製翡翠地磚色
+        color: rb.isPedestrian ? '#0f766e' : '#0f172a',
         weight: roadWidth,
-        opacity: 0.95,
+        opacity: 0.34,
         lineCap: 'square',
         interactive: false
       }).addTo(streetMicroDetailsGroup);
@@ -9626,39 +9687,32 @@ function renderStreetMicroDetails() {
     STREET_MICRO_DETAILS.stopLines.forEach(sl => {
       const stopLine = L.polyline([sl.p1, sl.p2], {
         color: '#ffffff',
-        weight: Math.max(3, sl.width * zoomFactor * 1.3),
-        opacity: 0.98,
-        lineCap: 'square'
+        weight: Math.max(2.5, sl.width * zoomFactor * 0.9),
+        opacity: 0.95,
+        lineCap: 'butt'
       }).addTo(streetMicroDetailsGroup);
       stopLine.bindTooltip(`🛑 停止線 (${sl.name})`, { direction: 'top', offset: [0, -4] });
     });
   }
 
-  // ─── 3. 繪製黑白高對比斑馬線 (Crossings) ───
+  // ─── 3. 繪製黑白高對比斑馬線 (Crossings - 採 butt 端點防粘連成實心條) ───
   STREET_MICRO_DETAILS.crossings.forEach(cr => {
-    // 柏油底襯
+    const zebraW = Math.max(8, cr.width * zoomFactor * 1.4);
+    // 柏油深色底襯
     L.polyline([cr.p1, cr.p2], {
       color: '#0f172a',
-      weight: cr.width * zoomFactor * 1.5 + 4,
-      opacity: 0.92,
-      lineCap: 'square'
+      weight: zebraW + 3,
+      opacity: 0.78,
+      lineCap: 'butt'
     }).addTo(streetMicroDetailsGroup);
 
-    // 外圍行人引導黃色警示邊界
-    L.polyline([cr.p1, cr.p2], {
-      color: '#fef08a',
-      weight: cr.width * zoomFactor * 1.5 + 1.5,
-      opacity: 0.55,
-      lineCap: 'square'
-    }).addTo(streetMicroDetailsGroup);
-
-    // 斑馬線核心黑白斑馬條紋 (擬真高對比)
+    // 斑馬線清晰分離黑白條紋
     const zebra = L.polyline([cr.p1, cr.p2], {
       color: '#ffffff',
-      weight: cr.width * zoomFactor * 1.5,
-      opacity: 0.98,
-      dashArray: '6, 6',
-      lineCap: 'square'
+      weight: zebraW,
+      opacity: 0.96,
+      dashArray: '6, 12',
+      lineCap: 'butt'
     }).addTo(streetMicroDetailsGroup);
 
     zebra.bindTooltip(`🚶 ${cr.name}`, { direction: 'top', offset: [0, -6] });
@@ -9839,8 +9893,8 @@ function renderStreetMicroDetails() {
         🏷️ ${dp.label}
       </div>
     `;
-    const icon = L.divIcon({ html: iconHtml, className: 'doorplate-marker', iconAnchor: [35, 8] });
-    L.marker([dp.lat, dp.lon], { icon, zIndexOffset: 520, interactive: false }).addTo(streetMicroDetailsGroup);
+    const icon = L.divIcon({ html: iconHtml, className: 'doorplate-marker', iconSize: null, iconAnchor: [35, 8] });
+    L.marker([dp.lat, dp.lon], { icon, zIndexOffset: 980, interactive: false }).addTo(streetMicroDetailsGroup);
   });
 }
 

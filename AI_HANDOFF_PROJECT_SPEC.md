@@ -195,7 +195,14 @@ crew-deck-role/
 
 ## 🚀 九、 給接續 AI Agent 的首要工作 SOP (接手必讀)
 
-0. **先讀 `TECH_IMPLEMENTATION_PLAN.md`**：已決定主畫面用 PixiJS 繪製 2.5D 等角連續自然街廓風（不採用 PaGamO 六角蜂巢切格），MapLibre 只當 App 地圖頁；各功能用哪個套件已列好，不要自行換掉。
+0. **先讀技術現況與分工鐵則（`ISSUE-07`～`ISSUE-13` 對齊）**：
+   - **現行技術棧（勿重寫換引擎，見 `ISSUE-09`）**：2.5D 主沙盤（`index.html`/`game.js`）為純 HTML5 Canvas 2D，1:1 真實地圖（`cyber-realmap.*`）為 Leaflet 1.9.4 + NLSC 國土測繪圖資，多人私服（`server.js`）為 Node.js + 原生 `ws` WebSocket；`PixiJS`、`MapLibre GL JS`、`Socket.io` 列入未來 Phase 2+ 擴充規劃，不作為現況依賴，嚴禁擅自重寫引擎。
+   - **共用檔案主倉（SSOT）與鏡像標記（見 `ISSUE-11`/`12`）**：
+     - 地圖線主倉 = `city-pulse-detective`（`cyber-realmap.*`, `shared-data.js`, `transit-data.js`, `ebus-directory.js`, `game.js`, `index.html`；其他倉庫均為「鏡像，勿直接改」）。
+     - 企劃與 50 案主倉 = `taipei-detective-rpg`（`PROPOSAL.md`, `PROJECT_PROPOSAL.md`, `proposal.html`, `cases.json`, `cases.html`, `CASES_50_FULL_SPEC.md`；`city-pulse` 與 `metro` 均為「鏡像，勿直接改」）。
+     - 偵探核心主倉 = `taipei-detective-core`（唯一含 `src/` 與 `test/detective.test.js`，獨立 Port `3001`）。
+   - **雙問題欄聯防結論（見 `ISSUE-13`）**：Instinct 問題欄（`files.instinct.com/ju4sf6hj7efj-agy`，來源新鮮度 `sourceLastOkMs`、Zoom LOD `map-zoom-mid`、手機版零水平溢出、非 GPS 運具禁用「即時」字樣、公車卡片不放推算到站站次）與 Muse 問題欄（`hsiaoyujui114-code.github.io/detective-issue-list/`，`REVIEW-133` ISSUE-01~25 與 P-01~16）經逐項比對後**完全相容、無互相矛盾**，兩邊要求已全數合併落實並納入自動化驗收。
+   - 依前序指示維持真實連續自然街廓（已取消 PaGamO 六角格與防嚇馬賽克）。
 1. **先確認自身理解**：
    - 閱讀完本手冊後，簡短條列專案背景與禁止事項，證明完全吸收。
 2. **嚴守「直接果斷實作，嚴禁反問委託人對或錯」鐵則（禁忌第 9 條）**：

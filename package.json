@@ -1,14 +1,15 @@
 {
-  "name": "taipei-metro-detective-rpg",
+  "name": "city-pulse-detective",
   "version": "1.0.0",
   "description": "《雙北漫遊偵探：都會行蹤》✕《城市脈動：通勤偵探》- 雙引擎 3D/2.5D 動漫偵探 RPG、專屬私服器多人同步與跨 AI 協作工作區",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests/map-integrity.test.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hsiaoyujui114-code/taipei-metro-detective-rpg.git"
+    "url": "git+https://github.com/hsiaoyujui114-code/city-pulse-detective.git"
   },
   "keywords": [
     "detective",

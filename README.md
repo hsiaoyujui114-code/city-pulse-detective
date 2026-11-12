@@ -6,8 +6,23 @@
 
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen)](https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html)
-[![Multiplayer](https://img.shields.io/badge/Multiplayer-WebSocket-blue)](#-專屬多人私服器)
-[![Dual Engine](https://img.shields.io/badge/Engine-3D%20WebGL%20%2B%202.5D%20Canvas-orange)](#-雙核心引擎相容性架構)
+[![Multiplayer](https://img.shields.io/badge/Multiplayer-ws%20WebSocket-blue)](#-專屬多人私服器)
+[![Current Stack](https://img.shields.io/badge/Engine-Canvas%20%2B%20Leaflet%201.9.4-orange)](#-核心特色)
+
+---
+
+## 📦 四倉庫分工定位與 SSOT 權威來源對照表
+
+| GitHub 倉庫 | 定位與職責 | 權威維護內容 (SSOT) |
+| :--- | :--- | :--- |
+| **`city-pulse-detective`** | **線上試玩與地圖主站（本倉為 SSOT）** | `cyber-realmap.*`、`index.html`、`game.js`、`shared-data.js`、`server.js`（GitHub Pages 主入口） |
+| **`taipei-metro-detective-rpg`** | **地圖／多人在線鏡像倉** | 鏡像同步主站雙軌地圖、`shared-data.js`、`cases.json`、`PROPOSAL.md` 與 `server.js` |
+| **`taipei-detective-rpg`** | **故事劇本與 50 案件展示倉** | 50 案件資料、`cases.html`、`PROPOSAL.md`、`proposal.html` 靜態展示與雙軌地圖同步 |
+| **`taipei-detective-core`** | **獨立偵探系統核心引擎** | JSON 驅動案件／NPC／對話樹、`EcoWallet` 真實運價、`MapBridge`、`/detective` 工作台（Port 3001） |
+
+> ⚙️ **現行實作 vs 未來規劃 (`ISSUE-09`)**：現行網頁與私服器採用 **HTML5 Canvas 2D ＋ Leaflet 1.9.4（Canvas 模式）＋ Node.js ＋ `ws`**；`PixiJS` 與 `Socket.io` 屬於 Phase 2+ 未來擴充規劃，不作為當前執行依賴（請勿重寫切換引擎）。  
+> 📋 **共用檔案同步鐵則 (`ISSUE-11`)**：`cyber-realmap.*`、`shared-data.js`、`game.js`、`index.html` 以 **`city-pulse-detective`為主倉庫**（其他倉庫為鏡像，勿直接單邊修改）；`cases.json`、`cases.html`、`CASES_50_FULL_SPEC.md`、`PROPOSAL.md`、`PROJECT_PROPOSAL.md`、`proposal.html` 以 **`taipei-detective-rpg` 為主倉庫**（其他倉庫為鏡像，勿直接單邊修改）；`AI_HANDOFF_PROJECT_SPEC.md`、`COMPLETE_CONVERSATION_CHRONICLE.md`、`MAP_ISSUE_BOARD_PROTOCOL.md` 由四倉同步維持一致。  
+> 🚀 **GitHub Pages 部署 (`ISSUE-07`)**：所有靜態網站皆直接由 **`main` 分支根目錄 (`/`)** 透過 GitHub Pages Deploy from branch 發布，不使用 `.github/workflows/deploy.yml`。
 
 ---
 
@@ -41,9 +56,9 @@
 
 ## ⚡ 核心特色
 
-1. **雙核心引擎架構 (Dual-Engine Architecture)**：
-   - **3D WebGL 模式**：硬體加速 3D 俯瞰視角，流暢的光影與角色動畫。
-   - **2.5D Canvas 萬能相容模式**：在未開啟 WebGL 或特定限制環境下，**系統自動無縫切換**至 2.5D 高相容模式，確保 100% 絕不白屏、零死機！
+1. **雙軌地圖渲染架構 (Dual-Track Map Architecture)**：
+   - **2.5D Canvas 主沙盤 (`index.html` / `game.js`)**：純 HTML5 Canvas 2D 高相容等角街廓沙盤，免 WebGL 依賴、任何裝置秒開絕不黑屏。
+   - **1:1 真實網路科技地圖 (`cyber-realmap.html`)**：基於 Leaflet 1.9.4（Canvas 加速模式）與國土測繪 NLSC 圖資，100% 呈現雙北真實道路、門牌與四軌動態。（註：PixiJS WebGL 與 Socket.io 列入 Phase 2+ 未來擴充規劃）
 2. **雙北捷運路網自由探索 (地圖探索機制)**：
    - 拒絕死板的 HUD 直達按鈕！玩家必須打開 `[📍 地圖]` 刷悠遊卡搭乘捷運至各站點。
    - 走出閘門後，必須在街區中親自走動尋找全家便利商店、CoCo手搖飲、夜市美食小吃與線索！
@@ -74,18 +89,24 @@
 
 ---
 
-## 🚀 快速啟動
+## 🚀 快速啟動（雙倉庫並排協作與測試）
 
-### 1. 本地啟動專屬多人私服器
+### 1. 本地啟動專屬多人私服器與 `/detective` 偵探核心工作台
+`server.js` 會嘗試掛載同層兄弟目錄的 `../taipei-detective-core`（提供 `/detective` 與 `/api/detective/*`）。若只需要地圖模式可單倉啟動；若需啟用偵探核心工作台，請將兩個倉庫並排 clone 在同一個父目錄下：
 ```bash
-# 安裝依賴
-npm install
+# 於父目錄並排取得地圖主站與偵探核心
+git clone https://github.com/hsiaoyujui114-code/city-pulse-detective.git
+git clone https://github.com/hsiaoyujui114-code/taipei-detective-core.git
 
-# 啟動伺服器 (包含 HTTP 靜態服務與 WebSocket 多人伺服器)
-npm start
+# 啟動地圖＋私服器 (Port 3000)
+cd city-pulse-detective
+npm ci && npm start
+
+# 執行資料與地圖完整性自動化驗證測試
+npm test
 ```
-開啟瀏覽器前往：`http://localhost:3000`
+開啟瀏覽器前往：`http://localhost:3000/cyber-realmap.html`（若已並排核心倉庫，亦可訪問 `http://localhost:3000/detective`；若未並排，`/detective` 將顯示友善引導頁）。
 
 ### 2. GitHub Pages 線上試玩
 直接造訪（全倉庫統一官方試玩）：[https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html](https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html)  
-*(GitHub Pages 自動啟用同儕偵探共享模擬模式，免架設後台即可單人/展示遊玩)*
+*(GitHub Pages 自動啟用離線/直連雙通道模式，免架設後台即可單人/展示遊玩)*

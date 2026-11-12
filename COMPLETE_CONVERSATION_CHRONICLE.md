@@ -1,4 +1,4 @@
-﻿# 📜《雙北漫遊：都會行蹤》專案完整對話紀錄全誌 (Complete Conversation Chronicle)
+# 📜《雙北漫遊：都會行蹤》專案完整對話紀錄全誌 (Complete Conversation Chronicle)
 
 > **本文件為本專案啟動以來，委託人與 AI 工程師歷次對話之 100% 原始對話全文、討論決策與交付成果完整全誌。**  
 > **收錄範圍**：第 1 回合至第 60 回合（2026年10月6日 ～ 2026年10月15日）。  
@@ -4900,3 +4900,62 @@ flowchart TD
   5. **Port 3000 私服守護與四軌即時驗證**：
      - 本地 Port 3000 成功啟動 Node.js + WebSocket 專屬私服器，`/api/transit/live` 端點穩定供應 1,930+ 輛公車、170 列捷運、26 列臺鐵、3 列高鐵即時動態。
      - 四大憲法紅線（0 少年偵探、0 藝碩/益碩、0 瞬移、0 歷史廢除職稱）全面零違規通過。
+
+---
+
+### 第 136 輪紀錄 (Round 136 — Instinct 與 Muse REVIEW-133 雙問題欄聯合修復)
+- **委託人最新指示**：
+  `把最新的紀錄抓下來，https://hsiaoyujui114-code.github.io/detective-issue-list/   這是我請另一位muse ai助理做的問題欄，把instinct和muse做的問題欄的問題都改一改`
+- **雙問題欄整合盤點與修復成果**：
+  1. **資料與版本同步修復（ISSUE-01, ISSUE-02, ISSUE-11, ISSUE-24, ISSUE-25）**：
+     - 全倉庫執行 `git pull origin main` 拉取最新 Round 133/135 進度。
+     - 以 `taipei-detective-rpg` 之 50 宗完整案件（含 `chapter`、`diy_experiment`、`cross_case_clue`）與清除 LaTeX 原始碼後之最新 `cases.json`、`cases.html`、`CASES_50_FULL_SPEC.md`、`PROPOSAL.md`、`PROJECT_PROPOSAL.md`、`proposal.html`（含第 92/93 項與 93 項標題修正）為主源，跨三網站倉庫達成 100% MD5 一致同步。
+     - 以 `city-pulse-detective` 為主源，跨四倉庫同步 `shared-data.js`、`transit-data.js`、`ebus-directory.js`、`cyber-realmap.html/.css/.js`，並補齊 `taipei-detective-rpg` 之 `index.html`、`style.css`、`assets/images/radar_map.png`、`avatar_detective.png` 與 `vendor/leaflet/`，以及 `taipei-detective-core` 之 `vendor/leaflet/` 與 `shared-data.js`。
+  2. **缺檔、套件與偵探核心驗證（ISSUE-03, ISSUE-04, ISSUE-05, ISSUE-06, ISSUE-08）**：
+     - 移除三網站 `index.html` 閒置未呼叫的阻塞腳本引用（Three.js / PixiJS / Howler / SAT / Socket.io），保留實際使用之 Canvas + Leaflet + `ws`。
+     - 修正 `package.json` / `package-lock.json` 倉庫名稱與 `repository` URL（`city-pulse-detective` / `taipei-metro-detective-rpg` / `taipei-detective-rpg` / `taipei-detective-core`），三網站 `package.json` 均配置 `"test": "node tests/map-integrity.test.js"`。
+     - 於 `taipei-detective-core/src/data/dialogues/sample_dialogues.json` 補齊 `CASE-03`（江語晨 `suspect_03_jiang`）完整對話樹，並於 `test/detective.test.js` [6.4] 通過對質閉環驗證。
+     - 完善 `server.js` 兄弟目錄檢查：單獨啟動無 `../taipei-detective-core` 時印出友善提示並於 `/detective` 及 `/api/detective/*` 回傳明確 HTTP `503` 指引。
+     - 建立「地圖科學探究 10 案 (`shared-data.js`) ↔ Core 首發 10 案 (`demo_cases.json`) ↔ 50 案全集 (`cases.json`)」精確對照表，寫入 `PROPOSAL.md`、`proposal.html` (`#sec-case-mapping`) 與 `cases.html` 頂部橫幅。
+  3. **文件規範、引擎邊界與企劃書修正（ISSUE-07, 09, 12, 13 ＋ P-01～P-16）**：
+     - 四倉庫 `README.md` 新增「四倉庫分工與 SSOT／鏡像對照表」、統一試玩入口 `https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html`、雙倉庫並排前置條件（Port 3000 + 3001），並釐清 GitHub Pages 直接由 `main` 分支部署（移除虛構 `deploy.yml` 描述）、現行 Canvas + Leaflet + `ws` 實作與未來 Phase 2+（PixiJS / Socket.io）規劃。
+     - `MAP_ISSUE_BOARD_PROTOCOL.md` 與 `AI_HANDOFF_PROJECT_SPEC.md` 完成 Instinct 與 Muse 雙問題欄對帳結論（`ISSUE-13` 結案）。
+     - `PROPOSAL.md` / `PROJECT_PROPOSAL.md` / `proposal.html` 完成 P-01～P-16 修正：含 **P-07（將 §11.5／§11.6 原擬態 N=56 / d=3.39 實驗宣稱全面改寫為「尚待 Alan 與指導老師確認並實測之準實驗評量規劃設計」，移除已取消之 PaGamO 比較句）**、P-08 GitHub Pages 模擬市民與本機 `ws` 分界、P-09 清除四處殘留馬賽克規格、P-10 CWA/TTS/時間倍率現況說明、P-11 `EcoWallet.js` vs `game.js` 費率分界、P-12 `93 項` 標題、P-13 改寫「缺陷清零」、P-14 統一 `377` 間門市／`1,036` 條公車路線／尖峰 `1,700~2,000` 輛 GPS、P-15 區分 NLSC 顯示底圖 vs OSM 抽取資料、P-16 同步第 14 週 AI 管線規劃狀態；同時修復 `proposal.html` 內嵌 `</script>` 字串跳脫錯誤與可見區殘留 LaTeX 公式。
+  4. **1:1 地圖畫面與 Instinct 問題欄修正（ISSUE-14～23 ＋ Instinct 5 項）**：
+     - `ISSUE-14`：預設起始縮放設為 `14.0x`；高密度公車徽章僅於 `zoom >= 17.0` 採網格過濾顯示，`zoom < 16.5` 軌道列車改為精巧圓點不遮擋路名與忠孝西路；案件標記層級提升（`zIndexOffset: 2500`）並加上點擊觸發驗證。
+     - `ISSUE-15 / 16`：NLSC 通用電子地圖與 `PHOTO2` 正射影像鎖定 `maxNativeZoom: 18` + `keepBuffer: 6`，解決 Zoom 20.5 空白磚問題；街寫提示膠囊下移 `top: 192px` 零遮擋案件列；對齊台北車站周邊真實斜角瀝青路面、斑馬線與高層級門牌；特區跳轉改採快速切換減緩全白延遲。
+     - `ISSUE-17 / 23`：四主場景地標（淡水紅毛城、北投地熱谷、北投溫泉博物館、板橋林本源園邸／林家花園）固定高優先級標示，校正 `NTP-TS` 與 `TPE-BT` 特區跳轉中心，確保 `CASE-05`、`CASE-09` 清楚可見；關閉程式隨機生成之邊界切割藍色 3D 方塊，恢復潔淨街廓。
+     - `ISSUE-18 / 19 / 20 / 21 / 22`：清除站前案 `$\Delta h = 45 \text{ cm}$` 等全部未算繪 LaTeX（改為 `Δh = 45 cm` 等 Unicode）；修復 `cyber-realmap.html` 亂碼為 `霓虹 ON`；放寬左右戰術面板寬度與按鈕高度達成單行不折行；頂部特區／案件／門市篩選條加上 `◀ ▶` 左右捲動鈕（`1920/1366/1280/390/320px` 皆零水平溢出）；手機版羅盤移至左下角避免遮蔽按鈕；底部導航條改為單行不遮擋。
+     - Instinct 5 項複驗：保留 `sourceLastOkMs` 分源新鮮度計時（無 GPU/PTX 金鑰時黃燈標註 `(過期)`）、`map-zoom-mid` 站名 LOD、`min-width: 0` 防溢出、非 GPS 軌道彈窗清除誤導性「即時」字樣、公車彈窗維持無推算站次。
+  5. **自動化測試與實機瀏覽器驗證（ISSUE-10）**：
+     - 三網站倉庫新增並執行 `tests/map-integrity.test.js`（`npm test`）：通過 7 大項檢查與跨倉 MD5  parity 驗證（含故意破壞 `cases.json` `diy_experiment` 攔截實測通過）。
+     - `taipei-detective-core` 執行 `npm test`：10 大階段（含 CASE-03 江語晨對話閉環與憲法禁忌靜態掃描）全部通過。
+     - 無頭 Edge CDP 實測 `city-pulse-detective/cyber-realmap.html`（1920 / 20.5x / 1366 / 1280 / 390 / 320）與 `taipei-detective-rpg`（`index.html` / `cases.html` / `proposal.html`）：資產 0 筆 404、頁面 0 JS 例外、截圖複查全部通過，四大憲法紅線（0 少年偵探、0 藝碩/益碩、0 瞬移、0 歷史廢除職稱）0 違規。
+
+
+
+---
+
+### 第 136 輪紀錄 (Round 136)
+- **委託人核心指示（雙問題欄全面修復與四倉一致驗收）**：
+  - 拉取 4 大專案倉庫最新遠端進度，同時核對 **Muse AI（Review-133）** `https://hsiaoyujui114-code.github.io/detective-issue-list/` 全部 `ISSUE-01`～`ISSUE-25` 與 `P-01`～`P-16` 提案／代碼矛盾清單，以及 **Instinct** `https://files.instinct.com/ju4sf6hj7efj-agy` 待修項目，逐項修畢並完成跨倉同步、自動化測試、CDP 實機驗收與 Git 推送。
+  - **統一試玩遊戲網址**：`https://hsiaoyujui114-code.github.io/city-pulse-detective/cyber-realmap.html`。
+
+- **實施改造與重大技術成果**：
+  1. **四倉資料、套件與案件系統對齊（`ISSUE-01`～`06`、`24`、`25`、`P-02`、`P-03`）**：
+     - 全量同步 50 案 `cases.json`、`CASES_50_FULL_SPEC.md`、`shared-data.js`、`game.js`、`ebus-directory.js` 與 `transit-data.js`；修復 `shared-data.js` 內 `cos_06` 經緯度反置錯誤（已四倉同步校正）。
+     - 移除 `index.html` 5 個未使用冗餘 vendor `<script>`（Three/Pixi/Howler/SAT/Socket.io）；為 `taipei-detective-rpg` 與 `taipei-detective-core` 補齊 `vendor/leaflet` 離線資源。
+     - 於 `taipei-detective-core/src/data/dialogues/sample_dialogues.json` 新增 `suspect_03_jiang`（江志強）5 節點完整訊問／反駁證物／結案閉環對話樹，並於 `test/detective.test.js` `[6.4]` 實測通過。
+     - 修正各倉 `package.json`（專案名稱、repository 與 `test` 腳本）及補齊 `package-lock.json`（含相依套件完整鎖定）。
+  2. **伺服器降級保護、文件校正與雙問題欄協議（`ISSUE-07`～`13`、`P-01`、`P-04`、`P-05`）**：
+     - `city-pulse-detective/server.js` 與 `taipei-metro-detective-rpg/server.js` 補上 sibling `../taipei-detective-core` 啟動檢查與指引警告，缺少時對 `/detective` 與 `/api/detective/*` 回傳 HTTP `503` 友善提示頁／JSON。
+     - 同步更新四倉 `README.md` 與 `MAP_ISSUE_BOARD_PROTOCOL.md`：移除 `taipei-detective-rpg` 虛構 CI workflow 徽章與錯誤連結、補入雙問題欄基準（Muse Review-133 + Instinct）與並肩雙倉啟動說明、明確區分現行技術棧（Canvas + Leaflet 1.9.4 + `ws`）與 Phase 2+ 擴充規劃（PixiJS / Socket.io）。
+  3. **雙北全息地圖 UI / LOD / 遙測誠實度與 Edge CDP 實機修復（`ISSUE-14`～`23` & Instinct 5 項）**：
+     - 清除 `cyber-realmap.html` / `css` / `js` 亂碼（「霓虹 ON」）、新增路網快跳帶 `◀` / `▶` 捲動按鈕、`.jump-scroll-wrap { min-width: 0; }`、固定左 Telemetry `288px` 與右 Tactical `274px` 寬度及按鈕單行省略號、調整指北針（`right: 298px; top: 192px`）避免與右側面板重疊，並為 `buildings3DLabelGroup` 加上視窗安全邊界裁切防護。
+     - 實裝 `nlscBaseLayer` / `PHOTO2` `maxNativeZoom: 18` + `keepBuffer: 6`、Zoom 15 `map-zoom-mid` 中尺度 LOD、公車 Zoom `>= 17.0` 網格去重與台高鐵簡化圓標、即時資訊列追蹤 `sourceLastOkMs` 新鮮度（避免連線未確認前偽裝即時）。
+  4. **企劃書與提案清單 100% 誠實校正（`P-01`～`P-16`）**：
+     - 依真實資料盤點全面更新 `PROPOSAL.md`、`PROJECT_PROPOSAL.md`、`proposal.html` 與 `cases.html`：`41` 商業分區、`377` 超商門市、`45` 座公園、`1,036` 條公車路線、`10` 示範案、`50` 全集案。
+     - 建立「示範案 01～10 / Core case_01～10 / 全集 CASE-01～50 / 地圖案 01～10」對照表；清除錯誤重複表格列、LaTeX 逸散控制字元、`file://` 本機連結與馬賽克過時宣告（`toggleMosaic` 改為已取消之安全空操作）。
+     - **`P-07`（待 Alan 與指導教授確認）**：全面改寫 `§11.5` 與 `§11.6`，移除未經佐證之試驗數據，誠實標示為「待確認／規劃中準實驗評估設計」，留待團隊與指導教授確認是否有真實試測紀錄後再行回填。
+  5. **自動化測試與跨倉一致性驗收**：
+     - 三大 Web 倉新增 `tests/map-integrity.test.js`（涵蓋封裝、靜態資源、50 案結構、經緯度範圍、車牌規則、禁用詞與亂碼掃描、四倉與 17 支共享檔 + 8 支核心映像檔 MD5 一致性），搭配 `taipei-detective-core/test/detective.test.js` 10 大階段與 Edge CDP 多視窗實機稽核（1920/1366/1280/390/320）全數通過。
