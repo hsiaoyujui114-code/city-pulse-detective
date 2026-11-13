@@ -26,11 +26,12 @@ console.log(`\n🔎 Running map & data integrity suite in [${REPO_NAME}]...`);
 
 // 1. package.json & lock file consistency (ISSUE-06)
 const pkg = JSON.parse(readUtf8('package.json'));
-assert.strictEqual(pkg.name, REPO_NAME, `package.json name (${pkg.name}) must match repo directory (${REPO_NAME})`);
-assert(pkg.repository && String(pkg.repository.url || '').includes(REPO_NAME), `package.json repository URL must reference ${REPO_NAME}`);
+const expectedPkgName = REPO_NAME === 'planner' ? 'taipei-detective-rpg' : REPO_NAME;
+assert.strictEqual(pkg.name, expectedPkgName, `package.json name (${pkg.name}) must match repo directory (${expectedPkgName})`);
+assert(pkg.repository && String(pkg.repository.url || '').includes(expectedPkgName), `package.json repository URL must reference ${expectedPkgName}`);
 if (fs.existsSync(path.join(ROOT, 'package-lock.json'))) {
   const lock = JSON.parse(readUtf8('package-lock.json'));
-  assert.strictEqual(lock.name, REPO_NAME, `package-lock.json name must match ${REPO_NAME}`);
+  assert.strictEqual(lock.name, expectedPkgName, `package-lock.json name must match ${expectedPkgName}`);
 }
 console.log('✅ [1] package.json / package-lock.json metadata verified');
 
@@ -122,6 +123,9 @@ assert(!/\.compass-rose-hud\s*\{[^}]*top:\s*192px/.test(realmapCss), '.compass-r
 for (const f of ['cases.json', 'shared-data.js', 'cyber-realmap.js', 'cases.html']) {
   const txt = readUtf8(f);
   assert(!/\$\\Delta|\$\\text\{|\$Delta h/.test(txt), `Raw LaTeX expression detected in ${f} (ISSUE-18)`);
+  assert(!/\$\s*[，。；;\uFF1B]|（\s*\$\s*）|\(\s*\$\s*\)/.test(txt), `Dangling single dollar sign detected in ${f} (ISSUE-18)`);
+  assert(!/（\s*）/.test(txt), `Empty parentheses from broken formula removal in ${f} (ISSUE-18)`);
+  assert(!/：\s*=\s*/.test(txt), `Orphaned equality sign with missing formula variable in ${f} (ISSUE-18)`);
 }
 
 const proposalHtml = readUtf8('proposal.html');
@@ -170,6 +174,7 @@ const webSharedFiles = [
   'cyber-realmap.html', 'cyber-realmap.css', 'cyber-realmap.js',
   'game.js', 'index.html', 'transit-data.js', 'ebus-directory.js',
   'AI_HANDOFF_PROJECT_SPEC.md', 'MAP_ISSUE_BOARD_PROTOCOL.md',
+  'TECH_IMPLEMENTATION_PLAN.md', 'COMPLETE_CONVERSATION_CHRONICLE.md',
   'tests/map-integrity.test.js'
 ];
 

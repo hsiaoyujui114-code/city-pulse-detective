@@ -17,15 +17,15 @@ const { WebSocketServer, WebSocket } = require('ws');
 const transitLiveService = require('./transit-live-service');
 
 // 載入獨立都會調查員偵探核心引擎 (落實伺服器版本雙軌並行)
-const CORE_REPO_DIR = path.join(__dirname, '../taipei-detective-core');
+const CORE_REPO_DIR = process.env.CORE_REPO_DIR || path.join(__dirname, '../taipei-detective-core');
 let detectiveEngine = null;
 if (!fs.existsSync(CORE_REPO_DIR)) {
-  console.warn('⚠️ [ISSUE-08 前置檢查] 未偵測到兄弟倉庫 ../taipei-detective-core');
-  console.warn('   /detective 與 /api/detective/* 需與 taipei-detective-core 並排置於同一父目錄：');
+  console.warn('⚠️ [ISSUE-08 前置檢查] 未偵測到兄弟倉庫 ' + CORE_REPO_DIR);
+  console.warn('   /detective 與 /api/detective/* 需與 taipei-detective-core 並排置於同一父目錄（或設定 CORE_REPO_DIR 環境變數）：');
   console.warn('   cd .. && git clone https://github.com/hsiaoyujui114-code/taipei-detective-core.git');
 } else {
   try {
-    const detectiveModule = require('../taipei-detective-core/src/index');
+    const detectiveModule = require(path.join(CORE_REPO_DIR, 'src/index'));
     detectiveEngine = detectiveModule.createDetectiveEngine();
   } catch (e) {
     console.warn('⚠️ Detective core module not loaded in server:', e.message);
@@ -58,7 +58,7 @@ const server = http.createServer((req, res) => {
 
   // 獨立都會調查員偵探測試工作台與伺服器版本支援
   if (reqPath === '/detective' || reqPath === '/detective/') {
-    const detectiveHtml = path.join(__dirname, '../taipei-detective-core/public/index.html');
+    const detectiveHtml = path.join(CORE_REPO_DIR, 'public/index.html');
     if (fs.existsSync(detectiveHtml)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       fs.createReadStream(detectiveHtml).pipe(res);
