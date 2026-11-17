@@ -338,22 +338,26 @@
         <span>📡 全息雷達掃描</span>
         <span style="color:#94a3b8;">STANDBY</span>
       </button>
-            <!-- 🌟 2D 超微觀街道俯視控制組 (委託人 Round 133 規範) -->
+            <!-- 🌟 2D 超微觀街道俯視與幽靈巡航控制組 -->
+      <button class="tactical-tool-btn" id="btnToggleGhostMode" onclick="toggleGhostMode()" title="👻 幽靈天眼自由巡航模式 (按 G)：4倍極速飛行、無視地形障礙、全城俯瞰穿梭" style="border-color:#c084fc;">
+        <span id="tagGhostModeIcon">👻</span>
+        <span id="tagGhostModeText" style="color:#e9d5ff;">幽靈天眼(G)</span>
+      </button>
       <button class="tactical-tool-btn" id="btnToggle2DStreetLock" onclick="toggle2DStreetLockMode()" title="一鍵鎖定/解除 2D 街道微觀俯視視角（鎖定時禁止放大縮小）" style="border-color:#f59e0b;">
         <span id="tag2DStreetLockIcon">🔓</span>
         <span id="tag2DStreetLockText">自由縮放</span>
       </button>
-      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(20.5)" title="2D 正上方極致微觀街道俯視 (Zoom 20.5 實體瀝青/斑馬線/停止線/雙黃線/導盲磚)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
-        <span>🎯 2D 街道特寫</span>
-        <span style="color:#fbbf24; font-size:10px;">20.5x</span>
+      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 正上方超微觀街道特寫 (Zoom 21.5 實體瀝青/斑馬線/停止線/雙黃線/導盲磚/出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
+        <span>🔍 超微觀街道</span>
+        <span style="color:#fbbf24; font-size:10px;">21.5x</span>
       </button>
       <button class="tactical-tool-btn" id="btnShuangbeiFullView" onclick="setStreetTopDownView(14.0)" title="雙北宏觀全景 (Zoom 14)">
         <span>🌐 雙北全景</span>
         <span style="color:#38bdf8; font-size:10px;">14x</span>
       </button>
-      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大至 19.5x 微觀街廓，鏡頭自動跟隨人物與周遭街道">
-        <span>🎯 2D 街道俯視 (按 Z)</span>
-        <span style="color:#00f0ff;">20.5x</span>
+      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大至 21.5x 超微觀街廓，鏡頭自動跟隨人物與周遭街道">
+        <span>🎯 超微觀俯視 (按 Z)</span>
+        <span style="color:#00f0ff;">21.5x</span>
       </button>
       <button class="tactical-tool-btn" id="btnFitBounds" onclick="resetShuangbeiBounds()">
         <span>🔭 雙北全景居中</span>
@@ -462,7 +466,7 @@
 
   <!-- 底部操作提示 (Bottom Hint Bar - 精簡單行避免與街景提示列重疊裁切) -->
   <div class="bottom-hint-bar">
-    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[Z]</span> 2D街道特寫 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[滾輪]</span> 1:1 縮放 · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
+    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[G]</span> 幽靈天眼 · <span class="hint-key">[Z]</span> 超微觀(21.5x) · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[滾輪]</span> 極致縮放(至24x) · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
   </div>
 
   <!-- 雙軌 SSOT 單一資料源 -->

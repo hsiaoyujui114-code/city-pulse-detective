@@ -860,12 +860,34 @@ html, body {
 .leaflet-tile {
   /* 高畫質抗鋸齒街道渲染：保證在任何螢幕縮放與高解析度下，街道、巷弄與門牌線條平滑完整不消失 */
   image-rendering: -webkit-optimize-contrast;
-  image-rendering: auto;
+  image-rendering: crisp-edges;
 }
 
 body.map-zoom-street .leaflet-tile,
-body[data-map-zoom="street"] .leaflet-tile {
+body[data-map-zoom="street"] .leaflet-tile,
+body.map-zoom-ultra .leaflet-tile {
   image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+body.map-zoom-ultra .leaflet-tile {
+  filter: contrast(108%) saturate(106%) brightness(103%);
+}
+
+/* 👻 幽靈天眼自由巡航專用樣式 (Ghost Spectator Drone View) */
+.player-ghost-avatar-marker {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tactical-tool-btn.ghost-active {
+  border-color: #c084fc !important;
+  background: rgba(168, 85, 247, 0.28) !important;
+  box-shadow: 0 0 14px rgba(192, 132, 252, 0.7) !important;
+  color: #f3e8ff !important;
 }
 
 .leaflet-tile-pane {

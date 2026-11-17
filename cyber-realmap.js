@@ -226,7 +226,7 @@ function initCyberRealMap() {
     center: initCenter,
     zoom: initZoom,
     minZoom: isLocalFoVLocked ? 14 : 9,
-    maxZoom: 22,
+    maxZoom: 24,
     zoomControl: false,
     preferCanvas: true, // 開啟 Canvas 硬體加速向量渲染
     zoomSnap: 0.5, // 整數級別吸附，極限消除重繪負擔與圖層模糊
@@ -264,10 +264,10 @@ function initCyberRealMap() {
     return layer;
   }
 
-  // (1) 臺灣通用電子地圖 (內政部國土測繪中心 NLSC 繁中官方街道全圖・z=18 含完整街道建築與店家圖示，maxNativeZoom:18 確保 20.5x 放大仍極致清晰不空白)
+  // (1) 臺灣通用電子地圖 (內政部國土測繪中心 NLSC 繁中官方街道全圖・z=18 含完整街道建築與店家圖示，maxNativeZoom:18 確保 21.5x~24x 放大仍極致清晰不空白)
   const nlscBaseLayer = enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
     maxNativeZoom: 18,
-    maxZoom: 22,
+    maxZoom: 24,
     keepBuffer: 6,
     updateWhenZooming: false,
     updateWhenIdle: false,
@@ -278,7 +278,7 @@ function initCyberRealMap() {
   // (2) Esri 真實街道全景圖 (高對比暖色街廓・黑字中文路名清楚標註・Google Maps 同級清晰度)
   const esriStreetBaseLayer = enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
     maxNativeZoom: 19,
-    maxZoom: 22,
+    maxZoom: 24,
     detectRetina: false,
     attribution: 'Tiles &copy; Esri &mdash; World Street Map'
   }));
@@ -287,7 +287,7 @@ function initCyberRealMap() {
   const osmBaseLayer = enableResilientTileFallback(L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
     subdomains: 'abc',
     maxNativeZoom: 19,
-    maxZoom: 22,
+    maxZoom: 24,
     detectRetina: false,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 繁體中文街道巷弄全網'
   }), 'https://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png');
@@ -296,18 +296,18 @@ function initCyberRealMap() {
   const cyberDarkHybridLayer = L.layerGroup([
     enableResilientTileFallback(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
-      maxZoom: 22,
+      maxZoom: 24,
       detectRetina: false,
       attribution: 'Tiles &copy; Esri &mdash; Dark Canvas'
     })),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
-      maxZoom: 22,
+      maxZoom: 24,
       opacity: 1.0
     })),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
-      maxZoom: 22,
+      maxZoom: 24,
       opacity: 1.0
     }))
   ]);
@@ -316,19 +316,19 @@ function initCyberRealMap() {
   const satelliteHybridLayer = L.layerGroup([
     enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}', {
       maxNativeZoom: 18,
-      maxZoom: 22,
+      maxZoom: 24,
       keepBuffer: 6,
       detectRetina: false,
       attribution: '&copy; 內政部國土測繪中心 (NLSC) 正射影像'
     }), 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
-      maxZoom: 22,
+      maxZoom: 24,
       opacity: 1.0
     })),
     enableResilientTileFallback(L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
       maxNativeZoom: 19,
-      maxZoom: 22,
+      maxZoom: 24,
       opacity: 1.0
     }))
   ]);
@@ -445,6 +445,22 @@ function initCyberRealMap() {
   });
   window.addEventListener('resize', updateSpotlightVignette);
 
+  // 👻 天眼幽靈模式：地圖點擊直接滑翔飛往該目標點
+  map.on('click', (e) => {
+    if (isGhostMode && e && e.latlng && playerAvatarMarker) {
+      const targetPos = [e.latlng.lat, e.latlng.lng];
+      playerAvatarMarker.setLatLng(targetPos);
+      if (playerSenseCircle) playerSenseCircle.setLatLng(targetPos);
+      map.panTo(targetPos, { animate: true, duration: 0.35 });
+      updateFogOfWarMarkers(e.latlng, 350);
+      updateStreetProximityHUD(e.latlng.lat, e.latlng.lng);
+      saveMapState();
+      if (typeof showNavToast === 'function') {
+        showNavToast(`👻 天眼幽靈巡航飛往 [${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}]`);
+      }
+    }
+  });
+
   // 初始化環境風格自適應換裝 (Google Maps 階層道路包邊、聚光暗角調適)
   harmonizeMapTheme(currentBaseLayerKey);
 
@@ -525,6 +541,7 @@ function initPlayerAvatarMarker() {
     iconAnchor: [24, 24]
   });
   playerAvatarMarker = L.marker([25.0465, 121.5170], { icon: icon, zIndexOffset: 2000 }).addTo(map);
+  window.playerAvatarMarker = playerAvatarMarker;
   playerAvatarMarker.bindPopup(`
     <div style="font-size:12px; color:#f8fafc; padding:4px;">
       <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 都會調查員 (100m 實體親臨感應圈 ✕ 扇形探照)</div>
@@ -575,15 +592,151 @@ function resetMapOrientation() {
   showNavToast('🧭 方位羅盤已校準為正北方向 (0° N)');
 }
 
+// ──────────────────────────────────────────
+// 👻 幽靈天眼自由巡航模式系統 (Ghost Spectator Drone View)
+// ──────────────────────────────────────────
+let isGhostMode = false;
+window.isGhostMode = false;
+
+function toggleGhostMode(forcedState) {
+  isGhostMode = (typeof forcedState === 'boolean') ? forcedState : !isGhostMode;
+  window.isGhostMode = isGhostMode;
+
+  updatePlayerAvatarIcon();
+
+  const btn = document.getElementById('btnToggleGhostMode');
+  const icon = document.getElementById('tagGhostModeIcon');
+  const text = document.getElementById('tagGhostModeText');
+  if (btn) {
+    btn.classList.toggle('ghost-active', isGhostMode);
+    btn.classList.toggle('active', isGhostMode);
+  }
+  if (icon) icon.textContent = isGhostMode ? '👻' : '🚶';
+  if (text) text.textContent = isGhostMode ? '幽靈天眼 (ON)' : '幽靈天眼(G)';
+
+  if (playerSenseCircle) {
+    if (isGhostMode) {
+      playerSenseCircle.setStyle({
+        color: '#c084fc',
+        fillColor: '#a855f7',
+        fillOpacity: 0.12,
+        dashArray: '6, 6'
+      });
+      playerSenseCircle.setRadius(320);
+    } else {
+      playerSenseCircle.setStyle({
+        color: '#38bdf8',
+        fillColor: '#0284c7',
+        fillOpacity: 0.08,
+        dashArray: '4, 6'
+      });
+      playerSenseCircle.setRadius(110);
+    }
+  }
+
+  if (isGhostMode) {
+    if (typeof showNavToast === 'function') {
+      showNavToast('👻 已開啟【天眼幽靈自由巡航模式】！4倍速飛行 (Shift 8倍)，無視地形障礙，全城俯瞰穿梭。按 [G] 切換回調查員。');
+    }
+    if (isLocalFoVLocked) {
+      toggleLocalFoV();
+    }
+    if (playerAvatarMarker) {
+      const pos = playerAvatarMarker.getLatLng();
+      updateFogOfWarMarkers(pos, 350);
+    }
+  } else {
+    if (typeof showNavToast === 'function') {
+      showNavToast('🕵️ 已切換回【都會調查員地面視角】！步行漫遊雙北街頭。按 [G] 隨時開啟幽靈天眼。');
+    }
+  }
+}
+window.toggleGhostMode = toggleGhostMode;
+
+function updatePlayerAvatarIcon() {
+  if (!playerAvatarMarker) return;
+
+  let avatarHtml;
+  let iconSize = [48, 48];
+  let iconAnchor = [24, 24];
+
+  if (isGhostMode) {
+    avatarHtml = `
+      <div class="player-ghost-avatar" style="position:relative; width:52px; height:52px; display:flex; align-items:center; justify-content:center;">
+        <div style="position:absolute; width:52px; height:52px; border-radius:50%; border:2px dashed #c084fc; opacity:0.85; animation:spin 4s linear infinite; z-index:2;"></div>
+        <div style="position:absolute; width:68px; height:68px; border-radius:50%; border:1px solid #38bdf8; opacity:0.6; animation:ping 2s cubic-bezier(0,0,0.2,1) infinite; z-index:1;"></div>
+        <div style="position:relative; width:38px; height:38px; border-radius:50%; background:radial-gradient(circle, #7e22ce 0%, #0f172a 100%); border:2px solid #c084fc; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(192,132,252,0.9); z-index:3;">
+          <span style="font-size:20px; animation:bounce 1.5s infinite;">👻</span>
+        </div>
+        <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.95); border:1px solid #c084fc; color:#f3e8ff; font-size:10px; font-weight:900; padding:1px 6px; border-radius:4px; white-space:nowrap; z-index:4; box-shadow:0 0 8px rgba(192,132,252,0.6);">
+          天眼幽靈 (巡航)
+        </div>
+      </div>
+    `;
+    iconSize = [52, 52];
+    iconAnchor = [26, 26];
+  } else {
+    avatarHtml = `
+      <div style="position:relative; width:48px; height:48px; display:flex; align-items:center; justify-content:center;">
+        <div class="player-vision-cone" id="playerVisionCone" style="position:absolute; width:160px; height:160px; top:-56px; left:-56px; pointer-events:none; transform-origin:center center; transform:rotate(${playerHeading}deg); z-index:1;">
+          <svg viewBox="0 0 160 160" width="160" height="160" style="display:block; overflow:visible;">
+            <defs>
+              <radialGradient id="playerBeamGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.75" />
+                <stop offset="50%" stop-color="#0284c7" stop-opacity="0.30" />
+                <stop offset="100%" stop-color="#00f0ff" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <path d="M 80 80 L 40 10 A 80 80 0 0 1 120 10 Z" fill="url(#playerBeamGrad)" />
+          </svg>
+        </div>
+        <div style="position:absolute; width:48px; height:48px; border-radius:50%; border:2px solid #00f0ff; opacity:0.6; animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite; z-index:2;"></div>
+        <div style="position:relative; width:34px; height:34px; border-radius:50%; background:radial-gradient(circle, #0284c7 0%, #0f172a 100%); border:2px solid #38bdf8; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(0,240,255,0.8); z-index:3;">
+          <span style="font-size:18px;">🕵️</span>
+        </div>
+        <div style="position:absolute; bottom:-16px; background:rgba(15,23,42,0.92); border:1px solid #00f0ff; color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; white-space:nowrap; z-index:4;">
+          都會調查員
+        </div>
+      </div>
+    `;
+  }
+
+  const icon = L.divIcon({
+    className: isGhostMode ? 'player-ghost-avatar-marker' : 'player-avatar-marker',
+    html: avatarHtml,
+    iconSize: iconSize,
+    iconAnchor: iconAnchor
+  });
+  playerAvatarMarker.setIcon(icon);
+
+  if (isGhostMode) {
+    playerAvatarMarker.bindPopup(`
+      <div style="font-size:12px; color:#f8fafc; padding:4px;">
+        <div style="font-weight:900; color:#c084fc; margin-bottom:4px;">👻 天眼幽靈巡航飛船 (320m 全向全息雷達)</div>
+        <div>巡航模式：無視地面障礙 ✕ 4~8倍高速俯瞰</div>
+        <div style="font-size:11px; color:#e9d5ff; margin-top:4px;">鍵盤 WASD 自由穿梭，Shift 加速，點擊地圖直達，按 [G] 切換回調查員！</div>
+      </div>
+    `);
+  } else {
+    playerAvatarMarker.bindPopup(`
+      <div style="font-size:12px; color:#f8fafc; padding:4px;">
+        <div style="font-weight:900; color:#38bdf8; margin-bottom:4px;">🕵️ 都會調查員 (110m 實體親臨感應圈 ✕ 扇形探照)</div>
+        <div>當前位置：台北車站 忠孝西路一段核心</div>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">鍵盤 WASD / 方向鍵可實體漫遊，親訪老街撥開迷霧！按 [G] 開啟幽靈天眼！</div>
+      </div>
+    `);
+  }
+}
+
 
 // ============================================================
-// 🌟 2D 超微觀街道俯視視角系統 (Round 133 規範)
+// 🌟 2D 超微觀街道俯視視角系統 (Round 133/139 規範：放非常大且極致清晰)
 // ============================================================
 window.REALMAP_VIEWPORT_CONFIG = {
-  defaultStreetZoom: 20.5,   // 2D 正上方超微觀街道特寫 (畫面大概只能看到這個路，頂級細膩度)
+  defaultStreetZoom: 21.5,   // 2D 正上方超微觀街道特寫 (放大非常大，路面、標線、門牌、號誌一清二楚)
   overviewZoom: 14.0,        // 雙北全景
   minZoom: 12,
-  maxZoom: 22,
+  maxZoom: 24,
   allowZoomOut: true,        // 委託人指示：目前允許自由縮放；未來改為 false 即鎖定不能縮小 (一鍵切換)
   allowZoomIn: true,
   isLockedStreetView: false,
@@ -598,7 +751,7 @@ window.REALMAP_VIEWPORT_CONFIG = {
         window.map.setZoom(this.defaultStreetZoom);
       }
       if (typeof showNavToast === 'function') {
-        showNavToast('🔒 已鎖定 2D 街道微觀俯視視角 (Zoom 20.5)！禁止放大縮小。');
+        showNavToast(`🔒 已鎖定 2D 街道微觀俯視視角 (Zoom ${this.defaultStreetZoom})！禁止放大縮小。`);
       }
     } else {
       if (window.map) {
@@ -606,7 +759,7 @@ window.REALMAP_VIEWPORT_CONFIG = {
         window.map.setMaxZoom(this.maxZoom);
       }
       if (typeof showNavToast === 'function') {
-        showNavToast('🔓 已解除鎖定，目前允許自由縮放。');
+        showNavToast('🔓 已解除鎖定，目前允許自由縮放 (最高至 24x 極致放大)。');
       }
     }
     update2DStreetLockUI();
@@ -634,7 +787,7 @@ function update2DStreetLockUI() {
       btn.classList.remove('active');
       btn.style.borderColor = '#f59e0b';
       btn.style.background = '';
-      btn.title = '點擊一鍵鎖定為 2D 街道微觀俯視視角 (Zoom 20.5)';
+      btn.title = '點擊一鍵鎖定為 2D 街道微觀俯視視角 (Zoom 21.5)';
     }
   }
   const pillBtn = document.getElementById('btnPillLockToggle');
@@ -646,7 +799,7 @@ function update2DStreetLockUI() {
 
 function setStreetTopDownView(targetZoom) {
   if (!map) return;
-  const zoom = typeof targetZoom === 'number' ? targetZoom : 20.5;
+  const zoom = typeof targetZoom === 'number' ? targetZoom : 21.5;
   const playerPos = playerAvatarMarker ? playerAvatarMarker.getLatLng() : { lat: 25.0425, lng: 121.5075 };
   
   if (window.REALMAP_VIEWPORT_CONFIG.isLockedStreetView && zoom !== window.REALMAP_VIEWPORT_CONFIG.defaultStreetZoom) {
@@ -681,7 +834,7 @@ function updateStreetFocusPill(visible, zoom) {
     pill.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
-        <span><b>2D 街道微觀俯視 (${zoom || 20.5}x)</b>：NLSC 繁中街道全圖 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口</span>
+        <span><b>2D 街道微觀俯視 (${zoom || 21.5}x)</b>：NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口</span>
       </div>
       <button id="btnPillLockToggle" onclick="toggle2DStreetLockMode()" style="background:${isLocked ? '#ef4444' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">${isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角'}</button>
       <button onclick="setStreetTopDownView(14.0)" style="background:#475569; border:1px solid #94a3b8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:4px;">🌐 全景 (14x)</button>
@@ -701,7 +854,7 @@ function togglePlayerFocusMode() {
   if (isStreetFocusMode) {
     setStreetTopDownView(14.0);
   } else {
-    setStreetTopDownView(20.5);
+    setStreetTopDownView(21.5);
   }
 }
 
@@ -4321,10 +4474,15 @@ function addMrtLayer() {
 
 function updateMrtLODVisibility() {
   if (typeof map === 'undefined' || !map) return;
-  const isMid = map.getZoom() >= 13.0;
-  const isNear = map.getZoom() >= 14.0;
+  const curZoom = map.getZoom();
+  const isMid = curZoom >= 13.0;
+  const isNear = curZoom >= 14.0;
+  const isStreet = curZoom >= 18.0;
+  const isUltra = curZoom >= 21.0;
   document.body.classList.toggle('map-zoom-mid', isMid);
   document.body.classList.toggle('map-zoom-near', isNear);
+  document.body.classList.toggle('map-zoom-street', isStreet);
+  document.body.classList.toggle('map-zoom-ultra', isUltra);
 }
 
 // (4) 🚌 大臺北公車 (eBus - 參考 ebus.gov.taipei)
@@ -6879,8 +7037,9 @@ function renderHistoricLandmarks() {
   });
 }
 
-function updateFogOfWarMarkers(playerPos) {
+function updateFogOfWarMarkers(playerPos, customRadius) {
   if (!playerPos) return;
+  const effectiveRadius = (typeof customRadius === 'number') ? customRadius : (isGhostMode ? 350 : FOG_RADIUS_METERS);
 
   HISTORIC_STREETS_AND_LANDMARKS.forEach(item => {
     const distMeters = Math.round(calcDistanceKm(playerPos.lat, playerPos.lng, item.lat, item.lon) * 1000);
@@ -6890,7 +7049,7 @@ function updateFogOfWarMarkers(playerPos) {
     const dom = document.getElementById(`fog_pin_${item.id}`);
     const wasUnlocked = unlockedHistoricLandmarkIds.has(item.id);
 
-    if (distMeters <= FOG_RADIUS_METERS || !isFogOfWarActive) {
+    if (distMeters <= effectiveRadius || !isFogOfWarActive || isGhostMode) {
       if (!wasUnlocked) {
         unlockedHistoricLandmarkIds.add(item.id);
         playTransitSound('fog_unlock');
@@ -7146,7 +7305,15 @@ function initWalkNavFlowlineSystem() {
 }
 
 function handlePlayerKeyboardWalk(e) {
-  // 🎯 鍵盤「親臨鍵 (Z)」：快速切換街廓親臨模式 (19.5x 極致微觀)
+  // 🎯 鍵盤「幽靈天眼鍵 (G)」：快速切換天眼幽靈自由巡航模式
+  if (e.key === 'g' || e.key === 'G') {
+    if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+      e.preventDefault();
+      toggleGhostMode();
+      return;
+    }
+  }
+  // 🎯 鍵盤「親臨鍵 (Z)」：快速切換街廓親臨模式 (21.5x 超微觀)
   if (e.key === 'z' || e.key === 'Z') {
     togglePlayerFocusMode();
     return;
@@ -7184,7 +7351,13 @@ function handlePlayerKeyboardWalk(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   const curZoom = map ? map.getZoom() : 15;
   const inMicro = isStreetFocusMode || curZoom >= 17.5;
-  const step = inMicro ? 0.000085 : 0.00018; // 微觀親臨模式下步幅約 9.5 公尺，全域漫遊約 20 公尺
+  let step;
+  if (isGhostMode) {
+    // 幽靈天眼自由巡航：4倍速，按住 Shift 為 8倍極速衝刺
+    step = e.shiftKey ? 0.00090 : 0.00045;
+  } else {
+    step = inMicro ? 0.000085 : 0.00018; // 微觀親臨模式下步幅約 9.5 公尺，全域漫遊約 20 公尺
+  }
   let dLat = 0, dLon = 0, deg = null;
 
   if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
@@ -7202,6 +7375,7 @@ function handlePlayerKeyboardWalk(e) {
     movePlayerByOffset(dLat, dLon, deg);
   }
 }
+window.handlePlayerKeyboardWalk = handlePlayerKeyboardWalk;
 
 function movePlayerByOffset(dLat, dLon, headingDeg) {
   if (!playerAvatarMarker) return;
@@ -7222,9 +7396,9 @@ function movePlayerByOffset(dLat, dLon, headingDeg) {
   updateSpotlightVignette();
   const curZoom = map ? map.getZoom() : 15;
   const inMicroStreetMode = isStreetFocusMode || curZoom >= 17.5;
-  if (isLocalFoVLocked || inMicroStreetMode) {
+  if (isGhostMode || isLocalFoVLocked || inMicroStreetMode) {
     if (isLocalFoVLocked) updateLocalRadarHalo(nextLatLng);
-    if (map) map.panTo(nextLatLng, { animate: true, duration: 0.12 });
+    if (map) map.panTo(nextLatLng, { animate: true, duration: isGhostMode ? 0.08 : 0.12 });
   }
 
   // 即時足跡粒子渲染
@@ -7234,8 +7408,8 @@ function movePlayerByOffset(dLat, dLon, headingDeg) {
   updateStreetProximityHUD(nextLat, nextLng);
   checkStreetProximityInteraction(nextLat, nextLng);
 
-  // 掃描老街迷霧
-  updateFogOfWarMarkers({ lat: nextLat, lng: nextLng });
+  // 掃描老街迷霧 (幽靈模式下感應半徑擴大為 350m)
+  updateFogOfWarMarkers({ lat: nextLat, lng: nextLng }, isGhostMode ? 350 : undefined);
 
   // 如果開啟了導航目標，動態更新導航折線
   if (walkNavTargetMarker && isWalkNavFlowlineActive) {
