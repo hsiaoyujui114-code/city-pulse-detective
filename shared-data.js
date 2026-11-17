@@ -1423,7 +1423,7 @@ const ALL_50_CASES = [
   {
     "id": "CASE-11",
     "num": "11",
-    "title": "淡水紅毛城英國領事館旗語密碼案",
+    "title": "淡水紅毛城英國領事官邸油畫失竊案",
     "subtitle": "國際海事雙旗信號旗語（International Maritime Semaphore Flag...",
     "sectorId": "NTP-06",
     "sectorName": "淡水特區・淡水紅毛城英國領事館",
@@ -1515,7 +1515,7 @@ const ALL_50_CASES = [
   {
     "id": "CASE-12",
     "num": "12",
-    "title": "淡水老街阿給名店調味罐比重案",
+    "title": "淡水老街阿給名店高比重甜辣醬案",
     "subtitle": "阿基米德浮力定律（F浮 = ρ液 × V排 × g）、耐高壓金屬球型浮標抗黏滯密碼槽設計、實驗室...",
     "sectorId": "NTP-06",
     "sectorName": "淡水特區・淡水老街渡船頭",
@@ -1607,7 +1607,7 @@ const ALL_50_CASES = [
   {
     "id": "CASE-13",
     "num": "13",
-    "title": "龍山寺後巷夜市老攤偽鈔防偽案",
+    "title": "艋舺夜市千元偽鈔調包案",
     "subtitle": "中央印製廠新台幣千元券防偽特徵、純長纖維棉漿無螢光紙張特性、365nm 長波 UV 電子躍遷螢光...",
     "sectorId": "TPE-02",
     "sectorName": "萬華特區・艋舺龍山寺廣州街夜市",
@@ -1699,7 +1699,7 @@ const ALL_50_CASES = [
   {
     "id": "CASE-14",
     "num": "14",
-    "title": "剝皮寮歷史街區失傳藥籤暗語案",
+    "title": "剝皮寮歷史街區清代藥籤五行旋轉矩陣密碼案",
     "subtitle": "古典矩陣藏頭詩密碼（Matrix Transposition Cipher）與《本草綱目》植物五...",
     "sectorId": "TPE-02",
     "sectorName": "萬華特區・剝皮寮歷史街區",
