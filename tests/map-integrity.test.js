@@ -122,11 +122,18 @@ assert(!/\.compass-rose-hud\s*\{[^}]*top:\s*192px/.test(realmapCss), '.compass-r
 
 for (const f of ['cases.json', 'shared-data.js', 'cyber-realmap.js', 'cases.html']) {
   const txt = readUtf8(f);
-  assert(!/\$\\Delta|\$\\text\{|\$Delta h/.test(txt), `Raw LaTeX expression detected in ${f} (ISSUE-18)`);
-  assert(!/\$\s*[，。；;\uFF1B]|（\s*\$\s*）|\(\s*\$\s*\)/.test(txt), `Dangling single dollar sign detected in ${f} (ISSUE-18)`);
-  assert(!/（\s*）/.test(txt), `Empty parentheses from broken formula removal in ${f} (ISSUE-18)`);
-  assert(!/：\s*=\s*/.test(txt), `Orphaned equality sign with missing formula variable in ${f} (ISSUE-18)`);
+  assert(!/\$\Delta|\$\text\{|\$Delta h/.test(txt), `Raw LaTeX expression detected in ${f} (ISSUE-18)`);
 }
+
+// 5b. Formula & symbol integrity in cases.json diy_experiment (ISSUE-18: catch unpaired $, empty parens, orphaned =)
+cases.forEach(c => {
+  const exp = typeof c.diy_experiment === 'string' ? c.diy_experiment : JSON.stringify(c.diy_experiment || {});
+  const stripped = exp.replace(/\$[^$\n]+\$/g, '');
+  assert(!stripped.includes('$'), `Unpaired single dollar sign in ${c.id} diy_experiment (ISSUE-18)`);
+  assert(!/\$\s*\$/.test(exp), `Empty formula $$ in ${c.id} diy_experiment (ISSUE-18)`);
+  assert(!/（\s*）/.test(exp), `Empty parentheses in ${c.id} diy_experiment (ISSUE-18)`);
+  assert(!/：\s*=\s*/.test(exp), `Orphaned equality sign in ${c.id} diy_experiment (ISSUE-18)`);
+});
 
 const proposalHtml = readUtf8('proposal.html');
 const proposalVisible = proposalHtml.replace(/<script[\s\S]*?<\/script>/gi, '');

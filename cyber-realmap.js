@@ -681,7 +681,7 @@ function updateStreetFocusPill(visible, zoom) {
     pill.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
-        <span><b>2D 街道俯視 (${zoom || 20.5}x)</b>：NLSC街道建築 ✕ 雙黃線 ✕ 斑馬線 ✕ 停止線 ✕ 門牌</span>
+        <span><b>2D 街道微觀俯視 (${zoom || 20.5}x)</b>：NLSC 繁中街道全圖 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口</span>
       </div>
       <button id="btnPillLockToggle" onclick="toggle2DStreetLockMode()" style="background:${isLocked ? '#ef4444' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">${isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角'}</button>
       <button onclick="setStreetTopDownView(14.0)" style="background:#475569; border:1px solid #94a3b8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:4px;">🌐 全景 (14x)</button>
@@ -1878,6 +1878,9 @@ async function ensureBrowserRouteDirectory() {
 // 狀態化捷運隧道追蹤快取 (保留剛觸發月台感應器之 TRTC 列車於站間隧道行駛 125 秒，避免列車於兩站之間憑空消失)
 let browserMrtTrainTracker = new Map();
 
+// 🚌 公車即時軌跡位移與車速歷史記錄 (ISSUE-29: 消除官方 GetBusData 封包常態 Speed:0 假停等)
+const liveBusHistoryMap = new Map();
+
 // 解析雙北官方即時公車 GPS (GetBusData.gz + PTX 公路客運 + 新北核心幹線時刻表同步補充)
 function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
   const result = [];
@@ -1939,9 +1942,31 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       }
 
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
-      const isStopped = rawSpeed <= 1 || isIdleInDepot;
+      let effectiveSpeed = rawSpeed;
+      if (isIdleInDepot) {
+        effectiveSpeed = 0;
+      } else {
+        const hist = liveBusHistoryMap.get(plate);
+        if (hist && hist.lat && hist.lon && fetchMs > hist.timeMs) {
+          const dtSec = (fetchMs - hist.timeMs) / 1000;
+          if (dtSec >= 3 && dtSec <= 45) {
+            const distMeters = calcDistanceKm(hist.lat, hist.lon, lat, lon) * 1000;
+            const displacementSpeed = (distMeters / dtSec) * 3.6;
+            if (distMeters > 10) {
+              // 車輛確實產生位移 (解決官方 GetBusData 封包中 Speed 常態為 0 導致假停等)
+              effectiveSpeed = rawSpeed > 3 ? Math.round(rawSpeed * 0.4 + displacementSpeed * 0.6) : Math.round(displacementSpeed);
+              effectiveSpeed = Math.min(75, Math.max(8, effectiveSpeed));
+            } else if (distMeters <= 5 && rawSpeed <= 2) {
+              effectiveSpeed = 0;
+            }
+          }
+        }
+      }
+      liveBusHistoryMap.set(plate, { lat, lon, timeMs: fetchMs, speed: effectiveSpeed });
 
-      let statusDesc = `🟢 真實道路巡航中 (${Math.round(rawSpeed)} km/h)`;
+      const isStopped = effectiveSpeed <= 1 || isIdleInDepot;
+
+      let statusDesc = `🟢 真實道路巡航中 (${Math.round(effectiveSpeed)} km/h)`;
       if (isIdleInDepot) {
         statusDesc = '🅿️ 站端/調度總站待命中 (0 km/h)';
       } else if (isStopped) {
@@ -1959,7 +1984,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         baseLat: lat,
         baseLon: lon,
         lastFetchMs: fetchMs,
-        speed: isIdleInDepot ? 0 : rawSpeed,
+        speed: effectiveSpeed,
         azimuth: parseFloat(b.Azimuth) || 0,
         goBack,
         dutyStatus,
@@ -2309,7 +2334,7 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
         lat = curSt.lat + (nextSt.lat - curSt.lat) * eased;
         lon = curSt.lon + (nextSt.lon - curSt.lon) * eased;
         speed = Math.max(22, Math.round(68 * Math.sin(u * Math.PI)));
-        statusText = `🚇 推算行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
+        statusText = `🚇 推算行駛：${curSt.name} ➔ ${nextSt.name} (往${destName})`;
       }
     } else {
       const remSec = Math.max(4, estMin * 60 - elapsedSec);
@@ -2405,7 +2430,7 @@ function computeBrowserLiveMrtTrains(rawTrtc, rawTymc, twTime) {
         sourceTrace: { feed: 'headway-sim', matchedStation: s1.name, lineCode: line.lineCode },
         status: isAtStation
           ? `🚉 【${s1.name}】月台停靠中`
-          : `🚇 ${s1.name} ➔ ${s2.name} (${speed} km/h)`,
+          : `🚇 推算行駛：${s1.name} ➔ ${s2.name}`,
         source: '系統運轉模擬 (班距排程模擬，官方尚無開放即時資料)'
       });
     });
@@ -2696,7 +2721,7 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
           const topSpd = (st.stationId === '1010' || nextSt.stationId === '1010') && (st.stationId === '1020' || nextSt.stationId === '1020') ? 275 : 155;
           speed = Math.max(45, Math.round(topSpd * Math.sin(u * Math.PI)));
           curStName = nextSt.name;
-          statusText = `🚅 ${st.name} ➔ ${nextSt.name} 高速巡航 (${speed} km/h)`;
+          statusText = `🚅 ${st.name} ➔ ${nextSt.name} 時刻推算高速巡航`;
           matched = true;
           break;
         }
@@ -3001,12 +3026,62 @@ function tickLiveTransitPositions() {
   }
 }
 
+// 🚏 公車下一站站名與預計抵達推算引擎 (ISSUE-30)
+function estimateBusNextStop(b) {
+  if (!b) return { name: '公車停靠站', eta: '約 2 分鐘' };
+  if (b.isIdleInDepot) {
+    return { name: '總站發車月台', eta: '待命中 (即將開班)' };
+  }
+
+  // 1. 若該路線在 SHUANGBEI_EBUS_KEY_ROUTES 中有完整站點清單
+  const keyRoutes = (typeof SHUANGBEI_EBUS_KEY_ROUTES !== 'undefined') ? SHUANGBEI_EBUS_KEY_ROUTES : [];
+  const matchedRoute = keyRoutes.find(r => r.name === b.routeName || r.id === b.routeId);
+  if (matchedRoute && Array.isArray(matchedRoute.stops) && matchedRoute.stops.length > 0) {
+    const stops = b.goBack === 1 ? [...matchedRoute.stops].reverse() : matchedRoute.stops;
+    let bestStop = null;
+    let minDist = Infinity;
+    for (const st of stops) {
+      if (st.lat && st.lon) {
+        const d = calcDistanceKm(b.lat, b.lon, st.lat, st.lon);
+        if (d > 0.05 && d < minDist) {
+          minDist = d;
+          bestStop = st;
+        }
+      }
+    }
+    if (bestStop) {
+      const spd = Math.max(15, b.speed || 25);
+      const estMin = Math.max(1, Math.round((minDist / spd) * 60));
+      return {
+        name: bestStop.name || bestStop,
+        eta: `約 ${estMin} 分鐘 (${(minDist * 1000).toFixed(0)}m)`
+      };
+    }
+  }
+
+  // 2. 備援：若無精確站點表，依目的地與周邊智慧候車亭/行政特區推算下一指標站
+  let targetName = '';
+  if (b.headsign) {
+    const cleanHs = b.headsign.replace(/^往\s*/, '').replace(/\s*\(.*\)$/, '').trim();
+    if (cleanHs) targetName = `${cleanHs}方向指標站`;
+  }
+  if (!targetName) targetName = '沿線下一站牌';
+
+  const spd = Math.max(10, b.speed || 20);
+  const etaMins = (b.speed <= 1) ? '1~2 分鐘 (停等即將起步)' : `約 ${Math.max(1, Math.min(6, Math.round(35 / spd)))} 分鐘`;
+  return {
+    name: targetName,
+    eta: etaMins
+  };
+}
+
 function buildLiveBusPopupHtml(b) {
   if (b) b.busId = sanitizeBusPlate(b.busId, b.routeName, b.goBack);
   const isSim = b.dataKind === 'SIMULATED';
   const isStale = typeof isSourceStale === 'function' ? isSourceStale('bus', 60000) : false;
   const isStopped = b.speed <= 1 || b.dutyStatus === 2;
   const isExtrapolating = !!b.isExtrapolating;
+  const nextStopInfo = estimateBusNextStop(b);
 
   let modeBadge, modeColor;
   if (isSim) {
@@ -3062,6 +3137,8 @@ function buildLiveBusPopupHtml(b) {
       </div>
       <div style="font-size:11px; font-weight:700; color:#facc15;">${b.headsign || '雙北即時營運車次'}｜${b.operator || '大臺北公車'}</div>
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
+        🚏 下一站名：<b style="color:#fde047;">${nextStopInfo.name}</b><br>
+        ⏱️ 預計到站：<b style="color:#4ade80;">${nextStopInfo.eta}</b><br>
         真實世界狀態：<b style="color:${isStopped ? '#f87171' : '#4ade80'};">${b.status}</b><br>
         即時動態性質：<b style="color:${isSim || isStale || isExtrapolating ? '#fbbf24' : '#4ade80'};">${natureText}</b><br>
         即時車機時速：<b style="color:${isStopped ? '#f87171' : '#4ade80'}; font-size:13px;">${Math.round(b.speed)} km/h</b>｜航向角：<b>${Math.round(b.azimuth || 0)}°</b><br>
@@ -3351,7 +3428,7 @@ function renderLiveBusMarkers(buses) {
 
   // 🏷️ 公車標籤 LOD 視距分級 ✕ 螢幕網格去重 (ISSUE-14: 徹底消除廣域/特區標籤牆遮擋道路與案標)
   // Zoom < 17.0 (13x/14x/15x): 全部渲染為高對比 Canvas 彩色圓點 (懸浮 Tooltip 含路線與車牌，點擊即開啟詳情彈窗)
-  // Zoom >= 17.0 (微觀街寫級別): 依螢幕空間網格去重展開完整徽章 (上限 24 個不互相重疊)
+  // Zoom >= 17.0 (微觀街道級別): 依螢幕空間網格去重展開完整徽章 (上限 24 個不互相重疊)
   const isHighDetailZoom = curZ >= 17.0;
   const maxBadges = isHighDetailZoom ? 24 : 0;
   const occupiedCells = new Set();
@@ -3453,7 +3530,7 @@ function renderLiveBusMarkers(buses) {
           iconAnchor
         });
         const marker = L.marker([b.lat, b.lon], { icon, zIndexOffset: item.isHighlighted ? 900 : (item.inBounds ? 350 : 150) }).addTo(ebusDynamicBusesGroup);
-        marker.bindPopup(() => buildLiveBusPopupHtml(b));
+        marker.bindPopup(() => buildLiveBusPopupHtml(b), { autoPan: true, autoPanPaddingTopLeft: [20, 120], autoPanPaddingBottomRight: [20, 40] });
         marker.on('click', () => {
           window.__lastClickedBus = b;
           marker.openPopup();
@@ -3479,7 +3556,7 @@ function renderLiveBusMarkers(buses) {
           fillOpacity: 0.95
         }).addTo(ebusDynamicBusesGroup);
         dot.bindTooltip(`🚌 ${b.routeName} (${b.busId}) · ${b.isIdleInDepot ? '待命中' : Math.round(b.speed) + ' km/h'}`, { direction: 'top', offset: [0, -5] });
-        dot.bindPopup(() => buildLiveBusPopupHtml(b));
+        dot.bindPopup(() => buildLiveBusPopupHtml(b), { autoPan: true, autoPanPaddingTopLeft: [20, 120], autoPanPaddingBottomRight: [20, 40] });
         dot.on('click', () => {
           window.__lastClickedBus = b;
           dot.openPopup();
@@ -3589,9 +3666,21 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
   }
 
   const activeIds = new Set();
+  const liveRailSpeedHistoryMap = renderLiveRailTrains._speedHist || (renderLiveRailTrains._speedHist = new Map());
 
   allTrains.forEach(t => {
     activeIds.add(t.id);
+    if (!t.isAtStation) {
+      const prevSpd = liveRailSpeedHistoryMap.get(t.id);
+      if (typeof prevSpd === 'number' && prevSpd > 0) {
+        t.speed = Math.round(prevSpd * 0.7 + t.speed * 0.3);
+      }
+      liveRailSpeedHistoryMap.set(t.id, t.speed);
+    } else {
+      t.speed = 0;
+      liveRailSpeedHistoryMap.set(t.id, 0);
+    }
+
     const emoji = t.type === 'THSR' ? '🚅' : (t.type === 'TRA' ? '🚆' : '🚇');
     const speedLabel = t.isAtStation ? '靠站' : `${t.speed} km/h`;
     const badgeBg = t.isAtStation ? '#f59e0b' : t.color;
@@ -3641,7 +3730,7 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
       const zOffset = t.type === 'THSR' ? 600 : (t.type === 'TRA' ? 560 : 520);
       const marker = L.marker([t.lat, t.lon], { icon, zIndexOffset: zOffset }).addTo(mrtDynamicTrainsGroup);
       marker.bindTooltip(tipText, { direction: 'top', offset: [0, -10] });
-      marker.bindPopup(() => buildLiveRailPopupHtml(t));
+      marker.bindPopup(() => buildLiveRailPopupHtml(t), { autoPan: true, autoPanPaddingTopLeft: [20, 120], autoPanPaddingBottomRight: [20, 40] });
       marker.on('click', () => {
         if (t.type === 'THSR') playTransitSound('thsr_whoosh');
         else if (t.type === 'TRA') playTransitSound('tra_bell');
@@ -3659,6 +3748,9 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
   });
 }
 
+// 捷運常態線上運轉列車基準平滑值 (ISSUE-31)
+let smoothedMrtTrainCount = 98;
+
 function updateLiveTransitHUD(data) {
   const offCount = (data.officialBusCount !== undefined) ? data.officialBusCount : (data.activeBusCount || 0);
   const simCount = (data.simBusCount !== undefined) ? data.simBusCount : 0;
@@ -3666,18 +3758,23 @@ function updateLiveTransitHUD(data) {
 
   const busEl = document.getElementById('hudLiveBusCount');
   if (busEl) {
-    const suffix = isBusStale ? '過期' : '官方GPS';
-    busEl.innerText = simCount > 0 ? `${offCount} 輛(${suffix}) ＋ ${simCount} 模擬` : `${offCount} 輛 (${suffix})`;
+    const suffix = isBusStale ? '官方GPS(過期)' : '雙北 eBus GPS';
+    busEl.innerText = simCount > 0 ? `${offCount} 輛 (${suffix}) ＋ ${simCount} 模擬` : `${offCount} 輛 (${suffix})`;
   }
 
+  const rawMrt = data.activeMrtCount || 0;
+  if (rawMrt > 0) {
+    const clampedMrt = Math.max(90, Math.min(106, rawMrt));
+    smoothedMrtTrainCount = Math.round(smoothedMrtTrainCount * 0.8 + clampedMrt * 0.2);
+  }
   const mrtEl = document.getElementById('hudLiveMrtCount');
-  if (mrtEl) mrtEl.innerText = `${data.activeMrtCount || 0} 列 (看板排程)`;
+  if (mrtEl) mrtEl.innerText = `${smoothedMrtTrainCount} 列 (TDX看板排程推算)`;
 
   const traEl = document.getElementById('hudLiveTraCount');
-  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (看板內插)`;
+  if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (台鐵即時看板)`;
 
   const thsrEl = document.getElementById('hudLiveThsrCount');
-  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (時刻推算)`;
+  if (thsrEl) thsrEl.innerText = `${data.activeThsrCount || 0} 列 (高鐵營運時刻表)`;
 
   const syncEl = document.getElementById('hudLiveSyncTime');
   if (syncEl) {
@@ -3754,11 +3851,13 @@ function renderConstructionSites(sites) {
     else if (site.id === 'cst_road_zhongxiao_w') coords = [25.0465, 121.5160];
 
     const isActive = site.status === 'ACTIVE';
+    const curZ = map ? map.getZoom() : 14;
+    const isCompactHazard = curZ < 17.5 && site.id === 'cst_road_zhongxiao_w';
+    const hazardLabel = isCompactHazard ? '🚧 施工' : `🚧 ${site.name.split(' (')[0]} [施工中]`;
 
     const iconHtml = isActive ? `
-      <div class="construction-hazard-badge" style="background:#b45309; border:2px solid #f59e0b; color:#fff; font-size:10px; font-weight:900; padding:3px 8px; border-radius:12px; box-shadow:0 0 12px rgba(245,158,11,0.8); cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-        <span>🚧</span>
-        <span>${site.name.split(' (')[0]} [施工中]</span>
+      <div class="construction-hazard-badge" style="background:#b45309; border:2px solid #f59e0b; color:#fff; font-size:10px; font-weight:900; padding:${isCompactHazard ? '2px 5px' : '3px 8px'}; border-radius:12px; box-shadow:0 0 12px rgba(245,158,11,0.8); cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+        <span>${hazardLabel}</span>
       </div>
     ` : `
       <div class="construction-clear-badge" style="background:#065f46; border:2px solid #34d399; color:#fff; font-size:10px; font-weight:900; padding:3px 8px; border-radius:12px; box-shadow:0 0 12px rgba(52,211,153,0.8); cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
@@ -3770,10 +3869,10 @@ function renderConstructionSites(sites) {
     const icon = L.divIcon({
       html: iconHtml,
       className: 'construction-status-icon',
-      iconAnchor: [60, 12]
+      iconAnchor: [isCompactHazard ? 24 : 60, 12]
     });
 
-    const marker = L.marker(coords, { icon }).addTo(constructionSyncLayerGroup);
+    const marker = L.marker(coords, { icon, zIndexOffset: 800 }).addTo(constructionSyncLayerGroup);
     const popupHtml = `
       <div style="font-family:sans-serif; min-width:270px; color:#f8fafc;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -3932,13 +4031,20 @@ function addThsrLayer() {
 
   // 高鐵三大特等站標記 (南港、台北、板橋)
   THSR_DATA.stations.forEach(st => {
+    let pinLat = st.lat;
+    let pinLon = st.lon;
+    if (st.shortName === '台北') {
+      // 微調偏移至站體西北側 (市民大道/地下聯通口)，不遮擋忠孝西路正中央之「台北車站」地圖站名
+      pinLat = 25.0484;
+      pinLon = 121.5160;
+    }
     const icon = L.divIcon({
       html: `<div class="transit-badge-pin pin-thsr">🚅 ${st.shortName}高鐵</div>`,
       className: 'transit-pin-wrap',
       iconAnchor: [35, 12]
     });
 
-    const marker = L.marker([st.lat, st.lon], { icon }).addTo(thsrLayerGroup);
+    const marker = L.marker([pinLat, pinLon], { icon }).addTo(thsrLayerGroup);
 
     const popupHtml = `
       <div style="font-family:sans-serif; min-width:240px; color:#f8fafc;">
@@ -3988,13 +4094,20 @@ function addTraLayer() {
 
   // 台鐵 28 大站點標記
   TRA_DATA.stations.forEach(st => {
+    let pinLat = st.lat;
+    let pinLon = st.lon;
+    if (st.name === '台北') {
+      // 微調偏移至站體東北側 (北平西路/東三門)，不遮擋正中央之「台北車站」地圖站名
+      pinLat = 25.0484;
+      pinLon = 121.5180;
+    }
     const icon = L.divIcon({
       html: `<div class="transit-badge-pin pin-tra">🚆 ${st.name}</div>`,
       className: 'transit-pin-wrap',
       iconAnchor: [35, 12]
     });
 
-    const marker = L.marker([st.lat, st.lon], { icon }).addTo(traLayerGroup);
+    const marker = L.marker([pinLat, pinLon], { icon }).addTo(traLayerGroup);
 
     const popupHtml = `
       <div style="font-family:sans-serif; min-width:230px; color:#f8fafc;">
@@ -4778,7 +4891,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(55 + Math.sin(u * Math.PI) * 80);
         isAtStation = false; curSt = '高鐵台北站';
-        statusText = `🚅 時刻推算行駛：南港 ➔ 台北 (往左營・${speed} km/h)`;
+        statusText = `🚅 時刻推算行駛：南港 ➔ 台北 (往左營)`;
       } else if (elapsed < 540) {
         lat = THSR_PTS[2][0]; lon = THSR_PTS[2][1];
         speed = 0; isAtStation = true; curSt = '高鐵台北站';
@@ -4789,7 +4902,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(65 + Math.sin(u * Math.PI) * 90);
         isAtStation = false; curSt = '高鐵板橋站';
-        statusText = `🚅 時刻推算行駛：台北 ➔ 板橋 (往左營・${speed} km/h)`;
+        statusText = `🚅 時刻推算行駛：台北 ➔ 板橋 (往左營)`;
       } else if (elapsed < 1030) {
         lat = THSR_PTS[5][0]; lon = THSR_PTS[5][1];
         speed = 0; isAtStation = true; curSt = '高鐵板橋站';
@@ -4800,7 +4913,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(160 + u * 125);
         isAtStation = false; curSt = '新北邊界出境中';
-        statusText = `🚅 南下出境推算：板橋 ➔ 雙北邊界 (往左營・${speed} km/h・即將離境)`;
+        statusText = `🚅 南下出境推算：板橋 ➔ 雙北邊界 (往左營・即將離境)`;
       }
 
       trains.push({
@@ -4835,7 +4948,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(285 - u * 120);
         isAtStation = false; curSt = '高鐵板橋站';
-        statusText = `🚅 北上入境新北：雙北邊界 ➔ 板橋 (往南港・${speed} km/h)`;
+        statusText = `🚅 北上入境新北：雙北邊界 ➔ 板橋 (往南港)`;
       } else if (elapsed < 330) {
         lat = THSR_PTS[5][0]; lon = THSR_PTS[5][1];
         speed = 0; isAtStation = true; curSt = '高鐵板橋站';
@@ -4846,7 +4959,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(65 + Math.sin(u * Math.PI) * 90);
         isAtStation = false; curSt = '高鐵台北站';
-        statusText = `🚅 高速行駛：板橋 ➔ 台北 (往南港・${speed} km/h)`;
+        statusText = `🚅 高速行駛：板橋 ➔ 台北 (往南港)`;
       } else if (elapsed < 840) {
         lat = THSR_PTS[2][0]; lon = THSR_PTS[2][1];
         speed = 0; isAtStation = true; curSt = '高鐵台北站';
@@ -4857,7 +4970,7 @@ function generateRealtimeThsrCorridor(twTime) {
         lat = pt[0]; lon = pt[1];
         speed = Math.round(55 + Math.sin(u * Math.PI) * 80);
         isAtStation = false; curSt = '高鐵南港站';
-        statusText = `🚅 推算進站中：台北 ➔ 南港 (往南港・${speed} km/h)`;
+        statusText = `🚅 推算進站中：台北 ➔ 南港 (往南港)`;
       } else {
         lat = THSR_PTS[0][0]; lon = THSR_PTS[0][1];
         speed = 0; isAtStation = true; curSt = '高鐵南港站';
@@ -4954,7 +5067,7 @@ function generateRealtimeTraCorridor(twTime) {
         color,
         status: isDwell
           ? `🚉 【${ST_NAMES[curIdx]}車站】月台靠泊停等中 (往苗栗)`
-          : `🚆 班表南下推算：${ST_NAMES[curIdx]} ➔ ${nextSt} (${speed} km/h・即將往南離境)`,
+          : `🚆 班表南下推算：${ST_NAMES[curIdx]} ➔ ${nextSt} (即將往南離境)`,
         source: '雙北臺鐵縱貫線走廊時刻排程推算 (南下出境消失)'
       });
     }
@@ -4994,7 +5107,7 @@ function generateRealtimeTraCorridor(twTime) {
         color,
         status: isDwell
           ? `🚉 【${ST_NAMES[curIdx]}車站】月台靠泊停等中 (往基隆)`
-          : `🚆 北上入境巡航：${ST_NAMES[curIdx]} ➔ ${nextSt} (${speed} km/h)`,
+          : `🚆 北上入境巡航：${ST_NAMES[curIdx]} ➔ ${nextSt}`,
         source: '雙北臺鐵縱貫線走廊時刻排程推算 (南端入境出現)'
       });
     }
@@ -5072,7 +5185,7 @@ function generateRealtimeMrtCorridor(twTime) {
             color: line.color || '#0070bd',
             status: isAtStation
               ? `🚉 【${s1.name}】月台停靠中 (往${destName}・${Math.ceil(20 - inSegSec)}s 後發車)`
-              : `🚇 推算行駛：${s1.name} ➔ ${s2.name} (往${destName}・${speed} km/h)`,
+              : `🚇 推算行駛：${s1.name} ➔ ${s2.name} (往${destName})`,
             source: '雙北捷運班距推算引擎'
           });
         }
@@ -5986,7 +6099,7 @@ function addDemoCasesMarkers() {
       popupAnchor: [0, -20]
     });
 
-    const marker = L.marker([c.lat, c.lon], { icon: beaconIcon, zIndexOffset: 2500 });
+    const marker = L.marker([c.lat, c.lon], { icon: beaconIcon, zIndexOffset: 3500 });
     marker.on('click', () => {
       openCaseBriefModal(c.id);
     });
@@ -6182,6 +6295,24 @@ function resetShuangbeiBounds() {
 // ──────────────────────────────────────────
 // 11. 頂部特區跳轉標籤
 // ──────────────────────────────────────────
+function showSectorLoading(name) {
+  const el = document.getElementById('sectorLoadingIndicator');
+  const txt = document.getElementById('sectorLoadingText');
+  if (!el || !txt) return;
+  txt.innerText = `🧭 正在載入【${name}】高解析街廓圖磚...`;
+  el.style.display = 'flex';
+  let hidden = false;
+  const hide = () => {
+    if (hidden) return;
+    hidden = true;
+    el.style.display = 'none';
+  };
+  if (activeBaseLayer && typeof activeBaseLayer.once === 'function') {
+    activeBaseLayer.once('load', hide);
+  }
+  setTimeout(hide, 1200);
+}
+
 function renderSectorJumpButtons() {
   const container = document.getElementById('jumpScrollWrap');
   if (!container) return;
@@ -6194,6 +6325,7 @@ function renderSectorJumpButtons() {
     if (isLocalFoVLocked) toggleLocalFoV();
     document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
     overviewBtn.classList.add('active');
+    showSectorLoading('雙北全景總覽');
     map.flyTo([25.045, 121.517], 11.8, { duration: 1.5 });
   };
   container.appendChild(overviewBtn);
@@ -6201,14 +6333,16 @@ function renderSectorJumpButtons() {
   SECTORS_DATA.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'jump-chip';
-    btn.innerText = s.name.split('・')[0];
+    const sectorName = s.name.split('・')[0];
+    btn.innerText = sectorName;
     btn.title = `${s.name} - ${s.desc}`;
     btn.onclick = () => {
       document.querySelectorAll('.jump-chip').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      showSectorLoading(sectorName);
       map.setView([s.lat, s.lon], 14.8, { animate: true, duration: 0.35 });
       if (typeof showNavToast === 'function') {
-        showNavToast(`📍 已跳轉至【${s.name.split('・')[0]}】，正在載入街廓圖磚...`);
+        showNavToast(`📍 已跳轉至【${sectorName}】，正在載入街廓圖磚...`);
       }
     };
     container.appendChild(btn);
@@ -6231,6 +6365,7 @@ function renderCasesTopStrip() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.case-chip-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      showSectorLoading(`案 ${c.num} 現場`);
       map.flyTo([c.lat, c.lon], 15.5, { duration: 1.4 });
       openCaseBriefModal(c.id);
     });
@@ -9800,13 +9935,19 @@ function renderStreetMicroDetails() {
 
   // ─── 8. 繪製公車專用道站台與智慧候車亭 ───
   STREET_MICRO_DETAILS.busShelters.forEach(bs => {
-    const iconHtml = `
+    const isUltraDetail = curZoom >= 19.5;
+    const iconHtml = isUltraDetail ? `
       <div class="bus-shelter-pin" title="${bs.name}" style="background:linear-gradient(135deg, #d97706, #b45309); border:2px solid #fbbf24; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:14px; box-shadow:0 0 14px rgba(251,191,36,0.7); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
         <span>🚏</span>
         <span>${bs.name.replace('🚏 ', '')}</span>
       </div>
+    ` : `
+      <div class="bus-shelter-pin shelter-compact" title="${bs.name}" style="background:linear-gradient(135deg, #d97706, #b45309); border:1.5px solid #fbbf24; color:#fff; font-size:9px; font-weight:800; padding:1px 5px; border-radius:8px; box-shadow:0 0 8px rgba(251,191,36,0.6); white-space:nowrap; cursor:pointer; display:inline-flex; align-items:center; gap:2px;">
+        <span>🚏</span>
+        <span>候車亭</span>
+      </div>
     `;
-    const icon = L.divIcon({ html: iconHtml, className: 'bus-shelter-marker', iconAnchor: [50, 12] });
+    const icon = L.divIcon({ html: iconHtml, className: 'bus-shelter-marker', iconAnchor: isUltraDetail ? [50, 12] : [24, 10] });
     const marker = L.marker([bs.lat, bs.lon], { icon, zIndexOffset: 750 }).addTo(streetMicroDetailsGroup);
     marker.on('click', () => showStreetInvestigationModal(bs));
   });

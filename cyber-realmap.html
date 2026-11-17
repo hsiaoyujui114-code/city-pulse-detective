@@ -121,6 +121,12 @@
     <button onclick="clearBusFilterOnlySelected()" class="pill-clear-btn" title="恢復全雙北所有公車">✕ 恢復全公車</button>
   </div>
 
+  <!-- 🧭 特區跳轉圖資載入提示膠囊 (ISSUE-16: 解決跨特區跳轉圖磚連線中空白焦慮) -->
+  <div id="sectorLoadingIndicator" class="sector-loading-pill" style="display:none;">
+    <span class="loading-spin">🧭</span>
+    <span id="sectorLoadingText">正在連線內政部國土測繪 (NLSC) 載入特區圖磚...</span>
+  </div>
+
   
 
   <!-- 左側即時遙測 HUD 面板 (Left Telemetry Panel) -->
@@ -289,7 +295,7 @@
         <span style="color:#00f0ff;">ON</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleMrtTrains" onclick="toggleMrtTrainsLayer()">
-        <span>🚄 捷運真實動態列車 (平滑加減速)</span>
+        <span>🚄 捷運班距推算列車 (平滑加減速)</span>
         <span style="color:#38bdf8;">ACTIVE</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleUnderConstruction" onclick="toggleUnderConstructionLayer()">
@@ -456,7 +462,7 @@
 
   <!-- 底部操作提示 (Bottom Hint Bar - 精簡單行避免與街景提示列重疊裁切) -->
   <div class="bottom-hint-bar">
-    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[Z]</span> 2D街寫特寫 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[滾輪]</span> 1:1 縮放 · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
+    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[Z]</span> 2D街道特寫 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[滾輪]</span> 1:1 縮放 · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
   </div>
 
   <!-- 雙軌 SSOT 單一資料源 -->
