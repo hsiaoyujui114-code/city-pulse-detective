@@ -78,7 +78,7 @@ function sanitizeBusPlate(busId, routeName, dirIndex) {
 const SECTORS_DATA = (typeof SHUANGBEI_41_SECTORS !== 'undefined') ? SHUANGBEI_41_SECTORS : [];
 const STORES_DATA = (typeof REAL_WORLD_STORES !== 'undefined') ? REAL_WORLD_STORES : [];
 const PARKS_DATA = (typeof SHUANGBEI_REAL_PARKS !== 'undefined') ? SHUANGBEI_REAL_PARKS : [];
-const CASES_DATA = (typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : [];
+const CASES_DATA = (typeof ALL_50_CASES !== 'undefined' && Array.isArray(ALL_50_CASES) && ALL_50_CASES.length === 50) ? ALL_50_CASES : ((typeof DEMO_10_CASES !== 'undefined') ? DEMO_10_CASES : []);
 
 // 2. 雙北大眾運輸四軌資料源 (高鐵 ✕ 臺鐵 ✕ 捷運 ✕ 大臺北公車)
 const THSR_DATA = (typeof SHUANGBEI_THSR_NETWORK !== 'undefined') ? SHUANGBEI_THSR_NETWORK : null;
@@ -193,7 +193,7 @@ let isMrtVisible = true;
 let isMrtTrainsVisible = true;
 let isBusVisible = true;
 let isBusFleetVisible = true;
-let isTrafficLightsVisible = true;
+let isTrafficLightsVisible = false; // 依委託人指示徹底刪除紅綠燈
 let isUnderConstructionVisible = true;
 let isExpresswaysVisible = true;
 let isCoachHubsVisible = true;
@@ -366,7 +366,7 @@ function initCyberRealMap() {
   window.streetMicroDetailsGroup = streetMicroDetailsGroup;
   playerFootstepGroup = L.layerGroup().addTo(map);
   streetFogOfWarLayerGroup = L.layerGroup();
-  trafficLightsLayerGroup = L.layerGroup().addTo(map);
+  trafficLightsLayerGroup = L.layerGroup(); // 依委託人指示徹底刪除紅綠燈，不加入地圖
   underConstructionLayerGroup = L.layerGroup().addTo(map);
   expresswaysLayerGroup = L.layerGroup(); // 依委託人指示徹底刪除國道，不加入地圖
   coachHubsLayerGroup = L.layerGroup().addTo(map);
@@ -392,7 +392,7 @@ function initCyberRealMap() {
   addEBusLayer();
   addLearningVenuesLayer();
   addBuildingEntranceGlowLayer();
-  addTrafficLightsLayer();
+  // 依委託人指示徹底刪除紅綠燈：不載入交通號誌
   addUnderConstructionLayer();
   // 依指示徹底刪除國道高速公路
   if (expresswaysLayerGroup) expresswaysLayerGroup.clearLayers();
@@ -4573,88 +4573,15 @@ function interpolatePolyline(path, progress) {
 // 🚦 雙北規律三色交通號誌圖層 (Traffic Lights Layer & Dynamic Signal Engine)
 // 包含 10 大關鍵樞紐十字路口，綠燈 ➔ 黃燈 ➔ 紅燈循序循環，強制公車遵守停等
 // ──────────────────────────────────────────
+// 🚦 規律交通號誌系統 (依委託人指示徹底刪除紅綠燈)
+// ──────────────────────────────────────────
 function addTrafficLightsLayer() {
-  trafficLightsLayerGroup.clearLayers();
+  if (trafficLightsLayerGroup) trafficLightsLayerGroup.clearLayers();
   trafficLightMarkers.clear();
-  if (trafficLightsTimer) clearInterval(trafficLightsTimer);
-
-  const lights = (typeof SHUANGBEI_TRAFFIC_LIGHTS !== 'undefined') ? SHUANGBEI_TRAFFIC_LIGHTS : [];
-  if (lights.length === 0) return;
-
-  const nowSec = Date.now() / 1000;
-
-  lights.forEach(tl => {
-    const state = getTrafficLightDualPhaseState(tl, nowSec, 'EW');
-
-    const iconHtml = `
-      <div class="traffic-light-signal-box" id="tl_box_${tl.id}">
-        <div class="tl-housing">
-          <span class="tl-lamp tl-red ${state.state === 'RED' ? 'active' : ''}"></span>
-          <span class="tl-lamp tl-yellow ${state.state === 'YELLOW' ? 'active' : ''}"></span>
-          <span class="tl-lamp tl-green ${state.state === 'GREEN' ? 'active' : ''}"></span>
-        </div>
-        <div class="tl-countdown-pill" id="tl_pill_${tl.id}" style="border-color:${state.color}; color:${state.color};">
-          ${state.dual.ew.icon}EW ${state.dual.ew.remaining}s | ${state.dual.ns.icon}NS ${state.dual.ns.remaining}s
-        </div>
-      </div>
-    `;
-
-    const icon = L.divIcon({
-      html: iconHtml,
-      className: 'traffic-light-icon-wrap',
-      iconAnchor: [55, 14]
-    });
-
-    const marker = L.marker([tl.lat, tl.lon], { icon }).addTo(trafficLightsLayerGroup);
-
-    const updatePopup = (s) => `
-      <div style="font-family:sans-serif; color:#f8fafc; min-width:260px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="font-size:12px; font-weight:900; color:#38bdf8;">🚦 雙向交替號誌 (東西/南北相位差)</span>
-          <span style="font-size:10px; background:${s.color}; color:#fff; padding:1px 5px; border-radius:4px; font-weight:700;">${s.label}</span>
-        </div>
-        <strong style="font-size:12px; color:#ffffff;">${tl.name}</strong>
-        <div style="font-size:11px; color:#cbd5e1; margin-top:6px; line-height:1.5;">
-          東西向 (EW 相位)：<b style="color:${s.dual.ew.color};">${s.dual.ew.icon} ${s.dual.ew.label} (${s.dual.ew.remaining}s)</b><br>
-          南北向 (NS 相位)：<b style="color:${s.dual.ns.color};">${s.dual.ns.icon} ${s.dual.ns.label} (${s.dual.ns.remaining}s)</b><br>
-          監控行駛公車：${tl.routes.join(', ')}<br>
-          <span style="color:#ef4444; font-weight:700;">★ 交通法規：東西綠燈時南北強制紅燈；內積方向偵測杜絕煞停背後紅燈。</span>
-        </div>
-      </div>
-    `;
-
-    marker.bindPopup(updatePopup(state));
-    trafficLightMarkers.set(tl.id, { tl, marker, updatePopup });
-  });
-
-  // 每 1000ms 更新號誌燈狀態與雙向倒數秒數
-  trafficLightsTimer = setInterval(() => {
-    if (!isTrafficLightsVisible) return;
-    const curSec = Date.now() / 1000;
-    trafficLightMarkers.forEach(({ tl, marker, updatePopup }) => {
-      const s = getTrafficLightDualPhaseState(tl, curSec, 'EW');
-      const box = document.getElementById(`tl_box_${tl.id}`);
-      if (box) {
-        const r = box.querySelector('.tl-red');
-        const y = box.querySelector('.tl-yellow');
-        const g = box.querySelector('.tl-green');
-        if (r && y && g) {
-          r.className = 'tl-lamp tl-red' + (s.state === 'RED' ? ' active' : '');
-          y.className = 'tl-lamp tl-yellow' + (s.state === 'YELLOW' ? ' active' : '');
-          g.className = 'tl-lamp tl-green' + (s.state === 'GREEN' ? ' active' : '');
-        }
-        const pill = document.getElementById(`tl_pill_${tl.id}`);
-        if (pill) {
-          pill.style.borderColor = s.color;
-          pill.style.color = s.color;
-          pill.innerHTML = `${s.dual.ew.icon}EW ${s.dual.ew.remaining}s | ${s.dual.ns.icon}NS ${s.dual.ns.remaining}s`;
-        }
-      }
-      if (marker.isPopupOpen()) {
-        marker.setPopupContent(updatePopup(s));
-      }
-    });
-  }, 1000);
+  if (trafficLightsTimer) {
+    clearInterval(trafficLightsTimer);
+    trafficLightsTimer = null;
+  }
 }
 
 // ──────────────────────────────────────────
@@ -4751,14 +4678,15 @@ function addCoachHubsLayer() {
 }
 
 function toggleTrafficLightsLayer() {
-  isTrafficLightsVisible = !isTrafficLightsVisible;
-  if (isTrafficLightsVisible) map.addLayer(trafficLightsLayerGroup);
-  else map.removeLayer(trafficLightsLayerGroup);
+  isTrafficLightsVisible = false;
+  if (trafficLightsLayerGroup && map && map.hasLayer(trafficLightsLayerGroup)) {
+    map.removeLayer(trafficLightsLayerGroup);
+  }
   const btn = document.getElementById('btnToggleTrafficLights');
   if (btn) {
-    btn.classList.toggle('active', isTrafficLightsVisible);
+    btn.classList.remove('active');
     const badge = btn.querySelector('span:last-child');
-    if (badge) badge.innerText = isTrafficLightsVisible ? 'ON' : 'OFF';
+    if (badge) badge.innerText = 'OFF';
   }
 }
 
@@ -4891,47 +4819,11 @@ function initBusFleetContinuousDispatch() {
       const currentPt = curInfo.pt;
       const isEW = Math.abs(curInfo.headingLon) >= Math.abs(curInfo.headingLat);
 
-      // ★ 向量點積內積方向性號誌偵測 (V2-02)：公車前方 55m 內是否有紅燈 (排除身後已過路口號誌)
-      let shouldStopAtRed = false;
-      let activeTrafficLight = null;
-      let activeState = null;
-
-      for (let i = 0; i < lights.length; i++) {
-        const tl = lights[i];
-        const dLat = tl.lat - currentPt[0];
-        const dLon = tl.lon - currentPt[1];
-
-        // 航向向量與路口向量之點積內積：dot > 0 表示路口在公車正前方，dot <= 0 表示公車已過路口身後
-        const dot = curInfo.headingLat * dLat + curInfo.headingLon * dLon;
-        if (dot > 0) {
-          const distM = calcDistanceKm(currentPt[0], currentPt[1], tl.lat, tl.lon) * 1000;
-          if (distM <= 55 && distM >= 2) {
-            // ★ 雙向交替號誌判定 (V2-06)：東西向車流看 EW 相位，南北向車流看 NS 相位
-            const s = getTrafficLightDualPhaseState(tl, curSec, isEW ? 'EW' : 'NS');
-            if (s.state === 'RED' || (s.state === 'YELLOW' && s.remaining <= 2)) {
-              shouldStopAtRed = true;
-              activeTrafficLight = tl;
-              activeState = s;
-              break;
-            }
-          }
-        }
-      }
-
-      // ★ 累積里程與平滑加減速物理運算 (V2-01: 徹底消除紅轉綠瞬移數公里 Bug)
-      let statusText = '';
-      if (shouldStopAtRed && activeTrafficLight) {
-        // 遇紅燈平滑煞車降至 0 km/h，里程凍結不前進
-        item.currentSpeedKmH = Math.max(0, item.currentSpeedKmH - 28 * dt);
-        item.isStoppedAtRed = true;
-        statusText = `🚦 遵行號誌：【${isEW ? '東西向' : '南北向'}紅燈】停等停止線 (${activeTrafficLight.name.split(' (')[0]} 倒數 ${activeState.remaining}s)`;
-      } else {
-        // 綠燈起步加速巡航 (平滑加速至 38~44 km/h)
-        const targetSpeed = 38 + Math.sin(curSec + spec.offsetSec) * 5;
-        item.currentSpeedKmH = Math.min(targetSpeed, item.currentSpeedKmH + 16 * dt);
-        item.isStoppedAtRed = false;
-        statusText = `🚍 綠燈通暢・巡航行駛中 (${Math.round(item.currentSpeedKmH)} km/h)`;
-      }
+      // 累積里程與平滑加減速物理運算 (無紅綠燈阻擋，依自然路況流暢行駛)
+      const targetSpeed = 38 + Math.sin(curSec + spec.offsetSec) * 5;
+      item.currentSpeedKmH = Math.min(targetSpeed, item.currentSpeedKmH + 16 * dt);
+      item.isStoppedAtRed = false;
+      const statusText = `🚍 巡航行駛中 (${Math.round(item.currentSpeedKmH)} km/h)`;
 
       // 里程累積位移：dDist = speed * dt
       const dDist = (item.currentSpeedKmH / 3.6) * dt;
@@ -6518,13 +6410,16 @@ function renderCasesTopStrip() {
   CASES_DATA.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'case-chip-btn';
-    btn.innerHTML = `<span>🚨 案${c.num}</span><span class="case-chip-subject">${c.subject.split('（')[1]?.replace('）','') || '探究'}</span>`;
-    btn.title = `${c.title} (${c.subject})`;
+    const subLabel = (c.subject && c.subject.includes('（'))
+      ? c.subject.split('（')[1].replace('）', '')
+      : (c.title ? c.title.slice(0, 4) : '探究');
+    btn.innerHTML = '<span>🚨 案' + c.num + '</span><span class="case-chip-subject">' + subLabel + '</span>';
+    btn.title = c.title + ' (' + (c.location || '') + ')';
     btn.addEventListener('click', () => {
       document.querySelectorAll('.case-chip-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      showSectorLoading(`案 ${c.num} 現場`);
-      map.flyTo([c.lat, c.lon], 15.5, { duration: 1.4 });
+      showSectorLoading('案 ' + c.num + ' 現場');
+      map.flyTo([c.lat, c.lon], 16.5, { duration: 1.4 });
       openCaseBriefModal(c.id);
     });
     wrap.appendChild(btn);
@@ -6542,23 +6437,63 @@ function openCaseBriefModal(caseId) {
   const card = document.getElementById('caseBriefCard');
   if (!modal || !card) return;
 
-  const suspectsHtml = c.suspects.map(s => `
-    <div class="suspect-row">
-      <span class="suspect-name">👤 ${s.name} (${s.role})：</span>
-      <span style="color:#cbd5e1;">${s.motive}</span>
+  const suspects = c.suspects || [];
+  const suspectsHtml = suspects.map(s => `
+    <div class="suspect-row" style="margin-bottom:6px; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:4px;">
+      <span class="suspect-name" style="font-weight:700; color:#38bdf8;">👤 ${s.name} (${s.role || '關係人'})：</span>
+      <span style="color:#cbd5e1;">${s.motive || ''}</span>
     </div>
   `).join('');
 
-  const stepsHtml = c.investigationSteps.map(step => `
+  const steps = c.investigationSteps || [];
+  const stepsHtml = steps.map(step => `
     <li style="margin-bottom:4px; color:#cbd5e1;">${step}</li>
   `).join('');
+
+  const characters = c.characters || [];
+  const charactersHtml = characters.length > 0 ? `
+    <div class="case-section-box">
+      <div class="case-section-title">👥 涉案人物誌與口供</div>
+      ${characters.map(ch => `
+        <div style="background:rgba(255,255,255,0.04); border-left:3px solid #38bdf8; padding:8px 10px; margin-bottom:8px; border-radius:4px; font-size:12px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <strong style="color:#38bdf8; font-size:13px;">${ch.name}</strong>
+            <span style="color:#94a3b8;">${ch.identity || ''}</span>
+          </div>
+          <div style="color:#e2e8f0; margin-bottom:4px;"><strong style="color:#cbd5e1;">口供：</strong>${ch.statement || '無'}</div>
+          ${ch.flaw ? `<div style="color:#f87171;"><strong style="color:#fca5a5;">鑑識破綻：</strong>${ch.flaw}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const causeHtml = c.storyCause ? `
+    <div class="case-section-box">
+      <div class="case-section-title">📜 案發起因（三幕式・起）</div>
+      <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">${c.storyCause}</div>
+    </div>
+  ` : '';
+
+  const processHtml = c.storyProcess ? `
+    <div class="case-section-box">
+      <div class="case-section-title">🔍 偵查經過（三幕式・承）</div>
+      <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">${c.storyProcess}</div>
+    </div>
+  ` : '';
+
+  const climaxHtml = c.storyClimax ? `
+    <div class="case-section-box" style="border-left:3px solid #10b981;">
+      <div class="case-section-title" style="color:#34d399;">⚡ 破案對質與高潮（三幕式・轉結）</div>
+      <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">${c.storyClimax}</div>
+    </div>
+  ` : '';
 
   card.innerHTML = `
     <div class="case-card-header">
       <div class="case-card-title-wrap">
-        <div class="case-card-badge">🚨 示範案件 ${c.id} ｜ ${c.sectorName}</div>
+        <div class="case-card-badge">🚨 推理案件 ${c.id} ｜ ${c.sectorName || c.district || '雙北境內'}</div>
         <div class="case-card-title">${c.title}</div>
-        <div class="case-card-sub">探究核心：${c.subtitle}</div>
+        <div class="case-card-sub">探究核心：${c.subtitle || c.scienceConcept || '生活科學與邏輯鑑識'}</div>
       </div>
       <button class="case-card-close" onclick="closeCaseModal()">×</button>
     </div>
@@ -6570,68 +6505,91 @@ function openCaseBriefModal(caseId) {
           <span class="case-meta-val">${c.location}</span>
         </div>
         <div class="case-meta-item">
-          <span class="case-meta-label">🧪 課綱學門範疇</span>
-          <span class="case-meta-val">${c.subject}</span>
+          <span class="case-meta-label">🧪 難度與驚悚度</span>
+          <span class="case-meta-val">${c.difficulty || '★★★☆☆'} ｜ ${c.spookiness || '👻 溫和日常'}</span>
         </div>
         <div class="case-meta-item">
-          <span class="case-meta-label">📚 108課綱指標</span>
-          <span class="case-meta-val">${c.curriculumMapping}</span>
+          <span class="case-meta-label">📚 108課綱探究</span>
+          <span class="case-meta-val">${c.curriculumMapping || c.subject || '國小/國中自然科學'}</span>
         </div>
         <div class="case-meta-item">
           <span class="case-meta-label">🛰️ 實體 GPS 座標</span>
-          <span class="case-meta-val">E ${c.lon.toFixed(4)}°, N ${c.lat.toFixed(4)}°</span>
+          <span class="case-meta-val">E ${Number(c.lon).toFixed(4)}°, N ${Number(c.lat).toFixed(4)}°</span>
         </div>
       </div>
 
       <!-- 校園無毒安全教具提示 -->
-      <div class="case-safety-box" style="background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:6px; padding:10px 12px;">
+      <div class="case-safety-box" style="background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:6px; padding:10px 12px; margin-bottom:12px;">
         <div style="color:#34d399; font-weight:900; font-size:12px; margin-bottom:4px;">🛡️ 評審顧問安全規範（杜絕校園毒物）：</div>
-        <div style="font-size:11px; color:#a7f3d0; line-height:1.5;">${c.safeClassroomKit}</div>
+        <div style="font-size:11px; color:#a7f3d0; line-height:1.5;">${c.safeClassroomKit || '【校園無毒替代安全教具】：採用食用級/文具級安全教具，100%安全無毒。'}</div>
       </div>
 
-      <div class="case-section-box">
-        <div class="case-section-title">🔍 案件情境簡述</div>
-        <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">${c.brief}</div>
-      </div>
+      ${causeHtml}
+      ${processHtml}
+      ${charactersHtml || (suspectsHtml ? `
+        <div class="case-section-box">
+          <div class="case-section-title">👥 關係人與初步證言</div>
+          ${suspectsHtml}
+        </div>
+      ` : '')}
 
-      <div class="case-section-box">
-        <div class="case-section-title">👥 關係人與初步證言</div>
-        ${suspectsHtml}
-      </div>
+      ${climaxHtml}
 
-      <div class="case-section-box">
-        <div class="case-section-title">🔬 科學探究與實證檢驗流程</div>
-        <ol style="padding-left:18px; font-size:12px; line-height:1.6;">
-          ${stepsHtml}
-        </ol>
-      </div>
+      ${steps.length > 0 ? `
+        <div class="case-section-box">
+          <div class="case-section-title">🔬 科學探究與實證檢驗流程</div>
+          <ol style="padding-left:18px; font-size:12px; line-height:1.6;">
+            ${stepsHtml}
+          </ol>
+        </div>
+      ` : ''}
 
-      <div class="case-section-box" style="border-left:3px solid #38bdf8;">
-        <div class="case-section-title">💡 科學探究核心原理</div>
-        <div style="font-size:12px; color:#93c5fd; line-height:1.5;">${c.scienceConcept}</div>
-      </div>
+      ${c.conclusion && !c.storyClimax ? `
+        <div class="case-conclusion-box">
+          <div style="color:#fbbf24; font-weight:800; font-size:12px; margin-bottom:2px;">💡 鑑識探究結論：</div>
+          <div style="color:#fef08a; font-size:12px; line-height:1.5;">${c.conclusion}</div>
+        </div>
+      ` : ''}
     </div>
 
     <div class="case-card-footer">
-      <button class="case-card-close-btn" onclick="closeCaseModal()" style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:6px 14px; border-radius:6px; cursor:pointer;">關閉簡報</button>
-      <button class="btn-easter-egg" onclick="attemptCaseEasterEgg('${c.id}')" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; box-shadow:0 0 10px rgba(245,158,11,0.4);">🥚 探勘案發現場周邊彩蛋</button>
-      <button class="btn-fly-to-scene" onclick="flyToCaseLocation(${c.lat}, ${c.lon})">🚀 俯衝案發現場門牌</button>
-      <a href="/detective" target="_blank" onclick="return openDetectiveWorkbench(event)" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:none; color:#fff; font-weight:800; font-size:11px; padding:6px 14px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 0 10px rgba(2,132,199,0.4);" title="以都會調查員身分立案調查此案件">🕵️ 立案調查</a>
-      <a href="cases.html" target="_blank" style="background:rgba(245,158,11,0.18); border:1px solid #f59e0b; color:#fbbf24; font-weight:800; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="查看 50 宗歷史生活科學案件全集檔案庫">📂 50 案全集</a>
+      <div style="font-size:11px; color:#64748b;">
+        雙軌地理開放世界 ✕ 50 宗大案全息標記 ✕ 國小獨立研究專案
+      </div>
+      <button class="btn-focus-site" onclick="focusOnCase('${c.id}', ${c.lat}, ${c.lon})">🎯 鏡頭精準特寫案發現場</button>
     </div>
   `;
 
-  modal.style.display = 'flex';
+  modal.classList.add('active');
 }
 
 function closeCaseModal() {
   const modal = document.getElementById('caseBriefModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+function focusOnCase(caseId, lat, lon) {
+  closeCaseModal();
+  if (map) {
+    map.flyTo([lat, lon], 17.5, { duration: 1.2 });
+    if (typeof showNavToast === 'function') {
+      showNavToast('🎯 已將鏡頭特寫對焦於案件【' + caseId + '】現場！');
+    }
+  }
 }
 
 function flyToCaseLocation(lat, lon) {
   closeCaseModal();
-  map.flyTo([lat, lon], 16.5, { duration: 1.4 });
+  if (map) map.flyTo([lat, lon], 16.5, { duration: 1.4 });
+}
+
+if (typeof window !== 'undefined') {
+  window.closeCaseModal = closeCaseModal;
+  window.focusOnCase = focusOnCase;
+  window.flyToCaseLocation = flyToCaseLocation;
 }
 
 // ──────────────────────────────────────────
@@ -7326,7 +7284,7 @@ function handlePlayerKeyboardWalk(e) {
       return;
     }
   }
-  // 🎯 鍵盤「調查互動鍵 (E)」：近距調查眼前捷運出入口、公車站牌、超商、郵筒與號誌
+  // 🎯 鍵盤「調查互動鍵 (E)」：近距調查眼前捷運出入口、公車站牌、超商、郵筒與消防栓
   if (e.key === 'e' || e.key === 'E') {
     if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
       e.preventDefault();
@@ -9794,19 +9752,8 @@ const STREET_MICRO_DETAILS = {
     }
   ],
 
-  // 9. 紅綠燈行人號誌燈柱 (Traffic Light Poles)
-  trafficLights: [
-    { id: 'tl_zx_gq_nw', name: '🚦 忠孝館前路口西北號誌柱', lat: 25.0468, lon: 121.5164, state: 'green' },
-    { id: 'tl_zx_gq_ne', name: '🚦 忠孝館前路口東北號誌柱', lat: 25.0468, lon: 121.5176, state: 'green' },
-    { id: 'tl_zx_gq_sw', name: '🚦 忠孝館前路口西南號誌柱', lat: 25.0461, lon: 121.5164, state: 'red' },
-    { id: 'tl_zx_gq_se', name: '🚦 忠孝館前路口東南號誌柱', lat: 25.0461, lon: 121.5176, state: 'red' },
-    { id: 'tl_gq_xc', name: '🚦 館前許昌路口號誌柱', lat: 25.0448, lon: 121.5170, state: 'green' },
-    { id: 'tl_zx_cq', name: '🚦 忠孝重慶路口號誌柱', lat: 25.0464, lon: 121.5136, state: 'green' },
-    { id: 'tl_zx_gy', name: '🚦 忠孝公園路口號誌柱', lat: 25.0464, lon: 121.5190, state: 'red' },
-    { id: 'tl_cd_zh', name: '🚦 成都中華路口行人號誌柱 (西門 6 號口前)', lat: 25.0424, lon: 121.5081, state: 'green' },
-    { id: 'tl_cd_km', name: '🚦 成都昆明路口號誌柱', lat: 25.0425, lon: 121.5051, state: 'green' },
-    { id: 'tl_hz_em', name: '🚦 漢中峨眉路口徒步管制號誌', lat: 25.0435, lon: 121.5068, state: 'green' }
-  ],
+  // 9. 紅綠燈行人號誌燈柱 (已依委託人指示徹底刪除)
+  trafficLights: [],
 
   // 10. 街道家具 (郵筒、消防栓、暖光路燈)
   streetFurniture: [
@@ -10126,19 +10073,12 @@ function renderStreetMicroDetails() {
     marker.on('click', () => showStreetInvestigationModal(bs));
   });
 
-  // ─── 9. 繪製紅綠燈號誌燈柱 ───
-  STREET_MICRO_DETAILS.trafficLights.forEach(tl => {
-    const isGreen = tl.state === 'green';
-    const iconHtml = `
-      <div class="traffic-light-pin" title="${tl.name}" style="background:rgba(15,23,42,0.95); border:1.5px solid ${isGreen ? '#22c55e' : '#ef4444'}; color:${isGreen ? '#4ade80' : '#f87171'}; font-size:9px; font-weight:900; padding:2px 5px; border-radius:8px; box-shadow:0 0 10px ${isGreen ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'}; white-space:nowrap; display:inline-flex; align-items:center; gap:3px;">
-        <span>${isGreen ? '🚶‍♂️' : '🛑'}</span>
-        <span>${isGreen ? '通行' : '停等'}</span>
-      </div>
-    `;
-    const icon = L.divIcon({ html: iconHtml, className: 'traffic-light-marker', iconAnchor: [20, 10] });
-    const marker = L.marker([tl.lat, tl.lon], { icon, zIndexOffset: 700 }).addTo(streetMicroDetailsGroup);
-    marker.on('click', () => showStreetInvestigationModal(tl));
-  });
+  // ─── 9. 紅綠燈號誌燈柱 (已依委託人指示徹底刪除) ───
+  if (STREET_MICRO_DETAILS.trafficLights && STREET_MICRO_DETAILS.trafficLights.length > 0) {
+    STREET_MICRO_DETAILS.trafficLights.forEach(tl => {
+      // 已刪除
+    });
+  }
 
   // ─── 10. 繪製街道家具 (郵筒、消防栓、暖光路燈) ───
   STREET_MICRO_DETAILS.streetFurniture.forEach(sf => {
@@ -10332,12 +10272,11 @@ function checkStreetProximityInteraction(lat, lon) {
   const promptEl = document.getElementById('streetInteractPrompt');
   const actionTextEl = document.getElementById('interactActionText');
 
-  // 候選物件：捷運出口、公車站牌、超商商鋪、郵筒、消防栓、號誌
+  // 候選物件：捷運出口、公車站牌、超商商鋪、郵筒、消防栓
   const interactiveCandidates = [
     ...STREET_MICRO_DETAILS.subwayExits,
     ...STREET_MICRO_DETAILS.busShelters,
     ...STREET_MICRO_DETAILS.storefronts,
-    ...STREET_MICRO_DETAILS.trafficLights,
     ...STREET_MICRO_DETAILS.streetFurniture.filter(f => f.type !== 'lamp')
   ];
 

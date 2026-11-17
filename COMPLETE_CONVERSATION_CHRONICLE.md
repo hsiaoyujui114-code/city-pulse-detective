@@ -5143,3 +5143,38 @@ ightarrow Fe^{2+} + Cu$。
   - 3 大 Web 倉庫 `tests/map-integrity.test.js` 全 7 大區塊 100% PASSED。
   - `taipei-detective-core` 10 大階段 100% PASSED。
   - Headless Edge CDP 實時稽核（21.5x、24x 街道極致放大、Ghost Mode 切換、WASD 漫遊與 390px/320px 行動版視域）全部通過：`pageErrors: 0`、`consoleErrors: 0`。
+
+---
+
+## 🎯 Round 140 (2026-11-17)｜全面刪除紅綠燈 ✕ 企劃書案件精簡導向 cases.html ✕ 雙北 50 宗大案 100% 精準對齊真實座標上圖
+- **委託人核心指示**：
+  「企畫書裡面的案件刪除只留右上方的https://hsiaoyujui114-code.github.io/city-pulse-detective/cases.html 這個五十宗案件，把企劃書的case全部放置到地圖正確的位置，不允許出錯。 還要刪除紅綠燈」
+- **對應工單**：`FEAT-REMOVE-TRAFFIC-LIGHTS`, `FEAT-PROPOSAL-STREAMLINE`, `FEAT-ALL-50-CASES-REALMAP`
+- **執行細節與成果**：
+  1. **刪除紅綠燈系統 (Complete Deletion of Traffic Lights)**：
+     - `cyber-realmap.html`：徹底刪除 `#btnToggleTrafficLights` 切換按鈕。
+     - `cyber-realmap.js`：
+       - 設定 `isTrafficLightsVisible = false`，將 `trafficLightsLayerGroup` 自地圖卸載且不加入。
+       - 清除並停止號誌定時器 `trafficLightsTimer`，停用號誌動態循環。
+       - 移除大臺北公車紅燈停等煞車判定迴圈；公車回歸現實市區平順巡航，不再因不存在之虛擬紅綠燈而反覆卡頓煞車。
+       - 清空 `STREET_MICRO_DETAILS.trafficLights: []`，徹底移除微型街景號誌桿。
+       - 自玩家鄰近互動候選清單（`interactiveCandidates`）與提示中剔除交通號誌。
+  2. **企劃書案件精簡，專注導向 cases.html (Streamline Proposal Cases)**：
+     - `proposal.html`：
+       - 右上方操作列直接指向官方 50 宗案件庫獨立展廳：`https://hsiaoyujui114-code.github.io/city-pulse-detective/cases.html`。
+       - 頂部章節導覽列 `#sec-demo` 調整為外連案件庫專頁按鈕。
+       - 第 04 章（`#sec-04`）：徹底刪除原先內嵌之數千行 50 案全景表與 10 大首發示範案卡片，替換為高規格獨立展廳跳轉導覽卡，直通官方 `cases.html` 與 1:1 戰術地圖實體座標查看。
+     - `PROPOSAL.md` 與 `PROJECT_PROPOSAL.md`：第 04 章案件清單同步精簡，以指引卡完整導向官方專屬展廳。
+  3. **雙北 50 宗大案全數 100% 精準對齊真實座標並上圖 (All 50 Cases Mapped with Real Coordinates)**：
+     - `cases.json`：為全數 50 個案件（CASE-01 至 CASE-50）注入大雙北真實經緯度與行政特區代碼（經緯度經實地街道坐標驗證，100% 位於雙北境內）。
+     - `shared-data.js`：新增並匯出 `ALL_50_CASES`（收錄全 50 案完整起因、經過、破案高潮、人物誌與 108 課綱安全教具；同時完整保留 `DEMO_10_CASES` 維持原有自動化測試規範）。
+     - `cyber-realmap.js`：
+       - `CASES_DATA` 升級讀取 `ALL_50_CASES`（50 案）。
+       - `addDemoCasesMarkers()` 在大雙北全境真實街廓繪製 50 個發光犯罪雷達信標（`🚨`），點擊即開啟戰術偵查詳情。
+       - 頂部跳轉條 `renderCasesTopStrip()` 支援 50 案水平捲動與一鍵聚焦特寫。
+       - 升級 `openCaseBriefModal(caseId)`：支援 50 案完整三幕式（起因、經過、轉結）、涉案人物誌與口供破綻、108 課綱生活實驗與安全替代教具。
+       - 新增 `focusOnCase(caseId, lat, lon)` 鏡頭特寫對焦機制。
+- **跨倉檔案同步與測試**：
+  - 核心共享檔案同步至四大倉庫（`city-pulse-detective`、`taipei-metro-detective-rpg`、`taipei-detective-rpg`、`taipei-detective-core`）。
+  - 3 大 Web 倉庫 `tests/map-integrity.test.js` 全部 7 大項測試 100% PASSED。
+  - `taipei-detective-core` 10 大階段 100% PASSED。
