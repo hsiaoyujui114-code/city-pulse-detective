@@ -180,10 +180,19 @@ const webSharedFiles = [
   'PROPOSAL.md', 'PROJECT_PROPOSAL.md', 'proposal.html',
   'cyber-realmap.html', 'cyber-realmap.css', 'cyber-realmap.js',
   'game.js', 'index.html', 'transit-data.js', 'ebus-directory.js',
-  'AI_HANDOFF_PROJECT_SPEC.md', 'MAP_ISSUE_BOARD_PROTOCOL.md',
+  'AI_HANDOFF_PROJECT_SPEC.md', 'MAP_ISSUE_BOARD_PROTOCOL.md', 'INSTINCT_ISSUE_BOARD_FULLTEXT.md',
   'TECH_IMPLEMENTATION_PLAN.md', 'COMPLETE_CONVERSATION_CHRONICLE.md',
   'tests/map-integrity.test.js'
 ];
+
+// 6.5 Round 141 Muse REVIEW-140 & Instinct Issue Board regression guards
+const instinctFullText = readUtf8('INSTINCT_ISSUE_BOARD_FULLTEXT.md');
+assert(instinctFullText.includes('filerevision-01M63F7V2E21YH9M5YYG4YYV4Q') && instinctFullText.includes('逐段比對結論表'), 'INSTINCT_ISSUE_BOARD_FULLTEXT.md must contain verbatim Instinct fulltext and comparison table (ISSUE-13)');
+assert(!realmapHtml.includes('高清街道保證・放大不模糊'), 'cyber-realmap.html must not contain old blur guarantee claim (ISSUE-31)');
+assert(!realmapHtml.includes('Zoom 21.5 實體瀝青/斑馬線/停止線/雙黃線/導盲磚/出入口'), 'cyber-realmap.html line 346 button title must not contain old claim (ISSUE-15)');
+assert(!realmapJs.includes('方向指標站'), 'cyber-realmap.js must not generate fake 方向指標站 stop names (ISSUE-30)');
+assert(!realmapJs.includes('setTimeout(hide, 1200)'), 'showSectorLoading must wait for real tile load completion instead of fixed 1200ms timer (ISSUE-16)');
+console.log('✅ [6.5] Muse REVIEW-140 (ISSUE-13..17, ISSUE-28..31) & Instinct guards verified');
 
 if (webSiblings.length === 0) {
   console.log('ℹ️ [7] No sibling web repos in parent directory (single-repo CI mode); cross-repo parity skipped.');
@@ -199,7 +208,7 @@ if (webSiblings.length === 0) {
   }
   const coreDir = path.join(PARENT, 'taipei-detective-core');
   if (fs.existsSync(coreDir)) {
-    for (const rel of ['cyber-realmap.html', 'cyber-realmap.css', 'cyber-realmap.js', 'shared-data.js', 'transit-data.js', 'ebus-directory.js', 'AI_HANDOFF_PROJECT_SPEC.md', 'MAP_ISSUE_BOARD_PROTOCOL.md']) {
+    for (const rel of ['cyber-realmap.html', 'cyber-realmap.css', 'cyber-realmap.js', 'shared-data.js', 'transit-data.js', 'ebus-directory.js', 'AI_HANDOFF_PROJECT_SPEC.md', 'MAP_ISSUE_BOARD_PROTOCOL.md', 'INSTINCT_ISSUE_BOARD_FULLTEXT.md']) {
       const localPath = path.join(ROOT, rel);
       const corePath = path.join(coreDir, rel);
       assert(fs.existsSync(corePath), `Missing mirror file in taipei-detective-core: ${rel}`);

@@ -646,7 +646,8 @@ html, body {
   font-weight: 800;
   color: #fecdd3;
   white-space: nowrap;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
@@ -1735,18 +1736,28 @@ body:not(.show-station-labels) .transit-badge-pin {
   display: none !important;
 }
 
-/* 按下按鈕啟用：顯露捷運雙色標誌、路線膠囊與站名 */
+/* 按下按鈕啟用 (預設啟用)：顯露捷運雙色標誌、路線膠囊與站名，並配合 LOD 視距分層 */
 body.show-station-labels .mrt-pin-hybrid .pin-mrt-vector {
-  display: inline-flex !important;
+  display: inline-flex;
 }
-body.show-station-labels .mrt-pin-hybrid .pin-mrt-compact-dot {
-  display: none !important;
+body.show-station-labels .mrt-pin-hybrid .pin-mrt-compact-dot,
+body.show-station-labels .mrt-pin-hybrid .mrt-hub-concentric-dot {
+  display: none;
 }
 body.show-station-labels .transit-badge-pin {
-  display: inline-flex !important;
+  display: inline-flex;
 }
 
-/* 道路名稱標牌：預設簡潔隱藏，按下按鈕才顯露「民權東路」等綠底白字路牌 */
+/* 廣域與中觀視距 (Zoom < 16.5) 自動隱藏次要靜態站牌與轉運站標籤，徹底消除重新載入後站前徽章堆疊與長橘色遮蔽條 (ISSUE-14) */
+body:not(.map-zoom-street) .pin-ebus,
+body:not(.map-zoom-street) .coach-hub-pin,
+body:not(.map-zoom-street) .pin-uc-station,
+body:not(.map-zoom-street) .construction-hazard-badge,
+body:not(.map-zoom-street) .construction-clear-badge {
+  display: none !important;
+}
+
+/* 道路名稱標牌：預設啟用，顯露「忠孝西路一段」等高對比綠底白字路牌 (13x / 14x / 20.5x 全程清晰可見) */
 body:not(.show-road-names) .road-badge-wrap {
   display: none !important;
 }

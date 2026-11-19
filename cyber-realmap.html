@@ -201,7 +201,7 @@
       </div>
     </div>
 
-    <div style="font-size:10px; color:#38bdf8; font-weight:800; margin-bottom:4px;">🗺️ 1:1 真實網路圖資切換 (高清街道保證・放大不模糊):</div>
+    <div style="font-size:10px; color:#38bdf8; font-weight:800; margin-bottom:4px;">🗺️ 1:1 真實網路底圖切換 (NLSC 原生 18x・微觀向量標線疊圖):</div>
     <select id="tileSelect" onchange="switchBaseLayer(this.value)" style="width:100%; background:rgba(30,41,59,0.9); border:1px solid #00f0ff; color:#fff; padding:6px; border-radius:4px; font-size:11px; margin-bottom:10px; outline:none; cursor:pointer;">
       <option value="nlsc" selected>🇹🇼 臺灣通用電子地圖 (內政部國土測繪 繁中街道全圖・最清晰)</option>
       <option value="esri_street">🗺️ Esri 真實街道全景圖 (高對比街廓・中文路名清楚標註)</option>
@@ -250,14 +250,14 @@
         <span style="color:#22c55e;">LIVE ON</span>
       </button>
 
-      <!-- 🌟 地圖介面極致簡化 (預設隱藏冗贅文字標牌，按鈕按需啟用) -->
-      <button class="tactical-tool-btn" id="btnToggleStationLabels" onclick="toggleStationLabels()">
+      <!-- 🌟 地圖介面極致簡化 (預設啟用重要站名與路牌 LOD 視距分層，按鈕可隨時切換) -->
+      <button class="tactical-tool-btn active" id="btnToggleStationLabels" onclick="toggleStationLabels()">
         <span>🏷️ 捷運站名標籤</span>
-        <span style="color:#94a3b8;">預設隱藏</span>
+        <span style="color:#22c55e;">ON</span>
       </button>
-      <button class="tactical-tool-btn" id="btnToggleRoadNames" onclick="toggleRoadNames()">
+      <button class="tactical-tool-btn active" id="btnToggleRoadNames" onclick="toggleRoadNames()">
         <span>🛣️ 道路名稱標牌</span>
-        <span style="color:#94a3b8;">預設隱藏</span>
+        <span style="color:#22c55e;">ON</span>
       </button>
 
       <!-- 🌟 施工狀態即時同步 (真實世界停止施工則遊戲跟著停止施工) -->
@@ -311,7 +311,7 @@
         <span id="busFilterStatusTag" style="color:#94a3b8;">ALL</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleBusFleet" onclick="toggleBusFleetLayer()">
-        <span>🚍 公車巡航 (紅燈強制停等)</span>
+        <span>🚍 公車連續巡航車隊</span>
         <span style="color:#f59e0b;">DISPATCH</span>
       </button>
       <button class="tactical-tool-btn active" id="btnToggleCoachHubs" onclick="toggleCoachHubsLayer()">
@@ -343,7 +343,7 @@
         <span id="tag2DStreetLockIcon">🔓</span>
         <span id="tag2DStreetLockText">自由縮放</span>
       </button>
-      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 正上方超微觀街道特寫 (Zoom 21.5 實體瀝青/斑馬線/停止線/雙黃線/導盲磚/出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
+      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 街道微觀俯視 (NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
         <span>🔍 超微觀街道</span>
         <span style="color:#fbbf24; font-size:10px;">21.5x</span>
       </button>
