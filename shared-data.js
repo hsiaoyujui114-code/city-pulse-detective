@@ -503,7 +503,7 @@ const ALL_50_CASES = [
   {
     "id": "CASE-01",
     "num": "01",
-    "title": "西門町連鎖咖啡店招牌熱焦糖瑪奇朵中毒案",
+    "title": "西門町連鎖咖啡店招牌熱焦糖瑪奇朵食物中毒案",
     "subtitle": "薄層色層分析（TLC）與雙糖植物氰苷（Cyanogenic Glycoside）酵素解（Enzy...",
     "sectorId": "TPE-02",
     "sectorName": "萬華特區・西門町徒步商圈",
