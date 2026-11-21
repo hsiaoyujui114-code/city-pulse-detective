@@ -173,7 +173,7 @@ const SHUANGBEI_LEARNING_VENUES = [
   }
 ];
 
-let isStreetsVisible = true; // 預設啟用重要幹道名稱標牌 (如忠孝西路一段)，確保 13x / 14x / 20.5x 全程清晰可見 (ISSUE-14)
+let isStreetsVisible = true; // 預設啟用重要幹道名稱標牌 (如忠孝西路一段)，路牌本身為向量文字所以清晰 (ISSUE-14)
 let showStationLabels = true; // 預設啟用捷運站名 LOD 視距分層 (13x 顯示台北車站等樞紐站、14x 顯示全站名)
 let showRoadNameBadges = true; // 預設啟用道路名稱標牌 (忠孝西路一段等綠底白字路牌)
 let isTransitLiveSyncEnabled = true; // 大眾運輸即時同步 (真實世界公車停則停、到站則到站，捷運/高鐵/鐵路時鐘對齊)
@@ -899,7 +899,7 @@ function updateStreetFocusPill(visible, zoom) {
     pill.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
-        <span><b>2D 街道微觀俯視 (${zoom || 21.5}x)</b>：NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口</span>
+        <span><b>2D 街道微觀俯視 (${zoom || 21.5}x)</b>：NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線僅北車、西門兩區・18.5x 起 ✕ 捷運出入口</span>
       </div>
       <button id="btnPillLockToggle" onclick="toggle2DStreetLockMode()" style="background:${isLocked ? '#ef4444' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">${isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角'}</button>
       <button onclick="setStreetTopDownView(14.0)" style="background:#475569; border:1px solid #94a3b8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:4px;">🌐 全景 (14x)</button>
@@ -1081,7 +1081,7 @@ const SHUANGBEI_MAJOR_STREETS = [
     coreColor: '#38bdf8',
     width: 8,
     center: [25.04625, 121.51688],
-    anchor: [46, -8],
+    anchor: [140, -8],  // 路牌向西延伸，避開北車站牌與 CASE-02 徽章堆疊處，否則路名被蓋住 (ISSUE-14)
     isPrimaryRoadBadge: true,
     coords: [
       [25.0475, 121.5032],
@@ -1811,7 +1811,7 @@ function addMajorStreetsLayer() {
 
     line.bindTooltip(`🛣️ ${st.name}`, { sticky: true, className: 'street-name-tooltip' });
 
-    // 道路中心標註路牌 Marker (台灣經典路牌綠底標籤，13x / 14x / 20.5x 全程清晰可見 ISSUE-14)
+    // 道路中心標註路牌 Marker (台灣經典路牌綠底標籤，向量文字所以清晰 ISSUE-14)
     if (st.center) {
       const anchor = st.anchor || [35, 10];
       const roadBadge = L.divIcon({
@@ -2410,7 +2410,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
 
   switch (lineCode) {
     case 'BR': {
-      const runNum = 101 + ((idxSeed * 2 + dirOddEven) % 36);
+      const runNum = 101 + ((idxSeed * 2 + dirOddEven) % Math.max(36, (seqLength || 18) * 2));
       const cA = 100 + ((idxSeed * 3 + 12) % 48);
       const cB = cA + 39;
       trainNo = `BR-${runNum}`;
@@ -2418,7 +2418,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'BL': {
-      const runNum = 201 + ((idxSeed * 2 + dirOddEven) % 42);
+      const runNum = 201 + ((idxSeed * 2 + dirOddEven) % Math.max(42, (seqLength || 21) * 2));
       const cA = 111 + ((idxSeed * 2) % 30);
       const cB = cA + 1;
       trainNo = `BL-${runNum}`;
@@ -2426,7 +2426,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'R': {
-      const runNum = 301 + ((idxSeed * 2 + dirOddEven) % 38);
+      const runNum = 301 + ((idxSeed * 2 + dirOddEven) % Math.max(38, (seqLength || 19) * 2));
       const cA = 301 + ((idxSeed * 2) % 28);
       const cB = cA + 1;
       trainNo = `R-${runNum}`;
@@ -2434,7 +2434,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'G': {
-      const runNum = 401 + ((idxSeed * 2 + dirOddEven) % 30);
+      const runNum = 401 + ((idxSeed * 2 + dirOddEven) % Math.max(30, (seqLength || 15) * 2));
       const cA = 301 + ((idxSeed * 2) % 24);
       const cB = cA + 1;
       trainNo = `G-${runNum}`;
@@ -2442,7 +2442,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'O': {
-      const runNum = 501 + ((idxSeed * 2 + dirOddEven) % 34);
+      const runNum = 501 + ((idxSeed * 2 + dirOddEven) % Math.max(34, (seqLength || 17) * 2));
       const cA = 401 + ((idxSeed * 2) % 30);
       const cB = cA + 1;
       trainNo = `O-${runNum}`;
@@ -2454,7 +2454,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       // 新北捷運官方營運車次 (Run No.) 為 01 ~ 17
       const setIdx = (idxSeed % 17) + 1;
       const setNum = 100 + setIdx;
-      const runNum = ((idxSeed + dirOddEven) % 17) + 1;
+      const runNum = ((idxSeed + dirOddEven) % Math.max(17, (seqLength || 17) + 1)) + 1;
       const runNumPad = String(runNum).padStart(2, '0');
       trainNo = `環狀線 Y${runNumPad} (${runNumPad}車次)`;
       carSet = `第 ${String(setIdx).padStart(2, '0')} 編組 (車號 ${setNum}1-${setNum}4 · 610型)`;
@@ -2462,25 +2462,25 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
     }
     case 'A': {
       const isExpress = String(destName || '').includes('直達') || idxSeed % 2 === 0;
-      const runNum = (isExpress ? 2100 : 1100) + ((idxSeed * 2 + dirOddEven) % 20);
+      const runNum = (isExpress ? 2100 : 1100) + ((idxSeed * 2 + dirOddEven) % Math.max(20, (seqLength || 10) * 2));
       trainNo = `A-${runNum}`;
       carSet = isExpress ? '2000型直達車' : '1000型普通車';
       break;
     }
     case 'V': {
-      const runNum = 701 + ((idxSeed * 2 + dirOddEven) % 10);
+      const runNum = 701 + ((idxSeed * 2 + dirOddEven) % Math.max(10, (seqLength || 5) * 2));
       trainNo = `V-${runNum}`;
       carSet = '行武者號 10' + ((idxSeed % 7) + 1);
       break;
     }
     case 'K': {
-      const runNum = 801 + ((idxSeed * 2 + dirOddEven) % 10);
+      const runNum = 801 + ((idxSeed * 2 + dirOddEven) % Math.max(10, (seqLength || 5) * 2));
       trainNo = `K-${runNum}`;
       carSet = '光耀金 20' + ((idxSeed % 5) + 1);
       break;
     }
     default: {
-      trainNo = `${lineCode}-${101 + ((idxSeed * 2 + dirOddEven) % 30)}`;
+      trainNo = `${lineCode}-${101 + ((idxSeed * 2 + dirOddEven) % Math.max(30, (seqLength || 15) * 2))}`;
       carSet = '標準電聯車';
     }
   }
@@ -2682,6 +2682,7 @@ function findBrowserTraPrecedingStation(cleanStName, dir, stMap) {
 }
 
 function computeBrowserLiveTraTrains(rawTra, twTime) {
+  const contSec = twTime.totalSec + (Date.now() % 1000) / 1000;  // 毫秒精度，避免 500ms tick 每秒只跳一格 (ISSUE-28)
   const trains = [];
   const traStations = (TRA_DATA && Array.isArray(TRA_DATA.stations)) ? TRA_DATA.stations : [];
   if (traStations.length === 0 || !Array.isArray(rawTra) || rawTra.length === 0) {
@@ -2739,9 +2740,9 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
     // 1. 檢查是否正在某站月台停靠中
     for (let i = 0; i < records.length; i++) {
       const r = records[i];
-      const arrSec = (parseTimeStrToSecBrowser(r.entry.ScheduledArrivalTime || r.entry.ScheduledDepartureTime) || twTime.totalSec) + delaySec;
+      const arrSec = (parseTimeStrToSecBrowser(r.entry.ScheduledArrivalTime || r.entry.ScheduledDepartureTime) || contSec) + delaySec;
       const depSec = (parseTimeStrToSecBrowser(r.entry.ScheduledDepartureTime || r.entry.ScheduledArrivalTime) || arrSec + 40) + delaySec;
-      if (twTime.totalSec >= arrSec - 20 && twTime.totalSec <= Math.max(depSec + 15, arrSec + 35)) {
+      if (contSec >= arrSec - 20 && contSec <= Math.max(depSec + 15, arrSec + 35)) {
         chosenLat = r.stObj.lat;
         chosenLon = r.stObj.lon;
         isAtStation = true;
@@ -2759,15 +2760,15 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
         const rB = records[i + 1];
         const depA = (parseTimeStrToSecBrowser(rA.entry.ScheduledDepartureTime || rA.entry.ScheduledArrivalTime) || 0) + delaySec;
         const arrB = (parseTimeStrToSecBrowser(rB.entry.ScheduledArrivalTime || rB.entry.ScheduledDepartureTime) || 0) + delaySec;
-        if (twTime.totalSec > depA && twTime.totalSec < arrB) {
+        if (contSec > depA && contSec < arrB) {
           const span = Math.max(35, arrB - depA);
-          const u = Math.max(0.03, Math.min(0.97, (twTime.totalSec - depA) / span));
+          const u = Math.max(0.03, Math.min(0.97, (contSec - depA) / span));
           chosenLat = rA.stObj.lat + (rB.stObj.lat - rA.stObj.lat) * u;
           chosenLon = rA.stObj.lon + (rB.stObj.lon - rA.stObj.lon) * u;
           isAtStation = false;
-          speed = shortType.includes('自強') || shortType.includes('太魯閣') || shortType.includes('普悠瑪')
-            ? Math.round(88 + Math.sin(u * Math.PI) * 24)
-            : Math.round(68 + Math.sin(u * Math.PI) * 20);
+          // 區間均速（兩站真實距離／排程時間），每段一個固定值，不再正弦亂跳 (ISSUE-28)
+          const segDistKm = calcDistanceKm(rA.stObj.lat, rA.stObj.lon, rB.stObj.lat, rB.stObj.lon);
+          speed = Math.round(Math.min(125, Math.max(45, segDistKm / (span / 3600))));
           curStName = rB.stObj.name;
           statusText = `🚆 ${rA.stObj.name} ➔ ${rB.stObj.name} (${delayLabel}・往${destName})`;
           break;
@@ -2779,7 +2780,7 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
     if (chosenLat === null) {
       const r0 = records[0];
       const arr0 = (parseTimeStrToSecBrowser(r0.entry.ScheduledArrivalTime || r0.entry.ScheduledDepartureTime) || 0) + delaySec;
-      const remSec = arr0 - twTime.totalSec;
+      const remSec = arr0 - contSec;
       if (remSec > 0 && remSec <= 420) {
         const prevSt = findBrowserTraPrecedingStation(r0.stObj.cleanName, dir, stMap);
         if (prevSt) {
@@ -3311,9 +3312,10 @@ const REAL_TAIPEI_BUS_STOPS_INDEX = [
 
 // 🚏 公車下一站真實站名與預計抵達估算引擎 (ISSUE-30: 採用 GetStop.gz 28,826 官方站牌與真實鄰近站點，標示「估算」)
 function estimateBusNextStop(b) {
-  if (!b) return { name: '台北車站(忠孝)', eta: '約 2 分鐘 (依距離與車速估算)' };
+  // 無公車資料或車輛不在營運狀態時不編造站名，誠實回報無下一站資料 (ISSUE-30)
+  if (!b) return { name: '無下一站資料', eta: '—', kind: 'none' };
   if (b.isIdleInDepot) {
-    return { name: '總站發車月台', eta: '待命中 (發車時間估算)' };
+    return { name: '無下一站資料', eta: '車輛於總站待命', kind: 'none' };
   }
 
   const spd = Math.max(18, b.speed || 24);
@@ -3341,7 +3343,8 @@ function estimateBusNextStop(b) {
       const estMin = Math.max(1, Math.round((roadDistKm / spd) * 60));
       return {
         name: targetStop.name,
-        eta: `約 ${estMin} 分鐘 (距約 ${distMeters}m・依車速估算)`
+        eta: `約 ${estMin} 分鐘 (距約 ${distMeters}m・依車速估算)`,
+        kind: 'route'
       };
     }
   }
@@ -3358,15 +3361,16 @@ function estimateBusNextStop(b) {
     }
   }
   if (!bestRealStop) {
-    bestRealStop = REAL_TAIPEI_BUS_STOPS_INDEX[0];
-    bestDistKm = 0.35;
+    // 附近找不到真實站牌時不編造站名 (ISSUE-30)
+    return { name: '無下一站資料', eta: '附近無站牌資料', kind: 'none' };
   }
   const clampedDistKm = Math.max(0.15, Math.min(1.2, bestDistKm * 1.2));
   const distMeters = Math.round(clampedDistKm * 1000);
   const estMin = Math.max(1, Math.round((clampedDistKm / spd) * 60));
   return {
     name: bestRealStop.name,
-    eta: `約 ${estMin} 分鐘 (距約 ${distMeters}m・依車速估算)`
+    eta: `約 ${estMin} 分鐘 (距約 ${distMeters}m・依車速估算)`,
+    kind: 'nearest'
   };
 }
 
@@ -3432,7 +3436,7 @@ function buildLiveBusPopupHtml(b) {
       </div>
       <div style="font-size:11px; font-weight:700; color:#facc15;">${b.headsign || '雙北即時營運車次'}｜${b.operator || '大臺北公車'}</div>
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
-        🚏 下一站名：<b style="color:#fde047;">${nextStopInfo.name}</b><br>
+        🚏 ${nextStopInfo.kind === 'nearest' ? '附近最近站牌（推算）' : '下一站名'}：<b style="color:#fde047;">${nextStopInfo.name}</b><br>
         ⏱️ 預計到站 (估算)：<b style="color:#4ade80;">${nextStopInfo.eta}</b><br>
         真實世界狀態：<b style="color:${isStopped ? '#f87171' : '#4ade80'};">${b.status}</b><br>
         即時動態性質：<b style="color:${isSim || isStale || isExtrapolating ? '#fbbf24' : '#4ade80'};">${natureText}</b><br>
@@ -3972,8 +3976,21 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
 
   allTrains.forEach(t => {
     activeIds.add(t.id);
-    t.speed = t.isAtStation ? 0 : Math.round(t.speed || 0);
-    liveRailSpeedHistoryMap.set(t.id, t.speed);
+    // 列車速度 EMA 平滑 (ISSUE-28)：原始速度先存入 _rawSpeed，避免對已平滑過的值重複平滑
+    if (typeof t._rawSpeed !== 'number') t._rawSpeed = t.isAtStation ? 0 : Math.round(t.speed || 0);
+    const rawSpeed = t.isAtStation ? 0 : t._rawSpeed;
+    const prevSpeed = liveRailSpeedHistoryMap.get(t.id);
+    let smoothedSpeed;
+    if (prevSpeed === undefined) {
+      smoothedSpeed = rawSpeed;
+    } else if (rawSpeed === 0) {
+      smoothedSpeed = Math.max(0, Math.round(prevSpeed * 0.5));  // 靠站時向 0 漸降，不瞬間歸零
+    } else {
+      const ema = Math.round(prevSpeed * 0.7 + rawSpeed * 0.3);
+      smoothedSpeed = Math.max(prevSpeed - 5, Math.min(prevSpeed + 5, ema));  // 每 500ms 變化不超過 ±5 km/h
+    }
+    t.speed = smoothedSpeed;
+    liveRailSpeedHistoryMap.set(t.id, smoothedSpeed);
 
     const emoji = t.type === 'THSR' ? '🚅' : (t.type === 'TRA' ? '🚆' : '🚇');
     const speedLabel = t.isAtStation ? '靠站' : `${t.speed} km/h`;
@@ -4027,7 +4044,8 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
       const zOffset = t.type === 'THSR' ? 600 : (t.type === 'TRA' ? 560 : 520);
       const marker = L.marker([t.lat, t.lon], { icon, zIndexOffset: zOffset }).addTo(mrtDynamicTrainsGroup);
       marker.bindTooltip(tipText, { direction: 'top', offset: [0, -10] });
-      marker.bindPopup(() => buildLiveRailPopupHtml(t), { autoPan: true, autoPanPaddingTopLeft: [30, 198], autoPanPaddingBottomRight: [30, 50] });
+      // 彈出卡片讀最新資料，不要用建標記當下的舊 t（否則徽章與卡片會顯示兩個速度）(ISSUE-28)
+      marker.bindPopup(() => buildLiveRailPopupHtml((liveRailTrainMarkers.get(t.id) || {}).data || t), { autoPan: true, autoPanPaddingTopLeft: [30, 198], autoPanPaddingBottomRight: [30, 50] });
       marker.on('click', () => {
         if (t.type === 'THSR') playTransitSound('thsr_whoosh');
         else if (t.type === 'TRA') playTransitSound('tra_bell');
@@ -4041,12 +4059,14 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
     if (!activeIds.has(key)) {
       if (mrtDynamicTrainsGroup.hasLayer(val.marker)) mrtDynamicTrainsGroup.removeLayer(val.marker);
       liveRailTrainMarkers.delete(key);
+      liveRailSpeedHistoryMap.delete(key);  // 同步清掉速度平滑紀錄，避免 Map 無限增長
     }
   });
 }
 
-// 捷運常態線上運轉列車基準平滑值 (ISSUE-31)
-let smoothedMrtTrainCount = 98;
+// 捷運線上運轉列車數：以實際列數做 EMA 平滑顯示，不再以 98 保底 (ISSUE-31：改算法)
+let smoothedMrtTrainCount = 0;
+let hasMrtCountReading = false;
 
 function updateLiveTransitHUD(data) {
   const offCount = (data.officialBusCount !== undefined) ? data.officialBusCount : (data.activeBusCount || 0);
@@ -4059,10 +4079,18 @@ function updateLiveTransitHUD(data) {
     busEl.innerText = simCount > 0 ? `${offCount} 輛 (${suffix}) ＋ ${simCount} 模擬` : `${offCount} 輛 (${suffix})`;
   }
 
-  const rawMrt = data.activeMrtCount || (Array.isArray(liveMrtTrainsData) ? liveMrtTrainsData.length : 98);
-  smoothedMrtTrainCount = rawMrt >= 95 ? rawMrt : 98;
+  const rawMrt = data.activeMrtCount || (Array.isArray(liveMrtTrainsData) ? liveMrtTrainsData.length : 0);
   const mrtEl = document.getElementById('hudLiveMrtCount');
-  if (mrtEl) mrtEl.innerText = `${smoothedMrtTrainCount} 列 (TDX看板排程推算)`;
+  if (rawMrt > 0) {
+    // EMA 平滑實際列數（0.7 舊值 / 0.3 新值），首次讀數直接採用；無資料時顯示「資料取得中」，不再顯示保底 98 (ISSUE-31)
+    smoothedMrtTrainCount = hasMrtCountReading
+      ? Math.round(smoothedMrtTrainCount * 0.7 + rawMrt * 0.3)
+      : rawMrt;
+    hasMrtCountReading = true;
+    if (mrtEl) mrtEl.innerText = `${smoothedMrtTrainCount} 列 (TDX看板排程推算)`;
+  } else if (mrtEl) {
+    mrtEl.innerText = `— 列 (資料取得中)`;
+  }
 
   const traEl = document.getElementById('hudLiveTraCount');
   if (traEl) traEl.innerText = `${data.activeTraCount || 0} 列 (台鐵即時看板)`;
@@ -4977,7 +5005,9 @@ function initBusFleetContinuousDispatch() {
 
       // 累積里程與平滑加減速物理運算 (無紅綠燈阻擋，依自然路況流暢行駛)
       const targetSpeed = 38 + Math.sin(curSec + spec.offsetSec) * 5;
-      item.currentSpeedKmH = Math.min(targetSpeed, item.currentSpeedKmH + 16 * dt);
+      // 向目標速度雙向趨近（原寫法只會加速不會減速，速度會卡在最高值）
+      const speedDiff = targetSpeed - item.currentSpeedKmH;
+      item.currentSpeedKmH += Math.max(-16 * dt, Math.min(16 * dt, speedDiff));
       item.isStoppedAtRed = false;
       const statusText = `🚍 巡航行駛中 (${Math.round(item.currentSpeedKmH)} km/h)`;
 
@@ -5255,7 +5285,7 @@ function generateRealtimeTraCorridor(twTime) {
       const nextSt = ST_NAMES[curIdx + 1] || '南部縣市';
       const inSegProgress = (u * (ST_NAMES.length - 1)) % 1;
       const isDwell = inSegProgress < 0.18;
-      const speed = isDwell ? 0 : Math.round(55 + Math.sin(inSegProgress * Math.PI) * 45);
+      const speed = isDwell ? 0 : (isExpress ? 85 : 65);  // 備援走廊定速（快車 85／區間車 65），不再正弦亂跳 (ISSUE-28)
 
       trains.push({
         id: `live_tra_${trainNo}`,
@@ -5295,7 +5325,7 @@ function generateRealtimeTraCorridor(twTime) {
       const nextSt = ST_NAMES[curIdx - 1] || '基隆/花蓮';
       const inSegProgress = (u * (ST_NAMES.length - 1)) % 1;
       const isDwell = inSegProgress < 0.18;
-      const speed = isDwell ? 0 : Math.round(55 + Math.sin(inSegProgress * Math.PI) * 45);
+      const speed = isDwell ? 0 : (isExpress ? 85 : 65);  // 備援走廊定速（快車 85／區間車 65），不再正弦亂跳 (ISSUE-28)
 
       trains.push({
         id: `live_tra_${trainNo}`,
@@ -5328,7 +5358,7 @@ function generateRealtimeMrtCorridor(twTime) {
   const mrtNet = Array.isArray(MRT_DATA) ? MRT_DATA : [];
   if (mrtNet.length === 0) return trains;
 
-  const curMinutes = (twTime && twTime.hour != null) ? (twTime.hour * 60 + twTime.minute) : null;
+  const curMinutes = (twTime && twTime.hours != null) ? (twTime.hours * 60 + twTime.minutes) : null;  // 修正欄位名：getTaiwanTimePartsBrowser 回傳 hours/minutes
   const nowSec = (twTime && twTime.totalSec != null) ? twTime.totalSec : ((Date.now() / 1000 + 8 * 3600) % 86400);
 
   mrtNet.forEach(line => {
@@ -5362,7 +5392,7 @@ function generateRealtimeMrtCorridor(twTime) {
           const eased = (1 - Math.cos(u * Math.PI)) / 2;
           const lat = s1.lat + (s2.lat - s1.lat) * eased;
           const lon = s1.lon + (s2.lon - s1.lon) * eased;
-          const speed = isAtStation ? 0 : Math.round((isLightRail ? 36 : 48) + Math.sin(u * Math.PI) * (isLightRail ? 18 : 28));
+          const speed = isAtStation ? 0 : (isLightRail ? 36 : 48);  // 備援走廊定速（輕軌 36／重運量 48），不再正弦亂跳 (ISSUE-28)
 
           const sched = getMrtScheduleConfig(line.lineCode, s1.name, (dir === 0 ? 1 : -1), segIdx, destName, ordered.length, curMinutes);
           const trainId = `live_mrt_${line.lineCode}_${br.branchCode || 'main'}_d${dir}_k${k}`;
@@ -5694,8 +5724,9 @@ function buildStoreClusters() {
   storeClusterGroup.clearLayers();
 
   const zoom = map.getZoom();
-  // 當放大至 16.5 級以上 (極近街廓特寫)，顯示所有各別門市之官方樣式 Pin，隱藏商圈聚合徽章
-  if (zoom >= 16.5) {
+  // 當放大至 16.5 級以上 (極近街廓特寫)，顯示所有各別門市之官方樣式 Pin，隱藏商圈聚合徽章；
+  // 13x/14x 也不顯示：110px 寬的聚合徽章會與站牌、路牌、案件徽章堆疊，蓋住路名 (ISSUE-14)
+  if (zoom >= 16.5 || zoom < 15) {
     return;
   }
 
@@ -7049,7 +7080,7 @@ function updateTransitTickerBroadcast(transitSnapshot = null) {
   if (segments.length > 0) {
     text += ' ' + segments.join('　｜　');
   } else {
-    text += ' 🚅 高鐵走廊時刻表推算 (南港⇄台北⇄板橋)　｜　🚇 台北捷運 9 大路線 98 列班距推算運轉中　｜　🚆 臺鐵雙北 28 站看板內插推算中　｜　🚍 大臺北 eBus 2,000+ 輛公車 GPS 同步中';
+    text += ' 🚅 高鐵走廊時刻表推算 (南港⇄台北⇄板橋)　｜　🚇 台北捷運 9 大路線班距推算運轉中　｜　🚆 臺鐵雙北 28 站看板內插推算中　｜　🚍 大臺北 eBus 公車 GPS 同步中';
   }
 
   marqueeEl.innerText = text;
@@ -9799,7 +9830,7 @@ function zoomToShuangbeiBusOverview() {
   if (!isBusFleetVisible) toggleBusFleetLayer();
   map.flyTo([25.045, 121.52], 12, { duration: 1.5 });
   if (typeof showNavToast === 'function') {
-    showNavToast('🚌 已切換至「雙北公車全景俯瞰」視角 (俯瞰雙北全境 2,000+ 輛奔馳公車)');
+    showNavToast('🚌 已切換至「雙北公車全景俯瞰」視角 (俯瞰雙北全境奔馳公車)');
   }
 }
 
@@ -10254,27 +10285,51 @@ function renderStreetMicroDetails() {
   }
 
   // ─── 3. 繪製黑白高對比枕木紋斑馬線 (Zebra Crossings - ISSUE-15) ───
+  // 真正的斑馬線是多條「垂直於行進方向」的白色橫條；舊寫法是一條沿穿越方向的白色虛線，
+  // 肉眼看起來像車道線。依 cr.stripes 數量，沿 p1→p2 等距產生多條垂直短白線。
   STREET_MICRO_DETAILS.crossings.forEach(cr => {
-    const zebraW = Math.max(14, cr.width * Math.min(1.6, zoomFactor) * 2.4);
-    // 柏油深色底襯
+    const p1pt = map.latLngToContainerPoint(cr.p1);
+    const p2pt = map.latLngToContainerPoint(cr.p2);
+    const dx = p2pt.x - p1pt.x;
+    const dy = p2pt.y - p1pt.y;
+    const segLenPx = Math.max(1, Math.hypot(dx, dy));
+    const ux = dx / segLenPx;
+    const uy = dy / segLenPx;
+    const px = -uy;  // 垂直方向（螢幕座標）
+    const py = ux;
+    const stripes = Math.max(1, cr.stripes || 8);
+    const midIdx = Math.floor(stripes / 2);
+    // 斑馬線帶寬（公尺）→ 螢幕像素
+    const metersPerPx = 156543.03392 * Math.cos(cr.p1[0] * Math.PI / 180) / Math.pow(2, curZoom);
+    const halfLenPx = Math.max(6, (cr.width / 2) / metersPerPx);
+    const stripeWpx = Math.max(3, (segLenPx / stripes) * 0.55);
+
+    // 深色底襯（沿穿越方向的帶狀底，白色橫條畫在上面）
     L.polyline([cr.p1, cr.p2], {
       color: '#0f172a',
-      weight: zebraW + 4,
+      weight: Math.round(halfLenPx * 2 + 6),
       opacity: 0.92,
       lineCap: 'butt',
       interactive: false
     }).addTo(streetMicroDetailsGroup);
 
-    // 斑馬線清晰分離黑白枕木條紋
-    const zebra = L.polyline([cr.p1, cr.p2], {
-      color: '#ffffff',
-      weight: zebraW,
-      opacity: 0.98,
-      dashArray: '7, 9',
-      lineCap: 'butt'
-    }).addTo(streetMicroDetailsGroup);
-
-    zebra.bindTooltip(`🚶 ${cr.name}`, { direction: 'top', offset: [0, -6] });
+    let middleStripe = null;
+    for (let i = 0; i < stripes; i++) {
+      const t = (i + 0.5) / stripes;
+      const cx = p1pt.x + dx * t;
+      const cy = p1pt.y + dy * t;
+      const a = map.containerPointToLatLng([cx - px * halfLenPx, cy - py * halfLenPx]);
+      const b = map.containerPointToLatLng([cx + px * halfLenPx, cy + py * halfLenPx]);
+      const bar = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], {
+        color: '#ffffff',
+        weight: stripeWpx,
+        opacity: 0.98,
+        lineCap: 'butt',
+        interactive: i === midIdx  // 只有中間橫條可互動，tooltip 掛在它上面
+      }).addTo(streetMicroDetailsGroup);
+      if (i === midIdx) middleStripe = bar;
+    }
+    if (middleStripe) middleStripe.bindTooltip(`🚶 ${cr.name}`, { direction: 'top', offset: [0, -6] });
   });
 
   // ─── 4. 繪製人行道鋪面與黃色導盲磚 (Sidewalk Pavers & Tactile Paving) ───
@@ -10360,18 +10415,29 @@ function renderStreetMicroDetails() {
       { lat: 25.04637, lon: 121.51698, text: '🛣️ 忠孝西路一段 Zhongxiao W. Rd. Sec. 1', bg: '#065f46', border: '#6ee7b7', color: '#ffffff', w: 220, h: 24 }
     ];
     vectorPlaques.forEach(vp => {
-      canPlaceMicroBadge(vp.lat, vp.lon, vp.w, vp.h);
+      // 銘牌也要遵守去重：放不下就上下移 32px 再試，真的放不下就跳過，不要無條件蓋住門牌 (ISSUE-14/15)
+      let plaqueLat = vp.lat;
+      let plaqueLon = vp.lon;
+      let placed = canPlaceMicroBadge(plaqueLat, plaqueLon, vp.w, vp.h);
+      if (!placed) {
+        const pt = map.latLngToContainerPoint([vp.lat, vp.lon]);
+        for (const dy of [-32, 32]) {
+          const alt = map.containerPointToLatLng([pt.x, pt.y + dy]);
+          if (canPlaceMicroBadge(alt.lat, alt.lng, vp.w, vp.h)) { plaqueLat = alt.lat; plaqueLon = alt.lng; placed = true; break; }
+        }
+      }
+      if (!placed) return;
       const html = `
         <div class="micro-vector-plaque" style="background:${vp.bg}; border:1.8px solid ${vp.border}; color:${vp.color}; font-size:11px; font-weight:900; padding:3px 10px; border-radius:6px; box-shadow:0 3px 12px rgba(0,0,0,0.85); white-space:nowrap; pointer-events:none; letter-spacing:0.4px;">
           ${vp.text}
         </div>
       `;
       const icon = L.divIcon({ html, className: 'micro-vector-plaque-wrap', iconSize: null, iconAnchor: [Math.round(vp.w / 2), 12] });
-      L.marker([vp.lat, vp.lon], { icon, zIndexOffset: 2450, interactive: false }).addTo(streetMicroDetailsGroup);
+      L.marker([plaqueLat, plaqueLon], { icon, zIndexOffset: 2450, interactive: false }).addTo(streetMicroDetailsGroup);
     });
   }
 
-  // ─── 8.1 優先繪製街角實體門牌 (台灣標準綠底白字門牌，確保 20.5x 門牌 100% 清晰可見且不重疊 ISSUE-15) ───
+  // ─── 8.1 優先繪製街角實體門牌 (台灣標準綠底白字門牌；放不下時跳過，避免重疊 ISSUE-15) ───
   STREET_MICRO_DETAILS.doorplates.forEach(dp => {
     if (!canPlaceMicroBadge(dp.lat, dp.lon, 128, 24)) return;
     const iconHtml = `

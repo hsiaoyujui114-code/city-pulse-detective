@@ -247,7 +247,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
 
   switch (lineCode) {
     case 'BR': {
-      const runNum = 101 + ((idxSeed * 2 + dirOddEven) % 36);
+      const runNum = 101 + ((idxSeed * 2 + dirOddEven) % Math.max(36, (seqLength || 18) * 2));
       const cA = 100 + ((idxSeed * 3 + 12) % 48);
       const cB = cA + 39;
       trainNo = `BR-${runNum}`;
@@ -255,7 +255,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'BL': {
-      const runNum = 201 + ((idxSeed * 2 + dirOddEven) % 42);
+      const runNum = 201 + ((idxSeed * 2 + dirOddEven) % Math.max(42, (seqLength || 21) * 2));
       const cA = 111 + ((idxSeed * 2) % 30);
       const cB = cA + 1;
       trainNo = `BL-${runNum}`;
@@ -263,7 +263,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'R': {
-      const runNum = 301 + ((idxSeed * 2 + dirOddEven) % 38);
+      const runNum = 301 + ((idxSeed * 2 + dirOddEven) % Math.max(38, (seqLength || 19) * 2));
       const cA = 301 + ((idxSeed * 2) % 28);
       const cB = cA + 1;
       trainNo = `R-${runNum}`;
@@ -271,7 +271,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'G': {
-      const runNum = 401 + ((idxSeed * 2 + dirOddEven) % 30);
+      const runNum = 401 + ((idxSeed * 2 + dirOddEven) % Math.max(30, (seqLength || 15) * 2));
       const cA = 301 + ((idxSeed * 2) % 24);
       const cB = cA + 1;
       trainNo = `G-${runNum}`;
@@ -279,7 +279,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       break;
     }
     case 'O': {
-      const runNum = 501 + ((idxSeed * 2 + dirOddEven) % 34);
+      const runNum = 501 + ((idxSeed * 2 + dirOddEven) % Math.max(34, (seqLength || 17) * 2));
       const cA = 401 + ((idxSeed * 2) % 30);
       const cB = cA + 1;
       trainNo = `O-${runNum}`;
@@ -291,7 +291,7 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
       // 新北捷運官方營運車次 (Run No.) 為 01 ~ 17
       const setIdx = (idxSeed % 17) + 1;
       const setNum = 100 + setIdx;
-      const runNum = ((idxSeed + dirOddEven) % 17) + 1;
+      const runNum = ((idxSeed + dirOddEven) % Math.max(17, (seqLength || 17) + 1)) + 1;
       const runNumPad = String(runNum).padStart(2, '0');
       trainNo = `環狀線 Y${runNumPad} (${runNumPad}車次)`;
       carSet = `第 ${String(setIdx).padStart(2, '0')} 編組 (車號 ${setNum}1-${setNum}4 · 610型)`;
@@ -299,25 +299,25 @@ function getMrtScheduleConfig(lineCode, stCode, dirStep, curIdx, destName, seqLe
     }
     case 'A': {
       const isExpress = String(destName || '').includes('直達') || idxSeed % 2 === 0;
-      const runNum = (isExpress ? 2100 : 1100) + ((idxSeed * 2 + dirOddEven) % 20);
+      const runNum = (isExpress ? 2100 : 1100) + ((idxSeed * 2 + dirOddEven) % Math.max(20, (seqLength || 10) * 2));
       trainNo = `A-${runNum}`;
       carSet = isExpress ? '2000型直達車' : '1000型普通車';
       break;
     }
     case 'V': {
-      const runNum = 701 + ((idxSeed * 2 + dirOddEven) % 10);
+      const runNum = 701 + ((idxSeed * 2 + dirOddEven) % Math.max(10, (seqLength || 5) * 2));
       trainNo = `V-${runNum}`;
       carSet = '行武者號 10' + ((idxSeed % 7) + 1);
       break;
     }
     case 'K': {
-      const runNum = 801 + ((idxSeed * 2 + dirOddEven) % 10);
+      const runNum = 801 + ((idxSeed * 2 + dirOddEven) % Math.max(10, (seqLength || 5) * 2));
       trainNo = `K-${runNum}`;
       carSet = '光耀金 20' + ((idxSeed % 5) + 1);
       break;
     }
     default: {
-      trainNo = `${lineCode}-${101 + ((idxSeed * 2 + dirOddEven) % 30)}`;
+      trainNo = `${lineCode}-${101 + ((idxSeed * 2 + dirOddEven) % Math.max(30, (seqLength || 15) * 2))}`;
       carSet = '標準電聯車';
     }
   }
@@ -1145,8 +1145,8 @@ class TransitLiveService {
           const eased = (1 - Math.cos(u * Math.PI)) / 2;
           lat = curSt.lat + (nextSt.lat - curSt.lat) * eased;
           lon = curSt.lon + (nextSt.lon - curSt.lon) * eased;
-          const topSpeed = distKm > 1.3 ? 78 : 64;
-          speed = Math.max(18, Math.round(topSpeed * Math.sin(u * Math.PI)));
+          // 區間均速（距離／行駛時間），每段一個固定值，不再正弦亂跳 (ISSUE-28)
+          speed = Math.round(Math.min(68, Math.max(32, distKm / (travelSec / 3600))));
           statusText = `🚇 即時行駛：${curSt.name} ➔ ${nextSt.name} (往${destName}・${speed} km/h)`;
         }
       } else {
@@ -1156,7 +1156,9 @@ class TransitLiveService {
         const u = Math.max(0.1, Math.min(0.96, 1 - remSec / travelSec));
         lat = prevSt.lat + (curSt.lat - prevSt.lat) * u;
         lon = prevSt.lon + (curSt.lon - prevSt.lon) * u;
-        speed = Math.round(58 * Math.sin(u * Math.PI));
+        // 進站段區間均速（前站到本站距離／110 秒），不再正弦亂跳 (ISSUE-28)
+        const approachDistKm = calcDistKm(prevSt.lat, prevSt.lon, curSt.lat, curSt.lon);
+        speed = Math.round(Math.min(68, Math.max(32, approachDistKm / (travelSec / 3600))));
         statusText = `🚇 即時進站中：${prevSt.name} ➔ ${curSt.name} (約 ${Math.ceil(remSec)}s 到站・往${destName})`;
       }
 
@@ -1226,7 +1228,9 @@ class TransitLiveService {
           const u = (localSec - dwellSec) / (segSec - dwellSec);
           lat = stA.lat + (stB.lat - stA.lat) * u;
           lon = stA.lon + (stB.lon - stA.lon) * u;
-          speed = Math.round(52 * Math.sin(u * Math.PI));
+          // 輕軌區間均速（站距／73 秒行駛時間），不再正弦亂跳 (ISSUE-28)
+          const lkDistKm = calcDistKm(stA.lat, stA.lon, stB.lat, stB.lon);
+          speed = Math.round(Math.min(48, Math.max(32, lkDistKm / ((segSec - dwellSec) / 3600))));
           statusText = `🚊 時刻表同步行駛：${stA.name} ➔ ${stB.name} (往${destSt.name})`;
         }
 
@@ -1546,9 +1550,10 @@ class TransitLiveService {
           }
 
           const pt = interpolateCorridorSegment(THSR_CORRIDOR_PTS, stA.corridorIdx, stB.corridorIdx, u);
-          const isSouthOfBanqiao = (stA.id === '1010' || stB.id === '1020');
-          const topSpeed = isSouthOfBanqiao ? 285 : 145;
-          const curSpeed = Math.max(45, Math.round(topSpeed * Math.sin(u * Math.PI)));
+          // 區間定速，與瀏覽器版一致：桃園段 165／南港段 88／其他 82，不再正弦亂跳 (ISSUE-28)
+          const isTaoyuanSeg = (stA.id === '1020' || stB.id === '1020');
+          const isNangangSeg = (stA.id === '0990' || stB.id === '0990');
+          const curSpeed = isTaoyuanSeg ? 165 : (isNangangSeg ? 88 : 82);
 
           results.push({
             id: `live_thsr_${trainNo}`,

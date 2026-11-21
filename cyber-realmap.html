@@ -203,7 +203,7 @@
 
     <div style="font-size:10px; color:#38bdf8; font-weight:800; margin-bottom:4px;">🗺️ 1:1 真實網路底圖切換 (NLSC 原生 18x・微觀向量標線疊圖):</div>
     <select id="tileSelect" onchange="switchBaseLayer(this.value)" style="width:100%; background:rgba(30,41,59,0.9); border:1px solid #00f0ff; color:#fff; padding:6px; border-radius:4px; font-size:11px; margin-bottom:10px; outline:none; cursor:pointer;">
-      <option value="nlsc" selected>🇹🇼 臺灣通用電子地圖 (內政部國土測繪 繁中街道全圖・最清晰)</option>
+      <option value="nlsc" selected>🇹🇼 臺灣通用電子地圖 (內政部國土測繪 繁中街道全圖・最清晰（至 18x）)</option>
       <option value="esri_street">🗺️ Esri 真實街道全景圖 (高對比街廓・中文路名清楚標註)</option>
       <option value="osm">🌐 OpenStreetMap 繁體中文標準街道 (高覆蓋率巷弄路網)</option>
       <option value="dark">🛰️ 賽博暗黑夜間圖 (黑曜石底圖 ✕ 高對比霓虹街道複合)</option>
@@ -302,7 +302,7 @@
         <span>🚌 大臺北公車 (eBus)</span>
         <span style="color:#4ade80;">ON</span>
       </button>
-      <button class="tactical-tool-btn" id="btnShuangbeiBusOverview" onclick="zoomToShuangbeiBusOverview()" title="一鍵俯瞰雙北全境 2,000+ 輛奔馳公車" style="background:rgba(2,132,199,0.3); border-color:#38bdf8;">
+      <button class="tactical-tool-btn" id="btnShuangbeiBusOverview" onclick="zoomToShuangbeiBusOverview()" title="一鍵俯瞰雙北全境奔馳公車" style="background:rgba(2,132,199,0.3); border-color:#38bdf8;">
         <span>🎯 雙北公車全覽</span><span style="color:#38bdf8; font-size:10px;">ALL</span>
       </button>
       <!-- 🌟 專注過濾鍵 (快捷鍵 F：關閉其餘公車，只剩下我選擇的公車) -->
@@ -343,7 +343,7 @@
         <span id="tag2DStreetLockIcon">🔓</span>
         <span id="tag2DStreetLockText">自由縮放</span>
       </button>
-      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 街道微觀俯視 (NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線 ✕ 捷運出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
+      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 街道微觀俯視 (NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線僅北車、西門兩區・18.5x 起 ✕ 捷運出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
         <span>🔍 超微觀街道</span>
         <span style="color:#fbbf24; font-size:10px;">21.5x</span>
       </button>
@@ -446,7 +446,7 @@
       <span class="street-name-text" id="streetNameText">館前路 (Guanqian Rd.)</span>
       <span class="street-district-badge" id="streetDistrictBadge">中正區 站前特區</span>
     </div>
-    <div class="street-doorplate-text" id="streetDoorplateText">門牌概位：8號 (新光摩天大樓側)</div>
+    <div class="street-doorplate-text" id="streetDoorplateText">門牌概位：站前生活圈行人路段</div>
     <div class="street-interact-prompt" id="streetInteractPrompt" style="display:none;" onclick="handleStreetInteractionKey()">
       <span class="interact-key-pill">[E]</span>
       <span class="interact-action-text" id="interactActionText">調查周邊</span>
