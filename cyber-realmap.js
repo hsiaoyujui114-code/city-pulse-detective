@@ -297,8 +297,8 @@ function initCyberRealMap() {
   const nlscBaseLayer = enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
     maxNativeZoom: 18,
     maxZoom: 24,
-    keepBuffer: 1,
-    updateWhenZooming: false,
+    keepBuffer: 2,
+    updateWhenZooming: true,
     updateWhenIdle: true,
     detectRetina: false,
     attribution: '&copy; 內政部國土測繪中心 (NLSC) 臺灣通用電子地圖'
@@ -346,7 +346,7 @@ function initCyberRealMap() {
     enableResilientTileFallback(L.tileLayer('https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}', {
       maxNativeZoom: 18,
       maxZoom: 24,
-      keepBuffer: 1,
+      keepBuffer: 2,
       updateWhenIdle: true,
       detectRetina: false,
       attribution: '&copy; 內政部國土測繪中心 (NLSC) 正射影像'
@@ -796,7 +796,7 @@ function updatePlayerAvatarIcon() {
 // 🌟 2D 超微觀街道俯視視角系統 (Round 133/139 規範：放非常大且極致清晰)
 // ============================================================
 window.REALMAP_VIEWPORT_CONFIG = {
-  defaultStreetZoom: 21.5,   // 2D 正上方超微觀街道特寫 (放大非常大，路面、標線、門牌、號誌一清二楚)
+  defaultStreetZoom: 21.5,   // 街道放大檢視預設倍率（圖磚原生最高 18x，18x 以上為放大顯示；向量標線：北車、西門、建國高架三區）
   overviewZoom: 14.0,        // 雙北全景
   minZoom: 12,
   maxZoom: 24,
@@ -814,7 +814,7 @@ window.REALMAP_VIEWPORT_CONFIG = {
         window.map.setZoom(this.defaultStreetZoom);
       }
       if (typeof showNavToast === 'function') {
-        showNavToast(`🔒 已鎖定 2D 街道微觀俯視視角 (Zoom ${this.defaultStreetZoom})！禁止放大縮小。`);
+        showNavToast(`🔒 已鎖定街道放大檢視視角（圖磚原生 18x，放大至 ${this.defaultStreetZoom}x 顯示）！禁止放大縮小。`);
       }
     } else {
       if (window.map) {
@@ -822,7 +822,7 @@ window.REALMAP_VIEWPORT_CONFIG = {
         window.map.setMaxZoom(this.maxZoom);
       }
       if (typeof showNavToast === 'function') {
-        showNavToast('🔓 已解除鎖定，目前允許自由縮放 (最高至 24x 極致放大)。');
+        showNavToast('🔓 已解除鎖定，目前允許自由縮放（圖磚原生最高 18x，18x 以上為放大顯示）。');
       }
     }
     update2DStreetLockUI();
@@ -850,7 +850,7 @@ function update2DStreetLockUI() {
       btn.classList.remove('active');
       btn.style.borderColor = '#f59e0b';
       btn.style.background = '';
-      btn.title = '點擊一鍵鎖定為 2D 街道微觀俯視視角 (Zoom 21.5)';
+      btn.title = '點擊一鍵鎖定為街道放大檢視視角（圖磚原生 18x，放大至 21.5x 顯示）';
     }
   }
   const pillBtn = document.getElementById('btnPillLockToggle');
@@ -899,7 +899,7 @@ function updateStreetFocusPill(visible, zoom) {
     pill.innerHTML = `
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:14px; animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;">🎯</span>
-        <span><b>2D 街道微觀俯視 (${zoom || 21.5}x)</b>：NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線僅北車、西門兩區・18.5x 起 ✕ 捷運出入口</span>
+        <span><b>街道放大檢視（圖磚原生 18x，放大至 ${zoom || 21.5}x 顯示）</b>：NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線：北車、西門、建國高架三區・18.5x 起 ✕ 捷運出入口</span>
       </div>
       <button id="btnPillLockToggle" onclick="toggle2DStreetLockMode()" style="background:${isLocked ? '#ef4444' : '#0284c7'}; border:1px solid #38bdf8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:8px;">${isLocked ? '🔓 解鎖縮放' : '🔒 鎖定視角'}</button>
       <button onclick="setStreetTopDownView(14.0)" style="background:#475569; border:1px solid #94a3b8; color:#fff; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:800; margin-left:4px;">🌐 全景 (14x)</button>
@@ -1080,8 +1080,11 @@ const SHUANGBEI_MAJOR_STREETS = [
     color: '#0284c7',
     coreColor: '#38bdf8',
     width: 8,
-    center: [25.04625, 121.51688],
-    anchor: [140, -8],  // 路牌向西延伸，避開北車站牌與 CASE-02 徽章堆疊處，否則路名被蓋住 (ISSUE-14)
+    center: [25.04740, 121.50400],
+    anchor: [45, 14],  // ISSUE-14：徽章置中於座標點（錨點 x 取徽章半寬約 45px），座標落在忠孝西路一段西段路中心線上。
+    // 舊錨點 [140, -8] 會把徽章推到錨點以西 140px（13x 約 2.4 公里），永遠不在站前路段上。
+    // 新位置在 13x 時徽章右緣約在站點以西 23px，與案 02 信標左緣（以西約 19px）留約 4px 空隙；
+    // 14x、15x 空隙更大。若 live 實測 13x 仍相碰，把 center 經度再向西移 0.0005（約 50m）即可。
     isPrimaryRoadBadge: true,
     coords: [
       [25.0475, 121.5032],
@@ -2137,13 +2140,14 @@ function stabilizeBusKinematics(plate, rawLat, rawLon, rawSpeedVal, rawAzimuthVa
     return rec;
   }
 
-  // 初次載入該公車：設定穩定市區巡航速度 (22~36 km/h) 與順暢前推目標點
+  // 初次載入該公車：插值推算用的假設巡航速度 (22~36 km/h)，僅供死推步長使用；
+  // 顯示時速以車機回傳或實測位移為準，不得把此值當成真實車速 (ISSUE-29)。
   const defaultCruiseSpd = 22 + (seed % 15);
   const initSpd = (rawSpeedVal >= 14 && rawSpeedVal <= 52) ? Math.round(rawSpeedVal) : defaultCruiseSpd;
   const initAz = (rawAzimuthVal && rawAzimuthVal > 0) ? rawAzimuthVal : ((seed % 36) * 10);
 
   if (!prev || typeof prev.displayLat !== 'number' || typeof prev.displayLon !== 'number') {
-    const stepM = (initSpd / 3.6) * 10 * 0.48;
+    const stepM = (initSpd / 3.6) * 10 * 1.0;
     const rad = initAz * Math.PI / 180;
     const toLat = rawLat + (stepM * Math.cos(rad)) / 111320;
     const toLon = rawLon + (stepM * Math.sin(rad)) / (111320 * Math.cos(rawLat * Math.PI / 180));
@@ -2174,16 +2178,24 @@ function stabilizeBusKinematics(plate, rawLat, rawLon, rawSpeedVal, rawAzimuthVa
   let toLat = rawLat;
   let toLon = rawLon;
 
-  if (rawJumpMeters >= 8 && rawJumpMeters <= 85) {
+  // ISSUE-29：raw GPS 沒更新時，顯示位置已靠死推超前舊 raw 點；此時 rawJump 只是
+  // 「死推累積量」，不是真實位移，不得把目標拉回舊 raw 點（否則前進 10 秒、倒退 10 秒，
+  // 89 秒淨位移為零）。只有當 raw 點本身真的移動了（相對上次採納的 raw 點 ≥ 8 m）
+  // 才視為新鮮定位、採納為目標；否則一律走死推分支。
+  const lastRawLat = (typeof prev.lastRawLat === 'number') ? prev.lastRawLat : prev.rawLat;
+  const lastRawLon = (typeof prev.lastRawLon === 'number') ? prev.lastRawLon : prev.rawLon;
+  const rawMovedMeters = calcDistanceKm(lastRawLat, lastRawLon, rawLat, rawLon) * 1000;
+  const isFreshRawFix = rawMovedMeters >= 8;
+  if (isFreshRawFix && rawJumpMeters >= 8 && rawJumpMeters <= 85) {
     // 正常 GPS 推進 (8m ~ 85m / 10s)
     const dLat = rawLat - curLat;
     const dLon = (rawLon - curLon) * Math.cos(curLat * Math.PI / 180);
     nextAz = ((Math.atan2(dLon, dLat) * 180 / Math.PI) + 360) % 360;
-    const measSpd = Math.min(48, Math.max(18, Math.round((rawJumpMeters / 10) * 3.6)));
+    const measSpd = Math.round((rawJumpMeters / 10) * 3.6);
     targetSpeed = Math.round(prev.smoothSpeed * 0.8 + measSpd * 0.2);
     toLat = rawLat;
     toLon = rawLon;
-  } else if (rawJumpMeters > 85) {
+  } else if (isFreshRawFix && rawJumpMeters > 85) {
     // 防暴衝夾制 (ISSUE-29: 杜絕 EAL-3866 在 10 秒內跳過整個畫面)
     const maxStepM = 58;
     const dLat = rawLat - curLat;
@@ -2195,16 +2207,18 @@ function stabilizeBusKinematics(plate, rawLat, rawLon, rawSpeedVal, rawAzimuthVa
     nextAz = ((Math.atan2(cLon, dLat) * 180 / Math.PI) + 360) % 360;
     targetSpeed = Math.round(prev.smoothSpeed * 0.85 + 28 * 0.15);
   } else {
-    // 官方 GetBusData 封包在 20~30s 間隔內尚未更新座標 (如 KKA-1161)：沿道路航向平滑微推進，不掉回 0 km/h
+    // 官方 GetBusData 封包在 20~30s 間隔內尚未更新座標 (如 KKA-1161)：沿道路航向死推，
+    // 步長必須是 10 秒走滿 10 秒的路（舊 0.45 係數讓標籤寫 30 km/h、標記卻只走 13.5 km/h，
+    // 且下次同步會被拉回舊 raw 點，見 ISSUE-29）；拉回守衛已刪除，見 29-2。
     const targetCruise = (rawSpeedVal >= 16 && rawSpeedVal <= 48) ? rawSpeedVal : defaultCruiseSpd;
     targetSpeed = Math.round(prev.smoothSpeed * 0.88 + targetCruise * 0.12);
     targetSpeed = Math.max(18, Math.min(42, targetSpeed));
-    const stepM = (targetSpeed / 3.6) * 10 * 0.45;
+    const stepM = (targetSpeed / 3.6) * 10 * 1.0;
     const rad = nextAz * Math.PI / 180;
     toLat = curLat + (stepM * Math.cos(rad)) / 111320;
     toLon = curLon + (stepM * Math.sin(rad)) / (111320 * Math.cos(curLat * Math.PI / 180));
     const driftM = calcDistanceKm(rawLat, rawLon, toLat, toLon) * 1000;
-    if (driftM > 110) {
+    if (false && driftM > 110) {  // ISSUE-29：拉回守衛已停用——死推漂移不再拉回舊 raw 點（否則前進 10 秒、倒退 10 秒）。
       const backLat = rawLat - curLat;
       const backLon = (rawLon - curLon) * Math.cos(curLat * Math.PI / 180);
       nextAz = ((Math.atan2(backLon, backLat) * 180 / Math.PI) + 360) % 360;
@@ -2217,6 +2231,8 @@ function stabilizeBusKinematics(plate, rawLat, rawLon, rawSpeedVal, rawAzimuthVa
   const rec = {
     rawLat,
     rawLon,
+    lastRawLat: isFreshRawFix ? rawLat : lastRawLat,
+    lastRawLon: isFreshRawFix ? rawLon : lastRawLon,
     displayLat: curLat,
     displayLon: curLon,
     fromLat: curLat,
@@ -2287,12 +2303,15 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
       }
 
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
+      const hasSpeedReading = rawSpeed > 0;  // ISSUE-29：車機有無回傳速度；沒有時顯示不得假裝是實測時速
       const rawAz = parseFloat(b.Azimuth) || 0;
       const kin = stabilizeBusKinematics(plate, rawLat, rawLon, rawSpeed, rawAz, isIdleInDepot, fetchMs);
       const effectiveSpeed = kin.smoothSpeed;
       const isStopped = isIdleInDepot || effectiveSpeed <= 1;
 
-      let statusDesc = `🟢 道路平滑巡航中 (${Math.round(effectiveSpeed)} km/h)`;
+      let statusDesc = hasSpeedReading
+        ? `🟢 道路平滑巡航中 (${Math.round(effectiveSpeed)} km/h)`
+        : `🟢 行駛中（推算時速約 ${Math.round(effectiveSpeed)} km/h，車機未回傳速度）`;
       if (isIdleInDepot) {
         statusDesc = '🅿️ 站端/調度總站待命中 (0 km/h)';
       } else if (isStopped) {
@@ -2315,6 +2334,8 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         toLon: kin.toLon,
         lastFetchMs: fetchMs,
         speed: effectiveSpeed,
+        rawSpeed: rawSpeed,
+        hasSpeedReading: hasSpeedReading,
         azimuth: kin.azimuth,
         goBack,
         dutyStatus,
@@ -2346,6 +2367,7 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
 
       presentRouteCodes.add(rName);
       const rawSpeed = Math.max(0, parseFloat(b.Speed) || 0);
+      const hasSpeedReading = rawSpeed > 0;  // ISSUE-29：車機有無回傳速度；沒有時顯示不得假裝是實測時速
       const dutyStatus = Number(b.DutyStatus || 0);
       const isIdleInDepot = dutyStatus === 2;
       const kin = stabilizeBusKinematics(plate, lat, lon, rawSpeed, parseFloat(b.Azimuth) || 0, isIdleInDepot, fetchMs);
@@ -2368,13 +2390,15 @@ function computeBrowserLiveBuses(rawBusList, rawInterCity, twTime) {
         toLon: kin.toLon,
         lastFetchMs: fetchMs,
         speed: effectiveSpeed,
+        rawSpeed: rawSpeed,
+        hasSpeedReading: hasSpeedReading,
         azimuth: kin.azimuth,
         goBack: Number(b.Direction || 0),
         dutyStatus,
         busStatus: Number(b.BusStatus || 0),
         isIdleInDepot,
         dataKind: 'OFFICIAL_GPS',
-        status: isStopped ? '🅿️ 客運轉運站待命 (0 km/h)' : `🟢 公路平滑巡航中 (${Math.round(effectiveSpeed)} km/h)`,
+        status: isStopped ? '🅿️ 客運轉運站待命 (0 km/h)' : (hasSpeedReading ? `🟢 公路平滑巡航中 (${Math.round(effectiveSpeed)} km/h)` : `🟢 行駛中（推算時速約 ${Math.round(effectiveSpeed)} km/h，車機未回傳速度）`),
         dataTime: b.SrcUpdateTime || '',
         source: '交通部 PTX/TDX 公路客運即時 GPS'
       });
@@ -2666,12 +2690,14 @@ function findBrowserTraPrecedingStation(cleanStName, dir, stMap) {
   for (const seq of BROWSER_TRA_LINE_SEQS) {
     const idx = seq.indexOf(cleanStName);
     if (idx !== -1) {
-      // Direction 0 (順行/北上東行): 鶯歌 -> 基隆 (idx - 1), 八堵 -> 福隆 (idx - 1)
-      // Direction 1 (逆行/南下西行): 基隆 -> 鶯歌 (idx + 1), 福隆 -> 八堵 (idx + 1)
+      // TDX Direction 0 = 順行：西部幹線南下、東部幹線北上；Direction 1 = 逆行。
+      // 站序沿線排列（基隆 -> 鶯歌、八堵 -> 福隆），所以順行列車的前一站在 idx-1
+      // （西幹線），東線順行（北上）的前一站在 idx+1；舊寫法兩邊全取反，
+      // 導致分支 3 的車從錯誤的一側「開進」第一站，看起來像在倒退（ISSUE-28）。
       const isWestMain = seq[0] === '基隆';
       const prevIdx = dir === 0
-        ? (isWestMain ? idx + 1 : idx - 1)
-        : (isWestMain ? idx - 1 : idx + 1);
+        ? (isWestMain ? idx - 1 : idx + 1)
+        : (isWestMain ? idx + 1 : idx - 1);
       if (prevIdx >= 0 && prevIdx < seq.length) {
         const prevClean = seq[prevIdx];
         if (stMap.has(prevClean)) return stMap.get(prevClean);
@@ -2680,6 +2706,13 @@ function findBrowserTraPrecedingStation(cleanStName, dir, stMap) {
   }
   return null;
 }
+
+// ISSUE-28：台鐵／高鐵位置記憶。位置是「快照＋時鐘」的純函數，快照一變（站掉出看板、誤點更新）
+// 座標就能任意跳（實測 0642 次 50 秒倒退約 30 公里）。每車記住上一次採納的位置與行進方向；
+// 新算出的位置若一步跳太遠（超過最高速 × 經過時間＋1.0 km 誤差），視為快照跳變：
+// 沿原方向以站間均速死推（站內則原地不動），不瞬移、不倒退；快照穩定後自然回到正確位置。
+const liveTraPositionTracker = new Map();
+const liveThsrPositionTracker = new Map();
 
 function computeBrowserLiveTraTrains(rawTra, twTime) {
   const contSec = twTime.totalSec + (Date.now() % 1000) / 1000;  // 毫秒精度，避免 500ms tick 每秒只跳一格 (ISSUE-28)
@@ -2716,8 +2749,11 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
 
     const first = records[0].entry;
     const delayMin = Number(first.DelayTime) || 0;
-    const delaySec = delayMin * 60;
     const delayLabel = delayMin > 0 ? `晚 ${delayMin} 分` : '準點';
+    // ISSUE-28：誤點是逐站的，不得用 records[0] 一個值平移全車時刻。
+    // 各站到發時刻改用該站自己的 DelayTime（見下方三個分支內的 delaySecFor(r)），
+    // 否則 records[0] 一滾動，全車時刻跟著跳幾分鐘，位置跟著跳十幾公里。
+    const delaySecFor = (r) => (Number(r.entry.DelayTime) || 0) * 60;
     const typeNameRaw = (first.TrainTypeName && first.TrainTypeName.Zh_tw) ? first.TrainTypeName.Zh_tw : '臺鐵列車';
     const shortType = typeNameRaw.includes('太魯閣') ? '太魯閣'
       : (typeNameRaw.includes('普悠瑪') ? '普悠瑪'
@@ -2728,7 +2764,7 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
     const dir = Number(first.Direction || 0);
     const destName = (first.EndingStationName && first.EndingStationName.Zh_tw)
       ? first.EndingStationName.Zh_tw
-      : (dir === 0 ? '北上/東行終點' : '南下/西行終點');
+      : (dir === 0 ? '順行終點' : '逆行終點');
 
     let chosenLat = null;
     let chosenLon = null;
@@ -2740,8 +2776,8 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
     // 1. 檢查是否正在某站月台停靠中
     for (let i = 0; i < records.length; i++) {
       const r = records[i];
-      const arrSec = (parseTimeStrToSecBrowser(r.entry.ScheduledArrivalTime || r.entry.ScheduledDepartureTime) || contSec) + delaySec;
-      const depSec = (parseTimeStrToSecBrowser(r.entry.ScheduledDepartureTime || r.entry.ScheduledArrivalTime) || arrSec + 40) + delaySec;
+      const arrSec = (parseTimeStrToSecBrowser(r.entry.ScheduledArrivalTime || r.entry.ScheduledDepartureTime) || contSec) + delaySecFor(r);
+      const depSec = (parseTimeStrToSecBrowser(r.entry.ScheduledDepartureTime || r.entry.ScheduledArrivalTime) || arrSec + 40) + delaySecFor(r);
       if (contSec >= arrSec - 20 && contSec <= Math.max(depSec + 15, arrSec + 35)) {
         chosenLat = r.stObj.lat;
         chosenLon = r.stObj.lon;
@@ -2758,8 +2794,8 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
       for (let i = 0; i < records.length - 1; i++) {
         const rA = records[i];
         const rB = records[i + 1];
-        const depA = (parseTimeStrToSecBrowser(rA.entry.ScheduledDepartureTime || rA.entry.ScheduledArrivalTime) || 0) + delaySec;
-        const arrB = (parseTimeStrToSecBrowser(rB.entry.ScheduledArrivalTime || rB.entry.ScheduledDepartureTime) || 0) + delaySec;
+        const depA = (parseTimeStrToSecBrowser(rA.entry.ScheduledDepartureTime || rA.entry.ScheduledArrivalTime) || 0) + delaySecFor(rA);
+        const arrB = (parseTimeStrToSecBrowser(rB.entry.ScheduledArrivalTime || rB.entry.ScheduledDepartureTime) || 0) + delaySecFor(rB);
         if (contSec > depA && contSec < arrB) {
           const span = Math.max(35, arrB - depA);
           const u = Math.max(0.03, Math.min(0.97, (contSec - depA) / span));
@@ -2779,7 +2815,7 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
     // 3. 檢查是否正在駛向雙北第一站 (距離到站 <= 420 秒內才顯示，過濾尚在外縣市遠方之列車)
     if (chosenLat === null) {
       const r0 = records[0];
-      const arr0 = (parseTimeStrToSecBrowser(r0.entry.ScheduledArrivalTime || r0.entry.ScheduledDepartureTime) || 0) + delaySec;
+      const arr0 = (parseTimeStrToSecBrowser(r0.entry.ScheduledArrivalTime || r0.entry.ScheduledDepartureTime) || 0) + delaySecFor(r0);
       const remSec = arr0 - contSec;
       if (remSec > 0 && remSec <= 420) {
         const prevSt = findBrowserTraPrecedingStation(r0.stObj.cleanName, dir, stMap);
@@ -2797,6 +2833,37 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
 
     if (chosenLat === null || chosenLon === null) return;
 
+    // ISSUE-28：位置必須是時間的單調函數（見 liveTraPositionTracker）。
+    const traKey = `live_tra_${trainNo}`;
+    const prevTraPos = liveTraPositionTracker.get(traKey);
+    const traNowMs = Date.now();
+    let traDirLat = prevTraPos ? prevTraPos.dLat : null;
+    let traDirLon = prevTraPos ? prevTraPos.dLon : null;
+    if (prevTraPos) {
+      const dtSec = Math.max(0.5, (traNowMs - prevTraPos.lastMs) / 1000);
+      const stepKm = calcDistanceKm(prevTraPos.lat, prevTraPos.lon, chosenLat, chosenLon);
+      const maxStepKm = (130 / 3600) * dtSec + 1.0;
+      if (stepKm > maxStepKm) {
+        // 快照跳變：不瞬移。沿上一次行進方向以站間均速死推；若原本在站內（無方向），原地不動。
+        if (prevTraPos.dLat !== null && speed > 0) {
+          const advKm = (speed / 3600) * dtSec;
+          chosenLat = prevTraPos.lat + prevTraPos.dLat * (advKm / 111.32);
+          chosenLon = prevTraPos.lon + prevTraPos.dLon * (advKm / (111.32 * Math.cos(prevTraPos.lat * Math.PI / 180)));
+        } else {
+          chosenLat = prevTraPos.lat;
+          chosenLon = prevTraPos.lon;
+        }
+      } else if (stepKm > 0.0005) {
+        // 正常移動：更新行進方向（單位向量，經度以 cos(lat) 折算）
+        const dLat = chosenLat - prevTraPos.lat;
+        const dLon = (chosenLon - prevTraPos.lon) * Math.cos(prevTraPos.lat * Math.PI / 180);
+        const dLen = Math.hypot(dLat, dLon);
+        traDirLat = dLat / dLen;
+        traDirLon = dLon / dLen;
+      }
+    }
+    liveTraPositionTracker.set(traKey, { lat: chosenLat, lon: chosenLon, dLat: traDirLat, dLon: traDirLon, lastMs: traNowMs });
+
     const color = (shortType.includes('自強') || shortType.includes('太魯閣') || shortType.includes('普悠瑪'))
       ? '#f43f5e'
       : (shortType.includes('區間快') ? '#06b6d4' : '#38bdf8');
@@ -2805,7 +2872,7 @@ function computeBrowserLiveTraTrains(rawTra, twTime) {
       type: 'TRA',
       trainNo,
       name: `臺鐵 ${shortType} ${trainNo}次`,
-      headsign: `往 ${destName} (${dir === 0 ? '順行北上/東行' : '逆行南下/西行'}・${delayLabel})`,
+      headsign: `往 ${destName} (${dir === 0 ? '順行' : '逆行'}・${delayLabel})`,
       currentStation: curStName,
       lat: chosenLat,
       lon: chosenLon,
@@ -2936,7 +3003,7 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
           const isNangangSeg = (st.stationId === '0990' || nextSt.stationId === '0990');
           speed = isTaoyuanSeg ? 165 : (isNangangSeg ? 88 : 82);
           curStName = nextSt.name;
-          statusText = `🚅 ${st.name} ➔ ${nextSt.name} 時刻推算定速巡航 (${speed} km/h)`;
+          statusText = `🚅 ${st.name} ➔ ${nextSt.name} 時刻推算定速巡航`;
           matched = true;
           break;
         }
@@ -2952,6 +3019,36 @@ function computeBrowserLiveThsrTrains(rawTimetable, twTime) {
       curStName = st0.name;
       statusText = `🚉 【${st0.name}】準備發車中 (往 ${destName})`;
     }
+
+    // ISSUE-28：位置記憶（高鐵同款；見 liveThsrPositionTracker）。高鐵時刻表快照雖穩定，
+    // 但靠站視窗提早 15／90 秒仍會造成小跳變，同樣以最高速 300 km/h＋1.0 km 誤差把關。
+    const thsrKey = `live_thsr_${trainNo}`;
+    const prevThsrPos = liveThsrPositionTracker.get(thsrKey);
+    const thsrNowMs = Date.now();
+    let thsrDirLat = prevThsrPos ? prevThsrPos.dLat : null;
+    let thsrDirLon = prevThsrPos ? prevThsrPos.dLon : null;
+    if (prevThsrPos) {
+      const dtSec = Math.max(0.5, (thsrNowMs - prevThsrPos.lastMs) / 1000);
+      const stepKm = calcDistanceKm(prevThsrPos.lat, prevThsrPos.lon, lat, lon);
+      const maxStepKm = (300 / 3600) * dtSec + 1.0;
+      if (stepKm > maxStepKm) {
+        if (prevThsrPos.dLat !== null && speed > 0) {
+          const advKm = (speed / 3600) * dtSec;
+          lat = prevThsrPos.lat + prevThsrPos.dLat * (advKm / 111.32);
+          lon = prevThsrPos.lon + prevThsrPos.dLon * (advKm / (111.32 * Math.cos(prevThsrPos.lat * Math.PI / 180)));
+        } else {
+          lat = prevThsrPos.lat;
+          lon = prevThsrPos.lon;
+        }
+      } else if (stepKm > 0.0005) {
+        const dLat = lat - prevThsrPos.lat;
+        const dLon = (lon - prevThsrPos.lon) * Math.cos(prevThsrPos.lat * Math.PI / 180);
+        const dLen = Math.hypot(dLat, dLon);
+        thsrDirLat = dLat / dLen;
+        thsrDirLon = dLon / dLen;
+      }
+    }
+    liveThsrPositionTracker.set(thsrKey, { lat, lon, dLat: thsrDirLat, dLon: thsrDirLon, lastMs: thsrNowMs });
 
     trains.push({
       id: `live_thsr_${trainNo}`,
@@ -3046,7 +3143,19 @@ function stopLiveTransitSync() {
   liveRailTrainMarkers.clear();
 }
 
+// ISSUE-29：同步加 in-flight 守衛。一次同步要等 5~6 個平行抓取（含 GetBusData.gz 解壓），
+// 超過 10 秒就會重疊，慢的那次後完成會把較舊的 liveBusFleetData 蓋回來、位置倒退。
 async function syncLiveTransitData() {
+  if (syncLiveTransitData._running) return;
+  syncLiveTransitData._running = true;
+  try {
+    await syncLiveTransitDataInner();
+  } finally {
+    syncLiveTransitData._running = false;
+  }
+}
+
+async function syncLiveTransitDataInner() {
   if (!isTransitLiveSyncEnabled) return;
   const twTime = getTaiwanTimePartsBrowser();
 
@@ -3222,9 +3331,21 @@ function tickLiveTransitPositions() {
   if (isBusVisible && isBusFleetVisible && liveBusFleetData.length > 0) {
     liveBusFleetData.forEach(b => {
       if (!b.isIdleInDepot && typeof b.fromLat === 'number' && typeof b.toLat === 'number') {
-        const u = Math.min(1.0, Math.max(0, (nowMs - (b.lastFetchMs || nowMs)) / 10000));
-        b.lat = b.fromLat + (b.toLat - b.fromLat) * u;
-        b.lon = b.fromLon + (b.toLon - b.fromLon) * u;
+        // ISSUE-29：u 飽和在 1.0 是凍結主因——抓取失敗時 lastFetchMs 停在舊值，
+        // 全車永久停在 toLat。超過 30 秒沒新資料，改沿最後航向繼續死推，不停格。
+        const ageMs = nowMs - (b.lastFetchMs || nowMs);
+        if (ageMs > 30000) {
+          const stepM = ((b.speed || 24) / 3.6) * 0.5;
+          const rad = (b.azimuth || 0) * Math.PI / 180;
+          b.lat = b.lat + (stepM * Math.cos(rad)) / 111320;
+          b.lon = b.lon + (stepM * Math.sin(rad)) / (111320 * Math.cos(b.lat * Math.PI / 180));
+          b.isDataStale = true;
+        } else {
+          const u = Math.min(1.0, Math.max(0, ageMs / 10000));
+          b.lat = b.fromLat + (b.toLat - b.fromLat) * u;
+          b.lon = b.fromLon + (b.toLon - b.fromLon) * u;
+          b.isDataStale = false;
+        }
         const hist = liveBusHistoryMap.get(b.busId);
         if (hist) {
           hist.displayLat = b.lat;
@@ -3377,7 +3498,7 @@ function estimateBusNextStop(b) {
 function buildLiveBusPopupHtml(b) {
   if (b) b.busId = sanitizeBusPlate(b.busId, b.routeName, b.goBack);
   const isSim = b.dataKind === 'SIMULATED';
-  const isStale = typeof isSourceStale === 'function' ? isSourceStale('bus', 60000) : false;
+  const isStale = (typeof isSourceStale === 'function' ? isSourceStale('bus', 60000) : false) || !!b.isDataStale;
   const isStopped = b.speed <= 1 || b.dutyStatus === 2;
   const isExtrapolating = !!b.isExtrapolating;
   const nextStopInfo = estimateBusNextStop(b);
@@ -3440,7 +3561,7 @@ function buildLiveBusPopupHtml(b) {
         ⏱️ 預計到站 (估算)：<b style="color:#4ade80;">${nextStopInfo.eta}</b><br>
         真實世界狀態：<b style="color:${isStopped ? '#f87171' : '#4ade80'};">${b.status}</b><br>
         即時動態性質：<b style="color:${isSim || isStale || isExtrapolating ? '#fbbf24' : '#4ade80'};">${natureText}</b><br>
-        即時車機時速：<b style="color:${isStopped ? '#f87171' : '#4ade80'}; font-size:13px;">${Math.round(b.speed)} km/h</b>｜航向角：<b>${Math.round(b.azimuth || 0)}°</b><br>
+        ${b.hasSpeedReading ? '車機回傳時速' : '推算時速（車機未回傳速度）'}：<b style="color:${isStopped ? '#f87171' : '#4ade80'}; font-size:13px;">${Math.round(b.speed)} km/h</b>｜航向角：<b>${Math.round(b.azimuth || 0)}°</b><br>
         ${coordLabel}：<b>${b.lat.toFixed(5)}°N, ${b.lon.toFixed(5)}°E</b><br>
         ${timeLabel}：<b>${b.dataTime || lastLiveSuccessTimeStr || '即時'}</b><br>
         資料來源：<b style="color:#38bdf8;">${sourceText}</b>
@@ -3926,7 +4047,7 @@ function buildLiveRailPopupHtml(t) {
       ` : ''}
       <div style="font-size:10px; color:#cbd5e1; margin-top:6px; line-height:1.55;">
         運行狀態：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'};">${t.status}</b><br>
-        估算時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.speed} km/h</b> <span style="font-size:9.5px; color:#94a3b8;">(平均推算)</span><br>
+        估算時速：<b style="color:${t.isAtStation ? '#fbbf24' : '#4ade80'}; font-size:13px;">${t.displaySpeed ?? Math.round(t.speed || 0)} km/h</b> <span style="font-size:9.5px; color:#94a3b8;">(平均推算)</span><br>
         軌道推算座標：<b>${t.lat.toFixed(5)}°N, ${t.lon.toFixed(5)}°E</b><br>
         資料性質：<b style="color:${isSimulated ? '#facc15' : '#38bdf8'};">${sourceDetail}</b><br>
         資料時間：<b>${isThsr ? `今日營運時刻表 (${new Date().toISOString().slice(0, 10)})` : (lastLiveSuccessTimeStr || '時鐘推算（非GPS）')}</b>
@@ -3976,24 +4097,27 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
 
   allTrains.forEach(t => {
     activeIds.add(t.id);
-    // 列車速度 EMA 平滑 (ISSUE-28)：原始速度先存入 _rawSpeed，避免對已平滑過的值重複平滑
-    if (typeof t._rawSpeed !== 'number') t._rawSpeed = t.isAtStation ? 0 : Math.round(t.speed || 0);
-    const rawSpeed = t.isAtStation ? 0 : t._rawSpeed;
+    // 列車速度 EMA 平滑 (ISSUE-28)：每 500ms tick 都是全新物件，_rawSpeed 守衛無效，
+    // 直接以 liveRailSpeedHistoryMap 為唯一狀態；平滑過程保持浮點數，只在顯示時取整，
+    // 否則 Math.round 會產生黏住的固定點（例如原始 82 會卡在 81，見 ISSUE-28）
+    const rawSpeed = t.isAtStation ? 0 : Math.round(t.speed || 0);
     const prevSpeed = liveRailSpeedHistoryMap.get(t.id);
     let smoothedSpeed;
     if (prevSpeed === undefined) {
       smoothedSpeed = rawSpeed;
     } else if (rawSpeed === 0) {
-      smoothedSpeed = Math.max(0, Math.round(prevSpeed * 0.5));  // 靠站時向 0 漸降，不瞬間歸零
+      smoothedSpeed = prevSpeed < 2 ? 0 : prevSpeed * 0.5;  // 靠站時向 0 漸降，且能真正歸零
     } else {
-      const ema = Math.round(prevSpeed * 0.7 + rawSpeed * 0.3);
+      const ema = prevSpeed * 0.7 + rawSpeed * 0.3;
       smoothedSpeed = Math.max(prevSpeed - 5, Math.min(prevSpeed + 5, ema));  // 每 500ms 變化不超過 ±5 km/h
+      if (Math.abs(smoothedSpeed - rawSpeed) < 1) smoothedSpeed = rawSpeed;  // 收斂後歸位，不留 1 km/h 誤差
     }
     t.speed = smoothedSpeed;
+    t.displaySpeed = Math.round(smoothedSpeed);
     liveRailSpeedHistoryMap.set(t.id, smoothedSpeed);
 
     const emoji = t.type === 'THSR' ? '🚅' : (t.type === 'TRA' ? '🚆' : '🚇');
-    const speedLabel = t.isAtStation ? '靠站' : `${t.speed} km/h`;
+    const speedLabel = t.isAtStation ? '靠站' : `${t.displaySpeed ?? Math.round(t.speed || 0)} km/h`;
     const badgeBg = t.isAtStation ? '#f59e0b' : t.color;
     const speedTagText = speedLabel;
     const shortId = t.trainNo || (t.name ? t.name.split(' ')[0] : '列車');
@@ -4060,6 +4184,8 @@ function renderLiveRailTrains(mrtTrains, traTrains, thsrTrains) {
       if (mrtDynamicTrainsGroup.hasLayer(val.marker)) mrtDynamicTrainsGroup.removeLayer(val.marker);
       liveRailTrainMarkers.delete(key);
       liveRailSpeedHistoryMap.delete(key);  // 同步清掉速度平滑紀錄，避免 Map 無限增長
+      liveTraPositionTracker.delete(key);
+      liveThsrPositionTracker.delete(key);
     }
   });
 }
@@ -4611,7 +4737,8 @@ function addMrtLayer() {
     `;
 
     const isTpeMain = st.name === '台北車站';
-    const anchorX = isTpeMain ? -6 : (38 + (st.lines.length * 15));
+    const anchorX = isTpeMain ? -20 : (38 + (st.lines.length * 15));  // ISSUE-14：台北車站 pill 向東移 14px，
+    // 使 13x 時 pill 左緣（站點以東 20px）與案 02 信標右緣（站點以東約 13px）留約 7px 空隙，不再被信標切角；只動台北車站，其他站不動。
     const anchorY = isTpeMain ? 26 : 14;
     const icon = L.divIcon({
       html: html,
@@ -5724,11 +5851,10 @@ function buildStoreClusters() {
   storeClusterGroup.clearLayers();
 
   const zoom = map.getZoom();
-  // 當放大至 16.5 級以上 (極近街廓特寫)，顯示所有各別門市之官方樣式 Pin，隱藏商圈聚合徽章；
-  // 13x/14x 也不顯示：110px 寬的聚合徽章會與站牌、路牌、案件徽章堆疊，蓋住路名 (ISSUE-14)
-  if (zoom >= 16.5 || zoom < 15) {
-    return;
-  }
+  // ISSUE-14（2026-11-21 實機驗證）：商圈聚合徽章不再於任何倍率顯示。舊條件只藏了 zoom < 15，
+  // 但徽章在 15x～16.5x 仍會顯示並蓋住站名與路名；且 15x 起個別門市 Pin 已經顯示
+  //（updateStoreLODVisibility：zoom >= 15.0 即顯示），徽章與 Pin 雙重呈現毫無必要。
+  return;
 
   // 密集商圈聚類列表 (V2-05: 消除密集門市互相疊壓遮擋)
   const COMMERCIAL_HUBS = [
@@ -5793,11 +5919,7 @@ function addAllStoreMarkers() {
   const countEl = document.getElementById('hudStoreCount');
   if (countEl) countEl.innerText = `${totalCount} 處`;
 
-  // 建立商圈聚類並繫結地圖縮放事件
-  buildStoreClusters();
-  if (map) {
-    map.on('zoomend', buildStoreClusters);
-  }
+  // ISSUE-14：商圈聚合徽章已停用（buildStoreClusters 現為空操作），不再繫結縮放事件。
 
   console.log(`✅ 已完成繪製全雙北 ${totalCount} 間真實實體門市與商圈輕量聚類！`);
 }
@@ -6554,6 +6676,8 @@ function showSectorLoading(name) {
   el.style.display = 'flex';
   const startMs = Date.now();
   let hidden = false;
+  let lastLoadedCount = -1;
+  let lastProgressMs = Date.now();
 
   const hide = () => {
     if (hidden) return;
@@ -6602,9 +6726,15 @@ function showSectorLoading(name) {
 
     txt.innerText = `🧭 正在載入【${name}】高解析街廓圖磚 (${loaded}/${total})...`;
 
-    const layerStillLoading = activeBaseLayer && activeBaseLayer._loading === true;
-    if (loaded >= total && !layerStillLoading) {
+    // ISSUE-33：只以畫面內可見圖磚為準。Leaflet 內部 _loading 還包含視窗外緩衝圖磚與未清除的舊層級圖磚，
+    // 可見圖磚全載完時 _loading 仍可能為 true，會讓膠囊一直不消失，故不再等它。
+    if (loaded >= total) {
       hide();
+    } else if (loaded === lastLoadedCount) {
+      if (Date.now() - lastProgressMs > 3000) hide(); // 3 秒無進展視為卡住，直接隱藏
+    } else {
+      lastLoadedCount = loaded;
+      lastProgressMs = Date.now();
     }
   };
 
@@ -6645,9 +6775,6 @@ function renderSectorJumpButtons() {
       // 直接定位至目標特區 (animate:false 避免排隊下載沿途過渡圖磚，大幅加快載入速度 ISSUE-16)
       map.setView([s.lat, s.lon], 15.0, { animate: false });
       showSectorLoading(sectorName);
-      if (typeof showNavToast === 'function') {
-        showNavToast(`📍 已跳轉至【${sectorName}】，正在載入街廓圖磚...`);
-      }
     };
     container.appendChild(btn);
   });
@@ -7524,7 +7651,7 @@ function handlePlayerKeyboardWalk(e) {
       return;
     }
   }
-  // 🎯 鍵盤「親臨鍵 (Z)」：快速切換街廓親臨模式 (21.5x 超微觀)
+  // 🎯 鍵盤「親臨鍵 (Z)」：快速切換街廓親臨模式 (放大檢視，圖磚原生 18x）
   if (e.key === 'z' || e.key === 'Z') {
     togglePlayerFocusMode();
     return;
@@ -7556,6 +7683,23 @@ function handlePlayerKeyboardWalk(e) {
       map.closePopup();
     }
     return;
+  }
+
+  // 🎯 鍵盤「縮放鍵 (+ / = / -)」(ISSUE-32)：不論焦點在地圖、面板或按鈕上，加減號都要能縮放。
+  // 之前完全沒有處理 +/-；Leaflet 內建鍵盤縮放只在地圖容器取得焦點時才作用，按過面板按鈕後焦點離開地圖，加號就失效。
+  if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
+    if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+      e.preventDefault();
+      if (map) map.zoomIn();
+      return;
+    }
+  }
+  if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') {
+    if (!e.target || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA')) {
+      e.preventDefault();
+      if (map) map.zoomOut();
+      return;
+    }
   }
 
   // 如果正在輸入框則不觸發
@@ -9836,9 +9980,9 @@ function zoomToShuangbeiBusOverview() {
 
 
 // ============================================================
-// 🏙️ 超微觀街廓親臨系統 (Zoom 18-21 極致街道細節 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道)
+// 🏙️ 街道放大檢視系統 (Zoom 18–21.5 街道放大檢視 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道)
 // ============================================================
-// 🏙️ 超微觀街廓親臨系統 (Zoom 18-21 極致街道細節 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道 ✕ 街角家具 ✕ 臨場HUD)
+// 🏙️ 街道放大檢視系統 (Zoom 18–21.5 街道放大檢視 ✕ 斑馬線 ✕ 捷運出口 ✕ 騎樓步道 ✕ 街角家具 ✕ 臨場HUD)
 // ============================================================
 const STREET_MICRO_DETAILS = {
   // 1. 實體雙向瀝青路面鋪面 (Asphalt Road Surface Beds) - 2D 正上方俯視極致路面結構
@@ -9863,7 +10007,13 @@ const STREET_MICRO_DETAILS = {
     { id: 'rb_hz', name: '漢中街 (西門町徒步商圈徒步街區)', p1: [25.0415, 121.5068], p2: [25.0455, 121.5068], width: 18, lanes: 0, isPedestrian: true, hasDividers: false, speedLimit: 10 },
     { id: 'rb_em', name: '峨眉街 (萬年大樓潮流商場街)', p1: [25.0435, 121.5045], p2: [25.0435, 121.5085], width: 18, lanes: 2, hasDividers: false, speedLimit: 30 },
     { id: 'rb_wc', name: '武昌街二段 (西門電影街)', p1: [25.0448, 121.5045], p2: [25.0448, 121.5085], width: 18, lanes: 2, hasDividers: false, speedLimit: 30 },
-    { id: 'rb_km', name: '昆明街 (西門南北縱向動脈)', p1: [25.0415, 121.5050], p2: [25.0460, 121.5050], width: 22, lanes: 3, hasDividers: true, speedLimit: 40 }
+    { id: 'rb_km', name: '昆明街 (西門南北縱向動脈)', p1: [25.0415, 121.5050], p2: [25.0460, 121.5050], width: 22, lanes: 3, hasDividers: true, speedLimit: 40 },
+
+    // ─── 建國高架一帶平面路網 (ISSUE-15：建國南路平面段與忠孝東路三段，座標初值待對照 live 圖磚校準) ───
+    { id: 'rb_jg', name: '建國南路 (建國高架平面段)', p1: [25.0520, 121.5380], p2: [25.0240, 121.5390], width: 30, lanes: 6, hasDividers: true, speedLimit: 50 },
+    { id: 'rb_zx3', name: '忠孝東路三段 (建國南路口東西向主幹)', p1: [25.0445, 121.5300], p2: [25.0445, 121.5450], width: 30, lanes: 6, hasDividers: true, speedLimit: 50 },
+    { id: 'rb_sm3', name: '市民大道三段 (建國南路口東西向主幹)', p1: [25.0490, 121.5300], p2: [25.0490, 121.5450], width: 30, lanes: 6, hasDividers: true, speedLimit: 50 },
+    { id: 'rb_ra3', name: '仁愛路三段 (建國南路口東西向主幹)', p1: [25.0375, 121.5300], p2: [25.0375, 121.5450], width: 28, lanes: 4, hasDividers: true, speedLimit: 50 }
   ],
 
   // 2. 行人穿越道 (斑馬線 Zebra Crossings) - 黑白高對比斑馬線紋理 + 警示邊界 + 行人引導
@@ -9899,7 +10049,12 @@ const STREET_MICRO_DETAILS = {
     { id: 'cr_xm_cd_km', name: '成都路 ✕ 昆明街口斑馬線 (國賓大戲院轉角)', p1: [25.0425, 121.5048], p2: [25.0425, 121.5053], width: 5.5, stripes: 10 },
     { id: 'cr_xm_hz_em', name: '漢中街 ✕ 峨眉街徒步交會處斑馬線 (萬年商業大樓/阿宗麵線街角)', p1: [25.0435, 121.5065], p2: [25.0435, 121.5071], width: 5.0, stripes: 9 },
     { id: 'cr_xm_hz_wc', name: '漢中街 ✕ 武昌街二段徒步十字路口 (西門電影街入口)', p1: [25.0448, 121.5065], p2: [25.0448, 121.5071], width: 5.0, stripes: 9 },
-    { id: 'cr_xm_zh_em', name: '中華路一段 ✕ 峨眉街口穿越道 (鴨肉扁前跨街)', p1: [25.0435, 121.5082], p2: [25.0435, 121.5088], width: 6.0, stripes: 12 }
+    { id: 'cr_xm_zh_em', name: '中華路一段 ✕ 峨眉街口穿越道 (鴨肉扁前跨街)', p1: [25.0435, 121.5082], p2: [25.0435, 121.5088], width: 6.0, stripes: 12 },
+
+    // ─── 建國高架一帶路口斑馬線 (ISSUE-15，座標初值待對照 live 圖磚校準) ───
+    { id: 'cr_jg_zx', name: '忠孝東路三段 ✕ 建國南路口行人穿越道 (建國高架下)', p1: [25.0446, 121.5372], p2: [25.0444, 121.5379], width: 6.0, stripes: 12 },
+    { id: 'cr_jg_sm', name: '市民大道三段 ✕ 建國南路口行人穿越道', p1: [25.0491, 121.5373], p2: [25.0489, 121.5380], width: 6.0, stripes: 12 },
+    { id: 'cr_jg_ra', name: '仁愛路三段 ✕ 建國南路口行人穿越道', p1: [25.0376, 121.5378], p2: [25.0374, 121.5385], width: 6.0, stripes: 12 }
   ],
 
   // 3. 車道停止線 (Stop Lines) - 位於斑馬線前緣之實體白色寬幅車輛停止標線 (涵蓋 20.5x 核心視窗 ISSUE-15)
@@ -9912,7 +10067,12 @@ const STREET_MICRO_DETAILS = {
     { id: 'sl_cq_zx_s', name: '重慶南路北向停止線 (忠孝路口南側)', p1: [25.0459, 121.5134], p2: [25.0459, 121.5139], width: 4.0 },
     { id: 'sl_cd_zh_e', name: '成都路東向停止線 (中華路一段路口西側)', p1: [25.0423, 121.5078], p2: [25.0427, 121.5078], width: 4.5 },
     { id: 'sl_cd_km_w', name: '成都路西向停止線 (昆明街口東側)', p1: [25.0423, 121.5054], p2: [25.0427, 121.5054], width: 4.0 },
-    { id: 'sl_zh_cd_n', name: '中華路一段南向停止線 (成都路口北側)', p1: [25.0429, 121.5083], p2: [25.0429, 121.5087], width: 5.0 }
+    { id: 'sl_zh_cd_n', name: '中華路一段南向停止線 (成都路口北側)', p1: [25.0429, 121.5083], p2: [25.0429, 121.5087], width: 5.0 },
+
+    // ─── 建國高架一帶路口停止線 (ISSUE-15，座標初值待對照 live 圖磚校準) ───
+    { id: 'sl_jg_zx_e', name: '忠孝東路東向車道停止線 (建國南路口西側)', p1: [25.04475, 121.5372], p2: [25.04455, 121.5372], width: 4.5 },
+    { id: 'sl_jg_sm_s', name: '市民大道南向車道停止線 (建國南路口北側)', p1: [25.04925, 121.5373], p2: [25.04905, 121.5373], width: 4.5 },
+    { id: 'sl_jg_ra_n', name: '仁愛路北向車道停止線 (建國南路口南側)', p1: [25.03775, 121.5378], p2: [25.03755, 121.5378], width: 4.5 }
   ],
 
   // 4. 路口淨空黃色網狀格 (Yellow Box Junctions / 网狀禁止暫停區)
@@ -10138,7 +10298,7 @@ const STREET_MICRO_DETAILS = {
 let currentNearbyInteractiveObject = null;
 
 // 渲染極致街道細節
-// 渲染極致街道細節 (2D 正上方超微觀街道俯視系統・Zoom 18~22 極致展開)
+// 渲染街道放大檢視細節 (街道放大檢視・Zoom 18~21.5，圖磚原生 18x）
 function renderStreetMicroDetails() {
   if (!map || !streetMicroDetailsGroup) return;
   const curZoom = map.getZoom();
@@ -10408,11 +10568,13 @@ function renderStreetMicroDetails() {
     return true;
   };
 
-  // ─── 8.0 在 18.5x~24x 超微觀視角下繪製高解析向量建築與路名銘牌，覆蓋 18x 放大點陣糊字，確保文字 100% 銳利清晰 (ISSUE-15) ───
+  // ─── 8.0 在 18.5x~21.5x 放大檢視下繪製高解析向量建築與路名銘牌，覆蓋 18x 放大點陣糊字（僅北車與建國高架有銘牌） (ISSUE-15) ───
   if (curZoom >= 18.5) {
     const vectorPlaques = [
       { lat: 25.04682, lon: 121.51700, text: '🚇 北捷台北車站 Taipei Main Station (BL12・R10)', bg: 'rgba(15,23,42,0.96)', border: '#38bdf8', color: '#ffffff', w: 250, h: 26 },
-      { lat: 25.04637, lon: 121.51698, text: '🛣️ 忠孝西路一段 Zhongxiao W. Rd. Sec. 1', bg: '#065f46', border: '#6ee7b7', color: '#ffffff', w: 220, h: 24 }
+      { lat: 25.04637, lon: 121.51698, text: '🛣️ 忠孝西路一段 Zhongxiao W. Rd. Sec. 1', bg: '#065f46', border: '#6ee7b7', color: '#ffffff', w: 220, h: 24 },
+      { lat: 25.0450, lon: 121.5380, text: '🛣️ 建國高架道路 Jianguo Elevated Rd.', bg: '#065f46', border: '#6ee7b7', color: '#ffffff', w: 220, h: 24 },
+      { lat: 25.0445, lon: 121.5375, text: '🛣️ 忠孝東路三段 Zhongxiao E. Rd. Sec. 3', bg: '#065f46', border: '#6ee7b7', color: '#ffffff', w: 220, h: 24 }
     ];
     vectorPlaques.forEach(vp => {
       // 銘牌也要遵守去重：放不下就上下移 32px 再試，真的放不下就跳過，不要無條件蓋住門牌 (ISSUE-14/15)

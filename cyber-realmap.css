@@ -859,16 +859,13 @@ html, body {
 }
 
 .leaflet-tile {
-  /* 高畫質抗鋸齒街道渲染：向量線條在任何縮放下保持平滑（底圖圖磚本身超過 18x 會模糊） */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  /* 底圖圖磚原生最高 18x，18x 以上為平滑放大（不用 crisp-edges，避免文字變硬馬賽克） */
+  image-rendering: auto;
 }
 
 body.map-zoom-street .leaflet-tile,
 body[data-map-zoom="street"] .leaflet-tile,
 body.map-zoom-ultra .leaflet-tile {
-  image-rendering: -webkit-optimize-contrast !important;
-  image-rendering: crisp-edges !important;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
@@ -892,27 +889,14 @@ body.map-zoom-ultra .leaflet-tile {
 }
 
 .leaflet-tile-pane {
-  /* 全彩高透亮街道渲染：提升全域明亮度與透光感，徹底消除暗沉感 */
-  filter: brightness(105%) saturate(106%);
+  /* ISSUE-33：拿掉 filter——filter 會把整個圖磚層光柵化，圖磚間次像素縫隙會透出底色變成接縫線 */
   transform: translateZ(0);
 }
 
 /* ──────────────────────────────────────────
    ☀️ 各風格底圖全域高亮透徹化 (Map Tile Brightness Enhancements)
    ────────────────────────────────────────── */
-body[data-map-theme="nlsc"] .leaflet-tile-pane,
-body[data-map-theme="esri_street"] .leaflet-tile-pane,
-body[data-map-theme="osm"] .leaflet-tile-pane {
-  filter: brightness(107%) contrast(102%) saturate(105%);
-}
-
-body[data-map-theme="satellite"] .leaflet-tile-pane {
-  filter: brightness(108%) contrast(104%) saturate(106%);
-}
-
-body[data-map-theme="dark"] .leaflet-tile-pane {
-  filter: brightness(112%) contrast(106%) saturate(110%);
-}
+/* ISSUE-33：各主題底圖不再對圖磚層加 filter（會光柵化整層、露出接縫線）；亮度改由向量圖層補。 */
 
 /* 底層畫布自適應亮色，防止深色底透過切換與縫隙使地圖顯暗 */
 body[data-map-theme="nlsc"] #map,
@@ -3055,4 +3039,17 @@ body:not(.map-zoom-mid) .moving-mrt-train {
 #btnTopDownStreetView:hover {
   background: rgba(245, 158, 11, 0.4) !important;
   box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+}
+
+/* ──────────────────────────────────────────
+   ISSUE-32：縮放按鈕不得被右側戰術面板遮住
+   Leaflet 縮放鈕在 #map 右下角；右側面板（.right-tactical-panel，right:12px、寬 274px、下緣到 100vh-56px）
+   在桌機版會蓋住它。把縮放鈕向左移出面板範圍、向上移出底部提示列範圍。
+   只在桌機版生效：手機版（<=768px）左右面板預設 display:none，角落本來就是空的。
+   ────────────────────────────────────────── */
+@media (min-width: 769px) {
+  .leaflet-right .leaflet-control-zoom {
+    margin-right: 298px !important;
+    margin-bottom: 44px !important;
+  }
 }
