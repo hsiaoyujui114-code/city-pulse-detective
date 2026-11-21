@@ -343,17 +343,17 @@
         <span id="tag2DStreetLockIcon">🔓</span>
         <span id="tag2DStreetLockText">自由縮放</span>
       </button>
-      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="2D 街道微觀俯視 (NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線僅北車、西門兩區・18.5x 起 ✕ 捷運出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
-        <span>🔍 超微觀街道</span>
-        <span style="color:#fbbf24; font-size:10px;">21.5x</span>
+      <button class="tactical-tool-btn" id="btnTopDownStreetView" onclick="setStreetTopDownView(21.5)" title="街道放大檢視 (NLSC 繁中官方街道 ✕ 實體街廓 ✕ 交通標線：北車、西門、建國高架三區・18.5x 起 ✕ 捷運出入口)" style="background:rgba(245,158,11,0.2); border-color:#fbbf24;">
+        <span>🔍 街道放大檢視</span>
+        <span style="color:#fbbf24; font-size:10px;">18x 原生圖磚</span>
       </button>
       <button class="tactical-tool-btn" id="btnShuangbeiFullView" onclick="setStreetTopDownView(14.0)" title="雙北宏觀全景 (Zoom 14)">
         <span>🌐 雙北全景</span>
         <span style="color:#38bdf8; font-size:10px;">14x</span>
       </button>
-      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大至 21.5x 超微觀街廓，鏡頭自動跟隨人物與周遭街道">
-        <span>🎯 超微觀俯視 (按 Z)</span>
-        <span style="color:#00f0ff;">21.5x</span>
+      <button class="tactical-tool-btn" id="btnFocusPlayer" onclick="togglePlayerFocusMode()" title="🎯 街廓親臨模式 (按 Z)：放大檢視街廓（圖磚原生 18x，18x 以上為放大顯示），鏡頭自動跟隨人物與周遭街道">
+        <span>🎯 街廓放大檢視 (按 Z)</span>
+        <span style="color:#00f0ff;">18x 原生圖磚</span>
       </button>
       <button class="tactical-tool-btn" id="btnFitBounds" onclick="resetShuangbeiBounds()">
         <span>🔭 雙北全景居中</span>
@@ -462,7 +462,7 @@
 
   <!-- 底部操作提示 (Bottom Hint Bar - 精簡單行避免與街景提示列重疊裁切) -->
   <div class="bottom-hint-bar">
-    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[G]</span> 幽靈天眼 · <span class="hint-key">[Z]</span> 超微觀(21.5x) · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[滾輪]</span> 極致縮放(至24x) · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
+    <span><span class="hint-key">[WASD]</span> 漫遊 · <span class="hint-key">[G]</span> 幽靈天眼 · <span class="hint-key">[Z]</span> 街廓放大檢視 · <span class="hint-key">[E]</span> 調查 · <span class="hint-key">[F]</span> 公車過濾 · <span class="hint-key">[＋/－]</span> 縮放 · <span class="hint-key">[滾輪]</span> 縮放（圖磚原生最高 18x） · <span class="hint-key">[點🚨/門市/載具]</span> 調取檔案</span>
   </div>
 
   <!-- 雙軌 SSOT 單一資料源 -->
