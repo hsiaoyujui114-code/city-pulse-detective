@@ -859,7 +859,7 @@ html, body {
 }
 
 .leaflet-tile {
-  /* 高畫質抗鋸齒街道渲染：保證在任何螢幕縮放與高解析度下，街道、巷弄與門牌線條平滑完整不消失 */
+  /* 高畫質抗鋸齒街道渲染：向量線條在任何縮放下保持平滑（底圖圖磚本身超過 18x 會模糊） */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
@@ -1757,7 +1757,7 @@ body:not(.map-zoom-street) .construction-clear-badge {
   display: none !important;
 }
 
-/* 道路名稱標牌：預設啟用，顯露「忠孝西路一段」等高對比綠底白字路牌 (13x / 14x / 20.5x 全程清晰可見) */
+/* 道路名稱標牌：預設啟用，顯露「忠孝西路一段」等高對比綠底白字路牌（路牌本身為向量文字所以清晰；底圖圖磚超過 18x 會模糊） */
 body:not(.show-road-names) .road-badge-wrap {
   display: none !important;
 }
@@ -3027,7 +3027,7 @@ body:not(.map-zoom-mid) .moving-mrt-train {
 }
 
 
-/* ─── 🌟 2D 超微觀街道俯視系統 (Zoom 20.5 專用高精視覺) ─── */
+/* ─── 🌟 2D 超微觀街道俯視系統 (Zoom 20.5 專用向量視覺；底圖圖磚原生最高 18x，超過會模糊) ─── */
 .box-junction-tooltip {
   background: rgba(15, 23, 42, 0.95);
   border: 1.5px solid #facc15;
